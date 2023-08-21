@@ -259,23 +259,9 @@ impl FactoryComponent for QueueSong {
 
             // connect key presses
             add_controller = &gtk::EventControllerKey {
-                connect_key_pressed[sender, index] => move |_widget, key, _code, state| {
-                    use gtk::gdk::Key;
-                    println!("state {state:?}");
-                    if !state.contains(gdk::ModifierType::CONTROL_MASK) {
-                        println!("true");
-                    }
-                    match (key, state.contains(gdk::ModifierType::CONTROL_MASK)) {
-                        // (Key::Down, true) => sender.output(QueueSongOutput::KeyDown),
-                        // (Key::Down, false) => println!("normal press"),
-                        _ => {}
-                    }
-                    match key {
-                        Key::Delete => sender.output(QueueSongOutput::Remove(index.clone())),
-                        // Key::Down if state.contains(gdk::ModifierType::CONTROL_MASK) => sender.output(QueueSongOutput::KeyDown),
-                        // Key::Up if state.contains(gdk::ModifierType::CONTROL_MASK) => sender.output(QueueSongOutput::KeyUp),
-                        _ => println!("{:?}", key),
-                        // _ => {}
+                connect_key_pressed[sender, index] => move |_widget, key, _code, _state| {
+                    if key == gtk::gdk::Key::Delete {
+                        sender.output(QueueSongOutput::Remove(index.clone()));
                     }
                     gtk::Inhibit(false)
                 }
