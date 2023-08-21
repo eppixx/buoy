@@ -27,9 +27,7 @@ pub enum QueueSongInput {
         y: f64,
     },
     DragLeave,
-    StartPlay,
-    PausePlay,
-    StopPlay,
+    NewState(PlayState),
 }
 
 #[derive(Debug)]
@@ -55,24 +53,16 @@ pub struct QueueSong {
     index: DynamicIndex,
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
-    play_icon: gtk::Image,
+    left_icon_stack: gtk::Stack,
 }
 
 impl QueueSong {
     pub fn new_play_state(&self, state: PlayState) -> (Option<DynamicIndex>, Option<Id>) {
+        self.sender.input(QueueSongInput::NewState(state.clone()));
         match state {
-            PlayState::Play => {
-                self.sender.input(QueueSongInput::StartPlay);
-                (Some(self.index.clone()), Some(self.id.clone()))
-            }
-            PlayState::Pause => {
-                self.sender.input(QueueSongInput::PausePlay);
-                (Some(self.index.clone()), None)
-            }
-            PlayState::Stop => {
-                self.sender.input(QueueSongInput::StopPlay);
-                (None, None)
-            }
+            PlayState::Play => (Some(self.index.clone()), Some(self.id.clone())),
+            PlayState::Pause => (Some(self.index.clone()), None),
+            PlayState::Stop => (None, None),
         }
     }
 
@@ -98,7 +88,7 @@ impl FactoryComponent for QueueSong {
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
-            play_icon: gtk::Image::new(),
+            left_icon_stack: gtk::Stack::default(),
         };
 
         DragState::reset(&mut model.root_widget);
@@ -126,7 +116,7 @@ impl FactoryComponent for QueueSong {
     fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
             QueueSongInput::Activated => {
-                self.play_icon.set_icon_name(Some("audio-volume-high"));
+                self.new_play_state(PlayState::Play);
                 sender.output(QueueSongOutput::Activated(
                     self.index.clone(),
                     self.id.clone(),
@@ -149,16 +139,11 @@ impl FactoryComponent for QueueSong {
                 }
             }
             QueueSongInput::DragLeave => DragState::reset(&mut self.root_widget),
-            QueueSongInput::StartPlay => {
-                self.play_icon.set_from_icon_name(Some("audio-volume-high"));
-            }
-            QueueSongInput::PausePlay => {
-                self.play_icon
-                    .set_from_icon_name(Some("media-playback-pause-symbolic"));
-            }
-            QueueSongInput::StopPlay => {
-                self.play_icon.set_from_icon_name(None);
-            }
+            QueueSongInput::NewState(state) => match state {
+                PlayState::Play => self.left_icon_stack.set_visible_child_name("status-play"),
+                PlayState::Pause => self.left_icon_stack.set_visible_child_name("status-pause"),
+                PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
+            },
         }
     }
 
@@ -170,17 +155,50 @@ impl FactoryComponent for QueueSong {
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_spacing: 10,
+                set_margin_start: 3,
 
-                self.play_icon.clone() -> gtk::Image {
-                    set_icon_name: None,
+                self.left_icon_stack.clone() -> gtk::Stack {
+                    add_child = &gtk::Image {
+                        add_css_class: "queue-default-cover",
+                        set_icon_name: Some("folder-music-symbolic"),
+                        set_height_request: 48,
+                        set_width_request: 48,
+                    } -> {
+                        set_name: "default-image",
+                    },
+                    add_child = &gtk::Image {
+                        set_icon_name: Some("audio-volume-high"),
+                    } -> {
+                        set_name: "status-play",
+                    },
+                    add_child = &gtk::Image {
+                        set_icon_name: Some("media-playback-pause-symbolic"),
+                    } -> {
+                        set_name: "status-pause",
+                    }
+                    //TODO display real cover
                 },
 
-                gtk::Label {
-                    set_label: &self.id.serialize(),
-                    set_width_chars: 3,
-                    set_hexpand: true,
-                    set_halign: gtk::Align::Start,
-                    set_ellipsize: pango::EllipsizeMode::End,
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_valign: gtk::Align::Center,
+
+                    gtk::Label {
+                        set_label: &self.id.serialize(),
+                        set_width_chars: 3,
+                        set_hexpand: true,
+                        set_halign: gtk::Align::Start,
+                        set_ellipsize: pango::EllipsizeMode::End,
+                    },
+
+                    gtk:: Label {
+                        //TODO insert real artist
+                        set_markup: &format!("<span style=\"italic\">{}</span>", "Artist"),
+                        set_width_chars: 3,
+                        set_hexpand: true,
+                        set_halign: gtk::Align::Start,
+                        set_ellipsize: pango::EllipsizeMode::End,
+                    }
                 },
 
                 gtk::Button {

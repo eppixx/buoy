@@ -19,6 +19,14 @@ margin-top: 1px;
 .destructive-button-spacer {
 margin-left: 15px;
 }
+
+.queue-default-cover {
+border-radius: 3px;
+border-top: 1px solid LightGray;
+border-right: 1px solid LightGray;
+border-bottom: 1px solid LightGray;
+border-left: 1px solid LightGray;
+}
 ";
     relm4::set_global_css(data);
 }
