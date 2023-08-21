@@ -36,6 +36,7 @@ pub enum QueueSongInput {
 pub enum QueueSongOutput {
     Activated(DynamicIndex, Id),
     Clicked(DynamicIndex),
+    ShiftClicked(DynamicIndex),
     Remove(DynamicIndex),
     DropAbove {
         src: DynamicIndex,
@@ -117,6 +118,7 @@ impl FactoryComponent for QueueSong {
         match output {
             QueueSongOutput::Activated(index, id) => Some(QueueInput::Activated(index, id)),
             QueueSongOutput::Clicked(index) => Some(QueueInput::Clicked(index)),
+            QueueSongOutput::ShiftClicked(index) => Some(QueueInput::ShiftClicked(index)),
             QueueSongOutput::Remove(index) => Some(QueueInput::Remove),
             QueueSongOutput::KeyUp => Some(QueueInput::KeyUp),
             QueueSongOutput::KeyDown => Some(QueueInput::KeyDown),
@@ -242,7 +244,11 @@ impl FactoryComponent for QueueSong {
                         let state = _widget.current_event_state();
                         if !(state.contains(gdk::ModifierType::SHIFT_MASK)
                              || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
+                            // normal click
                             sender.output(QueueSongOutput::Clicked(index.clone()));
+                        } else if state.contains(gdk::ModifierType::SHIFT_MASK) {
+                            // shift click
+                            sender.output(QueueSongOutput::ShiftClicked(index.clone()));
                         }
                     }
                     else if n == 2 {

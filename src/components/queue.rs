@@ -19,6 +19,7 @@ pub struct QueueModel {
     playing_index: Option<DynamicIndex>,
     remove_items: gtk::Button,
     clear_items: gtk::Button,
+    last_selected: Option<DynamicIndex>,
 }
 
 impl QueueModel {
@@ -37,6 +38,7 @@ impl QueueModel {
 pub enum QueueInput {
     Activated(DynamicIndex, Id),
     Clicked(DynamicIndex),
+    ShiftClicked(DynamicIndex),
     Append(Id),
     Clear,
     Remove,
@@ -75,6 +77,7 @@ impl SimpleComponent for QueueModel {
             playing_index: None,
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
+            last_selected: None,
         };
 
         model.songs.guard().push_back(Id::song("1"));
@@ -165,6 +168,33 @@ impl SimpleComponent for QueueModel {
                 {
                     self.songs.widget().unselect_row(song.root_widget());
                 }
+                self.last_selected = Some(index.clone());
+            }
+            QueueInput::ShiftClicked(target) => {
+                if let Some(index) = &self.last_selected {
+                    let (lower, bigger) = if index.current_index() < target.current_index() {
+                        (index.clone(), target)
+                    } else {
+                        (target, index.clone())
+                    };
+
+                    let items: Vec<gtk::ListBoxRow> = self
+                        .songs
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(i, s)| {
+                            if i >= lower.current_index() && i <= bigger.current_index() {
+                                return Some(s.root_widget().clone());
+                            }
+                            None
+                        })
+                        .collect();
+                    for item in items {
+                        self.songs.widget().select_row(Some(&item));
+                    }
+                } else {
+                    self.last_selected = Some(target)
+                }
             }
             QueueInput::Append(id) => {
                 let _ = self.songs.guard().push_back(id);
@@ -173,6 +203,7 @@ impl SimpleComponent for QueueModel {
             QueueInput::Clear => {
                 self.songs.guard().clear();
                 self.update_clear_btn_sensitivity();
+                self.last_selected = None;
             }
             QueueInput::Remove => {
                 let selected_indices: Vec<usize> = self
