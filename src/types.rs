@@ -1,6 +1,7 @@
-use std::fmt::Display;
+use relm4::gtk::glib;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, glib::Boxed)]
+#[boxed_type(name = "MediaId")]
 pub enum Id {
     Song(String),
     Artist(String),
