@@ -28,6 +28,8 @@ pub enum QueueSongInput {
     },
     DragLeave,
     NewState(PlayState),
+    HoverEnter,
+    HoverLeave,
 }
 
 #[derive(Debug)]
@@ -54,6 +56,7 @@ pub struct QueueSong {
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
     left_icon_stack: gtk::Stack,
+    right_icon_stack: gtk::Stack,
 }
 
 impl QueueSong {
@@ -89,6 +92,7 @@ impl FactoryComponent for QueueSong {
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
             left_icon_stack: gtk::Stack::default(),
+            right_icon_stack: gtk::Stack::default(),
         };
 
         DragState::reset(&mut model.root_widget);
@@ -144,6 +148,8 @@ impl FactoryComponent for QueueSong {
                 PlayState::Pause => self.left_icon_stack.set_visible_child_name("status-pause"),
                 PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
             },
+            QueueSongInput::HoverEnter => self.right_icon_stack.set_visible_child_name("handle"),
+            QueueSongInput::HoverLeave => self.right_icon_stack.set_visible_child_name("empty"),
         }
     }
 
@@ -201,11 +207,22 @@ impl FactoryComponent for QueueSong {
                     }
                 },
 
-                gtk::Button {
-                    set_icon_name: "view-more-symbolic",
-                    set_tooltip_text: Some("drag to reorder"),
-                    add_controller: &self.drag_src,
-                    set_margin_end: 3,
+                self.right_icon_stack.clone() -> gtk::Stack {
+                    set_transition_type: gtk::StackTransitionType::Crossfade,
+                    set_transition_duration: 200,
+
+                    add_child = &gtk::Label {} -> {
+                        set_name: "empty"
+                    },
+                    add_child = &gtk::Image {
+                        set_icon_name: Some("view-more-symbolic"),
+                        set_tooltip_text: Some("drag to reorder"),
+                        add_controller: &self.drag_src,
+                        set_height_request: 32,
+                        set_width_request: 32,
+                    } -> {
+                        set_name: "handle"
+                    }
                 }
             },
 
@@ -248,6 +265,14 @@ impl FactoryComponent for QueueSong {
                 },
 
                 connect_leave => QueueSongInput::DragLeave,
+            },
+
+            //moving mouse over item
+            add_controller = &gtk::EventControllerMotion {
+                connect_enter[sender] => move |_widget, _, _| {
+                    sender.input(QueueSongInput::HoverEnter);
+                },
+                connect_leave => QueueSongInput::HoverLeave,
             },
 
             // double left click activates item
