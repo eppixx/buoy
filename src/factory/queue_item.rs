@@ -37,7 +37,7 @@ pub enum QueueSongOutput {
     Activated(DynamicIndex, Id),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
-    Remove(DynamicIndex),
+    Remove,
     DropAbove {
         src: DynamicIndex,
         dest: DynamicIndex,
@@ -46,8 +46,6 @@ pub enum QueueSongOutput {
         src: DynamicIndex,
         dest: DynamicIndex,
     },
-    KeyUp,
-    KeyDown,
 }
 
 #[derive(Debug)]
@@ -119,9 +117,7 @@ impl FactoryComponent for QueueSong {
             QueueSongOutput::Activated(index, id) => Some(QueueInput::Activated(index, id)),
             QueueSongOutput::Clicked(index) => Some(QueueInput::Clicked(index)),
             QueueSongOutput::ShiftClicked(index) => Some(QueueInput::ShiftClicked(index)),
-            QueueSongOutput::Remove(index) => Some(QueueInput::Remove),
-            QueueSongOutput::KeyUp => Some(QueueInput::KeyUp),
-            QueueSongOutput::KeyDown => Some(QueueInput::KeyDown),
+            QueueSongOutput::Remove => Some(QueueInput::Remove),
             QueueSongOutput::DropAbove { src, dest } => Some(QueueInput::DropAbove { src, dest }),
             QueueSongOutput::DropBelow { src, dest } => Some(QueueInput::DropBelow { src, dest }),
         }
@@ -259,9 +255,9 @@ impl FactoryComponent for QueueSong {
 
             // connect key presses
             add_controller = &gtk::EventControllerKey {
-                connect_key_pressed[sender, index] => move |_widget, key, _code, _state| {
+                connect_key_pressed[sender] => move |_widget, key, _code, _state| {
                     if key == gtk::gdk::Key::Delete {
-                        sender.output(QueueSongOutput::Remove(index.clone()));
+                        sender.output(QueueSongOutput::Remove);
                     }
                     gtk::Inhibit(false)
                 }

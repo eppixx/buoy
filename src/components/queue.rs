@@ -23,11 +23,6 @@ pub struct QueueModel {
 }
 
 impl QueueModel {
-    pub fn append(&mut self, id: Id) {
-        self.songs.guard().push_back(id);
-        self.update_clear_btn_sensitivity();
-    }
-
     fn update_clear_btn_sensitivity(&mut self) {
         self.clear_items
             .set_sensitive(!self.songs.guard().is_empty());
@@ -50,8 +45,6 @@ pub enum QueueInput {
         src: DynamicIndex,
         dest: DynamicIndex,
     },
-    KeyUp,
-    KeyDown,
     NewState(PlayState),
     SomeIsSelected(bool),
 }
@@ -142,7 +135,7 @@ impl SimpleComponent for QueueModel {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
             QueueInput::Activated(index, id) => {
                 // remove play icon and selection from other indexes
@@ -225,8 +218,6 @@ impl SimpleComponent for QueueModel {
 
                 self.update_clear_btn_sensitivity();
             }
-            QueueInput::KeyUp => todo!("up without ctrl"),
-            QueueInput::KeyDown => todo!("down without ctrl"),
             QueueInput::DropAbove { src, dest } => {
                 let mut guard = self.songs.guard();
                 let src = src.current_index();
@@ -268,7 +259,7 @@ impl SimpleComponent for QueueModel {
                     PlayState::Stop => todo!(),
                 }
             }
-            QueueInput::SomeIsSelected(state) => _ = self.remove_items.set_sensitive(state),
+            QueueInput::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
         }
     }
 }

@@ -36,12 +36,9 @@ impl SimpleComponent for AppModel {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let queue: Controller<QueueModel> =
-            QueueModel::builder()
-                .launch(())
-                .forward(sender.input_sender(), |msg| match msg {
-                    _ => todo!(),
-                });
+        let queue: Controller<QueueModel> = QueueModel::builder()
+            .launch(())
+            .forward(sender.input_sender(), |_msg| todo!());
         let model = AppModel { counter, queue };
 
         // Insert the macro code generation here
