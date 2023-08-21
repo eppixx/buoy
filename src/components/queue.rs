@@ -36,6 +36,7 @@ impl QueueModel {
 #[derive(Debug)]
 pub enum QueueInput {
     Activated(DynamicIndex, Id),
+    Clicked(DynamicIndex),
     Append(Id),
     Clear,
     Remove,
@@ -154,6 +155,16 @@ impl SimpleComponent for QueueModel {
 
                 // TODO play song
                 println!("playing id: {id:?}");
+            }
+            QueueInput::Clicked(index) => {
+                for (_i, song) in self
+                    .songs
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| i != &index.current_index())
+                {
+                    self.songs.widget().unselect_row(song.root_widget());
+                }
             }
             QueueInput::Append(id) => {
                 let _ = self.songs.guard().push_back(id);

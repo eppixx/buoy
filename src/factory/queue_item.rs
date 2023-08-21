@@ -2,7 +2,10 @@ use relm4::{
     gtk::{
         self, gdk, glib, pango,
         prelude::ToValue,
-        traits::{BoxExt, ButtonExt, GestureSingleExt, ListBoxRowExt, OrientableExt, WidgetExt},
+        traits::{
+            BoxExt, ButtonExt, EventControllerExt, GestureSingleExt, ListBoxRowExt, OrientableExt,
+            WidgetExt,
+        },
     },
     prelude::{DynamicIndex, FactoryComponent},
     FactorySender,
@@ -32,6 +35,7 @@ pub enum QueueSongInput {
 #[derive(Debug)]
 pub enum QueueSongOutput {
     Activated(DynamicIndex, Id),
+    Clicked(DynamicIndex),
     Remove(DynamicIndex),
     DropAbove {
         src: DynamicIndex,
@@ -112,6 +116,7 @@ impl FactoryComponent for QueueSong {
     fn output_to_parent_input(output: Self::Output) -> Option<QueueInput> {
         match output {
             QueueSongOutput::Activated(index, id) => Some(QueueInput::Activated(index, id)),
+            QueueSongOutput::Clicked(index) => Some(QueueInput::Clicked(index)),
             QueueSongOutput::Remove(index) => Some(QueueInput::Remove),
             QueueSongOutput::KeyUp => Some(QueueInput::KeyUp),
             QueueSongOutput::KeyDown => Some(QueueInput::KeyDown),
@@ -232,8 +237,15 @@ impl FactoryComponent for QueueSong {
             // double left click activates item
             add_controller = &gtk::GestureClick {
                 set_button: 1,
-                connect_pressed[sender] => move |_widget, n, _x, _y|{
-                    if n == 2  {
+                connect_pressed[sender, index] => move |_widget, n, _x, _y|{
+                    if n == 1 {
+                        let state = _widget.current_event_state();
+                        if !(state.contains(gdk::ModifierType::SHIFT_MASK)
+                             || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
+                            sender.output(QueueSongOutput::Clicked(index.clone()));
+                        }
+                    }
+                    else if n == 2 {
                         sender.input(QueueSongInput::Activated);
                     }
                 }
