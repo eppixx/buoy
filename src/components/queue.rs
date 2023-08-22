@@ -6,10 +6,20 @@ use relm4::{
         traits::{ListBoxRowExt, WidgetExt},
     },
     prelude::DynamicIndex,
-    ComponentParts, ComponentSender, SimpleComponent,
+    Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent,
 };
 
-use crate::{factory::queue_item::QueueSong, play_state::PlayState, types::Id};
+use crate::{
+    components::{
+        sequence_button::SequenceButtonOutput,
+        sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+    },
+    factory::queue_item::QueueSong,
+    play_state::PlayState,
+    types::Id,
+};
+
+use super::sequence_button::SequenceButtonModel;
 
 #[derive(Debug)]
 pub struct Uri {}
@@ -20,12 +30,18 @@ pub struct QueueModel {
     remove_items: gtk::Button,
     clear_items: gtk::Button,
     last_selected: Option<DynamicIndex>,
+    shuffle: relm4::Controller<SequenceButtonModel<Shuffle>>,
+    repeat: relm4::Controller<SequenceButtonModel<Repeat>>,
 }
 
 impl QueueModel {
     fn update_clear_btn_sensitivity(&mut self) {
         self.clear_items
             .set_sensitive(!self.songs.guard().is_empty());
+    }
+
+    fn shuffle(&self) -> bool {
+        self.shuffle.model().current() == &Shuffle::Sequential
     }
 }
 
@@ -47,6 +63,8 @@ pub enum QueueInput {
     },
     NewState(PlayState),
     SomeIsSelected(bool),
+    ToggleShuffle,
+    RepeatPressed,
 }
 
 #[derive(Debug)]
@@ -65,12 +83,27 @@ impl SimpleComponent for QueueModel {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let shuffle: relm4::Controller<SequenceButtonModel<Shuffle>> =
+            SequenceButtonModel::<Shuffle>::builder()
+                .launch(Shuffle::Sequential)
+                .forward(sender.input_sender(), |msg| match msg {
+                    SequenceButtonOutput::Status(_shuffle) => QueueInput::ToggleShuffle,
+                });
+        let repeat: relm4::Controller<SequenceButtonModel<Repeat>> =
+            SequenceButtonModel::<Repeat>::builder()
+                .launch(Repeat::Normal)
+                .forward(sender.input_sender(), |msg| match msg {
+                    SequenceButtonOutput::Status(_repeat) => QueueInput::RepeatPressed,
+                });
+
         let mut model = QueueModel {
             songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
             playing_index: None,
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
             last_selected: None,
+            shuffle,
+            repeat,
         };
 
         model.songs.guard().push_back(Id::song("1"));
@@ -108,29 +141,36 @@ impl SimpleComponent for QueueModel {
             },
 
             gtk::ActionBar {
-                pack_start = &model.clear_items.clone() {
-                    set_icon_name: "user-trash-symbolic",
-                    set_tooltip_text: Some("clear queue"),
-                    set_sensitive: false,
-                    connect_clicked => QueueInput::Clear,
+                pack_start = &model.shuffle.widget().clone() {},
+                pack_start = &model.repeat.widget().clone() {},
+
+                pack_end = &gtk::Button {
+                    set_icon_name: "document-new-symbolic",
+                    set_tooltip_text: Some("add queue to playlists"),
+                    connect_clicked => QueueInput::Append(Id::song("5555555")),
                 },
 
-                pack_start = &gtk::Label {
+                pack_end = &gtk::Label {
                     add_css_class: "destructive-button-spacer",
                 },
 
-                pack_start = &model.remove_items.clone() {
+                pack_end = &model.remove_items.clone() {
                     set_icon_name: "list-remove-symbolic",
                     set_tooltip_text: Some("remove song from queue"),
                     set_sensitive: false,
                     connect_clicked => QueueInput::Remove,
                 },
 
-                pack_end = &gtk::Button {
-                    set_icon_name: "document-new-symbolic",
-                    set_tooltip_text: Some("add queue to playlists"),
-                    connect_clicked => QueueInput::Append(Id::song("5555555")),
-                }
+                pack_end = &gtk::Label {
+                    add_css_class: "destructive-button-spacer",
+                },
+
+                pack_end = &model.clear_items.clone() {
+                    set_icon_name: "user-trash-symbolic",
+                    set_tooltip_text: Some("clear queue"),
+                    set_sensitive: false,
+                    connect_clicked => QueueInput::Clear,
+                },
             }
         }
     }
@@ -260,6 +300,12 @@ impl SimpleComponent for QueueModel {
                 }
             }
             QueueInput::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
+            QueueInput::ToggleShuffle => {
+                //TODO sth useful
+            }
+            QueueInput::RepeatPressed => {
+                //TODO sth useful
+            }
         }
     }
 }
