@@ -188,6 +188,7 @@ impl FactoryComponent for QueueSong {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_valign: gtk::Align::Center,
+                    set_spacing: 3,
 
                     gtk::Label {
                         set_label: &self.id.serialize(),
@@ -218,8 +219,8 @@ impl FactoryComponent for QueueSong {
                         set_icon_name: Some("view-more-symbolic"),
                         set_tooltip_text: Some("drag to reorder"),
                         add_controller: &self.drag_src,
-                        set_height_request: 32,
-                        set_width_request: 32,
+                        set_height_request: 24,
+                        set_width_request: 24,
                     } -> {
                         set_name: "handle"
                     }
