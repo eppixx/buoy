@@ -56,6 +56,7 @@ pub struct QueueSong {
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
     left_icon_stack: gtk::Stack,
+    favorited: gtk::Stack,
     right_icon_stack: gtk::Stack,
 }
 
@@ -92,6 +93,7 @@ impl FactoryComponent for QueueSong {
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
             left_icon_stack: gtk::Stack::default(),
+            favorited: gtk::Stack::default(),
             right_icon_stack: gtk::Stack::default(),
         };
 
@@ -148,8 +150,14 @@ impl FactoryComponent for QueueSong {
                 PlayState::Pause => self.left_icon_stack.set_visible_child_name("status-pause"),
                 PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
             },
-            QueueSongInput::HoverEnter => self.right_icon_stack.set_visible_child_name("handle"),
-            QueueSongInput::HoverLeave => self.right_icon_stack.set_visible_child_name("empty"),
+            QueueSongInput::HoverEnter => {
+                self.favorited.set_visible_child_name("non-starred");
+                self.right_icon_stack.set_visible_child_name("handle");
+            }
+            QueueSongInput::HoverLeave => {
+                self.favorited.set_visible_child_name("empty");
+                self.right_icon_stack.set_visible_child_name("empty");
+            }
         }
     }
 
@@ -206,6 +214,34 @@ impl FactoryComponent for QueueSong {
                         set_halign: gtk::Align::Start,
                         set_ellipsize: pango::EllipsizeMode::End,
                     }
+                },
+
+                gtk::Label {
+                    //TODO get real length of song
+                    set_label: "2:00",
+                },
+
+                self.favorited.clone() -> gtk::Stack {
+                    set_transition_type: gtk::StackTransitionType::Crossfade,
+                    set_transition_duration: 200,
+
+                    add_child = &gtk::Label {} -> {
+                        set_name: "empty",
+                    },
+                    add_child = &gtk::Button {
+                        set_icon_name: "starred",
+                        set_tooltip_text: Some("click to unfavorite"),
+                        connect_clicked => todo!(),
+                    } -> {
+                        set_name: "starred",
+                    },
+                    add_child = &gtk::Button {
+                        set_icon_name: "non-starred",
+                        set_tooltip_text: Some("click to favorite"),
+                        connect_clicked => todo!(),
+                    } -> {
+                        set_name: "non-starred",
+                    },
                 },
 
                 self.right_icon_stack.clone() -> gtk::Stack {
