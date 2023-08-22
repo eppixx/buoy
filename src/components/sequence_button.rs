@@ -65,7 +65,7 @@ impl<T: Sequence> relm4::SimpleComponent for SequenceButtonModel<T> {
             SequenceButtonInput::Toggle => {
                 self.sequence.next();
                 self.btn.set_icon_name(self.sequence.current());
-                self.btn.set_tooltip_text(Some(self.sequence.current()));
+                self.btn.set_tooltip_text(Some(self.sequence.tooltip()));
             }
         }
     }
