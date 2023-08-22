@@ -151,12 +151,15 @@ impl FactoryComponent for QueueSong {
                 PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
             },
             QueueSongInput::HoverEnter => {
+                //TODO change if needed
                 self.favorited.set_visible_child_name("non-starred");
                 self.right_icon_stack.set_visible_child_name("handle");
             }
             QueueSongInput::HoverLeave => {
-                self.favorited.set_visible_child_name("empty");
-                self.right_icon_stack.set_visible_child_name("empty");
+                if self.favorited.visible_child_name().as_deref() != Some("starred") {
+                    self.favorited.set_visible_child_name("empty");
+                    self.right_icon_stack.set_visible_child_name("empty");
+                }
             }
         }
     }
