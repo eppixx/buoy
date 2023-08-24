@@ -24,11 +24,11 @@ impl Sequence for Repeat {
         };
     }
 
-    fn tooltip(&self) -> &str {
+    fn tooltip(&self) -> Option<&str> {
         match self {
-            Self::Normal => "no repeat",
-            Self::RepeatOne => "repeat current song",
-            Self::RepeatAll => "repeat queue",
+            Self::Normal => Some("no repeat"),
+            Self::RepeatOne => Some("repeat current song"),
+            Self::RepeatAll => Some("repeat queue"),
         }
     }
 }

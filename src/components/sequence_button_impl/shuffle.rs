@@ -21,10 +21,10 @@ impl Sequence for Shuffle {
         };
     }
 
-    fn tooltip(&self) -> &str {
+    fn tooltip(&self) -> Option<&str> {
         match self {
-            Self::Sequential => "sequential order",
-            Self::Shuffle => "random order",
+            Self::Sequential => Some("sequential order"),
+            Self::Shuffle => Some("random order"),
         }
     }
 }

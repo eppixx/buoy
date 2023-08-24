@@ -87,13 +87,13 @@ impl SimpleComponent for QueueModel {
             SequenceButtonModel::<Shuffle>::builder()
                 .launch(Shuffle::Sequential)
                 .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOutput::Status(_shuffle) => QueueInput::ToggleShuffle,
+                    SequenceButtonOutput::Clicked => QueueInput::ToggleShuffle,
                 });
         let repeat: relm4::Controller<SequenceButtonModel<Repeat>> =
             SequenceButtonModel::<Repeat>::builder()
                 .launch(Repeat::Normal)
                 .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOutput::Status(_repeat) => QueueInput::RepeatPressed,
+                    SequenceButtonOutput::Clicked => QueueInput::RepeatPressed,
                 });
 
         let mut model = QueueModel {
