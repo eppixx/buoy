@@ -126,18 +126,17 @@ impl SimpleComponent for QueueModel {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 5,
 
-            #[local_ref]
-            queue_songs -> gtk::ListBox {
-                set_selection_mode: gtk::SelectionMode::Multiple,
-
-                connect_selected_rows_changed[sender] => move |widget| {
-                    sender.input(QueueInput::SomeIsSelected(!widget.selected_rows().is_empty()));
-                },
-            },
-
-            // dummy for moving the actionbar to the end of the queue
-            gtk::Label {
+            gtk::ScrolledWindow {
                 set_vexpand: true,
+
+                #[local_ref]
+                queue_songs -> gtk::ListBox {
+                    set_selection_mode: gtk::SelectionMode::Multiple,
+
+                    connect_selected_rows_changed[sender] => move |widget| {
+                        sender.input(QueueInput::SomeIsSelected(!widget.selected_rows().is_empty()));
+                    },
+                },
             },
 
             gtk::ActionBar {
