@@ -1,12 +1,7 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum PlayState {
     Play,
     Pause,
+    #[default]
     Stop,
-}
-
-impl Default for PlayState {
-    fn default() -> Self {
-        PlayState::Stop
-    }
 }
