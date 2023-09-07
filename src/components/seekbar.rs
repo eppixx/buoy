@@ -118,7 +118,6 @@ fn convert_for_label(time: i64) -> String {
     let seconds =
         (time - chrono::Duration::hours(hours) - chrono::Duration::minutes(minutes)).num_seconds();
 
-    println!("{hours}, {minutes}, {seconds}");
     let mut result = String::new();
     if hours > 0 {
         result.push_str(format!("{}:{:0>2}:{:0>2}", hours, minutes, seconds).as_str());
