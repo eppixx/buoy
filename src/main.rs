@@ -69,29 +69,6 @@ impl SimpleComponent for AppModel {
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 5,
 
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_spacing: 5,
-                    set_margin_top: 5,
-                    set_margin_start: 5,
-                    set_margin_end: 5,
-
-                    gtk::Button {
-                        set_label: "Increment",
-                        connect_clicked => AppMsg::Increment,
-                    },
-
-                    gtk::Button::with_label("Decrement") {
-                        connect_clicked => AppMsg::Decrement,
-                    },
-                },
-
-                gtk::Label {
-                    #[watch]
-                    set_label: &format!("Counter: {}", model.counter),
-                    set_margin_all: 5,
-                },
-
                 append: model.queue.widget(),
             }
         }
