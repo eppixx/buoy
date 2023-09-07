@@ -172,7 +172,6 @@ impl FactoryComponent for QueueSong {
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_spacing: 10,
-                set_margin_start: 3,
 
                 self.left_icon_stack.clone() -> gtk::Stack {
                     add_child = &gtk::Image {
@@ -199,9 +198,9 @@ impl FactoryComponent for QueueSong {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_valign: gtk::Align::Center,
-                    set_spacing: 3,
 
                     gtk::Label {
+                        //TODO insert real title
                         set_label: &self.id.serialize(),
                         set_width_chars: 3,
                         set_hexpand: true,
