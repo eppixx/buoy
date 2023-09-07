@@ -55,4 +55,19 @@
   min-width: 32px;
 }
 
+.seekbar {
+  min-width: 200px;
+  margin: 0px 50px;
+}
 
+.seekbar-current {
+  
+}
+
+.seekbar-scale {
+  margin: 0px 7px;
+}
+
+.seekbar-total {
+  
+}

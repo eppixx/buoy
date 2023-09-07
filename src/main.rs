@@ -1,6 +1,7 @@
 use components::{
     play_controls::{PlayControlModel, PlayControlOutput},
-    queue::{QueueModel, QueueInput},
+    queue::{QueueInput, QueueModel},
+    seekbar::{SeekbarModel, SeekbarOutput},
 };
 use gtk::prelude::{BoxExt, GtkWindowExt, OrientableExt};
 use relm4::{
@@ -14,7 +15,7 @@ use relm4::{
     SimpleComponent,
 };
 
-use crate::play_state::PlayState;
+use crate::{components::seekbar::SeekbarCurrent, play_state::PlayState};
 
 mod components;
 pub mod css;
@@ -25,17 +26,18 @@ pub mod types;
 struct AppModel {
     queue: Controller<QueueModel>,
     play_controls: Controller<PlayControlModel>,
+    seekbar: Controller<SeekbarModel>,
 }
 
 #[derive(Debug)]
 enum AppMsg {
     PlayControlOutput(PlayControlOutput),
+    Seekbar(SeekbarOutput),
 }
 
 #[relm4::component]
 impl SimpleComponent for AppModel {
     type Input = AppMsg;
-
     type Output = ();
     type Init = ();
 
@@ -51,9 +53,13 @@ impl SimpleComponent for AppModel {
         let play_controls = PlayControlModel::builder()
             .launch(PlayState::Pause) // TODO change to previous state
             .forward(sender.input_sender(), |msg| AppMsg::PlayControlOutput(msg));
+        let seekbar = SeekbarModel::builder()
+            .launch(Some(SeekbarCurrent::new(1000 * 60, None))) // TODO change to previous state
+            .forward(sender.input_sender(), |msg| AppMsg::Seekbar(msg));
         let model = AppModel {
             queue,
             play_controls,
+            seekbar,
         };
 
         // Insert the macro code generation here
@@ -73,6 +79,7 @@ impl SimpleComponent for AppModel {
             AppMsg::PlayControlOutput(PlayControlOutput::Status(status)) => {
                 _ = self.queue.sender().send(QueueInput::NewState(status));
             }
+            AppMsg::Seekbar(_) => {}
         }
     }
 
@@ -89,6 +96,8 @@ impl SimpleComponent for AppModel {
                 set_spacing: 5,
 
                 append: model.play_controls.widget(),
+
+                append: model.seekbar.widget(),
 
                 append: model.queue.widget(),
             }

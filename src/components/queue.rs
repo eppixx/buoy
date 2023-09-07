@@ -294,8 +294,7 @@ impl SimpleComponent for QueueModel {
                         // sender.output(QueueOutput::Play(id.unwrap()));
                         println!("TODO implement play in queue");
                     }
-                    PlayState::Pause =>
-                        println!("TODO implement pause in queue"),
+                    PlayState::Pause => println!("TODO implement pause in queue"),
                     PlayState::Stop => println!("TODO implement stop in queue"),
                 }
             }

@@ -2,7 +2,7 @@ use relm4::{
     component,
     gtk::{
         self,
-        traits::{ButtonExt, WidgetExt, BoxExt},
+        traits::{BoxExt, ButtonExt, WidgetExt},
     },
     ComponentParts, ComponentSender, SimpleComponent,
 };
