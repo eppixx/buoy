@@ -1,6 +1,6 @@
 use components::{
     play_controls::{PlayControlModel, PlayControlOutput},
-    queue::QueueModel,
+    queue::{QueueModel, QueueInput},
 };
 use gtk::prelude::{BoxExt, GtkWindowExt, OrientableExt};
 use relm4::{
@@ -49,7 +49,7 @@ impl SimpleComponent for AppModel {
             .launch(())
             .forward(sender.input_sender(), |_msg| todo!());
         let play_controls = PlayControlModel::builder()
-            .launch(PlayState::Stop) // TODO change to previous state
+            .launch(PlayState::Pause) // TODO change to previous state
             .forward(sender.input_sender(), |msg| AppMsg::PlayControlOutput(msg));
         let model = AppModel {
             queue,
@@ -64,8 +64,15 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            //TODO do smth useful
-            AppMsg::PlayControlOutput(state) => println!("playcontrol button pressed {state:?}"),
+            AppMsg::PlayControlOutput(PlayControlOutput::Next) => {
+                _ = self.queue.sender().send(QueueInput::PlayNext);
+            }
+            AppMsg::PlayControlOutput(PlayControlOutput::Previous) => {
+                _ = self.queue.sender().send(QueueInput::PlayPrevious);
+            }
+            AppMsg::PlayControlOutput(PlayControlOutput::Status(status)) => {
+                _ = self.queue.sender().send(QueueInput::NewState(status));
+            }
         }
     }
 

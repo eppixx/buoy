@@ -65,6 +65,8 @@ pub enum QueueInput {
     SomeIsSelected(bool),
     ToggleShuffle,
     RepeatPressed,
+    PlayNext,
+    PlayPrevious,
 }
 
 #[derive(Debug)]
@@ -290,12 +292,11 @@ impl SimpleComponent for QueueModel {
                         // };
                         // self.playing_index = index;
                         // sender.output(QueueOutput::Play(id.unwrap()));
-                        todo!();
+                        println!("TODO implement play in queue");
                     }
-                    PlayState::Pause => {
-                        todo!();
-                    }
-                    PlayState::Stop => todo!(),
+                    PlayState::Pause =>
+                        println!("TODO implement pause in queue"),
+                    PlayState::Stop => println!("TODO implement stop in queue"),
                 }
             }
             QueueInput::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
@@ -304,6 +305,12 @@ impl SimpleComponent for QueueModel {
             }
             QueueInput::RepeatPressed => {
                 //TODO sth useful
+            }
+            QueueInput::PlayNext => {
+                //TODO fth useful
+            }
+            QueueInput::PlayPrevious => {
+                //TODO fth useful
             }
         }
     }
