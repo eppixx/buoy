@@ -31,3 +31,25 @@
   margin-left: 5px;
   margin-right: 5px;
 }
+
+.play-control {
+  margin: 3px;
+}
+
+.play-control-previous {
+  min-height: 32px;
+  min-width: 32px;
+}
+
+.play-control-play-pause {
+  margin: 0px  20px;
+  min-height: 32px;
+  min-width: 32px;
+}
+
+.play-control-next {
+  min-height: 32px;
+  min-width: 32px;
+}
+
+

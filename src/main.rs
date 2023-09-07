@@ -1,15 +1,20 @@
-use components::queue::QueueModel;
+use components::{
+    play_controls::{PlayControlModel, PlayControlOutput},
+    queue::QueueModel,
+};
 use gtk::prelude::{BoxExt, GtkWindowExt, OrientableExt};
 use relm4::{
     gtk::{
         self,
         gio::SimpleAction,
         prelude::{ActionMapExt, ApplicationExt},
-        traits::GtkApplicationExt,
+        traits::{GtkApplicationExt, WidgetExt},
     },
     Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
     SimpleComponent,
 };
+
+use crate::play_state::PlayState;
 
 mod components;
 pub mod css;
@@ -19,10 +24,13 @@ pub mod types;
 
 struct AppModel {
     queue: Controller<QueueModel>,
+    play_controls: Controller<PlayControlModel>,
 }
 
 #[derive(Debug)]
-enum AppMsg {}
+enum AppMsg {
+    PlayControlOutput(PlayControlOutput),
+}
 
 #[relm4::component]
 impl SimpleComponent for AppModel {
@@ -40,7 +48,13 @@ impl SimpleComponent for AppModel {
         let queue: Controller<QueueModel> = QueueModel::builder()
             .launch(())
             .forward(sender.input_sender(), |_msg| todo!());
-        let model = AppModel { queue };
+        let play_controls = PlayControlModel::builder()
+            .launch(PlayState::Stop) // TODO change to previous state
+            .forward(sender.input_sender(), |msg| AppMsg::PlayControlOutput(msg));
+        let model = AppModel {
+            queue,
+            play_controls,
+        };
 
         // Insert the macro code generation here
         let widgets = view_output!();
@@ -49,12 +63,16 @@ impl SimpleComponent for AppModel {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
-        match msg {}
+        match msg {
+            //TODO do smth useful
+            AppMsg::PlayControlOutput(state) => println!("playcontrol button pressed {state:?}"),
+        }
     }
 
     view! {
         #[root]
         gtk::Window {
+            add_css_class: "main-window",
             set_title: Some("Simple app"),
             set_default_width: 500,
             set_default_height: 700,
@@ -62,6 +80,8 @@ impl SimpleComponent for AppModel {
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 5,
+
+                append: model.play_controls.widget(),
 
                 append: model.queue.widget(),
             }
