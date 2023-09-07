@@ -73,7 +73,7 @@ impl SimpleComponent for AppModel {
         #[root]
         gtk::Window {
             add_css_class: "main-window",
-            set_title: Some("Simple app"),
+            set_title: Some("Bouy"),
             set_default_width: 500,
             set_default_height: 700,
 
@@ -109,7 +109,7 @@ fn main() -> anyhow::Result<()> {
     application.set_accels_for_action("app.reload_css", &["<Primary><Shift>C"]);
     application.add_action(&reload_css);
 
-    let app = RelmApp::new("relm4.test.simple");
+    let app = RelmApp::new("com.github.eppixx.bouy");
     css::setup_css()?;
     app.run::<AppModel>(());
     Ok(())
