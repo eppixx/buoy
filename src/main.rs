@@ -1,9 +1,9 @@
 use components::queue::QueueModel;
-use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt};
+use gtk::prelude::{BoxExt, GtkWindowExt, OrientableExt};
 use relm4::{
-    gtk::{self, traits::WidgetExt},
+    gtk::self,
     Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
-    RelmWidgetExt, SimpleComponent,
+    SimpleComponent,
 };
 
 mod components;
@@ -13,14 +13,11 @@ mod play_state;
 pub mod types;
 
 struct AppModel {
-    counter: u8,
     queue: Controller<QueueModel>,
 }
 
 #[derive(Debug)]
 enum AppMsg {
-    Increment,
-    Decrement,
 }
 
 #[relm4::component]
@@ -28,18 +25,18 @@ impl SimpleComponent for AppModel {
     type Input = AppMsg;
 
     type Output = ();
-    type Init = u8;
+    type Init = ();
 
     // Initialize the UI.
     fn init(
-        counter: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let queue: Controller<QueueModel> = QueueModel::builder()
             .launch(())
             .forward(sender.input_sender(), |_msg| todo!());
-        let model = AppModel { counter, queue };
+        let model = AppModel { queue };
 
         // Insert the macro code generation here
         let widgets = view_output!();
@@ -49,12 +46,6 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            AppMsg::Increment => {
-                self.counter = self.counter.wrapping_add(1);
-            }
-            AppMsg::Decrement => {
-                self.counter = self.counter.wrapping_sub(1);
-            }
         }
     }
 
@@ -78,6 +69,6 @@ impl SimpleComponent for AppModel {
 fn main() -> anyhow::Result<()> {
     let app = RelmApp::new("relm4.test.simple");
     css::setup_css()?;
-    app.run::<AppModel>(0);
+    app.run::<AppModel>(());
     Ok(())
 }
