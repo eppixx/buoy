@@ -97,6 +97,11 @@ impl SimpleComponent for AppModel {
 }
 
 fn main() -> anyhow::Result<()> {
+    //enable logging
+    tracing_subscriber::fmt()
+        .with_span_events(tracing_subscriber::fmt::format::FmtSpan::FULL)
+        .with_max_level(tracing::Level::INFO)
+        .init();
     let application = relm4::main_application();
 
     // quit action

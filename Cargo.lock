@@ -74,6 +74,8 @@ dependencies = [
  "anyhow",
  "relm4",
  "relm4-components",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
