@@ -1,7 +1,12 @@
 use components::queue::QueueModel;
 use gtk::prelude::{BoxExt, GtkWindowExt, OrientableExt};
 use relm4::{
-    gtk::self,
+    gtk::{
+        self,
+        gio::SimpleAction,
+        prelude::{ActionMapExt, ApplicationExt},
+        traits::GtkApplicationExt,
+    },
     Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
     SimpleComponent,
 };
@@ -17,8 +22,7 @@ struct AppModel {
 }
 
 #[derive(Debug)]
-enum AppMsg {
-}
+enum AppMsg {}
 
 #[relm4::component]
 impl SimpleComponent for AppModel {
@@ -45,8 +49,7 @@ impl SimpleComponent for AppModel {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
-        match msg {
-        }
+        match msg {}
     }
 
     view! {
