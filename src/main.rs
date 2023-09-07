@@ -70,6 +70,25 @@ impl SimpleComponent for AppModel {
 }
 
 fn main() -> anyhow::Result<()> {
+    let application = relm4::main_application();
+
+    // quit action
+    let quit = SimpleAction::new("quit", None);
+    let app = application.clone();
+    quit.connect_activate(move |_action, _parameter| {
+        app.quit();
+    });
+    application.set_accels_for_action("app.quit", &["<Primary>Q"]);
+    application.add_action(&quit);
+
+    //relaod css action
+    let reload_css = SimpleAction::new("reload_css", None);
+    reload_css.connect_activate(move |_action, _parameter| {
+        css::setup_css().unwrap();
+    });
+    application.set_accels_for_action("app.reload_css", &["<Primary><Shift>C"]);
+    application.add_action(&reload_css);
+
     let app = RelmApp::new("relm4.test.simple");
     css::setup_css()?;
     app.run::<AppModel>(());
