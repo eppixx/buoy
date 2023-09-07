@@ -1,34 +1,9 @@
 use relm4::gtk::traits::WidgetExt;
 
-pub fn setup_css() {
-    let data = "
-.padd-item {
-margin-top: 1px;
-margin-bottom: 1px;
-}
-.drag-indicator-top {
-border-top: 1px solid Gray;
-margin-bottom: 1px;
-}
-
-.drag-indicator-bottom {
-border-bottom: 1px solid Gray;
-margin-top: 1px;
-}
-
-.destructive-button-spacer {
-margin-left: 15px;
-}
-
-.queue-default-cover {
-border-radius: 3px;
-border-top: 1px solid LightGray;
-border-right: 1px solid LightGray;
-border-bottom: 1px solid LightGray;
-border-left: 1px solid LightGray;
-}
-";
-    relm4::set_global_css(data);
+pub fn setup_css() -> anyhow::Result<()> {
+    let data = std::fs::read_to_string("data/bouy.css")?;
+    relm4::set_global_css(&data);
+    Ok(())
 }
 
 pub struct DragState {}

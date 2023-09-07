@@ -98,8 +98,9 @@ impl SimpleComponent for AppModel {
     }
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let app = RelmApp::new("relm4.test.simple");
-    css::setup_css();
+    css::setup_css()?;
     app.run::<AppModel>(0);
+    Ok(())
 }
