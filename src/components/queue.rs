@@ -148,6 +148,7 @@ impl SimpleComponent for QueueModel {
                 pack_end = &gtk::Button {
                     set_icon_name: "document-new-symbolic",
                     set_tooltip_text: Some("add queue to playlists"),
+                    set_focus_on_click: false,
                     connect_clicked => QueueInput::Append(Id::song("5555555")),
                 },
 
@@ -159,6 +160,7 @@ impl SimpleComponent for QueueModel {
                     set_icon_name: "list-remove-symbolic",
                     set_tooltip_text: Some("remove song from queue"),
                     set_sensitive: false,
+                    set_focus_on_click: false,
                     connect_clicked => QueueInput::Remove,
                 },
 
@@ -170,6 +172,7 @@ impl SimpleComponent for QueueModel {
                     set_icon_name: "user-trash-symbolic",
                     set_tooltip_text: Some("clear queue"),
                     set_sensitive: false,
+                    set_focus_on_click: false,
                     connect_clicked => QueueInput::Clear,
                 },
             }

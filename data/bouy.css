@@ -20,6 +20,10 @@
   margin-left: 15px;
 }
 
+.queue {
+  border-top: 1px solid LightGray;
+}
+
 .queue-default-cover {
   border-radius: 3px;
   border-top: 1px solid LightGray;
@@ -74,6 +78,7 @@
 
 .play-info {
   margin: 4px;
+  min-width: 450px;
 }
 
 .play-info-cover {
@@ -93,4 +98,24 @@
 .window-titlebar {
   min-height: 50px;
   margin: 0px 7px;
+}
+
+.main-box {
+  
+}
+
+.main-paned {
+  
+}
+.main-paned.wide {
+  min-width: 10px;
+}
+
+.browser {
+  padding: 5px;
+  border-top: 1px solid LightGray;
+}
+
+.pathbar {
+  
 }

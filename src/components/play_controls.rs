@@ -53,6 +53,7 @@ impl SimpleComponent for PlayControlModel {
                 add_css_class: "play-control-previous",
                 add_css_class: "circular",
                 set_icon_name: "media-skip-backward-symbolic",
+                set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
                     _ = sender.output(PlayControlOutput::Previous);
                 },
@@ -62,6 +63,7 @@ impl SimpleComponent for PlayControlModel {
                 add_css_class: "play-control-play-pause",
                 add_css_class: "circular",
                 set_icon_name: "media-playback-stop-symbolic",
+                set_focus_on_click: false,
                 connect_clicked[sender] => move |btn| {
                     match btn.icon_name().unwrap().as_str() {
                         "media-playback-start-symbolic" => {
@@ -81,6 +83,7 @@ impl SimpleComponent for PlayControlModel {
                 add_css_class: "play-control-next",
                 add_css_class: "circular",
                 set_icon_name: "media-skip-forward-symbolic",
+                set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
                     _ = sender.output(PlayControlOutput::Next);
                 },

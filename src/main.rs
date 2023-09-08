@@ -3,6 +3,7 @@ use components::{
     play_info::PlayInfoModel,
     queue::{QueueInput, QueueModel},
     seekbar::{SeekbarModel, SeekbarOutput},
+    browser::Browser,
 };
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt};
 use relm4::{
@@ -29,6 +30,7 @@ struct AppModel {
     play_controls: Controller<PlayControlModel>,
     seekbar: Controller<SeekbarModel>,
     play_info: Controller<PlayInfoModel>,
+    browser: Controller<Browser>,
 }
 
 #[derive(Debug)]
@@ -61,11 +63,13 @@ impl SimpleComponent for AppModel {
         let play_info = PlayInfoModel::builder()
             .launch(None) // TODO change to previous state
             .detach();
+        let browser = Browser::builder().launch(vec![]).detach();
         let model = AppModel {
             queue,
             play_controls,
             seekbar,
             play_info,
+            browser,
         };
 
         // Insert the macro code generation here
@@ -94,7 +98,7 @@ impl SimpleComponent for AppModel {
         gtk::Window {
             add_css_class: "main-window",
             set_title: Some("Bouy"),
-            set_default_width: 500,
+            set_default_width: 900,
             set_default_height: 700,
 
             #[wrap(Some)]
@@ -112,11 +116,13 @@ impl SimpleComponent for AppModel {
 
                     gtk::Button {
                         set_icon_name: "media-eq-symbolic",
+                        set_focus_on_click: false,
                         connect_clicked => todo!(),
                     },
 
                     gtk::Button {
                         set_icon_name: "open-menu-symbolic",
+                        set_focus_on_click: false,
                         connect_clicked => todo!(),
                     },
 
@@ -127,6 +133,7 @@ impl SimpleComponent for AppModel {
             },
 
             gtk::Box {
+                add_css_class: "main-box",
                 set_orientation: gtk::Orientation::Vertical,
 
                 gtk::WindowHandle {
@@ -143,11 +150,12 @@ impl SimpleComponent for AppModel {
                     },
                 },
                 gtk::Paned {
-                    set_wide_handle: true,
+                    add_css_class: "main-paned",
+                    // set_wide_handle: true,
+                    set_position: 300, // TODO set from previous state
 
                     set_start_child: Some(model.queue.widget()),
-                    // set_end_child: gtk::Label {
-                    // },
+                    set_end_child: Some(model.browser.widget()),
                 },
             }
         }
