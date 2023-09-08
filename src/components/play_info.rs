@@ -11,7 +11,7 @@ pub struct PlayInfoModel {
 impl Default for PlayInfoModel {
     fn default() -> Self {
         Self {
-            title: String::from("Nichts wird abgespielt"),
+            title: String::from("Nothing is played currently"),
             cover: None,
             artist: None,
             album: None,
