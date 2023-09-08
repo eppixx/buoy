@@ -47,6 +47,7 @@ impl SimpleComponent for PlayControlModel {
         #[root]
         gtk::Box {
             add_css_class: "play-control",
+            set_halign: gtk::Align::Center,
 
             append = &model.prev_btn.clone() {
                 add_css_class: "play-control-previous",
