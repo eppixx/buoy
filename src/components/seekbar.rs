@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use relm4::{
     component,
     gtk::{

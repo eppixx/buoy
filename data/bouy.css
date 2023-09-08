@@ -71,3 +71,22 @@
 .seekbar-total {
   
 }
+
+.play-info {
+  margin: 4px;
+}
+
+.play-info-cover {
+  border-radius: 3px;
+  border-top: 1px solid LightGray;
+  border-right: 1px solid LightGray;
+  border-bottom: 1px solid LightGray;
+  border-left: 1px solid LightGray;
+  min-width: 96px;
+  min-height: 96px;
+}
+
+.play-info-info {
+  margin: 9px;
+}
+

@@ -1,5 +1,6 @@
 use components::{
     play_controls::{PlayControlModel, PlayControlOutput},
+    play_info::PlayInfoModel,
     queue::{QueueInput, QueueModel},
     seekbar::{SeekbarModel, SeekbarOutput},
 };
@@ -27,6 +28,7 @@ struct AppModel {
     queue: Controller<QueueModel>,
     play_controls: Controller<PlayControlModel>,
     seekbar: Controller<SeekbarModel>,
+    play_info: Controller<PlayInfoModel>,
 }
 
 #[derive(Debug)]
@@ -52,14 +54,18 @@ impl SimpleComponent for AppModel {
             .forward(sender.input_sender(), |_msg| todo!());
         let play_controls = PlayControlModel::builder()
             .launch(PlayState::Pause) // TODO change to previous state
-            .forward(sender.input_sender(), |msg| AppMsg::PlayControlOutput(msg));
+            .forward(sender.input_sender(), AppMsg::PlayControlOutput);
         let seekbar = SeekbarModel::builder()
             .launch(Some(SeekbarCurrent::new(1000 * 60, None))) // TODO change to previous state
-            .forward(sender.input_sender(), |msg| AppMsg::Seekbar(msg));
+            .forward(sender.input_sender(), AppMsg::Seekbar);
+        let play_info = PlayInfoModel::builder()
+            .launch(None) // TODO change to previous state
+            .detach();
         let model = AppModel {
             queue,
             play_controls,
             seekbar,
+            play_info,
         };
 
         // Insert the macro code generation here
@@ -94,6 +100,8 @@ impl SimpleComponent for AppModel {
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 5,
+
+                append: model.play_info.widget(),
 
                 append: model.play_controls.widget(),
 

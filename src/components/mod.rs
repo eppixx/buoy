@@ -1,4 +1,5 @@
 pub mod play_controls;
+pub mod play_info;
 pub mod queue;
 pub mod seekbar;
 pub mod sequence_button;
