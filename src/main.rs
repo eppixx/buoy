@@ -5,7 +5,7 @@ use components::{
     seekbar::{SeekbarModel, SeekbarOutput},
     browser::Browser,
 };
-use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt};
+use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     gtk::{
         self,
@@ -37,6 +37,7 @@ struct AppModel {
 enum AppMsg {
     PlayControlOutput(PlayControlOutput),
     Seekbar(SeekbarOutput),
+    VolumeChange(f64),
 }
 
 #[relm4::component]
@@ -89,7 +90,8 @@ impl SimpleComponent for AppModel {
             AppMsg::PlayControlOutput(PlayControlOutput::Status(status)) => {
                 _ = self.queue.sender().send(QueueInput::NewState(status));
             }
-            AppMsg::Seekbar(_) => {}
+            AppMsg::Seekbar(seek) => {} //TODO
+            AppMsg::VolumeChange(value) => {} //TODO
         }
     }
 
@@ -118,6 +120,14 @@ impl SimpleComponent for AppModel {
                         set_icon_name: "media-eq-symbolic",
                         set_focus_on_click: false,
                         connect_clicked => todo!(),
+                    },
+
+                    gtk::VolumeButton {
+                        set_focus_on_click: false,
+                        //TODO init with previous state
+                        connect_value_changed[sender] => move |scale, value| {
+                            sender.input(AppMsg::VolumeChange(value));
+                        }
                     },
 
                     gtk::Button {
