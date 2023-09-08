@@ -4,7 +4,7 @@ use components::{
     queue::{QueueInput, QueueModel},
     seekbar::{SeekbarModel, SeekbarOutput},
 };
-use gtk::prelude::{BoxExt, GtkWindowExt, OrientableExt};
+use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt};
 use relm4::{
     gtk::{
         self,
@@ -97,17 +97,58 @@ impl SimpleComponent for AppModel {
             set_default_width: 500,
             set_default_height: 700,
 
+            #[wrap(Some)]
+            set_titlebar = &gtk::WindowHandle {
+                gtk::Box {
+                    add_css_class: "window-titlebar",
+                    gtk::WindowControls {
+                        set_side: gtk::PackType::Start,
+                    },
+
+                    gtk::Label {
+                        set_markup: "<span weight=\"bold\">Bouy</span>",
+                        set_hexpand: true,
+                    },
+
+                    gtk::Button {
+                        set_icon_name: "media-eq-symbolic",
+                        connect_clicked => todo!(),
+                    },
+
+                    gtk::Button {
+                        set_icon_name: "open-menu-symbolic",
+                        connect_clicked => todo!(),
+                    },
+
+                    gtk::WindowControls {
+                        set_side: gtk::PackType::End,
+                    },
+                },
+            },
+
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 5,
 
-                append: model.play_info.widget(),
+                gtk::WindowHandle {
+                    gtk::Box {
+                        set_spacing: 5,
 
-                append: model.play_controls.widget(),
+                        model.play_info.widget(),
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
 
-                append: model.seekbar.widget(),
+                            append: model.play_controls.widget(),
+                            append: model.seekbar.widget(),
+                        }
+                    },
+                },
+                gtk::Paned {
+                    set_wide_handle: true,
 
-                append: model.queue.widget(),
+                    set_start_child: Some(model.queue.widget()),
+                    // set_end_child: gtk::Label {
+                    // },
+                },
             }
         }
     }

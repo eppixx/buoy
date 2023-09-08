@@ -90,3 +90,7 @@
   margin: 9px;
 }
 
+.window-titlebar {
+  min-height: 50px;
+  margin: 0px 7px;
+}
