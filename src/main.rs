@@ -153,6 +153,7 @@ impl SimpleComponent for AppModel {
                         model.play_info.widget(),
                         gtk::Box {
                             set_orientation: gtk::Orientation::Vertical,
+                            set_valign: gtk::Align::Center,
 
                             append: model.play_controls.widget(),
                             append: model.seekbar.widget(),
