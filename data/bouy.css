@@ -78,7 +78,7 @@
 
 .play-info {
   margin: 4px;
-  min-width: 450px;
+  min-width: 350px;
 }
 
 .play-info-cover {
@@ -96,8 +96,8 @@
 }
 
 .window-titlebar {
-  min-height: 50px;
-  margin: 0px 7px;
+  min-height: 35px;
+  margin: 0px 5px;
 }
 
 .main-box {
