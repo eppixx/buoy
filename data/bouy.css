@@ -7,12 +7,12 @@
 }
 
 .drag-indicator-top {
-  border-top: 1px solid Gray;
+  border-top: 1px solid @highlight_color;
   margin-bottom: 1px;
 }
 
 .drag-indicator-bottom {
-  border-bottom: 1px solid Gray;
+  border-bottom: 1px solid @highlight_color;
   margin-top: 1px;
 }
 
@@ -21,15 +21,37 @@
 }
 
 .queue {
-  border-top: 1px solid LightGray;
+  border-top: 1px solid LightGray; /* TODO change for dark theme */
 }
 
 .queue-default-cover {
   border-radius: 3px;
-  border-top: 1px solid LightGray;
-  border-right: 1px solid LightGray;
-  border-bottom: 1px solid LightGray;
-  border-left: 1px solid LightGray;
+  border-top: 1px solid LightGray; /* TODO change for dark theme */
+  border-right: 1px solid LightGray; /* TODO change for dark theme */
+  border-bottom: 1px solid LightGray; /* TODO change for dark theme */
+  border-left: 1px solid LightGray; /* TODO change for dark theme */
+      background-image:
+        linear-gradient(
+            170deg,
+            alpha(
+                @highlight_color,
+                0.1
+            ),
+            alpha(
+                @highlight_color,
+                0.15
+            ) 43%,
+            alpha(
+                @highlight_color,
+                0
+            ) 44%
+        ),
+        -gtk-icontheme("audio-x-generic-symbolic"),
+        linear-gradient(
+            to bottom,
+            @base_color,
+            @base_color
+        );
 }
 
 .queue-song {
@@ -83,10 +105,10 @@
 
 .play-info-cover {
   border-radius: 3px;
-  border-top: 1px solid LightGray;
-  border-right: 1px solid LightGray;
-  border-bottom: 1px solid LightGray;
-  border-left: 1px solid LightGray;
+  border-top: 1px solid LightGray;  /* TODO change for dark theme */
+  border-right: 1px solid LightGray;  /* TODO change for dark theme */
+  border-bottom: 1px solid LightGray;  /* TODO change for dark theme */
+  border-left: 1px solid LightGray;  /* TODO change for dark theme */
   min-width: 96px;
   min-height: 96px;
 }
@@ -113,7 +135,7 @@
 
 .browser {
   padding: 5px;
-  border-top: 1px solid LightGray;
+  border-top: 1px solid LightGray; /* TODO change for dark theme */
 }
 
 .pathbar {
