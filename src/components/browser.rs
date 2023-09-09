@@ -36,6 +36,12 @@ impl relm4::SimpleComponent for Browser {
         let model = Browser::default();
         let widgets = view_output!();
 
+        if path.is_empty() {
+            model.back_btn.set_sensitive(false);
+        } else {
+            todo!("set view according to path");
+        }
+
         relm4::ComponentParts { model, widgets }
     }
 
