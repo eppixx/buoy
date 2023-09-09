@@ -1,9 +1,9 @@
 use components::{
+    browser::Browser,
     play_controls::{PlayControlModel, PlayControlOutput},
     play_info::PlayInfoModel,
     queue::{QueueInput, QueueModel},
     seekbar::{SeekbarModel, SeekbarOutput},
-    browser::Browser,
 };
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
@@ -90,7 +90,7 @@ impl SimpleComponent for AppModel {
             AppMsg::PlayControlOutput(PlayControlOutput::Status(status)) => {
                 _ = self.queue.sender().send(QueueInput::NewState(status));
             }
-            AppMsg::Seekbar(seek) => {} //TODO
+            AppMsg::Seekbar(seek) => {}       //TODO
             AppMsg::VolumeChange(value) => {} //TODO
         }
     }

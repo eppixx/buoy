@@ -1,16 +1,25 @@
-use relm4::gtk::{self, traits::{ButtonExt, OrientableExt, WidgetExt, EditableExt}};
+use relm4::gtk::{
+    self,
+    traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, WidgetExt},
+};
 
 use crate::types::Id;
 
 #[derive(Debug, Default)]
 pub struct Browser {
     content: gtk::Stack,
-    // back_btn: 
+    back_btn: gtk::Button,
 }
 
 #[derive(Debug)]
 pub enum BrowserInput {
     SearchChanged(String),
+    BackClicked,
+    HomeClicked,
+    ArtistClicked,
+    AlbumClicked,
+    TrackClicked,
+    PlaylistClicked,
 }
 
 #[relm4::component(pub)]
@@ -28,7 +37,6 @@ impl relm4::SimpleComponent for Browser {
         let widgets = view_output!();
 
         relm4::ComponentParts { model, widgets }
-
     }
 
     view! {
@@ -39,19 +47,58 @@ impl relm4::SimpleComponent for Browser {
             gtk::Box {
                 add_css_class: "pathbar",
 
-                gtk::Button {
-                    set_icon_name: "go-home-symbolic",
-                    set_visible: false,
+                append = &model.back_btn.clone() {
+                    gtk::Box {
+                        gtk::Image {
+                            set_icon_name: Some("go-previous-symbolic"),
+                        },
+                        gtk::Label {
+                            set_label: "Back",
+                        },
+                    },
+                    connect_clicked => Self::Input::BackClicked,
                 },
-                gtk::Button {
-                    set_icon_name: "go-previous-symbolic",
-                    set_label: "Back",
-                    set_visible: false,
+
+                gtk::Label {
+                    add_css_class: "pathbar-space",
                 },
-                //TODO add path
+
+                gtk::Box {
+                    set_spacing: 7,
+                    set_hexpand: true,
+
+                    gtk::Button {
+                        set_icon_name: "go-home-symbolic",
+                        set_tooltip_text: Some("Go to dashboard"),
+                        connect_clicked => Self::Input::HomeClicked,
+                    },
+                    gtk::Button {
+                        set_icon_name: "avatar-default-symbolic",
+                        set_tooltip_text: Some("Show Artists"),
+                        connect_clicked => Self::Input::ArtistClicked,
+                    },
+                    gtk::Button {
+                        set_icon_name: "media-optical-cd-audio-symbolic",
+                        set_tooltip_text: Some("Show Albums"),
+                        connect_clicked => Self::Input::AlbumClicked,
+                    },
+                    gtk::Button {
+                        set_icon_name: "audio-x-generic-symbolic",
+                        set_tooltip_text: Some("Show Tracks"),
+                        connect_clicked => Self::Input::TrackClicked,
+                    },
+                    gtk::Button {
+                        set_icon_name: "playlist-symbolic",
+                        set_tooltip_text: Some("Show playlists"),
+                        connect_clicked => Self::Input::PlaylistClicked,
+                    },
+                },
+
                 gtk::Label {
                     set_hexpand: true,
+                    add_css_class: "pathbar-space",
                 },
+
                 gtk::SearchEntry {
                     set_placeholder_text: Some("Search..."),
                     grab_focus: (),
@@ -71,9 +118,14 @@ impl relm4::SimpleComponent for Browser {
     fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
             BrowserInput::SearchChanged(search) => {
-                //TODO send to active view
                 tracing::warn!("new search {search}");
             }
+            BrowserInput::BackClicked => todo!(),
+            BrowserInput::HomeClicked => todo!(),
+            BrowserInput::ArtistClicked => todo!(),
+            BrowserInput::AlbumClicked => todo!(),
+            BrowserInput::TrackClicked => todo!(),
+            BrowserInput::PlaylistClicked => todo!(),
         }
     }
 }

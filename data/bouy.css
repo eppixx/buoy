@@ -119,3 +119,7 @@
 .pathbar {
   
 }
+
+.pathbar-space {
+  min-width: 30px;
+}
