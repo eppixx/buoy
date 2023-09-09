@@ -1,32 +1,49 @@
 use relm4::gtk::{
     self,
-    traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, WidgetExt},
+    traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
 };
 
 use crate::types::Id;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum View {
+    Dashboard,
+    Artists,
+    Albums,
+    Tracks,
+    Playlists,
+    Id(Id),
+}
+
 #[derive(Debug, Default)]
 pub struct Browser {
+    history: Vec<View>, //includes current View; so should never be empty
     content: gtk::Stack,
     back_btn: gtk::Button,
+    dashboard_btn: gtk::ToggleButton,
+    artists_btn: gtk::ToggleButton,
+    albums_btn: gtk::ToggleButton,
+    tracks_btn: gtk::ToggleButton,
+    playlists_btn: gtk::ToggleButton,
 }
 
 #[derive(Debug)]
 pub enum BrowserInput {
     SearchChanged(String),
     BackClicked,
-    HomeClicked,
+    DashboardClicked,
     ArtistClicked,
     AlbumClicked,
     TrackClicked,
     PlaylistClicked,
+    NewView(View),
 }
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for Browser {
     type Input = BrowserInput;
     type Output = ();
-    type Init = Vec<Id>;
+    type Init = ();
 
     fn init(
         path: Self::Init,
@@ -36,11 +53,7 @@ impl relm4::SimpleComponent for Browser {
         let model = Browser::default();
         let widgets = view_output!();
 
-        if path.is_empty() {
-            model.back_btn.set_sensitive(false);
-        } else {
-            todo!("set view according to path");
-        }
+        sender.input(BrowserInput::NewView(View::Dashboard));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -73,27 +86,28 @@ impl relm4::SimpleComponent for Browser {
                     set_spacing: 7,
                     set_hexpand: true,
 
-                    gtk::Button {
+                    append = &model.dashboard_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "go-home-symbolic",
                         set_tooltip_text: Some("Go to dashboard"),
-                        connect_clicked => Self::Input::HomeClicked,
+                        set_active: true,
+                        connect_clicked => Self::Input::DashboardClicked,
                     },
-                    gtk::Button {
+                    append = &model.artists_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "avatar-default-symbolic",
                         set_tooltip_text: Some("Show Artists"),
                         connect_clicked => Self::Input::ArtistClicked,
                     },
-                    gtk::Button {
+                    append = &model.albums_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "media-optical-cd-audio-symbolic",
                         set_tooltip_text: Some("Show Albums"),
                         connect_clicked => Self::Input::AlbumClicked,
                     },
-                    gtk::Button {
+                    append = &model.tracks_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "audio-x-generic-symbolic",
                         set_tooltip_text: Some("Show Tracks"),
                         connect_clicked => Self::Input::TrackClicked,
                     },
-                    gtk::Button {
+                    append = &model.playlists_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "playlist-symbolic",
                         set_tooltip_text: Some("Show playlists"),
                         connect_clicked => Self::Input::PlaylistClicked,
@@ -115,23 +129,87 @@ impl relm4::SimpleComponent for Browser {
             },
 
             //TODO implement stack of view here
-            gtk::Label {
-                set_label: "sdfdsfdsf",
+            gtk::ScrolledWindow {
+                gtk::Label {
+                    set_label: "sdfdsfdsf",
+                }
             }
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             BrowserInput::SearchChanged(search) => {
                 tracing::warn!("new search {search}");
             }
-            BrowserInput::BackClicked => todo!(),
-            BrowserInput::HomeClicked => todo!(),
-            BrowserInput::ArtistClicked => todo!(),
-            BrowserInput::AlbumClicked => todo!(),
-            BrowserInput::TrackClicked => todo!(),
-            BrowserInput::PlaylistClicked => todo!(),
+            BrowserInput::BackClicked => {
+                if self.history.len() > 1 {
+                    let previous = self.history.pop();
+
+                    // untoggle all buttons
+                    self.dashboard_btn.set_active(false);
+                    self.artists_btn.set_active(false);
+                    self.albums_btn.set_active(false);
+                    self.tracks_btn.set_active(false);
+                    self.playlists_btn.set_active(false);
+
+                    //toggle the right one if its active
+                    match self.history.last() {
+                        Some(View::Dashboard) => self.dashboard_btn.set_active(true),
+                        Some(View::Artists) => self.artists_btn.set_active(true),
+                        Some(View::Albums) => self.albums_btn.set_active(true),
+                        Some(View::Tracks) => self.tracks_btn.set_active(true),
+                        Some(View::Playlists) => self.playlists_btn.set_active(true),
+                        _ => {}
+                    }
+
+                    // TODO show previous
+                    tracing::error!("new view {previous:?}");
+                }
+
+                if self.history.len() == 1 {
+                    self.back_btn.set_sensitive(false);
+                }
+            }
+            BrowserInput::DashboardClicked => {
+                sender.input(BrowserInput::NewView(View::Dashboard));
+                self.dashboard_btn.set_active(true);
+            }
+            BrowserInput::ArtistClicked => {
+                sender.input(BrowserInput::NewView(View::Artists));
+                self.artists_btn.set_active(true);
+            }
+            BrowserInput::AlbumClicked => {
+                sender.input(BrowserInput::NewView(View::Albums));
+                self.albums_btn.set_active(true);
+            }
+            BrowserInput::TrackClicked => {
+                sender.input(BrowserInput::NewView(View::Tracks));
+                self.tracks_btn.set_active(true);
+            }
+            BrowserInput::PlaylistClicked => {
+                sender.input(BrowserInput::NewView(View::Playlists));
+                self.playlists_btn.set_active(true);
+            }
+            BrowserInput::NewView(view) => {
+                match self.history.last() {
+                    Some(View::Dashboard) => self.dashboard_btn.set_active(false),
+                    Some(View::Artists) => self.artists_btn.set_active(false),
+                    Some(View::Albums) => self.albums_btn.set_active(false),
+                    Some(View::Tracks) => self.tracks_btn.set_active(false),
+                    Some(View::Playlists) => self.playlists_btn.set_active(false),
+                    _ => {}
+                }
+
+                if self.history.len() < 1 {
+                    self.back_btn.set_sensitive(false);
+                } else {
+                    self.back_btn.set_sensitive(true);
+                }
+                self.history.push(view.clone());
+                //TODO show new view
+                tracing::error!("new view {view:?}");
+            }
         }
     }
 }

@@ -64,7 +64,7 @@ impl SimpleComponent for AppModel {
         let play_info = PlayInfoModel::builder()
             .launch(None) // TODO change to previous state
             .detach();
-        let browser = Browser::builder().launch(vec![]).detach();
+        let browser = Browser::builder().launch(()).detach();
         let model = AppModel {
             queue,
             play_controls,
