@@ -1,10 +1,3 @@
-use components::{
-    browser::Browser,
-    play_controls::{PlayControlModel, PlayControlOutput},
-    play_info::PlayInfoModel,
-    queue::{QueueInput, QueueModel},
-    seekbar::{SeekbarModel, SeekbarOutput},
-};
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     gtk::{
@@ -17,12 +10,23 @@ use relm4::{
     SimpleComponent,
 };
 
-use crate::{components::seekbar::SeekbarCurrent, play_state::PlayState};
+use crate::{
+    play_state::PlayState,
+    playback::{Playback, PlaybackOutput},
+};
+use components::{
+    browser::Browser,
+    play_controls::{PlayControlModel, PlayControlOutput},
+    play_info::PlayInfoModel,
+    queue::{QueueInput, QueueModel},
+    seekbar::{SeekbarCurrent, SeekbarInput, SeekbarModel},
+};
 
 mod components;
 pub mod css;
 mod factory;
 mod play_state;
+mod playback;
 pub mod types;
 
 struct AppModel {
@@ -31,13 +35,15 @@ struct AppModel {
     seekbar: Controller<SeekbarModel>,
     play_info: Controller<PlayInfoModel>,
     browser: Controller<Browser>,
+    playback: Playback,
 }
 
 #[derive(Debug)]
 enum AppMsg {
     PlayControlOutput(PlayControlOutput),
-    Seekbar(SeekbarOutput),
+    Seekbar(i64),
     VolumeChange(f64),
+    Playback(PlaybackOutput),
 }
 
 #[relm4::component]
@@ -52,6 +58,7 @@ impl SimpleComponent for AppModel {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let (playback_sender, receiver) = glib::MainContext::channel(glib::Priority::DEFAULT);
         let queue: Controller<QueueModel> = QueueModel::builder()
             .launch(())
             .forward(sender.input_sender(), |_msg| todo!());
@@ -65,16 +72,23 @@ impl SimpleComponent for AppModel {
             .launch(None) // TODO change to previous state
             .detach();
         let browser = Browser::builder().launch(()).detach();
+        let playback = Playback::new(&playback_sender).unwrap();
         let model = AppModel {
             queue,
             play_controls,
             seekbar,
             play_info,
             browser,
+            playback,
         };
 
         // Insert the macro code generation here
         let widgets = view_output!();
+
+        receiver.attach(None, move |msg| {
+            sender.input(AppMsg::Playback(msg));
+            glib::ControlFlow::Continue
+        });
 
         ComponentParts { model, widgets }
     }
@@ -88,10 +102,23 @@ impl SimpleComponent for AppModel {
                 _ = self.queue.sender().send(QueueInput::PlayPrevious);
             }
             AppMsg::PlayControlOutput(PlayControlOutput::Status(status)) => {
+                match status {
+                    PlayState::Pause => self.playback.pause().unwrap(),
+                    PlayState::Play => self.playback.play().unwrap(),
+                    PlayState::Stop => self.playback.stop().unwrap(),
+                };
                 _ = self.queue.sender().send(QueueInput::NewState(status));
             }
-            AppMsg::Seekbar(seek) => {}       //TODO
-            AppMsg::VolumeChange(value) => {} //TODO
+            AppMsg::Seekbar(seek_in_ms) => self.playback.set_position(seek_in_ms),
+            AppMsg::VolumeChange(value) => self.playback.set_volume(value),
+            AppMsg::Playback(playback) => {
+                match playback {
+                    PlaybackOutput::TrackEnd => {} //TODO play next
+                    PlaybackOutput::Seek(ms) => {
+                        self.seekbar.sender().emit(SeekbarInput::SeekTo(ms));
+                    }
+                }
+            }
         }
     }
 
@@ -125,7 +152,7 @@ impl SimpleComponent for AppModel {
                     gtk::VolumeButton {
                         set_focus_on_click: false,
                         //TODO init with previous state
-                        connect_value_changed[sender] => move |scale, value| {
+                        connect_value_changed[sender] => move |_scale, value| {
                             sender.input(AppMsg::VolumeChange(value));
                         }
                     },
@@ -153,6 +180,7 @@ impl SimpleComponent for AppModel {
                         model.play_info.widget(),
                         gtk::Box {
                             set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 12,
                             set_valign: gtk::Align::Center,
 
                             append: model.play_controls.widget(),

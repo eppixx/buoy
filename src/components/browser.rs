@@ -1,9 +1,14 @@
-use relm4::gtk::{
-    self,
-    traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
+use relm4::{
+    gtk::{
+        self,
+        traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
+    },
+    Component, ComponentController,
 };
 
-use crate::types::Id;
+use crate::{components::dashboard::Dashboard, types::Id};
+
+use super::dashboard::DashboardOutput;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum View {
@@ -37,6 +42,7 @@ pub enum BrowserInput {
     TrackClicked,
     PlaylistClicked,
     NewView(View),
+    Dashboard(DashboardOutput),
 }
 
 #[relm4::component(pub)]
@@ -46,7 +52,7 @@ impl relm4::SimpleComponent for Browser {
     type Init = ();
 
     fn init(
-        path: Self::Init,
+        _path: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -130,9 +136,9 @@ impl relm4::SimpleComponent for Browser {
 
             //TODO implement stack of view here
             gtk::ScrolledWindow {
-                gtk::Label {
-                    set_label: "sdfdsfdsf",
-                }
+                add_css_class: "browser-content",
+                set_vexpand: true,
+                set_child: Some(&model.content.clone()),
             }
         }
     }
@@ -201,14 +207,26 @@ impl relm4::SimpleComponent for Browser {
                     _ => {}
                 }
 
-                if self.history.len() < 1 {
+                if self.history.is_empty() {
                     self.back_btn.set_sensitive(false);
                 } else {
                     self.back_btn.set_sensitive(true);
                 }
                 self.history.push(view.clone());
+                match view {
+                    View::Dashboard => {
+                        let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
+                            .launch(())
+                            .forward(sender.input_sender(), BrowserInput::Dashboard);
+                        self.content.add_child(dashboard.widget());
+                    }
+                    _ => todo!("add other views"),
+                }
                 //TODO show new view
                 tracing::error!("new view {view:?}");
+            }
+            BrowserInput::Dashboard(output) => {
+                //TODO react to output
             }
         }
     }
