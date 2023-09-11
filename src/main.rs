@@ -4,19 +4,21 @@ use relm4::{
         self,
         gio::SimpleAction,
         prelude::{ActionMapExt, ApplicationExt},
-        traits::{GtkApplicationExt, WidgetExt},
+        traits::{GtkApplicationExt, PopoverExt, WidgetExt},
     },
     Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
     SimpleComponent,
 };
 
 use crate::{
+    components::login_form::LoginForm,
     play_state::PlayState,
     playback::{Playback, PlaybackOutput},
     settings::Settings,
 };
 use components::{
     browser::Browser,
+    login_form::LoginFormOutput,
     play_controls::{PlayControlModel, PlayControlOutput},
     play_info::PlayInfoModel,
     queue::{QueueInput, QueueModel},
@@ -32,6 +34,7 @@ pub mod settings;
 pub mod types;
 
 struct AppModel {
+    login_form: Controller<LoginForm>,
     queue: Controller<QueueModel>,
     play_controls: Controller<PlayControlModel>,
     seekbar: Controller<SeekbarModel>,
@@ -46,6 +49,7 @@ enum AppMsg {
     Seekbar(i64),
     VolumeChange(f64),
     Playback(PlaybackOutput),
+    LoginForm(LoginFormOutput),
 }
 
 #[relm4::component]
@@ -61,6 +65,9 @@ impl SimpleComponent for AppModel {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (playback_sender, receiver) = glib::MainContext::channel(glib::Priority::DEFAULT);
+        let login_form: Controller<LoginForm> = LoginForm::builder()
+            .launch(())
+            .forward(sender.input_sender(), AppMsg::LoginForm);
         let queue: Controller<QueueModel> = QueueModel::builder()
             .launch(())
             .forward(sender.input_sender(), |_msg| todo!());
@@ -76,6 +83,7 @@ impl SimpleComponent for AppModel {
         let browser = Browser::builder().launch(()).detach();
         let playback = Playback::new(&playback_sender).unwrap();
         let model = AppModel {
+            login_form,
             queue,
             play_controls,
             seekbar,
@@ -121,6 +129,9 @@ impl SimpleComponent for AppModel {
                     }
                 }
             }
+            AppMsg::LoginForm(msg) => {
+                tracing::error!("msg from LoginForm: {msg:?}");
+            }
         }
     }
 
@@ -163,10 +174,13 @@ impl SimpleComponent for AppModel {
                         }
                     },
 
-                    gtk::Button {
+                    gtk::MenuButton {
                         set_icon_name: "open-menu-symbolic",
                         set_focus_on_click: false,
-                        connect_clicked => todo!(),
+                        #[wrap(Some)]
+                        set_popover: popover = &gtk::Popover {
+                            model.login_form.widget(),
+                        },
                     },
 
                     gtk::WindowControls {

@@ -1,5 +1,6 @@
 pub mod browser;
 pub mod dashboard;
+pub mod login_form;
 pub mod play_controls;
 pub mod play_info;
 pub mod queue;
