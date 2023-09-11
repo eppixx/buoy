@@ -13,6 +13,7 @@ use relm4::{
 use crate::{
     play_state::PlayState,
     playback::{Playback, PlaybackOutput},
+    settings::Settings,
 };
 use components::{
     browser::Browser,
@@ -27,6 +28,7 @@ pub mod css;
 mod factory;
 mod play_state;
 mod playback;
+pub mod settings;
 pub mod types;
 
 struct AppModel {
@@ -153,6 +155,10 @@ impl SimpleComponent for AppModel {
                         set_focus_on_click: false,
                         //TODO init with previous state
                         connect_value_changed[sender] => move |_scale, value| {
+                            {
+                                let mut settings = Settings::get().lock().unwrap();
+                                settings.volume = value;
+                            }
                             sender.input(AppMsg::VolumeChange(value));
                         }
                     },
@@ -207,6 +213,12 @@ fn main() -> anyhow::Result<()> {
         .with_span_events(tracing_subscriber::fmt::format::FmtSpan::FULL)
         .with_max_level(tracing::Level::INFO)
         .init();
+
+    //init settings
+    {
+        let _settings = Settings::get().lock().unwrap();
+    }
+
     let application = relm4::main_application();
 
     // quit action

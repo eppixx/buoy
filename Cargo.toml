@@ -14,3 +14,6 @@ chrono = "0.4.30"
 anyhow = "1.0.72"
 gstreamer = "0.21.0"
 glib = "0.18.1"
+serde = { version = "1.0.188", features = ["derive"] }
+toml = "0.7.8"
+xdg = "2.5.2"
