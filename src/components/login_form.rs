@@ -11,12 +11,14 @@ pub struct LoginForm {
     uri: gtk::Entry,
     user: gtk::Entry,
     password: gtk::PasswordEntry,
+    login_btn: gtk::Button,
 }
 
 #[derive(Debug)]
 pub enum LoginFormInput {
     AuthClicked,
     UriChanged,
+    FormChanged,
     ResetClicked,
 }
 
@@ -78,18 +80,21 @@ impl relm4::component::AsyncComponent for LoginForm {
                 attach[1, 0, 1, 1] = &model.uri.clone() {
                     set_placeholder_text: Some("http(s)://..."),
                     connect_changed => LoginFormInput::UriChanged,
+                    connect_changed => LoginFormInput::FormChanged,
                 },
                 attach[0, 1, 1, 1] = &gtk::Label {
                     set_label: "User name",
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 1, 1, 1] = &model.user.clone() {
+                    connect_changed => LoginFormInput::FormChanged,
                 },
                 attach[0, 2, 1, 1] = &gtk::Label {
                     set_label: "Password",
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 2, 1, 1] = &model.password.clone() {
+                    connect_changed => LoginFormInput::FormChanged,
                 },
             },
 
@@ -101,8 +106,9 @@ impl relm4::component::AsyncComponent for LoginForm {
                     connect_clicked => LoginFormInput::ResetClicked,
                 },
                 #[wrap(Some)]
-                set_end_widget = &gtk::Button {
+                set_end_widget = &model.login_btn.clone() -> gtk::Button {
                     set_label: "Login",
+                    set_sensitive: false,
                     connect_clicked => LoginFormInput::AuthClicked,
                 }
             }
@@ -125,7 +131,6 @@ impl relm4::component::AsyncComponent for LoginForm {
                     Ok(_) => println!("login success"),
                     Err(_) => println!("login failed"),
                 }
-                //TODO check login data
                 //TODO save them
             }
             LoginFormInput::ResetClicked => {
@@ -158,6 +163,13 @@ impl relm4::component::AsyncComponent for LoginForm {
                     self.uri.set_secondary_icon_tooltip_text(Some(error_str));
                 }
             },
+            LoginFormInput::FormChanged => {
+                //check form if input text is ok
+                let sensitive = !self.user.text().is_empty()
+                    && !self.password.text().is_empty()
+                    && url::Url::parse(&self.uri.text()).is_ok();
+                self.login_btn.set_sensitive(sensitive);
+            }
         }
     }
 }
