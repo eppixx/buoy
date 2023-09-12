@@ -1,4 +1,6 @@
-use relm4::gtk::traits::{BoxExt, ButtonExt, EntryExt, GridExt, OrientableExt, WidgetExt, EditableExt};
+use relm4::gtk::traits::{
+    BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
+};
 use relm4::{component, gtk};
 
 use crate::settings::Settings;
@@ -11,6 +13,12 @@ pub struct LoginForm {
 }
 
 #[derive(Debug)]
+pub enum LoginFormInput {
+    AuthClicked,
+    ResetClicked,
+}
+
+#[derive(Debug)]
 pub enum LoginFormOutput {
     LoggedIn(submarine::auth::Auth),
     LoggedOut,
@@ -18,7 +26,7 @@ pub enum LoginFormOutput {
 
 #[component(pub)]
 impl relm4::SimpleComponent for LoginForm {
-    type Input = ();
+    type Input = LoginFormInput;
     type Output = LoginFormOutput;
     type Init = ();
 
@@ -87,34 +95,41 @@ impl relm4::SimpleComponent for LoginForm {
                 set_start_widget = &gtk::Button {
                     add_css_class: "destructive-action",
                     set_label: "Reset login data",
-                    connect_clicked[model] => move |_| {
-                        model.uri.set_text("");
-                        model.user.set_text("");
-                        model.password.set_text("");
-
-                        let mut settings = Settings::get().lock().unwrap();
-                        settings.login_uri = None;
-                        settings.login_username = None;
-                        settings.login_password = None;
-                        settings.save();
-                    }
+                    connect_clicked => LoginFormInput::ResetClicked,
                 },
                 #[wrap(Some)]
                 set_end_widget = &gtk::Button {
                     set_label: "Login",
-                    connect_clicked[model] => move |_btn| {
-                        let auth = submarine::auth::AuthBuilder::new(model.user.text(), "0.16.1")
-                            .client_name("Bouy")
-                            .hashed(&model.password.text());
-                        // let client = submarine::Client::new(&model.uri.text(), auth);
-                        // match client.ping() {
-                        //     Ok(_) => {}
-                        //     Err(_) => {}
-                        // }
-                    }
-                    //TODO check login data
-                    //save them
+                    connect_clicked => LoginFormInput::AuthClicked,
                 }
+            }
+        }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+        match msg {
+            LoginFormInput::AuthClicked => {
+                let auth = submarine::auth::AuthBuilder::new(self.user.text(), "0.16.1")
+                    .client_name("Bouy")
+                    .hashed(&self.password.text());
+                // let client = submarine::Client::new(&model.uri.text(), auth);
+                // match client.ping() {
+                //     Ok(_) => {}
+                //     Err(_) => {}
+                // }
+                //TODO check login data
+                //TODO save them
+            }
+            LoginFormInput::ResetClicked => {
+                self.uri.set_text("");
+                self.user.set_text("");
+                self.password.set_text("");
+
+                let mut settings = Settings::get().lock().unwrap();
+                settings.login_uri = None;
+                settings.login_username = None;
+                settings.login_password = None;
+                settings.save();
             }
         }
     }
