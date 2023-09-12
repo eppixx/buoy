@@ -7,12 +7,12 @@
 }
 
 .drag-indicator-top {
-  border-top: 1px solid @highlight_color;
+  border-top: 1px solid @accent_color_100;
   margin-bottom: 1px;
 }
 
 .drag-indicator-bottom {
-  border-bottom: 1px solid @highlight_color;
+  border-bottom: 1px solid @accent_color_100;
   margin-top: 1px;
 }
 
