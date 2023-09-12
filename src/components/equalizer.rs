@@ -19,7 +19,6 @@ pub struct Equalizer {
     band7: gtk::Scale,
     band8: gtk::Scale,
     band9: gtk::Scale,
-    root: gtk::Box,
 }
 
 #[derive(Debug)]
