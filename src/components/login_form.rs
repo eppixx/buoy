@@ -12,7 +12,7 @@ pub struct LoginForm {
 
 #[derive(Debug)]
 pub enum LoginFormOutput {
-    LoggedIn,
+    LoggedIn(submarine::auth::Auth),
     LoggedOut,
 }
 
@@ -38,9 +38,6 @@ impl relm4::SimpleComponent for LoginForm {
             }
             if let Some(user) = &settings.login_username {
                 model.user.set_text(&user);
-            }
-            if let Some(pw) = &settings.login_password {
-                model.password.set_text(&pw);
             }
         }
 
@@ -105,6 +102,16 @@ impl relm4::SimpleComponent for LoginForm {
                 #[wrap(Some)]
                 set_end_widget = &gtk::Button {
                     set_label: "Login",
+                    connect_clicked[model] => move |_btn| {
+                        let auth = submarine::auth::AuthBuilder::new(model.user.text(), "0.16.1")
+                            .client_name("Bouy")
+                            .hashed(&model.password.text());
+                        // let client = submarine::Client::new(&model.uri.text(), auth);
+                        // match client.ping() {
+                        //     Ok(_) => {}
+                        //     Err(_) => {}
+                        // }
+                    }
                     //TODO check login data
                     //save them
                 }

@@ -177,9 +177,21 @@ impl SimpleComponent for AppModel {
                     gtk::MenuButton {
                         set_icon_name: "open-menu-symbolic",
                         set_focus_on_click: false,
+
                         #[wrap(Some)]
                         set_popover: popover = &gtk::Popover {
-                            model.login_form.widget(),
+                            set_position: gtk::PositionType::Right,
+
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+
+                                gtk::Button {
+                                    add_css_class: "destructive-action",
+                                    set_label: "Logout from Server",
+                                },
+
+                                model.login_form.widget(),
+                            },
                         },
                     },
 
