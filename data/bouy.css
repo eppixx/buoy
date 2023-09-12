@@ -154,7 +154,10 @@
   margin: 15px;
 }
 
-popover>box {
-  margin: 15px;
+.equalizer {
+   margin: 15px;
 }
 
+.equalizer-bands {
+  min-height: 300px;
+}

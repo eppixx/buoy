@@ -12,13 +12,14 @@ use relm4::{
 };
 
 use crate::{
-    components::login_form::LoginForm,
     play_state::PlayState,
     playback::{Playback, PlaybackOutput},
     settings::Settings,
 };
 use components::{
     browser::Browser,
+    equalizer::{Equalizer, EqualizerOut},
+    login_form::LoginForm,
     login_form::LoginFormOutput,
     play_controls::{PlayControlModel, PlayControlOutput},
     play_info::PlayInfoModel,
@@ -41,6 +42,7 @@ struct AppModel {
     seekbar: Controller<SeekbarModel>,
     play_info: Controller<PlayInfoModel>,
     browser: Controller<Browser>,
+    equalizer: Controller<Equalizer>,
     playback: Playback,
 }
 
@@ -51,6 +53,7 @@ enum AppMsg {
     VolumeChange(f64),
     Playback(PlaybackOutput),
     LoginForm(LoginFormOutput),
+    Equalizer(EqualizerOut),
 }
 
 #[relm4::component]
@@ -82,7 +85,11 @@ impl SimpleComponent for AppModel {
             .launch(None) // TODO change to previous state
             .detach();
         let browser = Browser::builder().launch(()).detach();
+        let equalizer = Equalizer::builder()
+            .launch(())
+            .forward(sender.input_sender(), AppMsg::Equalizer);
         let playback = Playback::new(&playback_sender).unwrap();
+
         let model = AppModel {
             login_form,
             queue,
@@ -90,6 +97,7 @@ impl SimpleComponent for AppModel {
             seekbar,
             play_info,
             browser,
+            equalizer,
             playback,
         };
 
@@ -135,7 +143,11 @@ impl SimpleComponent for AppModel {
                 }
             }
             AppMsg::LoginForm(msg) => {
-                tracing::error!("msg from LoginForm: {msg:?}");
+                // tracing::error!("msg from LoginForm: {msg:?}");
+                //TODO login
+            }
+            AppMsg::Equalizer(changed) => {
+                //TODO react to equalizer changed
             }
         }
     }
@@ -161,10 +173,14 @@ impl SimpleComponent for AppModel {
                         set_hexpand: true,
                     },
 
-                    gtk::Button {
+                    gtk::MenuButton {
                         set_icon_name: "media-eq-symbolic",
                         set_focus_on_click: false,
-                        connect_clicked => todo!(),
+                        #[wrap(Some)]
+                        set_popover: equalizer_popover = &gtk::Popover {
+                            model.equalizer.widget(),
+                        },
+                        // connect_clicked => todo!(),
                     },
 
                     gtk::VolumeButton {

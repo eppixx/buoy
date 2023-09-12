@@ -12,6 +12,9 @@ pub struct Settings {
     pub login_password: Option<String>,
 
     pub volume: f64,
+
+    pub equalizer_enabled: bool,
+    pub equalizer_bands: [f64; 10],
 }
 
 impl Default for Settings {
@@ -21,6 +24,8 @@ impl Default for Settings {
             login_username: Default::default(),
             login_password: Default::default(),
             volume: 75.0,
+            equalizer_enabled: false,
+            equalizer_bands: [0.0; 10],
         }
     }
 }
