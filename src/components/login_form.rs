@@ -47,10 +47,10 @@ impl relm4::component::AsyncComponent for LoginForm {
         {
             let settings = Settings::get().lock().unwrap();
             if let Some(uri) = &settings.login_uri {
-                model.uri.set_text(&uri);
+                model.uri.set_text(uri);
             }
             if let Some(user) = &settings.login_username {
-                model.user.set_text(&user);
+                model.user.set_text(user);
             }
         }
 

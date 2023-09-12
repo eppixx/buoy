@@ -121,7 +121,11 @@ impl SimpleComponent for AppModel {
                 _ = self.queue.sender().send(QueueInput::NewState(status));
             }
             AppMsg::Seekbar(seek_in_ms) => self.playback.set_position(seek_in_ms),
-            AppMsg::VolumeChange(value) => self.playback.set_volume(value),
+            AppMsg::VolumeChange(value) => {
+                self.playback.set_volume(value);
+                let mut settings = Settings::get().lock().unwrap();
+                settings.volume = value;
+            }
             AppMsg::Playback(playback) => {
                 match playback {
                     PlaybackOutput::TrackEnd => {} //TODO play next
@@ -167,10 +171,6 @@ impl SimpleComponent for AppModel {
                         set_focus_on_click: false,
                         //TODO init with previous state
                         connect_value_changed[sender] => move |_scale, value| {
-                            {
-                                let mut settings = Settings::get().lock().unwrap();
-                                settings.volume = value;
-                            }
                             sender.input(AppMsg::VolumeChange(value));
                         }
                     },

@@ -179,7 +179,7 @@ impl SimpleComponent for QueueModel {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
             QueueInput::Activated(index, id) => {
                 // remove play icon and selection from other indexes
