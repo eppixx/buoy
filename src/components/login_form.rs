@@ -11,6 +11,7 @@ pub struct LoginForm {
     uri: gtk::Entry,
     user: gtk::Entry,
     password: gtk::PasswordEntry,
+    error_icon: gtk::Image,
     login_btn: gtk::Button,
 }
 
@@ -24,8 +25,7 @@ pub enum LoginFormInput {
 
 #[derive(Debug)]
 pub enum LoginFormOutput {
-    LoggedIn(submarine::auth::Auth),
-    LoggedOut,
+    LoggedIn(submarine::Client),
 }
 
 #[component(pub, async)]
@@ -106,11 +106,21 @@ impl relm4::component::AsyncComponent for LoginForm {
                     connect_clicked => LoginFormInput::ResetClicked,
                 },
                 #[wrap(Some)]
-                set_end_widget = &model.login_btn.clone() -> gtk::Button {
-                    set_label: "Login",
-                    set_sensitive: false,
-                    connect_clicked => LoginFormInput::AuthClicked,
-                }
+                set_end_widget = &gtk::Box {
+                    set_orientation: gtk::Orientation::Horizontal,
+                    set_spacing: 5,
+
+                    model.error_icon.clone() -> gtk::Image {
+                        set_icon_name: Some("dialog-error"),
+                        set_visible: false,
+                        // set_visible: true,
+                    },
+                    model.login_btn.clone() -> gtk::Button {
+                        set_label: "Login",
+                        set_sensitive: false,
+                        connect_clicked => LoginFormInput::AuthClicked,
+                    }
+                },
             }
         }
     }
@@ -118,7 +128,7 @@ impl relm4::component::AsyncComponent for LoginForm {
     async fn update(
         &mut self,
         msg: Self::Input,
-        _sender: relm4::AsyncComponentSender<Self>,
+        sender: relm4::AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
@@ -128,10 +138,24 @@ impl relm4::component::AsyncComponent for LoginForm {
                     .hashed(&self.password.text());
                 let client = submarine::Client::new(&self.uri.text(), auth);
                 match client.ping().await {
-                    Ok(_) => println!("login success"),
-                    Err(_) => println!("login failed"),
+                    Ok(_) => sender.output(LoginFormOutput::LoggedIn(client)).unwrap(),
+                    Err(e) => {
+                        use submarine::SubsonicError;
+                        let error_str = match e {
+                            SubsonicError::Connection(_) => {
+                                "Connection error. Is the address valid?"
+                            }
+                            SubsonicError::NoServerFound => {
+                                "Subsonic server not found. Is the address correct"
+                            }
+                            SubsonicError::Server(_) => "Username or password is wrong",
+                            _ => "Login error",
+                        };
+                        println!("error: {error_str}");
+                        self.error_icon.set_visible(true);
+                        self.error_icon.set_tooltip_text(Some(error_str));
+                    }
                 }
-                //TODO save them
             }
             LoginFormInput::ResetClicked => {
                 self.uri.set_text("");
@@ -164,6 +188,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 }
             },
             LoginFormInput::FormChanged => {
+                self.error_icon.set_visible(false);
                 //check form if input text is ok
                 let sensitive = !self.user.text().is_empty()
                     && !self.password.text().is_empty()
