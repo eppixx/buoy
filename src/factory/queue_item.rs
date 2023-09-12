@@ -29,6 +29,10 @@ pub enum QueueSongInput {
     DragLeave,
     NewState(PlayState),
     StarredClicked,
+    DroppedItem {
+        value: glib::Value,
+        y: f64,
+    },
 }
 
 #[derive(Debug)]
@@ -163,6 +167,24 @@ impl FactoryComponent for QueueSong {
                 }
                 //TODO sth usefull
             }
+            QueueSongInput::DroppedItem { value, y } => {
+                sender.input(QueueSongInput::DragLeave);
+
+                // drop is a index
+                if let Ok(src_index) = value.get::<Index>() {
+                    sender.input(QueueSongInput::DragDropped {
+                        src: src_index.0.clone(),
+                        dest: self.index.clone(),
+                        y,
+                    });
+                }
+
+                // drop is a id
+                if let Ok(id) = value.get::<Id>() {
+                    todo!();
+                    // return true;
+                }
+            }
         }
     }
 
@@ -246,26 +268,12 @@ impl FactoryComponent for QueueSong {
                              <Id as gtk::prelude::StaticType>::static_type(),
                 ],
 
-                connect_drop[sender, index] => move |_target, value, _x, y| {
-                    sender.input(QueueSongInput::DragLeave);
-
-                    // drop is a index
-                    if let Ok(src_index) = value.get::<Index>() {
-                        sender.input(QueueSongInput::DragDropped {
-                            src: src_index.0.clone(),
-                            dest: index.clone(),
-                            y,
-                        });
-                        return true;
-                    }
-
-                    // drop is a id
-                    if let Ok(id) = value.get::<Id>() {
-                        todo!();
-                        // return true;
-                    }
-
-                    false
+                connect_drop[sender] => move |_target, value, _x, y| {
+                    sender.input(QueueSongInput::DroppedItem {
+                        value: value.clone(),
+                        y,
+                    });
+                    true
                 },
 
                 connect_motion[sender] => move |_widget, _x, y| {
