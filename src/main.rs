@@ -43,6 +43,7 @@ struct AppModel {
     play_info: Controller<PlayInfoModel>,
     browser: Controller<Browser>,
     equalizer: Controller<Equalizer>,
+    volume_button: gtk::VolumeButton,
     playback: Playback,
 }
 
@@ -98,11 +99,18 @@ impl SimpleComponent for AppModel {
             play_info,
             browser,
             equalizer,
+            volume_button: gtk::VolumeButton::default(),
             playback,
         };
 
         // Insert the macro code generation here
         let widgets = view_output!();
+
+        //init widgets
+        {
+            let settings = Settings::get().lock().unwrap();
+            model.volume_button.set_value(settings.volume);
+        }
 
         receiver.attach(None, move |msg| {
             sender.input(AppMsg::Playback(msg));
@@ -133,6 +141,7 @@ impl SimpleComponent for AppModel {
                 self.playback.set_volume(value);
                 let mut settings = Settings::get().lock().unwrap();
                 settings.volume = value;
+                settings.save();
             }
             AppMsg::Playback(playback) => {
                 match playback {
@@ -180,10 +189,9 @@ impl SimpleComponent for AppModel {
                         set_popover: equalizer_popover = &gtk::Popover {
                             model.equalizer.widget(),
                         },
-                        // connect_clicked => todo!(),
                     },
 
-                    gtk::VolumeButton {
+                    append = &model.volume_button.clone() -> gtk::VolumeButton {
                         set_focus_on_click: false,
                         //TODO init with previous state
                         connect_value_changed[sender] => move |_scale, value| {
