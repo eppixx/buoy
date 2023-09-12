@@ -1,5 +1,6 @@
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
+    component::{AsyncComponent, AsyncComponentController, AsyncController},
     gtk::{
         self,
         gio::SimpleAction,
@@ -34,7 +35,7 @@ pub mod settings;
 pub mod types;
 
 struct AppModel {
-    login_form: Controller<LoginForm>,
+    login_form: AsyncController<LoginForm>,
     queue: Controller<QueueModel>,
     play_controls: Controller<PlayControlModel>,
     seekbar: Controller<SeekbarModel>,
@@ -65,7 +66,7 @@ impl SimpleComponent for AppModel {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (playback_sender, receiver) = glib::MainContext::channel(glib::Priority::DEFAULT);
-        let login_form: Controller<LoginForm> = LoginForm::builder()
+        let login_form: AsyncController<LoginForm> = LoginForm::builder()
             .launch(())
             .forward(sender.input_sender(), AppMsg::LoginForm);
         let queue: Controller<QueueModel> = QueueModel::builder()

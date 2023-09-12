@@ -1,3 +1,4 @@
+use relm4::component::AsyncComponent;
 use relm4::gtk::traits::{
     BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
 };
@@ -15,6 +16,7 @@ pub struct LoginForm {
 #[derive(Debug)]
 pub enum LoginFormInput {
     AuthClicked,
+    UriChanged,
     ResetClicked,
 }
 
@@ -24,17 +26,18 @@ pub enum LoginFormOutput {
     LoggedOut,
 }
 
-#[component(pub)]
-impl relm4::SimpleComponent for LoginForm {
+#[component(pub, async)]
+impl relm4::component::AsyncComponent for LoginForm {
     type Input = LoginFormInput;
     type Output = LoginFormOutput;
     type Init = ();
+    type CommandOutput = ();
 
-    fn init(
+    async fn init(
         _init: Self::Init,
-        root: &Self::Root,
-        _sender: relm4::ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
+        root: Self::Root,
+        sender: relm4::AsyncComponentSender<Self>,
+    ) -> relm4::component::AsyncComponentParts<Self> {
         let model = LoginForm::default();
         let widgets = view_output!();
 
@@ -49,7 +52,7 @@ impl relm4::SimpleComponent for LoginForm {
             }
         }
 
-        relm4::ComponentParts { model, widgets }
+        relm4::component::AsyncComponentParts { model, widgets }
     }
 
     view! {
@@ -74,7 +77,7 @@ impl relm4::SimpleComponent for LoginForm {
                 },
                 attach[1, 0, 1, 1] = &model.uri.clone() {
                     set_placeholder_text: Some("http(s)://..."),
-                    // TODO validate uri
+                    connect_changed => LoginFormInput::UriChanged,
                 },
                 attach[0, 1, 1, 1] = &gtk::Label {
                     set_label: "User name",
@@ -106,17 +109,22 @@ impl relm4::SimpleComponent for LoginForm {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        msg: Self::Input,
+        _sender: relm4::AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
             LoginFormInput::AuthClicked => {
                 let auth = submarine::auth::AuthBuilder::new(self.user.text(), "0.16.1")
                     .client_name("Bouy")
                     .hashed(&self.password.text());
-                // let client = submarine::Client::new(&model.uri.text(), auth);
-                // match client.ping() {
-                //     Ok(_) => {}
-                //     Err(_) => {}
-                // }
+                let client = submarine::Client::new(&self.uri.text(), auth);
+                match client.ping().await {
+                    Ok(_) => println!("login success"),
+                    Err(_) => println!("login failed"),
+                }
                 //TODO check login data
                 //TODO save them
             }
@@ -131,6 +139,25 @@ impl relm4::SimpleComponent for LoginForm {
                 settings.login_password = None;
                 settings.save();
             }
+            LoginFormInput::UriChanged => match url::Url::parse(&self.uri.text()) {
+                Ok(_) => {
+                    self.uri.set_secondary_icon_name(None);
+                }
+                Err(e) => {
+                    self.uri.set_secondary_icon_name(Some("dialog-error"));
+                    let error_str = match e {
+                        url::ParseError::EmptyHost => "Address is empty",
+                        url::ParseError::InvalidPort => "Port is invalid",
+                        url::ParseError::InvalidIpv4Address => "Invalid IPv4 address",
+                        url::ParseError::InvalidIpv6Address => "Invalid IPv6 address",
+                        url::ParseError::InvalidDomainCharacter => {
+                            "Address contains invalid character"
+                        }
+                        _ => "Address is invalid",
+                    };
+                    self.uri.set_secondary_icon_tooltip_text(Some(error_str));
+                }
+            },
         }
     }
 }
