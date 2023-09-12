@@ -33,7 +33,10 @@ impl Settings {
         let config_path = xdg_dirs
             .place_config_file("config.toml")
             .expect("cannot create configuration directory");
-        let mut config_file = std::fs::File::create(config_path).unwrap();
+        let mut config_file = match std::fs::File::open(&config_path) {
+            Ok(file) => file,
+            Err(_) => std::fs::File::create(config_path).unwrap(),
+        };
         let mut content = String::new();
         config_file.read_to_string(&mut content).unwrap_or_default();
         let setting = toml::from_str::<Settings>(&content).unwrap_or_default();
@@ -52,6 +55,6 @@ impl Settings {
 
 impl Drop for Settings {
     fn drop(&mut self) {
-        self.save()
+        self.save();
     }
 }
