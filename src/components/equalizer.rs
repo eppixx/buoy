@@ -48,7 +48,6 @@ impl relm4::SimpleComponent for Equalizer {
         let model = Equalizer::default();
         let widgets = view_output!();
 
-        //TODO init state
         {
             let settings = Settings::get().lock().unwrap();
             model.reset_btn.set_sensitive(settings.equalizer_enabled);
