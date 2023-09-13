@@ -75,7 +75,8 @@ impl SimpleComponent for AppModel {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (playback_sender, receiver) = glib::MainContext::channel(glib::Priority::DEFAULT);
+        let (playback_sender, receiver) =
+            gtk::glib::MainContext::channel(gtk::glib::Priority::default());
         let login_form: AsyncController<LoginForm> = LoginForm::builder()
             .launch(())
             .forward(sender.input_sender(), AppMsg::LoginForm);
@@ -123,7 +124,7 @@ impl SimpleComponent for AppModel {
 
         receiver.attach(None, move |msg| {
             sender.input(AppMsg::Playback(msg));
-            glib::ControlFlow::Continue
+            gtk::prelude::Continue(true)
         });
 
         let client = Client::get().lock().unwrap();
@@ -240,6 +241,7 @@ impl SimpleComponent for AppModel {
                             set_position: gtk::PositionType::Right,
 
                             gtk::Box {
+                                add_css_class: "config-menu",
                                 set_orientation: gtk::Orientation::Vertical,
 
                                 gtk::Button {

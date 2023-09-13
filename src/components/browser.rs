@@ -1,4 +1,5 @@
 use relm4::{
+    component::{AsyncComponent, AsyncComponentController},
     gtk::{
         self,
         traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
@@ -230,9 +231,9 @@ impl relm4::SimpleComponent for Browser {
             BrowserInput::Dashboard(output) => {
                 //TODO react to output
             }
-            BrowserInput::Artists(out) => {
-                //TODO react to output
-            }
+            BrowserInput::Artists(msg) => match msg {
+                ArtistsOut::ChangeTo(id) => sender.input(BrowserInput::NewView(View::Id(id))),
+            },
         }
     }
 }
@@ -247,7 +248,7 @@ impl Browser {
                 self.content.set_child(Some(dashboard.widget()));
             }
             View::Artists => {
-                let artists: relm4::Controller<Artists> = Artists::builder()
+                let artists: relm4::component::AsyncController<Artists> = Artists::builder()
                     .launch(())
                     .forward(sender.input_sender(), BrowserInput::Artists);
                 self.content.set_child(Some(artists.widget()));

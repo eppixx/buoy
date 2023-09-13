@@ -1,6 +1,6 @@
-use glib::ControlFlow;
 use gstreamer as gst;
 use gstreamer::prelude::*;
+use relm4::gtk;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -27,7 +27,7 @@ pub enum PlaybackOutput {
 
 impl Playback {
     pub fn new(
-        sender: &glib::Sender<PlaybackOutput>,
+        sender: &gtk::glib::Sender<PlaybackOutput>,
         // settings: &Arc<RwLock<settings::Settings>>,
     ) -> anyhow::Result<Self> {
         gst::init()?;
@@ -96,15 +96,15 @@ impl Playback {
         let stamp = Rc::new(RefCell::new(pipeline.query_position::<gst::ClockTime>()));
         let pipeline_weak = pipeline.downgrade();
         let send = sender.clone();
-        glib::source::timeout_add_local(std::time::Duration::from_millis(TICK), move || {
+        gtk::glib::source::timeout_add_local(std::time::Duration::from_millis(TICK), move || {
             let pipeline = match pipeline_weak.upgrade() {
                 Some(pipeline) => pipeline,
-                None => return ControlFlow::Continue,
+                None => return gtk::prelude::Continue(true),
             };
 
             //dont send messages when not playing a stream
             if pipeline.current_state() != gst::State::Playing {
-                return ControlFlow::Continue;
+                return gtk::prelude::Continue(true);
             }
 
             let current = pipeline.query_position::<gst::ClockTime>();
@@ -117,7 +117,7 @@ impl Playback {
                 stamp.replace(current);
             }
 
-            ControlFlow::Continue
+            gtk::prelude::Continue(true)
         });
 
         let mut play = Self {
