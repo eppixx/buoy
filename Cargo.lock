@@ -100,7 +100,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "glib 0.18.1",
  "gstreamer",
  "relm4",
  "relm4-components",
