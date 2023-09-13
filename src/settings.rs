@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 pub struct Settings {
     pub login_uri: Option<String>,
     pub login_username: Option<String>,
-    pub login_password: Option<String>,
+    pub login_hash: Option<String>,
+    pub login_salt: Option<String>,
 
     pub volume: f64,
 
@@ -22,7 +23,8 @@ impl Default for Settings {
         Self {
             login_uri: Default::default(),
             login_username: Default::default(),
-            login_password: Default::default(),
+            login_hash: Default::default(),
+            login_salt: Default::default(),
             volume: 75.0,
             equalizer_enabled: false,
             equalizer_bands: [0.0; 10],
@@ -56,10 +58,12 @@ impl Settings {
             .expect("cannot create configuration directory");
         std::fs::write(config_path, settings).unwrap();
     }
-}
 
-impl Drop for Settings {
-    fn drop(&mut self) {
+    pub fn reset_login(&mut self) {
+        self.login_uri = None;
+        self.login_username = None;
+        self.login_hash = None;
+        self.login_salt = None;
         self.save();
     }
 }

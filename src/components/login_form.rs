@@ -1,4 +1,3 @@
-use relm4::component::AsyncComponent;
 use relm4::gtk::traits::{
     BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
 };
@@ -65,7 +64,7 @@ impl relm4::component::AsyncComponent for LoginForm {
 
             gtk::Label {
                 add_css_class: "h3",
-                set_label: "Login",
+                set_label: "Login to a Subsonic server",
                 set_halign: gtk::Align::Center,
             },
 
@@ -136,9 +135,21 @@ impl relm4::component::AsyncComponent for LoginForm {
                 let auth = submarine::auth::AuthBuilder::new(self.user.text(), "0.16.1")
                     .client_name("Bouy")
                     .hashed(&self.password.text());
+                let hash = auth.hash.clone();
+                let salt = auth.salt.clone();
                 let client = submarine::Client::new(&self.uri.text(), auth);
                 match client.ping().await {
-                    Ok(_) => sender.output(LoginFormOutput::LoggedIn(client)).unwrap(),
+                    Ok(_) => {
+                        {
+                            let mut settings = Settings::get().lock().unwrap();
+                            settings.login_uri = Some(self.uri.text().to_string());
+                            settings.login_username = Some(self.user.text().to_string());
+                            settings.login_hash = Some(hash);
+                            settings.login_salt = Some(salt);
+                            settings.save();
+                        }
+                        sender.output(LoginFormOutput::LoggedIn(client)).unwrap();
+                    }
                     Err(e) => {
                         use submarine::SubsonicError;
                         let error_str = match e {
@@ -165,7 +176,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.login_uri = None;
                 settings.login_username = None;
-                settings.login_password = None;
+                settings.login_hash = None;
                 settings.save();
             }
             LoginFormInput::UriChanged => match url::Url::parse(&self.uri.text()) {
