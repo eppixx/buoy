@@ -193,7 +193,6 @@ impl SimpleComponent for AppModel {
 
                     append = &model.volume_button.clone() -> gtk::VolumeButton {
                         set_focus_on_click: false,
-                        //TODO init with previous state
                         connect_value_changed[sender] => move |_scale, value| {
                             sender.input(AppMsg::VolumeChange(value));
                         }
