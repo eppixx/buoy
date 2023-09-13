@@ -6,9 +6,9 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::{components::dashboard::Dashboard, types::Id};
+use crate::{components::artists_view::Artists, components::dashboard::Dashboard, types::Id};
 
-use super::dashboard::DashboardOutput;
+use super::{artists_view::ArtistsOut, dashboard::DashboardOutput};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum View {
@@ -23,7 +23,7 @@ pub enum View {
 #[derive(Debug, Default)]
 pub struct Browser {
     history: Vec<View>, //includes current View; so should never be empty
-    content: gtk::Stack,
+    content: gtk::ScrolledWindow,
     back_btn: gtk::Button,
     dashboard_btn: gtk::ToggleButton,
     artists_btn: gtk::ToggleButton,
@@ -43,6 +43,7 @@ pub enum BrowserInput {
     PlaylistClicked,
     NewView(View),
     Dashboard(DashboardOutput),
+    Artists(ArtistsOut),
 }
 
 #[relm4::component(pub)]
@@ -135,11 +136,15 @@ impl relm4::SimpleComponent for Browser {
             },
 
             //TODO implement stack of view here
-            gtk::ScrolledWindow {
-                add_css_class: "browser-content",
+            append = &model.content.clone() -> gtk::ScrolledWindow {
+                set_hexpand: true,
                 set_vexpand: true,
-                set_child: Some(&model.content.clone()),
             }
+            // gtk::ScrolledWindow {
+            //     add_css_class: "browser-content",
+            //     set_vexpand: true,
+            //     set_child: Some(&model.content.clone()),
+            // }
         }
     }
 
@@ -150,7 +155,8 @@ impl relm4::SimpleComponent for Browser {
             }
             BrowserInput::BackClicked => {
                 if self.history.len() > 1 {
-                    let previous = self.history.pop();
+                    // remove current view from history
+                    let _ = self.history.pop();
 
                     // untoggle all buttons
                     self.dashboard_btn.set_active(false);
@@ -159,7 +165,7 @@ impl relm4::SimpleComponent for Browser {
                     self.tracks_btn.set_active(false);
                     self.playlists_btn.set_active(false);
 
-                    //toggle the right one if its active
+                    //toggle the right button one if its active
                     match self.history.last() {
                         Some(View::Dashboard) => self.dashboard_btn.set_active(true),
                         Some(View::Artists) => self.artists_btn.set_active(true),
@@ -169,10 +175,13 @@ impl relm4::SimpleComponent for Browser {
                         _ => {}
                     }
 
-                    // TODO show previous
-                    tracing::error!("new view {previous:?}");
+                    //change view
+                    if let Some(view) = self.history.last() {
+                        self.set_active_view(&view.clone(), &sender);
+                    }
                 }
 
+                //change back button sensitivity
                 if self.history.len() == 1 {
                     self.back_btn.set_sensitive(false);
                 }
@@ -207,27 +216,47 @@ impl relm4::SimpleComponent for Browser {
                     _ => {}
                 }
 
+                //set back button sensitivity
                 if self.history.is_empty() {
                     self.back_btn.set_sensitive(false);
                 } else {
                     self.back_btn.set_sensitive(true);
                 }
+                //remember new view
                 self.history.push(view.clone());
-                match view {
-                    View::Dashboard => {
-                        let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
-                            .launch(())
-                            .forward(sender.input_sender(), BrowserInput::Dashboard);
-                        self.content.add_child(dashboard.widget());
-                    }
-                    _ => todo!("add other views"),
-                }
-                //TODO show new view
-                tracing::error!("new view {view:?}");
+                //show new view
+                self.set_active_view(&view, &sender);
             }
             BrowserInput::Dashboard(output) => {
                 //TODO react to output
             }
+            BrowserInput::Artists(out) => {
+                //TODO react to output
+            }
+        }
+    }
+}
+
+impl Browser {
+    fn set_active_view(&mut self, view: &View, sender: &relm4::ComponentSender<Self>) {
+        match view {
+            View::Dashboard => {
+                let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
+                    .launch(())
+                    .forward(sender.input_sender(), BrowserInput::Dashboard);
+                self.content.set_child(Some(dashboard.widget()));
+            }
+            View::Artists => {
+                let artists: relm4::Controller<Artists> = Artists::builder()
+                    .launch(())
+                    .forward(sender.input_sender(), BrowserInput::Artists);
+                self.content.set_child(Some(artists.widget()));
+            }
+            // View::Albums => todo!(),
+            // View::Tracks => todo!(),
+            // View::Playlists => todo!(),
+            // View::Id(_) => todo!(),
+            _ => todo!("implement view"), //TODO show new view
         }
     }
 }
