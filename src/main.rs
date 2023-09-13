@@ -11,6 +11,7 @@ use relm4::{
     SimpleComponent,
 };
 
+use crate::client::Client;
 use crate::{
     play_state::PlayState,
     playback::{Playback, PlaybackOutput},
@@ -27,6 +28,7 @@ use components::{
     seekbar::{SeekbarCurrent, SeekbarInput, SeekbarModel},
 };
 
+pub mod client;
 mod components;
 pub mod css;
 mod factory;
@@ -36,6 +38,7 @@ pub mod settings;
 pub mod types;
 
 struct AppModel {
+    main_stack: gtk::Stack,
     login_form: AsyncController<LoginForm>,
     queue: Controller<QueueModel>,
     play_controls: Controller<PlayControlModel>,
@@ -43,12 +46,15 @@ struct AppModel {
     play_info: Controller<PlayInfoModel>,
     browser: Controller<Browser>,
     equalizer: Controller<Equalizer>,
-    volume_button: gtk::VolumeButton,
     playback: Playback,
+    equalizer_btn: gtk::MenuButton,
+    volume_btn: gtk::VolumeButton,
+    config_btn: gtk::MenuButton,
 }
 
 #[derive(Debug)]
 enum AppMsg {
+    ResetLogin,
     PlayControlOutput(PlayControlOutput),
     Seekbar(i64),
     VolumeChange(f64),
@@ -92,6 +98,7 @@ impl SimpleComponent for AppModel {
         let playback = Playback::new(&playback_sender).unwrap();
 
         let model = AppModel {
+            main_stack: gtk::Stack::default(),
             login_form,
             queue,
             play_controls,
@@ -99,8 +106,10 @@ impl SimpleComponent for AppModel {
             play_info,
             browser,
             equalizer,
-            volume_button: gtk::VolumeButton::default(),
             playback,
+            volume_btn: gtk::VolumeButton::default(),
+            equalizer_btn: gtk::MenuButton::default(),
+            config_btn: gtk::MenuButton::default(),
         };
 
         // Insert the macro code generation here
@@ -109,13 +118,23 @@ impl SimpleComponent for AppModel {
         //init widgets
         {
             let settings = Settings::get().lock().unwrap();
-            model.volume_button.set_value(settings.volume);
+            model.volume_btn.set_value(settings.volume);
         }
 
         receiver.attach(None, move |msg| {
             sender.input(AppMsg::Playback(msg));
             glib::ControlFlow::Continue
         });
+
+        let client = Client::get().lock().unwrap();
+        model.config_btn.set_sensitive(client.inner.is_some());
+        model.equalizer_btn.set_sensitive(client.inner.is_some());
+        model.volume_btn.set_sensitive(client.inner.is_some());
+
+        match &client.inner {
+            Some(_client) => model.main_stack.set_visible_child_name("logged-in"),
+            None => model.main_stack.set_visible_child_name("login-form"),
+        }
 
         ComponentParts { model, widgets }
     }
@@ -151,12 +170,24 @@ impl SimpleComponent for AppModel {
                     }
                 }
             }
-            AppMsg::LoginForm(msg) => {
+            AppMsg::LoginForm(client) => {
                 // tracing::error!("msg from LoginForm: {msg:?}");
                 //TODO login
+                self.main_stack.set_visible_child_name("logged-in");
+                self.config_btn.set_sensitive(true);
+                self.equalizer_btn.set_sensitive(true);
+                self.volume_btn.set_sensitive(true);
             }
             AppMsg::Equalizer(changed) => {
                 self.playback.sync_equalizer();
+            }
+            AppMsg::ResetLogin => {
+                let mut settings = Settings::get().lock().unwrap();
+                settings.reset_login();
+                self.main_stack.set_visible_child_name("login-form");
+                self.config_btn.set_sensitive(false);
+                self.equalizer_btn.set_sensitive(false);
+                self.volume_btn.set_sensitive(false);
             }
         }
     }
@@ -173,16 +204,18 @@ impl SimpleComponent for AppModel {
             set_titlebar = &gtk::WindowHandle {
                 gtk::Box {
                     add_css_class: "window-titlebar",
+
                     gtk::WindowControls {
                         set_side: gtk::PackType::Start,
                     },
 
+                    //title
                     gtk::Label {
                         set_markup: "<span weight=\"bold\">Bouy</span>",
                         set_hexpand: true,
                     },
 
-                    gtk::MenuButton {
+                    append = &model.equalizer_btn.clone() -> gtk::MenuButton {
                         set_icon_name: "media-eq-symbolic",
                         set_focus_on_click: false,
                         #[wrap(Some)]
@@ -191,14 +224,14 @@ impl SimpleComponent for AppModel {
                         },
                     },
 
-                    append = &model.volume_button.clone() -> gtk::VolumeButton {
+                    append = &model.volume_btn.clone() -> gtk::VolumeButton {
                         set_focus_on_click: false,
                         connect_value_changed[sender] => move |_scale, value| {
                             sender.input(AppMsg::VolumeChange(value));
                         }
                     },
 
-                    gtk::MenuButton {
+                    append = &model.config_btn.clone() -> gtk::MenuButton {
                         set_icon_name: "open-menu-symbolic",
                         set_focus_on_click: false,
 
@@ -212,9 +245,8 @@ impl SimpleComponent for AppModel {
                                 gtk::Button {
                                     add_css_class: "destructive-action",
                                     set_label: "Logout from Server",
+                                    connect_clicked => AppMsg::ResetLogin,
                                 },
-
-                                model.login_form.widget(),
                             },
                         },
                     },
@@ -225,34 +257,56 @@ impl SimpleComponent for AppModel {
                 },
             },
 
-            gtk::Box {
+            model.main_stack.clone() -> gtk::Stack {
                 add_css_class: "main-box",
-                set_orientation: gtk::Orientation::Vertical,
+                set_transition_type: gtk::StackTransitionType::Crossfade,
+                set_transition_duration: 200,
 
-                gtk::WindowHandle {
+                add_child = &gtk::WindowHandle {
+                    set_hexpand: true,
+                    set_vexpand: true,
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+
                     gtk::Box {
-                        set_spacing: 5,
+                        set_hexpand: true,
+                        set_vexpand: true,
+                        model.login_form.widget() {}
+                    }
+                } -> {
+                    set_name: "login-form",
+                },
+                add_child = &gtk::Box {
+                    add_css_class: "main-box",
+                    set_orientation: gtk::Orientation::Vertical,
 
-                        model.play_info.widget(),
+                    gtk::WindowHandle {
                         gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 12,
-                            set_valign: gtk::Align::Center,
+                            set_spacing: 5,
 
-                            append: model.play_controls.widget(),
-                            append: model.seekbar.widget(),
-                        }
+                            model.play_info.widget(),
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 12,
+                                set_valign: gtk::Align::Center,
+
+                                append: model.play_controls.widget(),
+                                append: model.seekbar.widget(),
+                            }
+                        },
                     },
-                },
-                gtk::Paned {
-                    add_css_class: "main-paned",
-                    // set_wide_handle: true,
-                    set_position: 300, // TODO set from previous state
+                    gtk::Paned {
+                        add_css_class: "main-paned",
+                        // set_wide_handle: true,
+                        set_position: 300, // TODO set from previous state
 
-                    set_start_child: Some(model.queue.widget()),
-                    set_end_child: Some(model.browser.widget()),
+                        set_start_child: Some(model.queue.widget()),
+                        set_end_child: Some(model.browser.widget()),
+                    },
+                } -> {
+                    set_name: "logged-in",
                 },
-            }
+            },
         }
     }
 }
