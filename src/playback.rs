@@ -4,13 +4,13 @@ use gstreamer::prelude::*;
 
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
+
+use crate::settings::Settings;
 
 // use crate::store::settings;
 
 #[derive(Debug)]
 pub struct Playback {
-    // settings: Arc<RwLock<settings::Settings>>,
     pipeline: gstreamer::Pipeline,
     source: gstreamer::Element,
     volume: gstreamer::Element,
@@ -129,7 +129,6 @@ impl Playback {
         };
 
         play.sync_equalizer();
-        play.sync_mute();
         play.sync_volume();
         Ok(play)
     }
@@ -177,7 +176,7 @@ impl Playback {
         }
     }
 
-    pub fn set_band(&self, band: i32, value: f64) {
+    pub fn set_band(&self, band: usize, value: f64) {
         let value = value.clamp(-10.0, 10.0);
         self.equalizer.set_property(&format!("band{}", band), value);
     }
@@ -188,26 +187,17 @@ impl Playback {
     }
 
     pub fn sync_equalizer(&mut self) {
-        // let settings = self.settings.read().unwrap();
-        // for (i, band) in settings.equalizer_bands().iter().enumerate() {
-        //     match settings.equalizer_enabled() {
-        //         true => self.set_band(i.try_into().unwrap(), *band),
-        //         false => self.set_band(i.try_into().unwrap(), 0.0),
-        //     }
-        // }
-    }
-
-    pub fn sync_mute(&mut self) {
-        // self.volume
-        // .set_property("mute", self.settings.read().unwrap().muted());
-        //TODO set from previous state
-        self.volume.set_property("mute", false);
+        let settings = Settings::get().lock().unwrap();
+        for (i, band) in settings.equalizer_bands.iter().enumerate() {
+            match settings.equalizer_enabled {
+                true => self.set_band(i, *band),
+                false => self.set_band(i, 0.0),
+            }
+        }
     }
 
     pub fn sync_volume(&mut self) {
-        // let volume = self.settings.read().unwrap().volume().clamp(0.0, 1.0);
-        // self.volume.set_property("volume", volume.powi(3))
-        //TODO set from previous state
-        self.volume.set_property("volume", 0.7);
+        let settings = Settings::get().lock().unwrap();
+        self.volume.set_property("volume", settings.volume);
     }
 }

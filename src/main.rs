@@ -156,7 +156,7 @@ impl SimpleComponent for AppModel {
                 //TODO login
             }
             AppMsg::Equalizer(changed) => {
-                //TODO react to equalizer changed
+                self.playback.sync_equalizer();
             }
         }
     }
