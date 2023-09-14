@@ -24,7 +24,7 @@ pub enum View {
 #[derive(Debug, Default)]
 pub struct Browser {
     history: Vec<View>, //includes current View; so should never be empty
-    content: gtk::ScrolledWindow,
+    content: gtk::Viewport,
     back_btn: gtk::Button,
     dashboard_btn: gtk::ToggleButton,
     artists_btn: gtk::ToggleButton,
@@ -61,7 +61,8 @@ impl relm4::SimpleComponent for Browser {
         let model = Browser::default();
         let widgets = view_output!();
 
-        sender.input(BrowserInput::NewView(View::Dashboard));
+        // sender.input(BrowserInput::NewView(View::Dashboard));
+        sender.input(BrowserInput::NewView(View::Artists));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -137,15 +138,11 @@ impl relm4::SimpleComponent for Browser {
             },
 
             //TODO implement stack of view here
-            append = &model.content.clone() -> gtk::ScrolledWindow {
-                set_hexpand: true,
-                set_vexpand: true,
+            append = &model.content.clone() -> gtk::Viewport {
+                add_css_class: "browser-content",
+                // set_hexpand: true,
+                // set_vexpand: true,
             }
-            // gtk::ScrolledWindow {
-            //     add_css_class: "browser-content",
-            //     set_vexpand: true,
-            //     set_child: Some(&model.content.clone()),
-            // }
         }
     }
 

@@ -111,6 +111,28 @@
   border-left: 1px solid LightGray;  /* TODO change for dark theme */
   min-width: 96px;
   min-height: 96px;
+        background-image:
+        linear-gradient(
+            170deg,
+            alpha(
+                @highlight_color,
+                0.1
+            ),
+            alpha(
+                @highlight_color,
+                0.15
+            ) 43%,
+            alpha(
+                @highlight_color,
+                0
+            ) 44%
+        ),
+        -gtk-icontheme("audio-x-generic-symbolic"),
+        linear-gradient(
+            to bottom,
+            @base_color,
+            @base_color
+        );
 }
 
 .play-info-info {
@@ -160,4 +182,30 @@
 
 .equalizer-bands {
   min-height: 300px;
+}
+
+.config-menu {
+  margin: 15px;
+}
+
+.browser-content {
+  
+}
+
+.artist-cover {
+  /*min-width: 150px;*/
+  /*min-height: 150px;*/
+}
+
+.cover_150 {
+  min-width: 150px;
+  min-height: 150px;
+}
+
+.artists-view {
+  
+}
+
+.artists-element {
+  padding: 10px;
 }
