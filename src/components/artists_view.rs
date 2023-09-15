@@ -79,6 +79,7 @@ impl relm4::component::AsyncComponent for Artists {
 
                 #[name(loading_box)]
                 gtk::Box {
+                    set_hexpand: true,
                     set_spacing: 30,
                     set_halign: gtk::Align::Center,
                     set_orientation: gtk::Orientation::Vertical,
