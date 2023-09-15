@@ -55,6 +55,8 @@ impl relm4::component::AsyncComponent for Artists {
             model.flowbox.insert(artist.widget(), 0);
         }
 
+        widgets.reveal_after_init.set_visible(true);
+
         relm4::component::AsyncComponentParts { model, widgets }
     }
 
@@ -65,8 +67,9 @@ impl relm4::component::AsyncComponent for Artists {
 
                 #[name(loading_box)]
                 gtk::Box {
-                    set_spacing: 7,
+                    set_spacing: 30,
                     set_halign: gtk::Align::Center,
+                    set_orientation: gtk::Orientation::Vertical,
 
                     gtk::Label {
                         add_css_class: "h2",
@@ -74,6 +77,7 @@ impl relm4::component::AsyncComponent for Artists {
                     },
 
                     gtk::Spinner {
+                        add_css_class: "size100",
                         set_halign: gtk::Align::Center,
                         start: (),
                     }
@@ -90,7 +94,9 @@ impl relm4::component::AsyncComponent for Artists {
             set_hexpand: true,
             set_orientation: gtk::Orientation::Vertical,
 
+            #[name = "reveal_after_init"]
             gtk::Label {
+                set_visible: false,
                 add_css_class: "h2",
                 set_halign: gtk::Align::Center,
                 set_label: "Artists",
@@ -145,6 +151,8 @@ impl relm4::component::AsyncComponent for ArtistElement {
             }
         }
 
+        widgets.actual_cover.set_visible(true);
+
         relm4::component::AsyncComponentParts { model, widgets }
     }
 
@@ -155,10 +163,17 @@ impl relm4::component::AsyncComponent for ArtistElement {
                 add_css_class: "artists-element",
 
                 #[name(spinner)]
-                gtk::Spinner {
-                    add_css_class: "cover_150",
+                gtk::Box {
+                    add_css_class: "card",
+                    add_css_class: "size150",
+                    set_halign: gtk::Align::Center,
 
-                    start: (),
+                    gtk::Spinner {
+                        add_css_class: "size50",
+                        set_hexpand: true,
+                        set_halign: gtk::Align::Center,
+                        start: (),
+                    }
                 }
             }
         }
@@ -171,10 +186,13 @@ impl relm4::component::AsyncComponent for ArtistElement {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 5,
 
+            #[name = "actual_cover"]
             gtk::Box {
+                set_visible: false,
                 set_halign: gtk::Align::Center,
+
                 append = &model.image.clone() -> gtk::Image {
-                    add_css_class: "cover_150",
+                    add_css_class: "size150",
                     add_css_class: "card",
                 },
             },

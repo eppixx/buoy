@@ -204,9 +204,19 @@
   /*min-height: 150px;*/
 }
 
-.cover_150 {
+.size150 {
   min-width: 150px;
   min-height: 150px;
+}
+
+.size100 {
+  min-width: 100px;
+  min-height: 100px;
+}
+
+.size50 {
+  min-width: 50px;
+  min-height: 50px;
 }
 
 .artists-view {
