@@ -1,3 +1,10 @@
+.debug {
+  border-top: 1px solid LightGray; /* TODO change for dark theme */
+  border-right: 1px solid LightGray; /* TODO change for dark theme */
+  border-bottom: 1px solid LightGray; /* TODO change for dark theme */
+  border-left: 1px solid LightGray; /* TODO change for dark theme */
+}
+
 .main-window {
 }
 
@@ -203,7 +210,7 @@
 }
 
 .artists-view {
-  
+  margin-top: 10px;
 }
 
 .artists-element {

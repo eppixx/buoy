@@ -171,9 +171,12 @@ impl relm4::component::AsyncComponent for ArtistElement {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 5,
 
-            append = &model.image.clone() -> gtk::Image {
-                add_css_class: "cover_150",
-                add_css_class: "card",
+            gtk::Box {
+                set_halign: gtk::Align::Center,
+                append = &model.image.clone() -> gtk::Image {
+                    add_css_class: "cover_150",
+                    add_css_class: "card",
+                },
             },
             gtk::Label {
                 set_text: &model.info.name,
