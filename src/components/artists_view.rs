@@ -1,10 +1,11 @@
 use relm4::{
     component::AsyncComponentController,
     gtk::{
-        self,
+        self, gdk,
         gdk_pixbuf::Pixbuf,
         pango,
-        traits::{BoxExt, OrientableExt, WidgetExt},
+        prelude::ToValue,
+        traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
 };
 
@@ -39,20 +40,31 @@ impl relm4::component::AsyncComponent for Artists {
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
-        let model = Artists::default();
-        let widgets = view_output!();
-
         let artists: Vec<submarine::data::ArtistId3> = {
             let client = Client::get().lock().unwrap().inner.clone().unwrap();
             let indexes: Vec<submarine::data::IndexId3> = client.get_artists(None).await.unwrap();
             indexes.into_iter().flat_map(|i| i.artist).collect()
         };
 
+        let model = Artists::default();
+        let widgets = view_output!();
+
         for artist in artists.into_iter().rev() {
-            let artist: relm4::component::AsyncController<ArtistElement> = ArtistElement::builder()
-                .launch(artist)
-                .forward(sender.input_sender(), ArtistsIn::Clicked);
-            model.flowbox.insert(artist.widget(), 0);
+            let id = artist.id.clone();
+            let artist_element: relm4::component::AsyncController<ArtistElement> =
+                ArtistElement::builder()
+                    .launch(artist)
+                    .forward(sender.input_sender(), ArtistsIn::Clicked);
+            let btn = gtk::Button::default();
+            btn.add_css_class("flat");
+            let sender = sender.clone();
+            btn.connect_clicked(move |_btn| {
+                sender
+                    .output(ArtistsOut::ChangeTo(Id::artist(&id)))
+                    .unwrap();
+            });
+            btn.set_child(Some(artist_element.widget()));
+            model.flowbox.insert(&btn, 0);
         }
 
         widgets.reveal_after_init.set_visible(true);
@@ -118,6 +130,7 @@ impl relm4::component::AsyncComponent for Artists {
 struct ArtistElement {
     info: submarine::data::ArtistId3,
     image: gtk::Image,
+    drag_src: gtk::DragSource,
 }
 
 #[relm4::component(async)]
@@ -132,12 +145,19 @@ impl relm4::component::AsyncComponent for ArtistElement {
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
+        let id = Id::artist(&init.id);
         let model = ArtistElement {
             info: init,
             image: gtk::Image::default(),
+            drag_src: gtk::DragSource::default(),
         };
-        let widgets = view_output!();
 
+        // set drag source
+        let content = gdk::ContentProvider::for_value(&id.to_value());
+        model.drag_src.set_content(Some(&content));
+        model.drag_src.set_actions(gdk::DragAction::MOVE);
+
+        // loading artist images
         {
             let client = Client::get().lock().unwrap().inner.clone().unwrap();
             if let Some(id) = &model.info.cover_art {
@@ -150,6 +170,8 @@ impl relm4::component::AsyncComponent for ArtistElement {
                 }
             }
         }
+
+        let widgets = view_output!();
 
         widgets.actual_cover.set_visible(true);
 
@@ -185,6 +207,7 @@ impl relm4::component::AsyncComponent for ArtistElement {
             add_css_class: "artist-cover",
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 5,
+            add_controller: &model.drag_src.clone(),
 
             #[name = "actual_cover"]
             gtk::Box {

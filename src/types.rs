@@ -12,20 +12,20 @@ pub enum Id {
 impl Id {
     const DELIMITER: char = ':';
 
-    pub fn song(id: &str) -> Self {
-        Self::Song(String::from(id))
+    pub fn song(id: impl Into<String>) -> Self {
+        Self::Song(id.into())
     }
 
-    pub fn album(id: &str) -> Self {
-        Self::Album(String::from(id))
+    pub fn album(id: impl Into<String>) -> Self {
+        Self::Album(id.into())
     }
 
-    pub fn artist(id: &str) -> Self {
-        Self::Artist(String::from(id))
+    pub fn artist(id: impl Into<String>) -> Self {
+        Self::Artist(id.into())
     }
 
-    pub fn playlist(id: &str) -> Self {
-        Self::Playlist(String::from(id))
+    pub fn playlist(id: impl Into<String>) -> Self {
+        Self::Playlist(id.into())
     }
 
     pub fn serialize(&self) -> String {
