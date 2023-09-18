@@ -1,7 +1,7 @@
 use relm4::gtk::traits::{
     BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
 };
-use relm4::{component, gtk};
+use relm4::{component, gtk, RelmWidgetExt};
 
 use crate::settings::Settings;
 
@@ -164,7 +164,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                         };
                         println!("error: {error_str}");
                         self.error_icon.set_visible(true);
-                        self.error_icon.set_tooltip_text(Some(error_str));
+                        self.error_icon.set_tooltip(error_str);
                     }
                 }
             }

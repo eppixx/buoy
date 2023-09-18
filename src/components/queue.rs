@@ -6,7 +6,8 @@ use relm4::{
         traits::{ListBoxRowExt, WidgetExt},
     },
     prelude::DynamicIndex,
-    Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent,
+    Component, ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
+    SimpleComponent,
 };
 
 use crate::{
@@ -20,9 +21,6 @@ use crate::{
 };
 
 use super::sequence_button::SequenceButtonModel;
-
-#[derive(Debug)]
-pub struct Uri {}
 
 pub struct QueueModel {
     songs: FactoryVecDeque<QueueSong>,
@@ -114,7 +112,6 @@ impl SimpleComponent for QueueModel {
         model.songs.guard().push_back(Id::song("4"));
         model.songs.guard().push_back(Id::song("5"));
 
-        let queue_songs = model.songs.widget();
         let widgets = view_output!();
 
         model.update_clear_btn_sensitivity();
@@ -131,8 +128,7 @@ impl SimpleComponent for QueueModel {
             gtk::ScrolledWindow {
                 set_vexpand: true,
 
-                #[local_ref]
-                queue_songs -> gtk::ListBox {
+                model.songs.widget().clone() -> gtk::ListBox {
                     set_selection_mode: gtk::SelectionMode::Multiple,
 
                     connect_selected_rows_changed[sender] => move |widget| {
@@ -147,7 +143,7 @@ impl SimpleComponent for QueueModel {
 
                 pack_end = &gtk::Button {
                     set_icon_name: "document-new-symbolic",
-                    set_tooltip_text: Some("add queue to playlists"),
+                    set_tooltip: "add queue to playlists",
                     set_focus_on_click: false,
                     connect_clicked => QueueInput::Append(Id::song("5555555")),
                 },
@@ -158,7 +154,7 @@ impl SimpleComponent for QueueModel {
 
                 pack_end = &model.remove_items.clone() {
                     set_icon_name: "list-remove-symbolic",
-                    set_tooltip_text: Some("remove song from queue"),
+                    set_tooltip: "remove song from queue",
                     set_sensitive: false,
                     set_focus_on_click: false,
                     connect_clicked => QueueInput::Remove,
@@ -170,7 +166,7 @@ impl SimpleComponent for QueueModel {
 
                 pack_end = &model.clear_items.clone() {
                     set_icon_name: "user-trash-symbolic",
-                    set_tooltip_text: Some("clear queue"),
+                    set_tooltip: "clear queue",
                     set_sensitive: false,
                     set_focus_on_click: false,
                     connect_clicked => QueueInput::Clear,

@@ -4,12 +4,16 @@ use relm4::{
         self,
         traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
     },
-    Component, ComponentController,
+    Component, ComponentController, RelmWidgetExt,
 };
 
-use crate::{components::artists_view::Artists, components::dashboard::Dashboard, types::Id};
-
-use super::{artists_view::ArtistsOut, dashboard::DashboardOutput};
+use super::{
+    albums::AlbumsOut, artists::ArtistsView, artists_view::ArtistsOut, dashboard::DashboardOutput,
+};
+use crate::{
+    components::albums::Albums, components::artists_view::Artists,
+    components::dashboard::Dashboard, types::Id,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum View {
@@ -45,6 +49,8 @@ pub enum BrowserInput {
     NewView(View),
     Dashboard(DashboardOutput),
     Artists(ArtistsOut),
+    Albums(AlbumsOut),
+    // AlbumsView(ArtistsViewOut),
 }
 
 #[relm4::component(pub)]
@@ -61,8 +67,10 @@ impl relm4::SimpleComponent for Browser {
         let model = Browser::default();
         let widgets = view_output!();
 
-        // sender.input(BrowserInput::NewView(View::Dashboard));
-        sender.input(BrowserInput::NewView(View::Artists));
+        //TODO swtich default view
+        sender.input(BrowserInput::NewView(View::Dashboard));
+        // sender.input(BrowserInput::NewView(View::Artists));
+        sender.input(BrowserInput::NewView(View::Albums));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -97,28 +105,28 @@ impl relm4::SimpleComponent for Browser {
 
                     append = &model.dashboard_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "go-home-symbolic",
-                        set_tooltip_text: Some("Go to dashboard"),
+                        set_tooltip: "Go to dashboard",
                         set_active: true,
                         connect_clicked => Self::Input::DashboardClicked,
                     },
                     append = &model.artists_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "avatar-default-symbolic",
-                        set_tooltip_text: Some("Show Artists"),
+                        set_tooltip: "Show Artists",
                         connect_clicked => Self::Input::ArtistClicked,
                     },
                     append = &model.albums_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "media-optical-cd-audio-symbolic",
-                        set_tooltip_text: Some("Show Albums"),
+                        set_tooltip: "Show Albums",
                         connect_clicked => Self::Input::AlbumClicked,
                     },
                     append = &model.tracks_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "audio-x-generic-symbolic",
-                        set_tooltip_text: Some("Show Tracks"),
+                        set_tooltip: "Show Tracks",
                         connect_clicked => Self::Input::TrackClicked,
                     },
                     append = &model.playlists_btn.clone() -> gtk::ToggleButton {
                         set_icon_name: "playlist-symbolic",
-                        set_tooltip_text: Some("Show playlists"),
+                        set_tooltip: "Show playlists",
                         connect_clicked => Self::Input::PlaylistClicked,
                     },
                 },
@@ -231,6 +239,11 @@ impl relm4::SimpleComponent for Browser {
             BrowserInput::Artists(msg) => match msg {
                 ArtistsOut::ChangeTo(id) => sender.input(BrowserInput::NewView(View::Id(id))),
             },
+            //TODO rename Out-enums to be the same
+            BrowserInput::Albums(msg) => match msg {
+                AlbumsOut::Clicked(id) => sender.input(BrowserInput::NewView(View::Id(id))),
+            },
+            // BrowserInput::AlbumsView(msg) => todo!(),
         }
     }
 }
@@ -250,11 +263,20 @@ impl Browser {
                     .forward(sender.input_sender(), BrowserInput::Artists);
                 self.content.set_child(Some(artists.widget()));
             }
-            // View::Albums => todo!(),
-            // View::Tracks => todo!(),
-            // View::Playlists => todo!(),
-            // View::Id(_) => todo!(),
-            _ => todo!("implement view"), //TODO show new view
+            View::Albums => {
+                let albums: relm4::component::AsyncController<Albums> = Albums::builder()
+                    .launch(())
+                    .forward(sender.input_sender(), BrowserInput::Albums);
+                self.content.set_child(Some(albums.widget()));
+            }
+            View::Tracks => {
+                //TODO change
+                let albums: relm4::component::AsyncController<ArtistsView> =
+                    ArtistsView::builder().launch(()).detach();
+                self.content.set_child(Some(albums.widget()));
+            }
+            View::Playlists => todo!(),
+            View::Id(_) => todo!(),
         }
     }
 }

@@ -8,7 +8,7 @@ use relm4::{
         },
     },
     prelude::{DynamicIndex, FactoryComponent},
-    FactorySender,
+    FactorySender, RelmWidgetExt,
 };
 
 use crate::{components::queue::QueueInput, css::DragState, play_state::PlayState, types::Id};
@@ -109,7 +109,7 @@ impl FactoryComponent for QueueSong {
         model
     }
 
-    fn output_to_parent_input(output: Self::Output) -> Option<QueueInput> {
+    fn forward_to_parent(output: Self::Output) -> Option<QueueInput> {
         match output {
             QueueSongOutput::Activated(index, id) => Some(QueueInput::Activated(index, id)),
             QueueSongOutput::Clicked(index) => Some(QueueInput::Clicked(index)),
@@ -155,13 +155,11 @@ impl FactoryComponent for QueueSong {
                 match self.starred.icon_name().as_deref() {
                     Some("starred") => {
                         self.starred.set_icon_name("non-starred");
-                        self.starred
-                            .set_tooltip_text(Some("Click to unfavorite song"));
+                        self.starred.set_tooltip("Click to unfavorite song");
                     }
                     Some("non-starred") => {
                         self.starred.set_icon_name("starred");
-                        self.starred
-                            .set_tooltip_text(Some("Click to favorite song"));
+                        self.starred.set_tooltip("Click to favorite song");
                     }
                     _ => self.starred.set_icon_name("starred"),
                 }
@@ -249,20 +247,20 @@ impl FactoryComponent for QueueSong {
 
                 self.starred.clone() -> gtk::Button {
                     set_icon_name: "starred",
-                    set_tooltip_text: Some("Click to favorite song"),
+                    set_tooltip: "Click to favorite song",
                     set_focus_on_click: false,
                     connect_clicked => QueueSongInput::StarredClicked,
                 },
             },
 
             // make item draggable
-            add_controller: &self.drag_src,
+            add_controller: self.drag_src.clone(),
 
             // activate is when pressed enter on item
             connect_activate => QueueSongInput::Activated,
 
             // accept drop from queue items and id's and render drop indicators
-            add_controller = &gtk::DropTarget {
+            add_controller = gtk::DropTarget {
                 set_actions: gdk::DragAction::MOVE,
                 set_types: &[<Index as gtk::prelude::StaticType>::static_type(),
                              <Id as gtk::prelude::StaticType>::static_type(),
@@ -286,7 +284,7 @@ impl FactoryComponent for QueueSong {
             },
 
             // double left click activates item
-            add_controller = &gtk::GestureClick {
+            add_controller = gtk::GestureClick {
                 set_button: 1,
                 connect_pressed[sender, index] => move |_widget, n, _x, _y|{
                     if n == 1 {
@@ -307,7 +305,7 @@ impl FactoryComponent for QueueSong {
             },
 
             // connect key presses
-            add_controller = &gtk::EventControllerKey {
+            add_controller = gtk::EventControllerKey {
                 connect_key_pressed[sender] => move |_widget, key, _code, _state| {
                     if key == gtk::gdk::Key::Delete {
                         sender.output(QueueSongOutput::Remove);

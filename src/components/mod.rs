@@ -1,5 +1,9 @@
+pub mod albums;
+pub mod albums_view;
+pub mod artists;
 pub mod artists_view;
 pub mod browser;
+pub mod cover;
 pub mod dashboard;
 pub mod equalizer;
 pub mod login_form;

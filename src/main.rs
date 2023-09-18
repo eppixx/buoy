@@ -11,14 +11,9 @@ use relm4::{
     SimpleComponent,
 };
 
-use crate::client::Client;
-use crate::{
-    play_state::PlayState,
-    playback::{Playback, PlaybackOutput},
-    settings::Settings,
-};
-use components::{
+use crate::components::{
     browser::Browser,
+    cover::{Cover, CoverIn},
     equalizer::{Equalizer, EqualizerOut},
     login_form::LoginForm,
     login_form::LoginFormOutput,
@@ -26,6 +21,12 @@ use components::{
     play_info::PlayInfoModel,
     queue::{QueueInput, QueueModel},
     seekbar::{SeekbarCurrent, SeekbarInput, SeekbarModel},
+};
+use crate::{
+    client::Client,
+    play_state::PlayState,
+    playback::{Playback, PlaybackOutput},
+    settings::Settings,
 };
 
 pub mod client;
@@ -50,6 +51,8 @@ struct AppModel {
     equalizer_btn: gtk::MenuButton,
     volume_btn: gtk::VolumeButton,
     config_btn: gtk::MenuButton,
+
+    cover: Controller<Cover>,
 }
 
 #[derive(Debug)]
@@ -98,6 +101,10 @@ impl SimpleComponent for AppModel {
             .forward(sender.input_sender(), AppMsg::Equalizer);
         let playback = Playback::new(&playback_sender).unwrap();
 
+        let cover = Cover::builder().launch(()).detach();
+        cover.emit(CoverIn::SetTitle(Some(String::from("lol"))));
+        cover.emit(CoverIn::SetSubtitle(Some(String::from("lulz"))));
+
         let model = AppModel {
             main_stack: gtk::Stack::default(),
             login_form,
@@ -111,9 +118,10 @@ impl SimpleComponent for AppModel {
             volume_btn: gtk::VolumeButton::default(),
             equalizer_btn: gtk::MenuButton::default(),
             config_btn: gtk::MenuButton::default(),
+
+            cover,
         };
 
-        // Insert the macro code generation here
         let widgets = view_output!();
 
         //init widgets
@@ -127,14 +135,16 @@ impl SimpleComponent for AppModel {
             gtk::prelude::Continue(true)
         });
 
-        let client = Client::get().lock().unwrap();
-        model.config_btn.set_sensitive(client.inner.is_some());
-        model.equalizer_btn.set_sensitive(client.inner.is_some());
-        model.volume_btn.set_sensitive(client.inner.is_some());
+        {
+            let client = Client::get().lock().unwrap();
+            model.config_btn.set_sensitive(client.inner.is_some());
+            model.equalizer_btn.set_sensitive(client.inner.is_some());
+            model.volume_btn.set_sensitive(client.inner.is_some());
 
-        match &client.inner {
-            Some(_client) => model.main_stack.set_visible_child_name("logged-in"),
-            None => model.main_stack.set_visible_child_name("login-form"),
+            match &client.inner {
+                Some(_client) => model.main_stack.set_visible_child_name("logged-in"),
+                None => model.main_stack.set_visible_child_name("login-form"),
+            }
         }
 
         ComponentParts { model, widgets }
@@ -293,6 +303,7 @@ impl SimpleComponent for AppModel {
                                 set_valign: gtk::Align::Center,
 
                                 append: model.play_controls.widget(),
+                                append: model.cover.widget(), //TODO remove
                                 append: model.seekbar.widget(),
                             }
                         },
@@ -349,3 +360,160 @@ fn main() -> anyhow::Result<()> {
     app.run::<AppModel>(());
     Ok(())
 }
+
+// test
+
+// Don't show GTK 4.10 deprecations.
+// We can't replace them without raising the GTK requirement to 4.10.
+// #![allow(deprecated)]
+
+// use relm4::RelmWidgetExt;
+
+// #[derive(Debug)]
+// enum CoverIn {
+//     LoadImage(Option<String>),
+//     SetTitle(Option<String>),
+//     SetSubtitle(Option<String>),
+// }
+
+// struct Cover {
+//     loading: bool,
+//     image: gtk::Image,
+//     title: Option<String>,
+//     subtitle: Option<String>,
+// }
+
+// #[derive(Debug)]
+// enum CoverCmd {
+//     LoadedImage(Vec<u8>),
+// }
+
+// #[relm4::component(pub)]
+// impl Component for Cover {
+//     type Init = ();
+//     type Input = CoverIn;
+//     type Output = ();
+//     type Widgets = CoverWidgets;
+//     type CommandOutput = CoverCmd;
+
+//     fn init(
+//         _: Self::Init,
+//         root: &Self::Root,
+//         _sender: ComponentSender<Self>,
+//     ) -> ComponentParts<Self> {
+//         let model = Cover {
+//             loading: false,
+//             image: gtk::Image::default(),
+//             title: None,
+//             subtitle: None,
+//         };
+//         let widgets = view_output!();
+
+//         ComponentParts { model, widgets }
+//     }
+
+//     view! {
+//         gtk::Box {
+//             set_orientation: gtk::Orientation::Vertical,
+//             set_margin_all: 12,
+//             set_spacing: 5,
+
+//             gtk::Button {
+//                 set_label: "Start search",
+//                 connect_clicked => CoverIn::LoadImage(Some(String::from("al-e0efdaf212ce4152eab39fac22c5c9e7_6115467e"))),
+//                 #[watch]
+//                 set_sensitive: !model.loading,
+//             },
+
+//             gtk::Box {
+//                 set_hexpand: true,
+//                 set_halign: gtk::Align::Center,
+
+//                 #[transition = "Crossfade"]
+//                 if model.loading {
+//                     gtk::Box {
+//                         add_css_class: "card",
+//                         add_css_class: "size100",
+
+//                         gtk::Spinner {
+//                             add_css_class: "size50",
+//                             set_hexpand: true,
+//                             set_halign: gtk::Align::Center,
+//                             set_valign: gtk::Align::Center,
+//                             start: (),
+//                         }
+//                     }
+//                 } else {
+//                     model.image.clone() -> gtk::Image {
+//                         add_css_class: "card",
+//                         add_css_class: "play-info-cover",
+//                     }
+//                 },
+//             },
+
+//             if let Some(title) = &model.title {
+//                 gtk::Label {
+//                     set_halign: gtk::Align::Center,
+//                     #[watch]
+//                     set_label: title,
+//                 }
+//             } else {
+//                 gtk::Label {}
+//             },
+
+//             if let Some(subtitle) = &model.subtitle {
+//                 gtk::Label {
+//                     set_halign: gtk::Align::Center,
+//                     #[watch]
+//                     set_markup: &format!("<span style=\"italic\">{}</span>", subtitle),
+//                 }
+//             } else {
+//                 gtk::Label {}
+//             }
+//         }
+//     }
+
+//     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+//         match msg {
+//             CoverIn::LoadImage(id) => match id {
+//                 None => self.image.set_from_pixbuf(None),
+//                 Some(id) => {
+//                     self.loading = true;
+//                     sender.oneshot_command(async move {
+//                         let client = Client::get().lock().unwrap().inner.clone().unwrap();
+//                         match client.get_cover_art(&id, Some(200)).await {
+//                             Ok(buffer) => {
+//                                 println!("ok");
+//                                 dbg!(&buffer);
+//                                 CoverCmd::LoadedImage(buffer)
+//                             }
+//                             Err(_) => CoverCmd::LoadedImage(vec![]),
+//                         }
+//                     });
+//                 }
+//             },
+//             CoverIn::SetTitle(title) => self.title = title,
+//             CoverIn::SetSubtitle(subtitle) => self.subtitle = subtitle,
+//         }
+//     }
+
+//     fn update_cmd(
+//         &mut self,
+//         message: Self::CommandOutput,
+//         _sender: ComponentSender<Self>,
+//         _root: &Self::Root,
+//     ) {
+//         match message {
+//             CoverCmd::LoadedImage(buffer) => {
+//                 println!("loaded a image");
+//                 let bytes = gtk::glib::Bytes::from(&buffer);
+//                 let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
+//                 match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
+//                     Ok(pixbuf) => self.image.set_from_pixbuf(Some(&pixbuf)),
+//                     _ => self.image.set_from_pixbuf(None),
+//                 }
+//                 self.loading = false;
+//             }
+//         }
+//     }
+// }

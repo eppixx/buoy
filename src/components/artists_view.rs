@@ -1,5 +1,4 @@
 use relm4::{
-    component::AsyncComponentController,
     gtk::{
         self, gdk,
         gdk_pixbuf::Pixbuf,
@@ -7,6 +6,7 @@ use relm4::{
         prelude::ToValue,
         traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
+    WidgetTemplate,
 };
 
 use relm4::{loading_widgets::LoadingWidgets, view};
@@ -28,7 +28,7 @@ pub enum ArtistsIn {
     Clicked(Id),
 }
 
-#[relm4::component(async pub)]
+#[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for Artists {
     type Input = ArtistsIn;
     type Output = ArtistsOut;
@@ -63,7 +63,7 @@ impl relm4::component::AsyncComponent for Artists {
                     .output(ArtistsOut::ChangeTo(Id::artist(&id)))
                     .unwrap();
             });
-            btn.set_child(Some(artist_element.widget()));
+            // btn.set_child(Some(artist_element.widget()));
             model.flowbox.insert(&btn, 0);
         }
 
@@ -208,7 +208,7 @@ impl relm4::component::AsyncComponent for ArtistElement {
             add_css_class: "artist-cover",
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 5,
-            add_controller: &model.drag_src.clone(),
+            add_controller: model.drag_src.clone(),
 
             #[name = "actual_cover"]
             gtk::Box {
