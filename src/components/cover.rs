@@ -1,7 +1,7 @@
 use relm4::{
     gtk::{
         self, glib, pango,
-        traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        traits::{BoxExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };

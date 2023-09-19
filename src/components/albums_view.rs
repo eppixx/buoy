@@ -73,17 +73,28 @@ impl relm4::component::AsyncComponent for AlbumsView {
 
         // get albums
         let albums: Vec<submarine::data::Child> = {
+            let mut albums = vec![];
             let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            //TODO fetch all albums beyond 500
-            client
-                .get_album_list2(
-                    submarine::api::get_album_list::Order::AlphabeticalByName,
-                    Some(500),
-                    Some(0),
-                    None::<&str>,
-                )
-                .await
-                .unwrap()
+            let mut offset = 0;
+            loop {
+                let mut part = client
+                    .get_album_list2(
+                        submarine::api::get_album_list::Order::AlphabeticalByName,
+                        Some(500),
+                        Some(offset),
+                        None::<&str>,
+                    )
+                    .await
+                    .unwrap();
+                if part.len() < 500 || part.is_empty() {
+                    albums.append(&mut part);
+                    break;
+                } else {
+                    albums.append(&mut part);
+                    offset += 500;
+                }
+            }
+            albums
         };
 
         // add albums with cover and title

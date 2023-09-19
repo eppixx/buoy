@@ -13,7 +13,6 @@ use relm4::{
 
 use crate::components::{
     browser::Browser,
-    cover::{Cover, CoverIn},
     equalizer::{Equalizer, EqualizerOut},
     login_form::LoginForm,
     login_form::LoginFormOutput,

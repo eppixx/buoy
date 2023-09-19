@@ -7,7 +7,7 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use crate::components::cover::{Cover, CoverBuilder, CoverIn};
+use crate::components::cover::{Cover, CoverBuilder};
 use crate::{client::Client, types::Id};
 
 #[derive(Debug, Default)]

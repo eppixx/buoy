@@ -12,7 +12,7 @@ impl Client {
     pub fn get() -> &'static Mutex<Client> {
         static CLIENT: OnceLock<Mutex<Client>> = OnceLock::new();
         match CLIENT.get() {
-            Some(client) => return client,
+            Some(client) => client,
             None => {
                 let settings = Settings::get().lock().unwrap();
                 if let (Some(uri), Some(user), Some(hash), Some(salt)) = (
