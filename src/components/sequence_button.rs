@@ -14,6 +14,7 @@ pub trait Sequence: std::fmt::Debug + 'static {
 }
 
 /// A button that changes its icon when pressed
+#[derive(Debug)]
 pub struct SequenceButton<T: Sequence> {
     btn: gtk::Button,
     sequence: T,

@@ -6,11 +6,11 @@ use relm4::{
         traits::{ListBoxRowExt, WidgetExt},
     },
     prelude::DynamicIndex,
-    Component, ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
-    SimpleComponent,
+    ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
 };
 
 use crate::{
+    client::Client,
     components::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
@@ -20,8 +20,10 @@ use crate::{
     types::Id,
 };
 
+#[derive(Debug)]
 pub struct Queue {
     songs: FactoryVecDeque<QueueSong>,
+    loading_queue: bool,
     playing_index: Option<DynamicIndex>,
     remove_items: gtk::Button,
     clear_items: gtk::Button,
@@ -63,6 +65,7 @@ pub enum QueueIn {
     RepeatPressed,
     PlayNext,
     PlayPrevious,
+    LoadPlayQueue,
 }
 
 #[derive(Debug)]
@@ -70,14 +73,21 @@ pub enum QueueOut {
     Play(Id),
 }
 
+#[derive(Debug)]
+pub enum QueueCmd {
+    FetchedQueue(Option<submarine::data::PlayQueue>),
+}
+
 #[relm4::component(pub)]
-impl SimpleComponent for Queue {
+impl relm4::Component for Queue {
     type Input = QueueIn;
     type Output = QueueOut;
     type Init = ();
+    type Widgets = QueueWidgets;
+    type CommandOutput = QueueCmd;
 
     fn init(
-        _queue: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -95,6 +105,7 @@ impl SimpleComponent for Queue {
 
         let mut model = Queue {
             songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
+            loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
@@ -103,11 +114,8 @@ impl SimpleComponent for Queue {
             repeat,
         };
 
-        model.songs.guard().push_back(Id::song("1"));
-        model.songs.guard().push_back(Id::song("2"));
-        model.songs.guard().push_back(Id::song("3"));
-        model.songs.guard().push_back(Id::song("4"));
-        model.songs.guard().push_back(Id::song("5"));
+        //init queue
+        sender.input(QueueIn::LoadPlayQueue);
 
         let widgets = view_output!();
 
@@ -125,12 +133,35 @@ impl SimpleComponent for Queue {
             gtk::ScrolledWindow {
                 set_vexpand: true,
 
-                model.songs.widget().clone() -> gtk::ListBox {
-                    set_selection_mode: gtk::SelectionMode::Multiple,
+                if model.loading_queue {
+                    gtk::Box {
+                        set_hexpand: true,
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 20,
 
-                    connect_selected_rows_changed[sender] => move |widget| {
-                        sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
-                    },
+                        gtk::Label {
+                            add_css_class: "h3",
+                            set_label: "Loading queue",
+                        },
+                        gtk::Spinner {
+                            add_css_class: "size100",
+                            start: (),
+                        }
+                    }
+                } else if model.songs.is_empty() {
+                    gtk::Label {
+                        add_css_class: "h3",
+                        set_label: "Queue is empty\nDrop music here",
+                        //TODO add DragDest
+                    }
+                } else {
+                    model.songs.widget().clone() -> gtk::ListBox {
+                        set_selection_mode: gtk::SelectionMode::Multiple,
+
+                        connect_selected_rows_changed[sender] => move |widget| {
+                            sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
+                        },
+                    }
                 },
             },
 
@@ -173,7 +204,7 @@ impl SimpleComponent for Queue {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             QueueIn::Activated(index, id) => {
                 // remove play icon and selection from other indexes
@@ -308,6 +339,43 @@ impl SimpleComponent for Queue {
             }
             QueueIn::PlayPrevious => {
                 //TODO fth useful
+            }
+            QueueIn::LoadPlayQueue => {
+                self.loading_queue = true;
+                sender.oneshot_command(async move {
+                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    if let Ok(Ok(queue)) = client.get_play_queue().await {
+                        QueueCmd::FetchedQueue(Some(queue))
+                    } else {
+                        QueueCmd::FetchedQueue(None)
+                    }
+                });
+            }
+        }
+    }
+
+    fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        _sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            QueueCmd::FetchedQueue(queue) => {
+                let queue = if let Some(queue) = queue {
+                    queue
+                } else {
+                    return;
+                };
+
+                for entry in &queue.entry {
+                    self.songs.guard().push_back(Id::song(&entry.id));
+                }
+                // TODO jump to current song
+                // TODO set seekbar
+                // TODO save queue
+
+                self.loading_queue = false;
             }
         }
     }
