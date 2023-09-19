@@ -8,11 +8,11 @@ use relm4::{
 };
 
 use super::{
-    albums::AlbumsOut,
+    albums_view::{AlbumsView, AlbumsViewOut},
     artists_view::{ArtistsView, ArtistsViewOut},
     dashboard::DashboardOutput,
 };
-use crate::{components::albums::Albums, components::dashboard::Dashboard, types::Id};
+use crate::{components::dashboard::Dashboard, types::Id};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum View {
@@ -36,6 +36,7 @@ pub struct Browser {
     playlists_btn: gtk::ToggleButton,
 
     artist_view: relm4::component::AsyncController<ArtistsView>,
+    albums_view: relm4::component::AsyncController<AlbumsView>,
 }
 
 #[derive(Debug)]
@@ -49,7 +50,7 @@ pub enum BrowserInput {
     PlaylistClicked,
     NewView(View),
     Dashboard(DashboardOutput),
-    Albums(AlbumsOut),
+    AlbumsView(AlbumsViewOut),
     ArtistsView(ArtistsViewOut),
 }
 
@@ -67,6 +68,9 @@ impl relm4::SimpleComponent for Browser {
         let artists: relm4::component::AsyncController<ArtistsView> = ArtistsView::builder()
             .launch(())
             .forward(sender.input_sender(), BrowserInput::ArtistsView);
+        let albums: relm4::component::AsyncController<AlbumsView> = AlbumsView::builder()
+            .launch(())
+            .forward(sender.input_sender(), BrowserInput::AlbumsView);
 
         let model = Self {
             history: vec![],
@@ -79,6 +83,7 @@ impl relm4::SimpleComponent for Browser {
             playlists_btn: gtk::ToggleButton::default(),
 
             artist_view: artists,
+            albums_view: albums,
         };
         let widgets = view_output!();
 
@@ -252,13 +257,16 @@ impl relm4::SimpleComponent for Browser {
                 //TODO react to output
             }
             //TODO rename Out-enums to be the same
-            BrowserInput::Albums(msg) => match msg {
-                AlbumsOut::Clicked(id) => sender.input(BrowserInput::NewView(View::Id(id))),
+            BrowserInput::AlbumsView(msg) => match msg {
+                AlbumsViewOut::ClickedAlbum(id) => {
+                    sender.input(BrowserInput::NewView(View::Id(id)))
+                }
             },
-            BrowserInput::ArtistsView(msg) => {
-                //TODO change to view
-                tracing::error!("received clicked artists");
-            }
+            BrowserInput::ArtistsView(msg) => match msg {
+                ArtistsViewOut::ClickedArtist(id) => {
+                    sender.input(BrowserInput::NewView(View::Id(id)))
+                }
+            },
         }
     }
 }
@@ -272,15 +280,8 @@ impl Browser {
                     .forward(sender.input_sender(), BrowserInput::Dashboard);
                 self.content.set_child(Some(dashboard.widget()));
             }
-            View::Artists => {
-                self.content.set_child(Some(self.artist_view.widget()));
-            }
-            View::Albums => {
-                let albums: relm4::component::AsyncController<Albums> = Albums::builder()
-                    .launch(())
-                    .forward(sender.input_sender(), BrowserInput::Albums);
-                self.content.set_child(Some(albums.widget()));
-            }
+            View::Artists => self.content.set_child(Some(self.artist_view.widget())),
+            View::Albums => self.content.set_child(Some(self.albums_view.widget())),
             View::Tracks => {
                 //TODO change
                 // self.content.set_child(Some(self.artist_view.widget()));

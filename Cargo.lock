@@ -1561,7 +1561,7 @@ dependencies = [
 [[package]]
 name = "submarine"
 version = "0.1.0"
-source = "git+https://github.com/eppixx/submarine#f7552065b0d553023f3fff9ff6d7dd0dcb25da77"
+source = "git+https://github.com/eppixx/submarine#6dc92cda1ebc08bbfacc672dabcbbd879dbdccc8"
 dependencies = [
  "cfg-if",
  "chrono",

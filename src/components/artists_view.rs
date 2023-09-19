@@ -7,7 +7,7 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use crate::components::cover::{Cover, CoverIn};
+use crate::components::cover::{Cover, CoverBuilder, CoverIn};
 use crate::{client::Client, types::Id};
 
 #[derive(Debug, Default)]
@@ -149,16 +149,16 @@ impl relm4::SimpleComponent for ArtistElement {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let cover: relm4::Controller<Cover> = Cover::builder().launch(()).detach();
+        // init cover
+        let mut builder = CoverBuilder::default().title(&id.name);
+        if let Some(id) = &id.cover_art {
+            builder = builder.image(id);
+        }
+
+        let cover: relm4::Controller<Cover> = Cover::builder().launch(builder).detach();
         let model = Self { cover };
 
         let widgets = view_output!();
-
-        //init widgets
-        model.cover.emit(CoverIn::SetTitle(Some(id.name)));
-        if let Some(id) = id.cover_art {
-            model.cover.emit(CoverIn::LoadImage(Some(id)));
-        }
 
         relm4::ComponentParts { model, widgets }
     }
@@ -170,7 +170,6 @@ impl relm4::SimpleComponent for ArtistElement {
             gtk::Button {
                 add_css_class: "flat",
                 connect_clicked[sender, id] => move |_btn| {
-                    tracing::error!("artists clicked");
                     sender.output(ArtistElementOut::Clicked(Id::artist(&id.id))).unwrap();
                 },
 

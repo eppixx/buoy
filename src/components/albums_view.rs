@@ -1,33 +1,192 @@
-// use crate::{client::Client, types::Id};
+use relm4::{
+    gtk::{
+        self,
+        traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+    },
+    loading_widgets::LoadingWidgets,
+    view, Component, ComponentController,
+};
 
-// pub struct AlbumsView {}
+use crate::components::cover::{Cover, CoverBuilder};
+use crate::{client::Client, types::Id};
 
-// pub enum AlbumsViewIn {
-//     ClickedAlbum(Id),
-// }
+#[derive(Debug, Default)]
+pub struct AlbumsView {
+    albums: gtk::FlowBox,
+    album_list: Vec<relm4::Controller<AlbumElement>>,
+}
 
-// pub enum AlbumsViewOut {
-//     ClickedAlbum(Id),
-// }
+#[derive(Debug)]
+pub enum AlbumsViewOut {
+    ClickedAlbum(Id),
+}
 
-// #[relm4::component(async, pub)]
-// impl relm4::component::AsyncComponent for AlbumsView {
-//     type Input = AlbumsViewIn;
-//     type Output = AlbumsViewOut;
-//     type Init = ();
-//     type CommandOutput = ();
+#[derive(Debug)]
+pub enum AlbumsViewIn {
+    AlbumElement(AlbumElementOut),
+}
 
-//     async fn init(
-//         _init: Self::Init,
-//         root: Self::Root,
-//         sender: relm4::AsyncComponentSender<Self>,
-//     ) -> relm4::component::AsyncComponentParts<Self> {
-//         let albums: Vec<submarine::data::ArtistId3> = {
-//             let client = Client::get().lock().unwrap().inner.clone().unwrap();
-//             let indexes: Vec<submarine::data::IndexId3> = client.get_album_list2(None).await.unwrap();
-//             indexes.into_iter().flat_map(|i| i.artist).collect()
-//         };
-//     }
+#[relm4::component(async, pub)]
+impl relm4::component::AsyncComponent for AlbumsView {
+    type Input = AlbumsViewIn;
+    type Output = AlbumsViewOut;
+    type Init = ();
+    type CommandOutput = ();
 
-//     view! {}
-// }
+    fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
+        view! {
+            append = root.clone() -> gtk::Box {
+                add_css_class: "albums-view",
+
+                #[name(loading_box)]
+                gtk::Box {
+                    set_hexpand: true,
+                    set_spacing: 30,
+                    set_halign: gtk::Align::Center,
+                    set_orientation: gtk::Orientation::Vertical,
+
+                    gtk::Label {
+                        add_css_class: "h2",
+                        set_label: "Loading albums",
+                    },
+
+                    gtk::Spinner {
+                        add_css_class: "size100",
+                        set_halign: gtk::Align::Center,
+                        start: (),
+                    }
+                }
+            }
+        }
+
+        // removes widget loading_box when function init finishes
+        Some(LoadingWidgets::new(root, loading_box))
+    }
+
+    async fn init(
+        _init: Self::Init,
+        root: Self::Root,
+        sender: relm4::AsyncComponentSender<Self>,
+    ) -> relm4::component::AsyncComponentParts<Self> {
+        let mut model = Self::default();
+        let widgets = view_output!();
+
+        // get albums
+        let albums: Vec<submarine::data::Child> = {
+            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            //TODO fetch all albums beyond 500
+            client
+                .get_album_list2(
+                    submarine::api::get_album_list::Order::AlphabeticalByName,
+                    Some(500),
+                    Some(0),
+                    None::<&str>,
+                )
+                .await
+                .unwrap()
+        };
+
+        // add albums with cover and title
+        for album in albums.into_iter().rev() {
+            let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
+                .launch(album)
+                .forward(sender.input_sender(), AlbumsViewIn::AlbumElement);
+            model.albums.insert(cover.widget(), 0);
+            model.album_list.insert(0, cover);
+        }
+
+        relm4::component::AsyncComponentParts { model, widgets }
+    }
+
+    view! {
+        gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
+            set_hexpand: true,
+
+            gtk::Label {
+                add_css_class: "h2",
+                set_label: "Albums",
+                set_halign: gtk::Align::Center,
+            },
+
+            gtk::ScrolledWindow {
+                set_hexpand: true,
+                set_vexpand: true,
+
+                #[wrap(Some)]
+                set_child = &model.albums.clone() -> gtk::FlowBox {
+                }
+            }
+        }
+    }
+
+    async fn update(
+        &mut self,
+        msg: Self::Input,
+        sender: relm4::AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            AlbumsViewIn::AlbumElement(msg) => match msg {
+                AlbumElementOut::Clicked(id) => {
+                    sender.output(AlbumsViewOut::ClickedAlbum(id)).unwrap()
+                }
+            },
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct AlbumElement {
+    cover: relm4::Controller<Cover>,
+}
+
+#[derive(Debug)]
+pub enum AlbumElementOut {
+    Clicked(Id),
+}
+
+#[relm4::component(pub)]
+impl relm4::SimpleComponent for AlbumElement {
+    type Input = ();
+    type Output = AlbumElementOut;
+    type Init = submarine::data::Child;
+
+    fn init(
+        id: Self::Init,
+        root: &Self::Root,
+        sender: relm4::ComponentSender<Self>,
+    ) -> relm4::ComponentParts<Self> {
+        // init cover
+        let mut builder = CoverBuilder::default().title(&id.title);
+        if let Some(id) = &id.cover_art {
+            builder = builder.image(id);
+        }
+        if let Some(artist) = &id.artist {
+            builder = builder.subtitle(artist);
+        }
+
+        let cover: relm4::Controller<Cover> = Cover::builder().launch(builder).detach();
+        let model = Self { cover };
+
+        let widgets = view_output!();
+
+        relm4::ComponentParts { model, widgets }
+    }
+
+    view! {
+        gtk::Box {
+            add_css_class: "albums-view-album",
+
+            gtk::Button {
+                add_css_class: "flat",
+                connect_clicked[sender, id] => move |_btn| {
+                    sender.output(AlbumElementOut::Clicked(Id::album(&id.id))).unwrap();
+                },
+
+                #[wrap(Some)]
+                set_child = &model.cover.widget().clone(),
+            }
+        }
+    }
+}

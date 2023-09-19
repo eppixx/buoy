@@ -1,4 +1,3 @@
-pub mod albums;
 pub mod albums_view;
 pub mod artists_view;
 pub mod browser;

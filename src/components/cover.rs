@@ -1,12 +1,36 @@
 use relm4::{
     gtk::{
-        self, pango,
+        self, glib, pango,
         traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
 
 use crate::client::Client;
+
+#[derive(Debug, Default, Clone)]
+pub struct CoverBuilder {
+    image: Option<String>,
+    title: Option<String>,
+    subtitle: Option<String>,
+}
+
+impl CoverBuilder {
+    pub fn image(mut self, image: impl Into<String>) -> Self {
+        self.image = Some(image.into());
+        self
+    }
+
+    pub fn title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+}
 
 #[derive(Debug)]
 pub enum CoverIn {
@@ -30,24 +54,28 @@ pub enum CoverCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
-    type Init = ();
+    type Init = CoverBuilder;
     type Input = CoverIn;
     type Output = ();
     type Widgets = CoverWidgets;
     type CommandOutput = CoverCmd;
 
     fn init(
-        _: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Cover {
             loading: false,
             image: gtk::Image::default(),
-            title: None,
-            subtitle: None,
+            title: init.title,
+            subtitle: init.subtitle,
         };
         let widgets = view_output!();
+
+        if let Some(id) = init.image {
+            sender.input(CoverIn::LoadImage(Some(id)));
+        }
 
         relm4::ComponentParts { model, widgets }
     }
@@ -114,7 +142,7 @@ impl relm4::Component for Cover {
                     set_max_width_chars: 15,
                     set_size_request: (150, -1),
                     #[watch]
-                    set_markup: &format!("<span style=\"italic\">{}</span>", subtitle),
+                    set_markup: &format!("<span style=\"italic\">{}</span>", glib::markup_escape_text(subtitle)),
                 }
             } else {
                 gtk::Label {
@@ -134,7 +162,6 @@ impl relm4::Component for Cover {
             CoverIn::LoadImage(id) => match id {
                 None => self.image.set_from_pixbuf(None),
                 Some(id) => {
-                    tracing::error!("start loading");
                     self.loading = true;
                     sender.oneshot_command(async move {
                         let client = Client::get().lock().unwrap().inner.clone().unwrap();
@@ -158,7 +185,6 @@ impl relm4::Component for Cover {
     ) {
         match message {
             CoverCmd::LoadedImage(buffer) => {
-                tracing::error!("loaded buffer");
                 let buffer = match buffer {
                     None => {
                         self.loading = false;
