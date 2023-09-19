@@ -15,7 +15,7 @@ pub struct LoginForm {
 }
 
 #[derive(Debug)]
-pub enum LoginFormInput {
+pub enum LoginFormIn {
     AuthClicked,
     UriChanged,
     FormChanged,
@@ -23,14 +23,14 @@ pub enum LoginFormInput {
 }
 
 #[derive(Debug)]
-pub enum LoginFormOutput {
+pub enum LoginFormOut {
     LoggedIn(submarine::Client),
 }
 
 #[component(pub, async)]
 impl relm4::component::AsyncComponent for LoginForm {
-    type Input = LoginFormInput;
-    type Output = LoginFormOutput;
+    type Input = LoginFormIn;
+    type Output = LoginFormOut;
     type Init = ();
     type CommandOutput = ();
 
@@ -78,22 +78,22 @@ impl relm4::component::AsyncComponent for LoginForm {
                 },
                 attach[1, 0, 1, 1] = &model.uri.clone() {
                     set_placeholder_text: Some("http(s)://..."),
-                    connect_changed => LoginFormInput::UriChanged,
-                    connect_changed => LoginFormInput::FormChanged,
+                    connect_changed => LoginFormIn::UriChanged,
+                    connect_changed => LoginFormIn::FormChanged,
                 },
                 attach[0, 1, 1, 1] = &gtk::Label {
                     set_label: "User name",
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 1, 1, 1] = &model.user.clone() {
-                    connect_changed => LoginFormInput::FormChanged,
+                    connect_changed => LoginFormIn::FormChanged,
                 },
                 attach[0, 2, 1, 1] = &gtk::Label {
                     set_label: "Password",
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 2, 1, 1] = &model.password.clone() {
-                    connect_changed => LoginFormInput::FormChanged,
+                    connect_changed => LoginFormIn::FormChanged,
                 },
             },
 
@@ -102,7 +102,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 set_start_widget = &gtk::Button {
                     add_css_class: "destructive-action",
                     set_label: "Reset login data",
-                    connect_clicked => LoginFormInput::ResetClicked,
+                    connect_clicked => LoginFormIn::ResetClicked,
                 },
                 #[wrap(Some)]
                 set_end_widget = &gtk::Box {
@@ -117,7 +117,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     model.login_btn.clone() -> gtk::Button {
                         set_label: "Login",
                         set_sensitive: false,
-                        connect_clicked => LoginFormInput::AuthClicked,
+                        connect_clicked => LoginFormIn::AuthClicked,
                     }
                 },
             }
@@ -131,7 +131,7 @@ impl relm4::component::AsyncComponent for LoginForm {
         _root: &Self::Root,
     ) {
         match msg {
-            LoginFormInput::AuthClicked => {
+            LoginFormIn::AuthClicked => {
                 let auth = submarine::auth::AuthBuilder::new(self.user.text(), "0.16.1")
                     .client_name("Bouy")
                     .hashed(&self.password.text());
@@ -148,7 +148,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                             settings.login_salt = Some(salt);
                             settings.save();
                         }
-                        sender.output(LoginFormOutput::LoggedIn(client)).unwrap();
+                        sender.output(LoginFormOut::LoggedIn(client)).unwrap();
                     }
                     Err(e) => {
                         use submarine::SubsonicError;
@@ -168,7 +168,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     }
                 }
             }
-            LoginFormInput::ResetClicked => {
+            LoginFormIn::ResetClicked => {
                 self.uri.set_text("");
                 self.user.set_text("");
                 self.password.set_text("");
@@ -179,7 +179,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 settings.login_hash = None;
                 settings.save();
             }
-            LoginFormInput::UriChanged => match url::Url::parse(&self.uri.text()) {
+            LoginFormIn::UriChanged => match url::Url::parse(&self.uri.text()) {
                 Ok(_) => {
                     self.uri.set_secondary_icon_name(None);
                 }
@@ -198,7 +198,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     self.uri.set_secondary_icon_tooltip_text(Some(error_str));
                 }
             },
-            LoginFormInput::FormChanged => {
+            LoginFormIn::FormChanged => {
                 self.error_icon.set_visible(false);
                 //check form if input text is ok
                 let sensitive = !self.user.text().is_empty()

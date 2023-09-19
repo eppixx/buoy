@@ -256,7 +256,6 @@ impl relm4::SimpleComponent for Browser {
             BrowserInput::Dashboard(output) => {
                 //TODO react to output
             }
-            //TODO rename Out-enums to be the same
             BrowserInput::AlbumsView(msg) => match msg {
                 AlbumsViewOut::ClickedAlbum(id) => {
                     sender.input(BrowserInput::NewView(View::Id(id)))

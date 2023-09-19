@@ -10,23 +10,23 @@ use relm4::{
 use crate::play_state::PlayState;
 
 #[derive(Debug, Default)]
-pub struct PlayControlModel {
+pub struct PlayControl {
     prev_btn: gtk::Button,
     play_btn: gtk::Button,
     next_btn: gtk::Button,
 }
 
 #[derive(Debug)]
-pub enum PlayControlOutput {
+pub enum PlayControlOut {
     Status(PlayState),
     Previous,
     Next,
 }
 
 #[component(pub)]
-impl SimpleComponent for PlayControlModel {
+impl SimpleComponent for PlayControl {
     type Input = PlayState;
-    type Output = PlayControlOutput;
+    type Output = PlayControlOut;
     type Init = PlayState;
 
     fn init(
@@ -34,7 +34,7 @@ impl SimpleComponent for PlayControlModel {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = PlayControlModel::default();
+        let model = PlayControl::default();
         let widgets = view_output!();
 
         //init buttons
@@ -55,7 +55,7 @@ impl SimpleComponent for PlayControlModel {
                 set_icon_name: "media-skip-backward-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
-                    _ = sender.output(PlayControlOutput::Previous);
+                    _ = sender.output(PlayControlOut::Previous);
                 },
             },
 
@@ -68,11 +68,11 @@ impl SimpleComponent for PlayControlModel {
                     match btn.icon_name().unwrap().as_str() {
                         "media-playback-start-symbolic" => {
                             sender.input(PlayState::Play);
-                            _ = sender.output(PlayControlOutput::Status(PlayState::Play));
+                            _ = sender.output(PlayControlOut::Status(PlayState::Play));
                         }
                         "media-playback-pause-symbolic" => {
                             sender.input(PlayState::Pause);
-                            _ = sender.output(PlayControlOutput::Status(PlayState::Pause));
+                            _ = sender.output(PlayControlOut::Status(PlayState::Pause));
                         }
                         _ => unreachable!("unkonwn icon name"),
                     }
@@ -85,7 +85,7 @@ impl SimpleComponent for PlayControlModel {
                 set_icon_name: "media-skip-forward-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
-                    _ = sender.output(PlayControlOutput::Next);
+                    _ = sender.output(PlayControlOut::Next);
                 },
             },
         }

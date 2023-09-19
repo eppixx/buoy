@@ -14,12 +14,11 @@ use relm4::{
 use crate::components::{
     browser::Browser,
     equalizer::{Equalizer, EqualizerOut},
-    login_form::LoginForm,
-    login_form::LoginFormOutput,
-    play_controls::{PlayControlModel, PlayControlOutput},
-    play_info::PlayInfoModel,
-    queue::{QueueInput, QueueModel},
-    seekbar::{SeekbarCurrent, SeekbarInput, SeekbarModel},
+    login_form::{LoginForm, LoginFormOut},
+    play_controls::{PlayControl, PlayControlOut},
+    play_info::PlayInfo,
+    queue::{Queue, QueueIn},
+    seekbar::{Seekbar, SeekbarCurrent, SeekbarIn},
 };
 use crate::{
     client::Client,
@@ -38,15 +37,17 @@ pub mod settings;
 pub mod types;
 
 struct AppModel {
-    main_stack: gtk::Stack,
+    playback: Playback,
+
     login_form: AsyncController<LoginForm>,
-    queue: Controller<QueueModel>,
-    play_controls: Controller<PlayControlModel>,
-    seekbar: Controller<SeekbarModel>,
-    play_info: Controller<PlayInfoModel>,
+    queue: Controller<Queue>,
+    play_controls: Controller<PlayControl>,
+    seekbar: Controller<Seekbar>,
+    play_info: Controller<PlayInfo>,
     browser: Controller<Browser>,
     equalizer: Controller<Equalizer>,
-    playback: Playback,
+
+    main_stack: gtk::Stack,
     equalizer_btn: gtk::MenuButton,
     volume_btn: gtk::VolumeButton,
     config_btn: gtk::MenuButton,
@@ -55,11 +56,11 @@ struct AppModel {
 #[derive(Debug)]
 enum AppMsg {
     ResetLogin,
-    PlayControlOutput(PlayControlOutput),
+    PlayControlOutput(PlayControlOut),
     Seekbar(i64),
     VolumeChange(f64),
     Playback(PlaybackOutput),
-    LoginForm(LoginFormOutput),
+    LoginForm(LoginFormOut),
     Equalizer(EqualizerOut),
 }
 
@@ -77,29 +78,31 @@ impl SimpleComponent for AppModel {
     ) -> ComponentParts<Self> {
         let (playback_sender, receiver) =
             gtk::glib::MainContext::channel(gtk::glib::Priority::default());
+        let playback = Playback::new(&playback_sender).unwrap();
+
         let login_form: AsyncController<LoginForm> = LoginForm::builder()
             .launch(())
             .forward(sender.input_sender(), AppMsg::LoginForm);
-        let queue: Controller<QueueModel> = QueueModel::builder()
+        let queue: Controller<Queue> = Queue::builder()
             .launch(())
             .forward(sender.input_sender(), |_msg| todo!());
-        let play_controls = PlayControlModel::builder()
+        let play_controls = PlayControl::builder()
             .launch(PlayState::Pause) // TODO change to previous state
             .forward(sender.input_sender(), AppMsg::PlayControlOutput);
-        let seekbar = SeekbarModel::builder()
+        let seekbar = Seekbar::builder()
             .launch(Some(SeekbarCurrent::new(1000 * 60, None))) // TODO change to previous state
             .forward(sender.input_sender(), AppMsg::Seekbar);
-        let play_info = PlayInfoModel::builder()
+        let play_info = PlayInfo::builder()
             .launch(None) // TODO change to previous state
             .detach();
         let browser = Browser::builder().launch(()).detach();
         let equalizer = Equalizer::builder()
             .launch(())
             .forward(sender.input_sender(), AppMsg::Equalizer);
-        let playback = Playback::new(&playback_sender).unwrap();
 
         let model = AppModel {
-            main_stack: gtk::Stack::default(),
+            playback,
+
             login_form,
             queue,
             play_controls,
@@ -107,7 +110,8 @@ impl SimpleComponent for AppModel {
             play_info,
             browser,
             equalizer,
-            playback,
+
+            main_stack: gtk::Stack::default(),
             volume_btn: gtk::VolumeButton::default(),
             equalizer_btn: gtk::MenuButton::default(),
             config_btn: gtk::MenuButton::default(),
@@ -143,19 +147,19 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            AppMsg::PlayControlOutput(PlayControlOutput::Next) => {
-                _ = self.queue.sender().send(QueueInput::PlayNext);
+            AppMsg::PlayControlOutput(PlayControlOut::Next) => {
+                _ = self.queue.sender().send(QueueIn::PlayNext);
             }
-            AppMsg::PlayControlOutput(PlayControlOutput::Previous) => {
-                _ = self.queue.sender().send(QueueInput::PlayPrevious);
+            AppMsg::PlayControlOutput(PlayControlOut::Previous) => {
+                _ = self.queue.sender().send(QueueIn::PlayPrevious);
             }
-            AppMsg::PlayControlOutput(PlayControlOutput::Status(status)) => {
+            AppMsg::PlayControlOutput(PlayControlOut::Status(status)) => {
                 match status {
                     PlayState::Pause => self.playback.pause().unwrap(),
                     PlayState::Play => self.playback.play().unwrap(),
                     PlayState::Stop => self.playback.stop().unwrap(),
                 };
-                _ = self.queue.sender().send(QueueInput::NewState(status));
+                _ = self.queue.sender().send(QueueIn::NewState(status));
             }
             AppMsg::Seekbar(seek_in_ms) => self.playback.set_position(seek_in_ms),
             AppMsg::VolumeChange(value) => {
@@ -168,7 +172,7 @@ impl SimpleComponent for AppModel {
                 match playback {
                     PlaybackOutput::TrackEnd => {} //TODO play next
                     PlaybackOutput::Seek(ms) => {
-                        self.seekbar.sender().emit(SeekbarInput::SeekTo(ms));
+                        self.seekbar.sender().emit(SeekbarIn::SeekTo(ms));
                     }
                 }
             }

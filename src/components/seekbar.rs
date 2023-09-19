@@ -7,14 +7,14 @@ use relm4::{
 };
 
 #[derive(Debug, Default)]
-pub struct SeekbarModel {
+pub struct Seekbar {
     current: i64,
     scale: gtk::Scale,
     total: i64,
 }
 
 #[derive(Debug)]
-pub enum SeekbarInput {
+pub enum SeekbarIn {
     SeekbarDragged,
     NewRange(i64), // in ms
     SeekTo(i64),   // in ms
@@ -36,8 +36,8 @@ impl SeekbarCurrent {
 }
 
 #[component(pub)]
-impl relm4::SimpleComponent for SeekbarModel {
-    type Input = SeekbarInput;
+impl relm4::SimpleComponent for Seekbar {
+    type Input = SeekbarIn;
     type Output = i64;
     type Init = Option<SeekbarCurrent>;
 
@@ -46,7 +46,7 @@ impl relm4::SimpleComponent for SeekbarModel {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut model = SeekbarModel::default();
+        let mut model = Self::default();
         let widgets = view_output!();
 
         //init widgets
@@ -79,7 +79,7 @@ impl relm4::SimpleComponent for SeekbarModel {
             append = &model.scale.clone() -> gtk::Scale {
                 add_css_class: "seekbar-scale",
                 set_hexpand: true,
-                connect_value_changed => SeekbarInput::SeekbarDragged,
+                connect_value_changed => SeekbarIn::SeekbarDragged,
             },
 
             #[name = "total"]
@@ -93,15 +93,15 @@ impl relm4::SimpleComponent for SeekbarModel {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            SeekbarInput::SeekbarDragged => {
+            SeekbarIn::SeekbarDragged => {
                 let value = self.scale.value() as i64;
                 self.current = value;
                 _ = sender.output(value);
             }
-            SeekbarInput::NewRange(total) => {
+            SeekbarIn::NewRange(total) => {
                 self.scale.set_range(0.0, total as f64);
             }
-            SeekbarInput::SeekTo(ms) => {
+            SeekbarIn::SeekTo(ms) => {
                 self.scale.set_value(ms as f64);
             }
         }

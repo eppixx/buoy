@@ -171,7 +171,7 @@ impl relm4::SimpleComponent for AlbumElement {
         // init cover
         let mut builder = CoverBuilder::default().title(&id.title);
         if let Some(id) = &id.cover_art {
-            builder = builder.image(id);
+            // builder = builder.image(id);
         }
         if let Some(artist) = &id.artist {
             builder = builder.subtitle(artist);

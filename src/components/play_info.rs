@@ -1,14 +1,14 @@
 use relm4::gtk::{self, traits::WidgetExt};
 
 #[derive(Debug)]
-pub struct PlayInfoModel {
+pub struct PlayInfo {
     pub cover: Option<String>,
     pub title: String,
     pub artist: Option<String>,
     pub album: Option<String>,
 }
 
-impl Default for PlayInfoModel {
+impl Default for PlayInfo {
     fn default() -> Self {
         Self {
             title: String::from("Nothing is played currently"),
@@ -20,10 +20,10 @@ impl Default for PlayInfoModel {
 }
 
 #[relm4::component(pub)]
-impl relm4::SimpleComponent for PlayInfoModel {
-    type Input = PlayInfoModel;
+impl relm4::SimpleComponent for PlayInfo {
+    type Input = PlayInfo;
     type Output = ();
-    type Init = Option<PlayInfoModel>;
+    type Init = Option<PlayInfo>;
 
     fn init(
         init: Self::Init,

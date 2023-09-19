@@ -14,39 +14,39 @@ pub trait Sequence: std::fmt::Debug + 'static {
 }
 
 /// A button that changes its icon when pressed
-pub struct SequenceButtonModel<T: Sequence> {
+pub struct SequenceButton<T: Sequence> {
     btn: gtk::Button,
     sequence: T,
 }
 
-impl<T: Sequence> SequenceButtonModel<T> {
+impl<T: Sequence> SequenceButton<T> {
     pub fn current(&self) -> &T {
         &self.sequence
     }
 }
 
 #[derive(Debug)]
-pub enum SequenceButtonInput {
+pub enum SequenceButtonIn {
     Toggle,
 }
 
 #[derive(Debug)]
-pub enum SequenceButtonOutput {
+pub enum SequenceButtonOut {
     Clicked,
 }
 
 #[relm4::component(pub)]
-impl<T: Sequence> relm4::SimpleComponent for SequenceButtonModel<T> {
+impl<T: Sequence> relm4::SimpleComponent for SequenceButton<T> {
     type Init = T;
-    type Input = SequenceButtonInput;
-    type Output = SequenceButtonOutput;
+    type Input = SequenceButtonIn;
+    type Output = SequenceButtonOut;
 
     fn init(
         params: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = SequenceButtonModel {
+        let model = SequenceButton {
             btn: gtk::Button::new(),
             sequence: params,
         };
@@ -60,19 +60,19 @@ impl<T: Sequence> relm4::SimpleComponent for SequenceButtonModel<T> {
             append = &model.btn.clone() {
                 set_icon_name: model.sequence.current(),
                 set_tooltip_text: model.sequence.tooltip(),
-                connect_clicked => SequenceButtonInput::Toggle,
+                connect_clicked => SequenceButtonIn::Toggle,
             }
         }
     }
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            SequenceButtonInput::Toggle => {
+            SequenceButtonIn::Toggle => {
                 self.sequence.next();
                 self.btn.set_icon_name(self.sequence.current());
                 self.btn.set_tooltip_text(self.sequence.tooltip());
             }
         }
-        _ = sender.output(SequenceButtonOutput::Clicked);
+        _ = sender.output(SequenceButtonOut::Clicked);
     }
 }

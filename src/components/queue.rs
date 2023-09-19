@@ -12,7 +12,7 @@ use relm4::{
 
 use crate::{
     components::{
-        sequence_button::SequenceButtonOutput,
+        sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
     factory::queue_item::QueueSong,
@@ -20,19 +20,17 @@ use crate::{
     types::Id,
 };
 
-use super::sequence_button::SequenceButtonModel;
-
-pub struct QueueModel {
+pub struct Queue {
     songs: FactoryVecDeque<QueueSong>,
     playing_index: Option<DynamicIndex>,
     remove_items: gtk::Button,
     clear_items: gtk::Button,
     last_selected: Option<DynamicIndex>,
-    shuffle: relm4::Controller<SequenceButtonModel<Shuffle>>,
-    repeat: relm4::Controller<SequenceButtonModel<Repeat>>,
+    shuffle: relm4::Controller<SequenceButton<Shuffle>>,
+    repeat: relm4::Controller<SequenceButton<Repeat>>,
 }
 
-impl QueueModel {
+impl Queue {
     fn update_clear_btn_sensitivity(&mut self) {
         self.clear_items
             .set_sensitive(!self.songs.guard().is_empty());
@@ -44,7 +42,7 @@ impl QueueModel {
 }
 
 #[derive(Debug)]
-pub enum QueueInput {
+pub enum QueueIn {
     Activated(DynamicIndex, Id),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
@@ -68,14 +66,14 @@ pub enum QueueInput {
 }
 
 #[derive(Debug)]
-pub enum QueueOutput {
+pub enum QueueOut {
     Play(Id),
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for QueueModel {
-    type Input = QueueInput;
-    type Output = QueueOutput;
+impl SimpleComponent for Queue {
+    type Input = QueueIn;
+    type Output = QueueOut;
     type Init = ();
 
     fn init(
@@ -83,20 +81,19 @@ impl SimpleComponent for QueueModel {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let shuffle: relm4::Controller<SequenceButtonModel<Shuffle>> =
-            SequenceButtonModel::<Shuffle>::builder()
+        let shuffle: relm4::Controller<SequenceButton<Shuffle>> =
+            SequenceButton::<Shuffle>::builder()
                 .launch(Shuffle::Sequential)
                 .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOutput::Clicked => QueueInput::ToggleShuffle,
+                    SequenceButtonOut::Clicked => QueueIn::ToggleShuffle,
                 });
-        let repeat: relm4::Controller<SequenceButtonModel<Repeat>> =
-            SequenceButtonModel::<Repeat>::builder()
-                .launch(Repeat::Normal)
-                .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOutput::Clicked => QueueInput::RepeatPressed,
-                });
+        let repeat: relm4::Controller<SequenceButton<Repeat>> = SequenceButton::<Repeat>::builder()
+            .launch(Repeat::Normal)
+            .forward(sender.input_sender(), |msg| match msg {
+                SequenceButtonOut::Clicked => QueueIn::RepeatPressed,
+            });
 
-        let mut model = QueueModel {
+        let mut model = Queue {
             songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
             playing_index: None,
             remove_items: gtk::Button::new(),
@@ -132,7 +129,7 @@ impl SimpleComponent for QueueModel {
                     set_selection_mode: gtk::SelectionMode::Multiple,
 
                     connect_selected_rows_changed[sender] => move |widget| {
-                        sender.input(QueueInput::SomeIsSelected(!widget.selected_rows().is_empty()));
+                        sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
                     },
                 },
             },
@@ -145,7 +142,8 @@ impl SimpleComponent for QueueModel {
                     set_icon_name: "document-new-symbolic",
                     set_tooltip: "add queue to playlists",
                     set_focus_on_click: false,
-                    connect_clicked => QueueInput::Append(Id::song("5555555")),
+                    // TODO add new playlist
+                    connect_clicked => QueueIn::Append(Id::song("5555555")),
                 },
 
                 pack_end = &gtk::Label {
@@ -157,7 +155,7 @@ impl SimpleComponent for QueueModel {
                     set_tooltip: "remove song from queue",
                     set_sensitive: false,
                     set_focus_on_click: false,
-                    connect_clicked => QueueInput::Remove,
+                    connect_clicked => QueueIn::Remove,
                 },
 
                 pack_end = &gtk::Label {
@@ -169,7 +167,7 @@ impl SimpleComponent for QueueModel {
                     set_tooltip: "clear queue",
                     set_sensitive: false,
                     set_focus_on_click: false,
-                    connect_clicked => QueueInput::Clear,
+                    connect_clicked => QueueIn::Clear,
                 },
             }
         }
@@ -177,7 +175,7 @@ impl SimpleComponent for QueueModel {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            QueueInput::Activated(index, id) => {
+            QueueIn::Activated(index, id) => {
                 // remove play icon and selection from other indexes
                 for (_i, song) in self
                     .songs
@@ -193,7 +191,7 @@ impl SimpleComponent for QueueModel {
                 //TODO send id up
                 println!("playing id: {id:?}");
             }
-            QueueInput::Clicked(index) => {
+            QueueIn::Clicked(index) => {
                 for (_i, song) in self
                     .songs
                     .iter()
@@ -204,7 +202,7 @@ impl SimpleComponent for QueueModel {
                 }
                 self.last_selected = Some(index.clone());
             }
-            QueueInput::ShiftClicked(target) => {
+            QueueIn::ShiftClicked(target) => {
                 if let Some(index) = &self.last_selected {
                     let (lower, bigger) = if index.current_index() < target.current_index() {
                         (index.clone(), target)
@@ -230,16 +228,16 @@ impl SimpleComponent for QueueModel {
                     self.last_selected = Some(target)
                 }
             }
-            QueueInput::Append(id) => {
+            QueueIn::Append(id) => {
                 let _ = self.songs.guard().push_back(id);
                 self.update_clear_btn_sensitivity();
             }
-            QueueInput::Clear => {
+            QueueIn::Clear => {
                 self.songs.guard().clear();
                 self.update_clear_btn_sensitivity();
                 self.last_selected = None;
             }
-            QueueInput::Remove => {
+            QueueIn::Remove => {
                 let selected_indices: Vec<usize> = self
                     .songs
                     .iter()
@@ -259,13 +257,13 @@ impl SimpleComponent for QueueModel {
 
                 self.update_clear_btn_sensitivity();
             }
-            QueueInput::DropAbove { src, dest } => {
+            QueueIn::DropAbove { src, dest } => {
                 let mut guard = self.songs.guard();
                 let src = src.current_index();
                 let dest = dest.current_index();
                 guard.move_to(src, dest);
             }
-            QueueInput::DropBelow { src, dest } => {
+            QueueIn::DropBelow { src, dest } => {
                 let mut guard = self.songs.guard();
                 let src = src.current_index();
                 let dest = dest.current_index();
@@ -275,7 +273,7 @@ impl SimpleComponent for QueueModel {
                     guard.move_to(src, dest + 1);
                 }
             }
-            QueueInput::NewState(state) => {
+            QueueIn::NewState(state) => {
                 if self.songs.is_empty() {
                     return;
                 }
@@ -298,17 +296,17 @@ impl SimpleComponent for QueueModel {
                     PlayState::Stop => println!("TODO implement stop in queue"),
                 }
             }
-            QueueInput::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
-            QueueInput::ToggleShuffle => {
+            QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
+            QueueIn::ToggleShuffle => {
                 //TODO sth useful
             }
-            QueueInput::RepeatPressed => {
+            QueueIn::RepeatPressed => {
                 //TODO sth useful
             }
-            QueueInput::PlayNext => {
+            QueueIn::PlayNext => {
                 //TODO fth useful
             }
-            QueueInput::PlayPrevious => {
+            QueueIn::PlayPrevious => {
                 //TODO fth useful
             }
         }

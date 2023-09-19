@@ -11,7 +11,7 @@ use relm4::{
     FactorySender, RelmWidgetExt,
 };
 
-use crate::{components::queue::QueueInput, css::DragState, play_state::PlayState, types::Id};
+use crate::{components::queue::QueueIn, css::DragState, play_state::PlayState, types::Id};
 
 #[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
 #[boxed_type(name = "QueueSongIndex")]
@@ -80,7 +80,7 @@ impl QueueSong {
 #[relm4::factory(pub)]
 impl FactoryComponent for QueueSong {
     type ParentWidget = gtk::ListBox;
-    type ParentInput = QueueInput;
+    type ParentInput = QueueIn;
     type CommandOutput = ();
     type Input = QueueSongInput;
     type Output = QueueSongOutput;
@@ -109,14 +109,14 @@ impl FactoryComponent for QueueSong {
         model
     }
 
-    fn forward_to_parent(output: Self::Output) -> Option<QueueInput> {
+    fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
         match output {
-            QueueSongOutput::Activated(index, id) => Some(QueueInput::Activated(index, id)),
-            QueueSongOutput::Clicked(index) => Some(QueueInput::Clicked(index)),
-            QueueSongOutput::ShiftClicked(index) => Some(QueueInput::ShiftClicked(index)),
-            QueueSongOutput::Remove => Some(QueueInput::Remove),
-            QueueSongOutput::DropAbove { src, dest } => Some(QueueInput::DropAbove { src, dest }),
-            QueueSongOutput::DropBelow { src, dest } => Some(QueueInput::DropBelow { src, dest }),
+            QueueSongOutput::Activated(index, id) => Some(QueueIn::Activated(index, id)),
+            QueueSongOutput::Clicked(index) => Some(QueueIn::Clicked(index)),
+            QueueSongOutput::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
+            QueueSongOutput::Remove => Some(QueueIn::Remove),
+            QueueSongOutput::DropAbove { src, dest } => Some(QueueIn::DropAbove { src, dest }),
+            QueueSongOutput::DropBelow { src, dest } => Some(QueueIn::DropBelow { src, dest }),
         }
     }
 

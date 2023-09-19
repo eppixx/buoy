@@ -152,7 +152,7 @@ impl relm4::SimpleComponent for ArtistElement {
         // init cover
         let mut builder = CoverBuilder::default().title(&id.name);
         if let Some(id) = &id.cover_art {
-            builder = builder.image(id);
+            // builder = builder.image(id);
         }
 
         let cover: relm4::Controller<Cover> = Cover::builder().launch(builder).detach();
