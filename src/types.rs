@@ -28,6 +28,15 @@ impl Id {
         Self::Playlist(id.into())
     }
 
+    pub fn inner(&self) -> &str {
+        match self {
+            Self::Song(id) => &id,
+            Self::Artist(id) => &id,
+            Self::Album(id) => &id,
+            Self::Playlist(id) => &id,
+        }
+    }
+
     pub fn serialize(&self) -> String {
         match self {
             Self::Song(id) => format!("song{}{id}", Self::DELIMITER),

@@ -108,7 +108,7 @@ impl relm4::SimpleComponent for Seekbar {
     }
 }
 
-fn convert_for_label(time: i64) -> String {
+pub fn convert_for_label(time: i64) -> String {
     let time = chrono::Duration::milliseconds(time);
     let hours = time.num_hours();
     let minutes = (time - chrono::Duration::hours(hours)).num_minutes();

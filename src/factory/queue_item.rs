@@ -11,14 +11,20 @@ use relm4::{
     FactorySender, RelmWidgetExt,
 };
 
-use crate::{components::queue::QueueIn, css::DragState, play_state::PlayState, types::Id};
+use crate::{
+    client::Client,
+    components::{queue::QueueIn, seekbar},
+    css::DragState,
+    play_state::PlayState,
+    types::Id,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
 #[boxed_type(name = "QueueSongIndex")]
 struct Index(DynamicIndex);
 
 #[derive(Debug)]
-pub enum QueueSongInput {
+pub enum QueueSongIn {
     Activated,
     DraggedOver(f64),
     DragDropped {
@@ -33,10 +39,11 @@ pub enum QueueSongInput {
         value: glib::Value,
         y: f64,
     },
+    LoadSongInfo,
 }
 
 #[derive(Debug)]
-pub enum QueueSongOutput {
+pub enum QueueSongOut {
     Activated(DynamicIndex, Id),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
@@ -55,6 +62,9 @@ pub enum QueueSongOutput {
 pub struct QueueSong {
     root_widget: gtk::ListBoxRow,
     id: Id,
+    title: String,
+    artist: String,
+    length: i64, //length of song in ms
     index: DynamicIndex,
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
@@ -64,7 +74,7 @@ pub struct QueueSong {
 
 impl QueueSong {
     pub fn new_play_state(&self, state: PlayState) -> (Option<DynamicIndex>, Option<Id>) {
-        self.sender.input(QueueSongInput::NewState(state.clone()));
+        self.sender.input(QueueSongIn::NewState(state.clone()));
         match state {
             PlayState::Play => (Some(self.index.clone()), Some(self.id.clone())),
             PlayState::Pause => (Some(self.index.clone()), None),
@@ -77,13 +87,18 @@ impl QueueSong {
     }
 }
 
+#[derive(Debug)]
+pub enum QueueItemCmd {
+    LoadedTrack(Option<submarine::data::Child>),
+}
+
 #[relm4::factory(pub)]
 impl FactoryComponent for QueueSong {
     type ParentWidget = gtk::ListBox;
     type ParentInput = QueueIn;
-    type CommandOutput = ();
-    type Input = QueueSongInput;
-    type Output = QueueSongOutput;
+    type CommandOutput = QueueItemCmd;
+    type Input = QueueSongIn;
+    type Output = QueueSongOut;
     type Init = Id;
     type Widgets = QueueSongWidgets;
 
@@ -91,12 +106,17 @@ impl FactoryComponent for QueueSong {
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
             id,
+            title: String::from("song"),
+            artist: String::from("Unknown Artist"),
+            length: 0,
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
             left_icon_stack: gtk::Stack::default(),
             starred: gtk::Button::default(),
         };
+
+        sender.input(QueueSongIn::LoadSongInfo);
 
         DragState::reset(&mut model.root_widget);
 
@@ -111,25 +131,22 @@ impl FactoryComponent for QueueSong {
 
     fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
         match output {
-            QueueSongOutput::Activated(index, id) => Some(QueueIn::Activated(index, id)),
-            QueueSongOutput::Clicked(index) => Some(QueueIn::Clicked(index)),
-            QueueSongOutput::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
-            QueueSongOutput::Remove => Some(QueueIn::Remove),
-            QueueSongOutput::DropAbove { src, dest } => Some(QueueIn::DropAbove { src, dest }),
-            QueueSongOutput::DropBelow { src, dest } => Some(QueueIn::DropBelow { src, dest }),
+            QueueSongOut::Activated(index, id) => Some(QueueIn::Activated(index, id)),
+            QueueSongOut::Clicked(index) => Some(QueueIn::Clicked(index)),
+            QueueSongOut::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
+            QueueSongOut::Remove => Some(QueueIn::Remove),
+            QueueSongOut::DropAbove { src, dest } => Some(QueueIn::DropAbove { src, dest }),
+            QueueSongOut::DropBelow { src, dest } => Some(QueueIn::DropBelow { src, dest }),
         }
     }
 
     fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
-            QueueSongInput::Activated => {
+            QueueSongIn::Activated => {
                 self.new_play_state(PlayState::Play);
-                sender.output(QueueSongOutput::Activated(
-                    self.index.clone(),
-                    self.id.clone(),
-                ));
+                sender.output(QueueSongOut::Activated(self.index.clone(), self.id.clone()));
             }
-            QueueSongInput::DraggedOver(y) => {
+            QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
                 if y < widget_height as f64 * 0.5f64 {
                     DragState::drop_shadow_top(&mut self.root_widget);
@@ -137,21 +154,21 @@ impl FactoryComponent for QueueSong {
                     DragState::drop_shadow_bottom(&mut self.root_widget);
                 }
             }
-            QueueSongInput::DragDropped { src, dest, y } => {
+            QueueSongIn::DragDropped { src, dest, y } => {
                 let widget_height = self.root_widget.height();
                 if y < widget_height as f64 * 0.5f64 {
-                    sender.output(QueueSongOutput::DropAbove { src, dest });
+                    sender.output(QueueSongOut::DropAbove { src, dest });
                 } else {
-                    sender.output(QueueSongOutput::DropBelow { src, dest });
+                    sender.output(QueueSongOut::DropBelow { src, dest });
                 }
             }
-            QueueSongInput::DragLeave => DragState::reset(&mut self.root_widget),
-            QueueSongInput::NewState(state) => match state {
+            QueueSongIn::DragLeave => DragState::reset(&mut self.root_widget),
+            QueueSongIn::NewState(state) => match state {
                 PlayState::Play => self.left_icon_stack.set_visible_child_name("status-play"),
                 PlayState::Pause => self.left_icon_stack.set_visible_child_name("status-pause"),
                 PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
             },
-            QueueSongInput::StarredClicked => {
+            QueueSongIn::StarredClicked => {
                 match self.starred.icon_name().as_deref() {
                     Some("starred") => {
                         self.starred.set_icon_name("non-starred");
@@ -165,12 +182,12 @@ impl FactoryComponent for QueueSong {
                 }
                 //TODO sth usefull
             }
-            QueueSongInput::DroppedItem { value, y } => {
-                sender.input(QueueSongInput::DragLeave);
+            QueueSongIn::DroppedItem { value, y } => {
+                sender.input(QueueSongIn::DragLeave);
 
                 // drop is a index
                 if let Ok(src_index) = value.get::<Index>() {
-                    sender.input(QueueSongInput::DragDropped {
+                    sender.input(QueueSongIn::DragDropped {
                         src: src_index.0.clone(),
                         dest: self.index.clone(),
                         y,
@@ -183,11 +200,20 @@ impl FactoryComponent for QueueSong {
                     // return true;
                 }
             }
+            QueueSongIn::LoadSongInfo => {
+                let id = self.id.clone();
+                sender.oneshot_command(async move {
+                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    match client.get_song(id.inner()).await {
+                        Ok(child) => QueueItemCmd::LoadedTrack(Some(child)),
+                        Err(_) => QueueItemCmd::LoadedTrack(None),
+                    }
+                });
+            }
         }
     }
 
     view! {
-        #[root]
         self.root_widget.clone() -> gtk::ListBoxRow {
             add_css_class: "queue-song",
 
@@ -222,17 +248,16 @@ impl FactoryComponent for QueueSong {
                     set_valign: gtk::Align::Center,
 
                     gtk::Label {
-                        //TODO insert real title
-                        set_label: &self.id.serialize(),
+                        #[watch]
+                        set_label: &self.title,
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
                         set_ellipsize: pango::EllipsizeMode::End,
                     },
-
                     gtk:: Label {
-                        //TODO insert real artist
-                        set_markup: &format!("<span style=\"italic\">{}</span>", "Artist"),
+                        #[watch]
+                        set_markup: &format!("<span style=\"italic\">{}</span>", self.artist),
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
@@ -241,15 +266,15 @@ impl FactoryComponent for QueueSong {
                 },
 
                 gtk::Label {
-                    //TODO get real length of song
-                    set_label: "2:00",
+                    #[watch]
+                    set_label: &seekbar::convert_for_label(self.length),
                 },
 
                 self.starred.clone() -> gtk::Button {
                     set_icon_name: "starred",
                     set_tooltip: "Click to favorite song",
                     set_focus_on_click: false,
-                    connect_clicked => QueueSongInput::StarredClicked,
+                    connect_clicked => QueueSongIn::StarredClicked,
                 },
             },
 
@@ -257,7 +282,7 @@ impl FactoryComponent for QueueSong {
             add_controller: self.drag_src.clone(),
 
             // activate is when pressed enter on item
-            connect_activate => QueueSongInput::Activated,
+            connect_activate => QueueSongIn::Activated,
 
             // accept drop from queue items and id's and render drop indicators
             add_controller = gtk::DropTarget {
@@ -267,7 +292,7 @@ impl FactoryComponent for QueueSong {
                 ],
 
                 connect_drop[sender] => move |_target, value, _x, y| {
-                    sender.input(QueueSongInput::DroppedItem {
+                    sender.input(QueueSongIn::DroppedItem {
                         value: value.clone(),
                         y,
                     });
@@ -275,12 +300,12 @@ impl FactoryComponent for QueueSong {
                 },
 
                 connect_motion[sender] => move |_widget, _x, y| {
-                    sender.input(QueueSongInput::DraggedOver(y));
+                    sender.input(QueueSongIn::DraggedOver(y));
                     //may need to return other value for drag in future
                     gdk::DragAction::MOVE
                 },
 
-                connect_leave => QueueSongInput::DragLeave,
+                connect_leave => QueueSongIn::DragLeave,
             },
 
             // double left click activates item
@@ -292,14 +317,14 @@ impl FactoryComponent for QueueSong {
                         if !(state.contains(gdk::ModifierType::SHIFT_MASK)
                              || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
                             // normal click
-                            sender.output(QueueSongOutput::Clicked(index.clone()));
+                            sender.output(QueueSongOut::Clicked(index.clone()));
                         } else if state.contains(gdk::ModifierType::SHIFT_MASK) {
                             // shift click
-                            sender.output(QueueSongOutput::ShiftClicked(index.clone()));
+                            sender.output(QueueSongOut::ShiftClicked(index.clone()));
                         }
                     }
                     else if n == 2 {
-                        sender.input(QueueSongInput::Activated);
+                        sender.input(QueueSongIn::Activated);
                     }
                 }
             },
@@ -308,11 +333,32 @@ impl FactoryComponent for QueueSong {
             add_controller = gtk::EventControllerKey {
                 connect_key_pressed[sender] => move |_widget, key, _code, _state| {
                     if key == gtk::gdk::Key::Delete {
-                        sender.output(QueueSongOutput::Remove);
+                        sender.output(QueueSongOut::Remove);
                     }
                     gtk::Inhibit(false)
                 }
             },
+        }
+    }
+
+    fn update_cmd(&mut self, message: Self::CommandOutput, _sender: relm4::FactorySender<Self>) {
+        match message {
+            QueueItemCmd::LoadedTrack(child) => {
+                let child = if let Some(child) = child {
+                    child
+                } else {
+                    return;
+                };
+
+                // settings song data
+                self.title = child.title;
+                if let Some(artist) = &child.artist {
+                    self.artist = artist.clone();
+                }
+                if let Some(length) = &child.duration {
+                    self.length = *length as i64 * 1000;
+                }
+            }
         }
     }
 }
