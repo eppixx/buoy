@@ -1,76 +1,37 @@
 use relm4::{
     gtk::{
-        self, gdk,
-        gdk_pixbuf::Pixbuf,
-        pango,
-        prelude::ToValue,
+        self,
         traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
-    WidgetTemplate,
+    loading_widgets::LoadingWidgets,
+    view, Component, ComponentController,
 };
 
-use relm4::{loading_widgets::LoadingWidgets, view};
-
+use crate::components::cover::{Cover, CoverIn};
 use crate::{client::Client, types::Id};
 
 #[derive(Debug, Default)]
-pub struct Artists {
-    flowbox: gtk::FlowBox,
+pub struct ArtistsView {
+    artists: gtk::FlowBox,
+    artist_list: Vec<relm4::Controller<ArtistElement>>,
 }
 
 #[derive(Debug)]
-pub enum ArtistsOut {
-    ChangeTo(Id),
+pub enum ArtistsViewOut {
+    ClickedArtist(Id),
 }
 
 #[derive(Debug)]
-pub enum ArtistsIn {
-    Clicked(Id),
+pub enum ArtistsViewIn {
+    ArtistElement(ArtistElementOut),
 }
 
 #[relm4::component(async, pub)]
-impl relm4::component::AsyncComponent for Artists {
-    type Input = ArtistsIn;
-    type Output = ArtistsOut;
+impl relm4::component::AsyncComponent for ArtistsView {
+    type Input = ArtistsViewIn;
+    type Output = ArtistsViewOut;
     type Init = ();
     type CommandOutput = ();
-
-    async fn init(
-        _init: Self::Init,
-        root: Self::Root,
-        sender: relm4::AsyncComponentSender<Self>,
-    ) -> relm4::component::AsyncComponentParts<Self> {
-        let artists: Vec<submarine::data::ArtistId3> = {
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            let indexes: Vec<submarine::data::IndexId3> = client.get_artists(None).await.unwrap();
-            indexes.into_iter().flat_map(|i| i.artist).collect()
-        };
-
-        let model = Artists::default();
-        let widgets = view_output!();
-
-        for artist in artists.into_iter().rev() {
-            let id = artist.id.clone();
-            let artist_element: relm4::component::AsyncController<ArtistElement> =
-                ArtistElement::builder()
-                    .launch(artist)
-                    .forward(sender.input_sender(), ArtistsIn::Clicked);
-            let btn = gtk::Button::default();
-            btn.add_css_class("flat");
-            let sender = sender.clone();
-            btn.connect_clicked(move |_btn| {
-                sender
-                    .output(ArtistsOut::ChangeTo(Id::artist(&id)))
-                    .unwrap();
-            });
-            // btn.set_child(Some(artist_element.widget()));
-            model.flowbox.insert(&btn, 0);
-        }
-
-        widgets.reveal_after_init.set_visible(true);
-
-        relm4::component::AsyncComponentParts { model, widgets }
-    }
 
     fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
         view! {
@@ -102,129 +63,119 @@ impl relm4::component::AsyncComponent for Artists {
         Some(LoadingWidgets::new(root, loading_box))
     }
 
+    async fn init(
+        _init: Self::Init,
+        root: Self::Root,
+        sender: relm4::AsyncComponentSender<Self>,
+    ) -> relm4::component::AsyncComponentParts<Self> {
+        let mut model = Self::default();
+        let widgets = view_output!();
+
+        // get artists
+        let artists: Vec<submarine::data::ArtistId3> = {
+            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            let indexes: Vec<submarine::data::IndexId3> = client.get_artists(None).await.unwrap();
+            indexes.into_iter().flat_map(|i| i.artist).collect()
+        };
+
+        // add artists with cover and title
+        for artist in artists.into_iter().rev() {
+            let cover: relm4::Controller<ArtistElement> = ArtistElement::builder()
+                .launch(artist)
+                .forward(sender.input_sender(), ArtistsViewIn::ArtistElement);
+            model.artists.insert(cover.widget(), 0);
+            model.artist_list.insert(0, cover);
+        }
+
+        relm4::component::AsyncComponentParts { model, widgets }
+    }
+
     view! {
         gtk::Box {
-            set_hexpand: true,
             set_orientation: gtk::Orientation::Vertical,
+            set_hexpand: true,
 
-            #[name = "reveal_after_init"]
             gtk::Label {
-                set_visible: false,
                 add_css_class: "h2",
-                set_halign: gtk::Align::Center,
                 set_label: "Artists",
+                set_halign: gtk::Align::Center,
             },
 
             gtk::ScrolledWindow {
-                set_vexpand: true,
                 set_hexpand: true,
+                set_vexpand: true,
 
                 #[wrap(Some)]
-                set_child = &model.flowbox.clone() -> gtk::FlowBox {
-                },
+                set_child = &model.artists.clone() -> gtk::FlowBox {
+                }
             }
+        }
+    }
+
+    async fn update(
+        &mut self,
+        msg: Self::Input,
+        sender: relm4::AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            ArtistsViewIn::ArtistElement(msg) => match msg {
+                ArtistElementOut::Clicked(id) => {
+                    sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap()
+                }
+            },
         }
     }
 }
 
 #[derive(Debug)]
-struct ArtistElement {
-    info: submarine::data::ArtistId3,
-    image: gtk::Image,
-    drag_src: gtk::DragSource,
+pub struct ArtistElement {
+    cover: relm4::Controller<Cover>,
 }
 
-#[relm4::component(async)]
-impl relm4::component::AsyncComponent for ArtistElement {
+#[derive(Debug)]
+pub enum ArtistElementOut {
+    Clicked(Id),
+}
+
+#[relm4::component(pub)]
+impl relm4::SimpleComponent for ArtistElement {
     type Input = ();
-    type Output = Id;
+    type Output = ArtistElementOut;
     type Init = submarine::data::ArtistId3;
-    type CommandOutput = ();
 
-    async fn init(
-        init: Self::Init,
-        root: Self::Root,
-        sender: relm4::AsyncComponentSender<Self>,
-    ) -> relm4::component::AsyncComponentParts<Self> {
-        let id = Id::artist(&init.id);
-        let model = ArtistElement {
-            info: init,
-            image: gtk::Image::default(),
-            drag_src: gtk::DragSource::default(),
-        };
-
-        // set drag source
-        let content = gdk::ContentProvider::for_value(&id.to_value());
-        model.drag_src.set_content(Some(&content));
-        model.drag_src.set_actions(gdk::DragAction::MOVE);
-
-        // loading artist images
-        {
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            if let Some(id) = &model.info.cover_art {
-                let buffer: Vec<u8> = client.get_cover_art(id, Some(300)).await.unwrap();
-                let bytes = gtk::glib::Bytes::from(&buffer);
-                let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
-                match Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
-                    Ok(pixbuf) => model.image.set_from_pixbuf(Some(&pixbuf)),
-                    _ => {} // TODO replace with stock image
-                }
-            }
-        }
+    fn init(
+        id: Self::Init,
+        root: &Self::Root,
+        sender: relm4::ComponentSender<Self>,
+    ) -> relm4::ComponentParts<Self> {
+        let cover: relm4::Controller<Cover> = Cover::builder().launch(()).detach();
+        let model = Self { cover };
 
         let widgets = view_output!();
 
-        widgets.actual_cover.set_visible(true);
-
-        relm4::component::AsyncComponentParts { model, widgets }
-    }
-
-    fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
-        view! {
-            #[local_ref]
-            root {
-                add_css_class: "artists-element",
-
-                #[name(spinner)]
-                gtk::Box {
-                    add_css_class: "card",
-                    add_css_class: "size150",
-                    set_halign: gtk::Align::Center,
-
-                    gtk::Spinner {
-                        add_css_class: "size50",
-                        set_hexpand: true,
-                        set_halign: gtk::Align::Center,
-                        start: (),
-                    }
-                }
-            }
+        //init widgets
+        model.cover.emit(CoverIn::SetTitle(Some(id.name)));
+        if let Some(id) = id.cover_art {
+            model.cover.emit(CoverIn::LoadImage(Some(id)));
         }
-        Some(LoadingWidgets::new(root, spinner))
+
+        relm4::ComponentParts { model, widgets }
     }
 
     view! {
         gtk::Box {
-            add_css_class: "artist-cover",
-            set_orientation: gtk::Orientation::Vertical,
-            set_spacing: 5,
-            add_controller: model.drag_src.clone(),
+            add_css_class: "artists-view-artist",
 
-            #[name = "actual_cover"]
-            gtk::Box {
-                set_visible: false,
-                set_halign: gtk::Align::Center,
-
-                append = &model.image.clone() -> gtk::Image {
-                    add_css_class: "size150",
-                    add_css_class: "card",
+            gtk::Button {
+                add_css_class: "flat",
+                connect_clicked[sender, id] => move |_btn| {
+                    tracing::error!("artists clicked");
+                    sender.output(ArtistElementOut::Clicked(Id::artist(&id.id))).unwrap();
                 },
-            },
-            gtk::Label {
-                set_text: &model.info.name,
-                set_ellipsize: pango::EllipsizeMode::End,
-                set_max_width_chars: 15,
-                set_size_request: (150, -1),
+
+                #[wrap(Some)]
+                set_child = &model.cover.widget().clone(),
             }
         }
     }

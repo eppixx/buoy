@@ -59,12 +59,12 @@ impl relm4::Component for Cover {
             set_spacing: 5,
 
             //test button
-            gtk::Button {
-                set_label: "Start search",
-                connect_clicked => CoverIn::LoadImage(Some(String::from("al-e0efdaf212ce4152eab39fac22c5c9e7_6115467e"))),
-                #[watch]
-                set_sensitive: !model.loading,
-            },
+            // gtk::Button {
+            //     set_label: "Start search",
+            //     connect_clicked => CoverIn::LoadImage(Some(String::from("al-e0efdaf212ce4152eab39fac22c5c9e7_6115467e"))),
+            //     #[watch]
+            //     set_sensitive: !model.loading,
+            // },
 
             gtk::Box {
                 set_hexpand: true,
@@ -102,7 +102,9 @@ impl relm4::Component for Cover {
                     set_label: title,
                 }
             } else {
-                gtk::Label {}
+                gtk::Label {
+                    set_visible: false,
+                }
             },
 
             if let Some(subtitle) = &model.subtitle {
@@ -115,7 +117,9 @@ impl relm4::Component for Cover {
                     set_markup: &format!("<span style=\"italic\">{}</span>", subtitle),
                 }
             } else {
-                gtk::Label {}
+                gtk::Label {
+                    set_visible: false,
+                }
             }
         }
     }

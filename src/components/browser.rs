@@ -8,12 +8,11 @@ use relm4::{
 };
 
 use super::{
-    albums::AlbumsOut, artists::ArtistsView, artists_view::ArtistsOut, dashboard::DashboardOutput,
+    albums::AlbumsOut,
+    artists_view::{ArtistsView, ArtistsViewOut},
+    dashboard::DashboardOutput,
 };
-use crate::{
-    components::albums::Albums, components::artists_view::Artists,
-    components::dashboard::Dashboard, types::Id,
-};
+use crate::{components::albums::Albums, components::dashboard::Dashboard, types::Id};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum View {
@@ -25,7 +24,7 @@ pub enum View {
     Id(Id),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Browser {
     history: Vec<View>, //includes current View; so should never be empty
     content: gtk::Viewport,
@@ -35,6 +34,8 @@ pub struct Browser {
     albums_btn: gtk::ToggleButton,
     tracks_btn: gtk::ToggleButton,
     playlists_btn: gtk::ToggleButton,
+
+    artist_view: relm4::component::AsyncController<ArtistsView>,
 }
 
 #[derive(Debug)]
@@ -48,9 +49,8 @@ pub enum BrowserInput {
     PlaylistClicked,
     NewView(View),
     Dashboard(DashboardOutput),
-    Artists(ArtistsOut),
     Albums(AlbumsOut),
-    // AlbumsView(ArtistsViewOut),
+    ArtistsView(ArtistsViewOut),
 }
 
 #[relm4::component(pub)]
@@ -64,7 +64,22 @@ impl relm4::SimpleComponent for Browser {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Browser::default();
+        let artists: relm4::component::AsyncController<ArtistsView> = ArtistsView::builder()
+            .launch(())
+            .forward(sender.input_sender(), BrowserInput::ArtistsView);
+
+        let model = Self {
+            history: vec![],
+            content: gtk::Viewport::default(),
+            back_btn: gtk::Button::default(),
+            dashboard_btn: gtk::ToggleButton::default(),
+            artists_btn: gtk::ToggleButton::default(),
+            albums_btn: gtk::ToggleButton::default(),
+            tracks_btn: gtk::ToggleButton::default(),
+            playlists_btn: gtk::ToggleButton::default(),
+
+            artist_view: artists,
+        };
         let widgets = view_output!();
 
         //TODO swtich default view
@@ -236,14 +251,14 @@ impl relm4::SimpleComponent for Browser {
             BrowserInput::Dashboard(output) => {
                 //TODO react to output
             }
-            BrowserInput::Artists(msg) => match msg {
-                ArtistsOut::ChangeTo(id) => sender.input(BrowserInput::NewView(View::Id(id))),
-            },
             //TODO rename Out-enums to be the same
             BrowserInput::Albums(msg) => match msg {
                 AlbumsOut::Clicked(id) => sender.input(BrowserInput::NewView(View::Id(id))),
             },
-            // BrowserInput::AlbumsView(msg) => todo!(),
+            BrowserInput::ArtistsView(msg) => {
+                //TODO change to view
+                tracing::error!("received clicked artists");
+            }
         }
     }
 }
@@ -258,10 +273,7 @@ impl Browser {
                 self.content.set_child(Some(dashboard.widget()));
             }
             View::Artists => {
-                let artists: relm4::component::AsyncController<Artists> = Artists::builder()
-                    .launch(())
-                    .forward(sender.input_sender(), BrowserInput::Artists);
-                self.content.set_child(Some(artists.widget()));
+                self.content.set_child(Some(self.artist_view.widget()));
             }
             View::Albums => {
                 let albums: relm4::component::AsyncController<Albums> = Albums::builder()
@@ -271,9 +283,7 @@ impl Browser {
             }
             View::Tracks => {
                 //TODO change
-                let albums: relm4::component::AsyncController<ArtistsView> =
-                    ArtistsView::builder().launch(()).detach();
-                self.content.set_child(Some(albums.widget()));
+                // self.content.set_child(Some(self.artist_view.widget()));
             }
             View::Playlists => todo!(),
             View::Id(_) => todo!(),
