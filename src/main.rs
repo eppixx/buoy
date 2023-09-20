@@ -1,4 +1,6 @@
-use components::{play_controls::PlayControlIn, queue::QueueOut, seekbar::SeekbarOut};
+use components::{
+    play_controls::PlayControlIn, play_info::PlayInfoIn, queue::QueueOut, seekbar::SeekbarOut,
+};
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
@@ -202,10 +204,14 @@ impl SimpleComponent for AppModel {
                 self.volume_btn.set_sensitive(false);
             }
             AppMsg::Queue(msg) => match msg {
-                QueueOut::Play(id, length) => {
+                QueueOut::Play(child) => {
+                    // update playcontrol
+                    self.play_info.emit(PlayInfoIn::NewState(child.clone()));
+
+                    // set playback
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
                     match client.stream_url(
-                        id.inner(),
+                        child.id,
                         None,
                         None::<&str>,
                         None,
@@ -215,7 +221,11 @@ impl SimpleComponent for AppModel {
                     ) {
                         Ok(url) => {
                             self.playback.set_track(url);
-                            self.seekbar.emit(SeekbarIn::NewRange(length));
+                            if let Some(length) = child.duration {
+                                self.seekbar.emit(SeekbarIn::NewRange(length as i64 * 1000));
+                            } else {
+                                self.seekbar.emit(SeekbarIn::NewRange(0));
+                            }
                             self.playback.play().unwrap();
                         }
                         Err(_) => {} //TODO error handling

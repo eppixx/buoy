@@ -44,7 +44,7 @@ pub enum QueueSongIn {
 
 #[derive(Debug)]
 pub enum QueueSongOut {
-    Activated(DynamicIndex, Id, i64),
+    Activated(DynamicIndex, submarine::data::Child),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
     Remove,
@@ -134,9 +134,7 @@ impl FactoryComponent for QueueSong {
 
     fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
         match output {
-            QueueSongOut::Activated(index, id, length) => {
-                Some(QueueIn::Activated(index, id, length))
-            }
+            QueueSongOut::Activated(index, info) => Some(QueueIn::Activated(index, info)),
             QueueSongOut::Clicked(index) => Some(QueueIn::Clicked(index)),
             QueueSongOut::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
             QueueSongOut::Remove => Some(QueueIn::Remove),
@@ -149,14 +147,8 @@ impl FactoryComponent for QueueSong {
         match message {
             QueueSongIn::Activated => {
                 if let Some(info) = &self.info {
-                    if let Some(length) = info.duration {
-                        self.new_play_state(PlayState::Play);
-                        sender.output(QueueSongOut::Activated(
-                            self.index.clone(),
-                            self.id.clone(),
-                            length as i64 * 1000,
-                        ));
-                    }
+                    self.new_play_state(PlayState::Play);
+                    sender.output(QueueSongOut::Activated(self.index.clone(), info.clone()));
                 }
             }
             QueueSongIn::DraggedOver(y) => {
