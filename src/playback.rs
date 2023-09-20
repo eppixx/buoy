@@ -187,7 +187,7 @@ impl Playback {
 
     pub fn set_volume(&self, value: f64) {
         let volume = value.clamp(0.0, 1.0);
-        self.volume.set_property("volume", volume);
+        self.volume.set_property("volume", volume.powi(2));
     }
 
     pub fn sync_equalizer(&mut self) {
