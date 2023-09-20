@@ -133,6 +133,7 @@ impl Playback {
     }
 
     pub fn set_track(&mut self, uri: impl AsRef<str>) {
+        self.stop().unwrap(); //TODO error handling
         self.source.set_property("uri", uri.as_ref());
     }
 

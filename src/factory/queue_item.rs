@@ -386,7 +386,6 @@ impl FactoryComponent for QueueSong {
                 self.info = Some(child);
             }
             QueueItemCmd::Favorited(state) => {
-                tracing::error!("changed state {state:?}");
                 match state {
                     Some(state) => self.favorited = state,
                     None => {} //TODO some error handling
