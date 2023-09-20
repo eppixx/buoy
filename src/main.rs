@@ -1,3 +1,4 @@
+use components::{play_controls::PlayControlIn, queue::QueueOut, seekbar::SeekbarOut};
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
@@ -57,11 +58,12 @@ struct AppModel {
 enum AppMsg {
     ResetLogin,
     PlayControlOutput(PlayControlOut),
-    Seekbar(i64),
+    Seekbar(SeekbarOut),
     VolumeChange(f64),
     Playback(PlaybackOutput),
     LoginForm(LoginFormOut),
     Equalizer(EqualizerOut),
+    Queue(QueueOut),
 }
 
 #[relm4::component]
@@ -85,7 +87,7 @@ impl SimpleComponent for AppModel {
             .forward(sender.input_sender(), AppMsg::LoginForm);
         let queue: Controller<Queue> = Queue::builder()
             .launch(())
-            .forward(sender.input_sender(), |_msg| todo!());
+            .forward(sender.input_sender(), AppMsg::Queue);
         let play_controls = PlayControl::builder()
             .launch(PlayState::Pause) // TODO change to previous state
             .forward(sender.input_sender(), AppMsg::PlayControlOutput);
@@ -159,9 +161,11 @@ impl SimpleComponent for AppModel {
                     PlayState::Play => self.playback.play().unwrap(),
                     PlayState::Stop => self.playback.stop().unwrap(),
                 };
-                _ = self.queue.sender().send(QueueIn::NewState(status));
+                self.queue.sender().send(QueueIn::NewState(status)).unwrap();
             }
-            AppMsg::Seekbar(seek_in_ms) => self.playback.set_position(seek_in_ms),
+            AppMsg::Seekbar(msg) => match msg {
+                SeekbarOut::SeekDragged(seek_in_ms) => self.playback.set_position(seek_in_ms),
+            },
             AppMsg::VolumeChange(value) => {
                 self.playback.set_volume(value);
                 let mut settings = Settings::get().lock().unwrap();
@@ -172,7 +176,9 @@ impl SimpleComponent for AppModel {
                 match playback {
                     PlaybackOutput::TrackEnd => {} //TODO play next
                     PlaybackOutput::Seek(ms) => {
-                        self.seekbar.sender().emit(SeekbarIn::SeekTo(ms));
+                        self.seekbar.emit(SeekbarIn::SeekTo(ms));
+                        self.play_controls
+                            .emit(PlayControlIn::NewState(PlayState::Play));
                     }
                 }
             }
@@ -195,6 +201,27 @@ impl SimpleComponent for AppModel {
                 self.equalizer_btn.set_sensitive(false);
                 self.volume_btn.set_sensitive(false);
             }
+            AppMsg::Queue(msg) => match msg {
+                QueueOut::Play(id, length) => {
+                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    match client.stream_url(
+                        id.inner(),
+                        None,
+                        None::<&str>,
+                        None,
+                        None::<&str>,
+                        None,
+                        None,
+                    ) {
+                        Ok(url) => {
+                            self.playback.set_track(url);
+                            self.seekbar.emit(SeekbarIn::NewRange(length));
+                            self.playback.play().unwrap();
+                        }
+                        Err(_) => {} //TODO error handling
+                    }
+                }
+            },
         }
     }
 
@@ -315,6 +342,10 @@ impl SimpleComponent for AppModel {
                 },
             },
         }
+    }
+
+    fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        self.playback.shutdown().unwrap();
     }
 }
 

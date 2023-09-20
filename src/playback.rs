@@ -121,7 +121,6 @@ impl Playback {
         });
 
         let mut play = Self {
-            // settings: settings.clone(),
             pipeline,
             source,
             volume,
@@ -148,6 +147,11 @@ impl Playback {
 
     pub fn stop(&mut self) -> anyhow::Result<()> {
         self.pipeline.set_state(gstreamer::State::Ready)?;
+        Ok(())
+    }
+
+    pub fn shutdown(&mut self) -> anyhow::Result<()> {
+        self.pipeline.set_state(gstreamer::State::Null)?;
         Ok(())
     }
 

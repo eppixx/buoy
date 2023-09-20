@@ -45,7 +45,7 @@ impl Queue {
 
 #[derive(Debug)]
 pub enum QueueIn {
-    Activated(DynamicIndex, Id),
+    Activated(DynamicIndex, Id, i64),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
     Append(Id),
@@ -70,7 +70,7 @@ pub enum QueueIn {
 
 #[derive(Debug)]
 pub enum QueueOut {
-    Play(Id),
+    Play(Id, i64),
 }
 
 #[derive(Debug)]
@@ -206,7 +206,7 @@ impl relm4::Component for Queue {
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            QueueIn::Activated(index, id) => {
+            QueueIn::Activated(index, id, length) => {
                 // remove play icon and selection from other indexes
                 for (_i, song) in self
                     .songs
@@ -218,9 +218,7 @@ impl relm4::Component for Queue {
                     song.new_play_state(PlayState::Stop);
                 }
 
-                // TODO play song
-                //TODO send id up
-                println!("playing id: {id:?}");
+                sender.output(QueueOut::Play(id, length)).unwrap();
             }
             QueueIn::Clicked(index) => {
                 for (_i, song) in self

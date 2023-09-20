@@ -44,7 +44,7 @@ pub enum QueueSongIn {
 
 #[derive(Debug)]
 pub enum QueueSongOut {
-    Activated(DynamicIndex, Id),
+    Activated(DynamicIndex, Id, i64),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
     Remove,
@@ -61,6 +61,7 @@ pub enum QueueSongOut {
 #[derive(Debug)]
 pub struct QueueSong {
     root_widget: gtk::ListBoxRow,
+    info: Option<submarine::data::Child>,
     id: Id,
     title: String,
     artist: String,
@@ -106,6 +107,7 @@ impl FactoryComponent for QueueSong {
     fn init_model(id: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
+            info: None,
             id,
             title: String::from("song"),
             artist: String::from("Unknown Artist"),
@@ -132,7 +134,9 @@ impl FactoryComponent for QueueSong {
 
     fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
         match output {
-            QueueSongOut::Activated(index, id) => Some(QueueIn::Activated(index, id)),
+            QueueSongOut::Activated(index, id, length) => {
+                Some(QueueIn::Activated(index, id, length))
+            }
             QueueSongOut::Clicked(index) => Some(QueueIn::Clicked(index)),
             QueueSongOut::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
             QueueSongOut::Remove => Some(QueueIn::Remove),
@@ -144,8 +148,16 @@ impl FactoryComponent for QueueSong {
     fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
             QueueSongIn::Activated => {
-                self.new_play_state(PlayState::Play);
-                sender.output(QueueSongOut::Activated(self.index.clone(), self.id.clone()));
+                if let Some(info) = &self.info {
+                    if let Some(length) = info.duration {
+                        self.new_play_state(PlayState::Play);
+                        sender.output(QueueSongOut::Activated(
+                            self.index.clone(),
+                            self.id.clone(),
+                            length as i64 * 1000,
+                        ));
+                    }
+                }
             }
             QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
@@ -371,7 +383,7 @@ impl FactoryComponent for QueueSong {
                 };
 
                 // settings song data
-                self.title = child.title;
+                self.title = child.title.clone();
                 if let Some(artist) = &child.artist {
                     self.artist = artist.clone();
                 }
@@ -381,6 +393,7 @@ impl FactoryComponent for QueueSong {
                 if child.starred.is_some() {
                     self.favorited = true;
                 }
+                self.info = Some(child);
             }
             QueueItemCmd::Favorited(state) => {
                 tracing::error!("changed state {state:?}");

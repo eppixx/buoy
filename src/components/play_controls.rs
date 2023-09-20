@@ -17,6 +17,11 @@ pub struct PlayControl {
 }
 
 #[derive(Debug)]
+pub enum PlayControlIn {
+    NewState(PlayState),
+}
+
+#[derive(Debug)]
 pub enum PlayControlOut {
     Status(PlayState),
     Previous,
@@ -25,7 +30,7 @@ pub enum PlayControlOut {
 
 #[component(pub)]
 impl SimpleComponent for PlayControl {
-    type Input = PlayState;
+    type Input = PlayControlIn;
     type Output = PlayControlOut;
     type Init = PlayState;
 
@@ -38,7 +43,7 @@ impl SimpleComponent for PlayControl {
         let widgets = view_output!();
 
         //init buttons
-        sender.input(state);
+        sender.input(PlayControlIn::NewState(state));
 
         ComponentParts { model, widgets }
     }
@@ -67,12 +72,12 @@ impl SimpleComponent for PlayControl {
                 connect_clicked[sender] => move |btn| {
                     match btn.icon_name().unwrap().as_str() {
                         "media-playback-start-symbolic" => {
-                            sender.input(PlayState::Play);
-                            _ = sender.output(PlayControlOut::Status(PlayState::Play));
+                            sender.input(PlayControlIn::NewState(PlayState::Play));
+                            sender.output(PlayControlOut::Status(PlayState::Play)).unwrap();
                         }
                         "media-playback-pause-symbolic" => {
-                            sender.input(PlayState::Pause);
-                            _ = sender.output(PlayControlOut::Status(PlayState::Pause));
+                            sender.input(PlayControlIn::NewState(PlayState::Pause));
+                            sender.output(PlayControlOut::Status(PlayState::Pause)).unwrap();
                         }
                         _ => unreachable!("unkonwn icon name"),
                     }
@@ -93,13 +98,13 @@ impl SimpleComponent for PlayControl {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            PlayState::Play => {
+            PlayControlIn::NewState(PlayState::Play) => {
                 self.play_btn.set_icon_name("media-playback-pause-symbolic");
             }
-            PlayState::Pause => {
+            PlayControlIn::NewState(PlayState::Pause) => {
                 self.play_btn.set_icon_name("media-playback-start-symbolic");
             }
-            PlayState::Stop => {
+            PlayControlIn::NewState(PlayState::Stop) => {
                 self.play_btn.set_icon_name("media-playback-start-symbolic");
             }
         }

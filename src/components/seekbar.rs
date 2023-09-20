@@ -26,6 +26,11 @@ pub struct SeekbarCurrent {
     total_in_ms: i64,
 }
 
+#[derive(Debug)]
+pub enum SeekbarOut {
+    SeekDragged(i64),
+}
+
 impl SeekbarCurrent {
     pub fn new(total_in_ms: i64, seek_in_ms: Option<i64>) -> Self {
         Self {
@@ -38,7 +43,7 @@ impl SeekbarCurrent {
 #[component(pub)]
 impl relm4::SimpleComponent for Seekbar {
     type Input = SeekbarIn;
-    type Output = i64;
+    type Output = SeekbarOut;
     type Init = Option<SeekbarCurrent>;
 
     fn init(
@@ -79,7 +84,10 @@ impl relm4::SimpleComponent for Seekbar {
             append = &model.scale.clone() -> gtk::Scale {
                 add_css_class: "seekbar-scale",
                 set_hexpand: true,
-                connect_value_changed => SeekbarIn::SeekbarDragged,
+                connect_change_value[sender] => move |_scale, _, _value| {
+                    sender.input(SeekbarIn::SeekbarDragged);
+                    gtk::Inhibit(false)
+                }
             },
 
             #[name = "total"]
@@ -96,13 +104,15 @@ impl relm4::SimpleComponent for Seekbar {
             SeekbarIn::SeekbarDragged => {
                 let value = self.scale.value() as i64;
                 self.current = value;
-                _ = sender.output(value);
+                sender.output(SeekbarOut::SeekDragged(value)).unwrap();
             }
             SeekbarIn::NewRange(total) => {
                 self.scale.set_range(0.0, total as f64);
+                self.total = total;
             }
             SeekbarIn::SeekTo(ms) => {
                 self.scale.set_value(ms as f64);
+                self.current = ms;
             }
         }
     }
