@@ -9,13 +9,13 @@ use relm4::{
 use crate::client::Client;
 
 #[derive(Debug, Default, Clone)]
-pub struct CoverBuilder {
+pub struct DescriptiveCoverBuilder {
     image: Option<String>,
     title: Option<String>,
     subtitle: Option<String>,
 }
 
-impl CoverBuilder {
+impl DescriptiveCoverBuilder {
     pub fn image(mut self, image: impl Into<String>) -> Self {
         self.image = Some(image.into());
         self
@@ -33,14 +33,14 @@ impl CoverBuilder {
 }
 
 #[derive(Debug)]
-pub enum CoverIn {
+pub enum DescriptiveCoverIn {
     LoadImage(Option<String>),
     SetTitle(Option<String>),
     SetSubtitle(Option<String>),
 }
 
 #[derive(Debug)]
-pub struct Cover {
+pub struct DescriptiveCover {
     loading: bool,
     image: gtk::Image,
     title: Option<String>,
@@ -48,24 +48,24 @@ pub struct Cover {
 }
 
 #[derive(Debug)]
-pub enum CoverCmd {
+pub enum DescriptiveCoverCmd {
     LoadedImage(Option<Vec<u8>>),
 }
 
 #[relm4::component(pub)]
-impl relm4::Component for Cover {
-    type Init = CoverBuilder;
-    type Input = CoverIn;
+impl relm4::Component for DescriptiveCover {
+    type Init = DescriptiveCoverBuilder;
+    type Input = DescriptiveCoverIn;
     type Output = ();
     type Widgets = CoverWidgets;
-    type CommandOutput = CoverCmd;
+    type CommandOutput = DescriptiveCoverCmd;
 
     fn init(
         init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Cover {
+        let model = Self {
             loading: false,
             image: gtk::Image::default(),
             title: init.title,
@@ -74,8 +74,10 @@ impl relm4::Component for Cover {
         let widgets = view_output!();
 
         if let Some(id) = init.image {
-            sender.input(CoverIn::LoadImage(Some(id)));
+            sender.input(DescriptiveCoverIn::LoadImage(Some(id)));
         }
+        widgets.invisible.set_visible(false);
+        widgets.invisible2.set_visible(false);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -95,7 +97,7 @@ impl relm4::Component for Cover {
             // },
 
             gtk::Box {
-                set_hexpand: true,
+                // set_hexpand: true,
                 set_halign: gtk::Align::Center,
 
                 #[transition = "Crossfade"]
@@ -120,18 +122,20 @@ impl relm4::Component for Cover {
                 },
             },
 
-            if let Some(title) = &model.title {
+            if model.title.is_some() {
                 gtk::Label {
                     set_halign: gtk::Align::Center,
                     set_ellipsize: pango::EllipsizeMode::End,
                     set_max_width_chars: 15,
                     set_size_request: (150, -1),
                     #[watch]
-                    set_label: title,
+                    set_label: model.title.as_ref().unwrap(),
                 }
             } else {
+                #[name = "invisible"]
                 gtk::Label {
                     set_visible: false,
+                    set_label: "invisible",
                 }
             },
 
@@ -145,8 +149,10 @@ impl relm4::Component for Cover {
                     set_markup: &format!("<span style=\"italic\">{}</span>", glib::markup_escape_text(subtitle)),
                 }
             } else {
+                #[name = "invisible2"]
                 gtk::Label {
                     set_visible: false,
+                    set_label: "invisible",
                 }
             }
         }
@@ -159,21 +165,21 @@ impl relm4::Component for Cover {
         _root: &Self::Root,
     ) {
         match msg {
-            CoverIn::LoadImage(id) => match id {
+            DescriptiveCoverIn::LoadImage(id) => match id {
                 None => self.image.set_from_pixbuf(None),
                 Some(id) => {
                     self.loading = true;
                     sender.oneshot_command(async move {
                         let client = Client::get().lock().unwrap().inner.clone().unwrap();
                         match client.get_cover_art(&id, Some(200)).await {
-                            Ok(buffer) => CoverCmd::LoadedImage(Some(buffer)),
-                            Err(_) => CoverCmd::LoadedImage(None),
+                            Ok(buffer) => DescriptiveCoverCmd::LoadedImage(Some(buffer)),
+                            Err(_) => DescriptiveCoverCmd::LoadedImage(None),
                         }
                     });
                 }
             },
-            CoverIn::SetTitle(title) => self.title = title,
-            CoverIn::SetSubtitle(subtitle) => self.subtitle = subtitle,
+            DescriptiveCoverIn::SetTitle(title) => self.title = title,
+            DescriptiveCoverIn::SetSubtitle(subtitle) => self.subtitle = subtitle,
         }
     }
 
@@ -184,7 +190,7 @@ impl relm4::Component for Cover {
         _root: &Self::Root,
     ) {
         match message {
-            CoverCmd::LoadedImage(buffer) => {
+            DescriptiveCoverCmd::LoadedImage(buffer) => {
                 let buffer = match buffer {
                     None => {
                         self.loading = false;

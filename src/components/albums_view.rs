@@ -7,7 +7,7 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use crate::components::cover::{Cover, CoverBuilder};
+use crate::components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder};
 use crate::{client::Client, types::Id};
 
 #[derive(Debug, Default)]
@@ -149,7 +149,7 @@ impl relm4::component::AsyncComponent for AlbumsView {
 
 #[derive(Debug)]
 pub struct AlbumElement {
-    cover: relm4::Controller<Cover>,
+    cover: relm4::Controller<DescriptiveCover>,
 }
 
 #[derive(Debug)]
@@ -169,7 +169,7 @@ impl relm4::SimpleComponent for AlbumElement {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         // init cover
-        let mut builder = CoverBuilder::default().title(&id.title);
+        let mut builder = DescriptiveCoverBuilder::default().title(&id.title);
         if let Some(id) = &id.cover_art {
             // builder = builder.image(id);
         }
@@ -177,7 +177,8 @@ impl relm4::SimpleComponent for AlbumElement {
             builder = builder.subtitle(artist);
         }
 
-        let cover: relm4::Controller<Cover> = Cover::builder().launch(builder).detach();
+        let cover: relm4::Controller<DescriptiveCover> =
+            DescriptiveCover::builder().launch(builder).detach();
         let model = Self { cover };
 
         let widgets = view_output!();

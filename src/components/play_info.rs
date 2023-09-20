@@ -6,11 +6,11 @@ use relm4::{
     Component, ComponentController,
 };
 
-use super::cover::{Cover, CoverBuilder, CoverIn};
+use super::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder, DescriptiveCoverIn};
 
 #[derive(Debug)]
 pub struct PlayInfo {
-    covers: relm4::Controller<Cover>,
+    covers: relm4::Controller<DescriptiveCover>,
     pub cover: Option<String>,
     pub title: String,
     pub artist: Option<String>,
@@ -20,7 +20,9 @@ pub struct PlayInfo {
 impl Default for PlayInfo {
     fn default() -> Self {
         Self {
-            covers: Cover::builder().launch(CoverBuilder::default()).detach(),
+            covers: DescriptiveCover::builder()
+                .launch(DescriptiveCoverBuilder::default())
+                .detach(),
             title: String::from("Nothing is played currently"),
             cover: None,
             artist: None,
@@ -81,7 +83,8 @@ impl relm4::SimpleComponent for PlayInfo {
                     self.artist = Some(artist);
                 }
                 if let Some(cover_id) = child.cover_art {
-                    self.covers.emit(CoverIn::LoadImage(Some(cover_id)));
+                    self.covers
+                        .emit(DescriptiveCoverIn::LoadImage(Some(cover_id)));
                 }
             }
         }
