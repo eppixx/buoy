@@ -65,11 +65,11 @@ pub struct QueueSong {
     title: String,
     artist: String,
     length: i64, //length of song in ms
+    favorited: bool,
     index: DynamicIndex,
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
     left_icon_stack: gtk::Stack,
-    starred: gtk::Button,
 }
 
 impl QueueSong {
@@ -90,6 +90,7 @@ impl QueueSong {
 #[derive(Debug)]
 pub enum QueueItemCmd {
     LoadedTrack(Option<submarine::data::Child>),
+    Favorited(Option<bool>), //None when request not successful
 }
 
 #[relm4::factory(pub)]
@@ -109,11 +110,11 @@ impl FactoryComponent for QueueSong {
             title: String::from("song"),
             artist: String::from("Unknown Artist"),
             length: 0,
+            favorited: false,
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
             left_icon_stack: gtk::Stack::default(),
-            starred: gtk::Button::default(),
         };
 
         sender.input(QueueSongIn::LoadSongInfo);
@@ -169,18 +170,27 @@ impl FactoryComponent for QueueSong {
                 PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
             },
             QueueSongIn::StarredClicked => {
-                match self.starred.icon_name().as_deref() {
-                    Some("starred") => {
-                        self.starred.set_icon_name("non-starred");
-                        self.starred.set_tooltip("Click to unfavorite song");
+                let id = self.id.clone();
+                let favorite = self.favorited;
+                sender.oneshot_command(async move {
+                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    let empty: Vec<&str> = vec![];
+                    let result = match favorite {
+                        true => {
+                            tracing::error!("unstar");
+                            client.unstar(vec![id.inner()], empty.clone(), empty).await
+                        }
+                        false => {
+                            tracing::error!("star");
+                            client.star(vec![id.inner()], empty.clone(), empty).await
+                        }
+                    };
+                    tracing::error!("result: {result:?}");
+                    match result {
+                        Ok(_) => QueueItemCmd::Favorited(Some(!favorite)),
+                        Err(_) => QueueItemCmd::Favorited(None),
                     }
-                    Some("non-starred") => {
-                        self.starred.set_icon_name("starred");
-                        self.starred.set_tooltip("Click to favorite song");
-                    }
-                    _ => self.starred.set_icon_name("starred"),
-                }
-                //TODO sth usefull
+                });
             }
             QueueSongIn::DroppedItem { value, y } => {
                 sender.input(QueueSongIn::DragLeave);
@@ -270,11 +280,21 @@ impl FactoryComponent for QueueSong {
                     set_label: &seekbar::convert_for_label(self.length),
                 },
 
-                self.starred.clone() -> gtk::Button {
-                    set_icon_name: "starred",
-                    set_tooltip: "Click to favorite song",
-                    set_focus_on_click: false,
-                    connect_clicked => QueueSongIn::StarredClicked,
+                #[transition = "Crossfade"]
+                if self.favorited {
+                    gtk::Button {
+                        set_icon_name: "starred",
+                        set_tooltip: "Click to unfavorite song",
+                        set_focus_on_click: false,
+                        connect_clicked => QueueSongIn::StarredClicked,
+                    }
+                } else {
+                    gtk::Button {
+                        set_icon_name: "non-starred",
+                        set_tooltip: "Click to favorite song",
+                        set_focus_on_click: false,
+                        connect_clicked => QueueSongIn::StarredClicked,
+                    }
                 },
             },
 
@@ -357,6 +377,16 @@ impl FactoryComponent for QueueSong {
                 }
                 if let Some(length) = &child.duration {
                     self.length = *length as i64 * 1000;
+                }
+                if child.starred.is_some() {
+                    self.favorited = true;
+                }
+            }
+            QueueItemCmd::Favorited(state) => {
+                tracing::error!("changed state {state:?}");
+                match state {
+                    Some(state) => self.favorited = state,
+                    None => {} //TODO some error handling
                 }
             }
         }
