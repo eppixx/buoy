@@ -39,7 +39,7 @@ mod playback;
 pub mod settings;
 pub mod types;
 
-struct AppModel {
+struct App {
     playback: Playback,
 
     login_form: AsyncController<LoginForm>,
@@ -57,7 +57,7 @@ struct AppModel {
 }
 
 #[derive(Debug)]
-enum AppMsg {
+enum AppIn {
     ResetLogin,
     PlayControlOutput(PlayControlOut),
     Seekbar(SeekbarOut),
@@ -69,8 +69,8 @@ enum AppMsg {
 }
 
 #[relm4::component]
-impl SimpleComponent for AppModel {
-    type Input = AppMsg;
+impl SimpleComponent for App {
+    type Input = AppIn;
     type Output = ();
     type Init = ();
 
@@ -86,25 +86,25 @@ impl SimpleComponent for AppModel {
 
         let login_form: AsyncController<LoginForm> = LoginForm::builder()
             .launch(())
-            .forward(sender.input_sender(), AppMsg::LoginForm);
+            .forward(sender.input_sender(), AppIn::LoginForm);
         let queue: Controller<Queue> = Queue::builder()
             .launch(())
-            .forward(sender.input_sender(), AppMsg::Queue);
+            .forward(sender.input_sender(), AppIn::Queue);
         let play_controls = PlayControl::builder()
             .launch(PlayState::Pause) // TODO change to previous state
-            .forward(sender.input_sender(), AppMsg::PlayControlOutput);
+            .forward(sender.input_sender(), AppIn::PlayControlOutput);
         let seekbar = Seekbar::builder()
             .launch(Some(SeekbarCurrent::new(1000 * 60, None))) // TODO change to previous state
-            .forward(sender.input_sender(), AppMsg::Seekbar);
+            .forward(sender.input_sender(), AppIn::Seekbar);
         let play_info = PlayInfo::builder()
             .launch(None) // TODO change to previous state
             .detach();
         let browser = Browser::builder().launch(()).detach();
         let equalizer = Equalizer::builder()
             .launch(())
-            .forward(sender.input_sender(), AppMsg::Equalizer);
+            .forward(sender.input_sender(), AppIn::Equalizer);
 
-        let model = AppModel {
+        let model = App {
             playback,
 
             login_form,
@@ -130,7 +130,7 @@ impl SimpleComponent for AppModel {
         }
 
         receiver.attach(None, move |msg| {
-            sender.input(AppMsg::Playback(msg));
+            sender.input(AppIn::Playback(msg));
             gtk::prelude::Continue(true)
         });
 
@@ -151,13 +151,13 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            AppMsg::PlayControlOutput(PlayControlOut::Next) => {
+            AppIn::PlayControlOutput(PlayControlOut::Next) => {
                 _ = self.queue.sender().send(QueueIn::PlayNext);
             }
-            AppMsg::PlayControlOutput(PlayControlOut::Previous) => {
+            AppIn::PlayControlOutput(PlayControlOut::Previous) => {
                 _ = self.queue.sender().send(QueueIn::PlayPrevious);
             }
-            AppMsg::PlayControlOutput(PlayControlOut::Status(status)) => {
+            AppIn::PlayControlOutput(PlayControlOut::Status(status)) => {
                 match status {
                     PlayState::Pause => self.playback.pause().unwrap(),
                     PlayState::Play => self.playback.play().unwrap(),
@@ -165,16 +165,16 @@ impl SimpleComponent for AppModel {
                 };
                 self.queue.sender().send(QueueIn::NewState(status)).unwrap();
             }
-            AppMsg::Seekbar(msg) => match msg {
+            AppIn::Seekbar(msg) => match msg {
                 SeekbarOut::SeekDragged(seek_in_ms) => self.playback.set_position(seek_in_ms),
             },
-            AppMsg::VolumeChange(value) => {
+            AppIn::VolumeChange(value) => {
                 self.playback.set_volume(value);
                 let mut settings = Settings::get().lock().unwrap();
                 settings.volume = value;
                 settings.save();
             }
-            AppMsg::Playback(playback) => {
+            AppIn::Playback(playback) => {
                 match playback {
                     PlaybackOutput::TrackEnd => {} //TODO play next
                     PlaybackOutput::Seek(ms) => {
@@ -184,7 +184,7 @@ impl SimpleComponent for AppModel {
                     }
                 }
             }
-            AppMsg::LoginForm(client) => match client {
+            AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
                     self.main_stack.set_visible_child_name("logged-in");
                     self.config_btn.set_sensitive(true);
@@ -192,10 +192,10 @@ impl SimpleComponent for AppModel {
                     self.volume_btn.set_sensitive(true);
                 }
             },
-            AppMsg::Equalizer(changed) => {
+            AppIn::Equalizer(changed) => {
                 self.playback.sync_equalizer();
             }
-            AppMsg::ResetLogin => {
+            AppIn::ResetLogin => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
                 self.main_stack.set_visible_child_name("login-form");
@@ -203,7 +203,7 @@ impl SimpleComponent for AppModel {
                 self.equalizer_btn.set_sensitive(false);
                 self.volume_btn.set_sensitive(false);
             }
-            AppMsg::Queue(msg) => match msg {
+            AppIn::Queue(msg) => match msg {
                 QueueOut::Play(child) => {
                     // update playcontrol
                     self.play_info.emit(PlayInfoIn::NewState(child.clone()));
@@ -270,7 +270,7 @@ impl SimpleComponent for AppModel {
                     append = &model.volume_btn.clone() -> gtk::VolumeButton {
                         set_focus_on_click: false,
                         connect_value_changed[sender] => move |_scale, value| {
-                            sender.input(AppMsg::VolumeChange(value));
+                            sender.input(AppIn::VolumeChange(value));
                         }
                     },
 
@@ -289,7 +289,7 @@ impl SimpleComponent for AppModel {
                                 gtk::Button {
                                     add_css_class: "destructive-action",
                                     set_label: "Logout from Server",
-                                    connect_clicked => AppMsg::ResetLogin,
+                                    connect_clicked => AppIn::ResetLogin,
                                 },
                             },
                         },
@@ -392,6 +392,6 @@ fn main() -> anyhow::Result<()> {
 
     let app = RelmApp::new("com.github.eppixx.bouy");
     css::setup_css()?;
-    app.run::<AppModel>(());
+    app.run::<App>(());
     Ok(())
 }
