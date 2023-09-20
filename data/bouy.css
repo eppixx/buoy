@@ -110,40 +110,33 @@
   min-width: 350px;
 }
 
-.play-info-cover {
+.cover-box {
+  margin: 15px;
+}
+
+.cover {
   border-radius: 3px;
   border-top: 1px solid LightGray;  /* TODO change for dark theme */
   border-right: 1px solid LightGray;  /* TODO change for dark theme */
   border-bottom: 1px solid LightGray;  /* TODO change for dark theme */
   border-left: 1px solid LightGray;  /* TODO change for dark theme */
-  min-width: 96px;
-  min-height: 96px;
-        background-image:
-        linear-gradient(
-            170deg,
-            alpha(
-                @highlight_color,
-                0.1
-            ),
-            alpha(
-                @highlight_color,
-                0.15
-            ) 43%,
-            alpha(
-                @highlight_color,
-                0
-            ) 44%
-        ),
-        -gtk-icontheme("audio-x-generic-symbolic"),
-        linear-gradient(
-            to bottom,
-            @base_color,
-            @base_color
-        );
+  background-image: linear-gradient(
+    170deg,
+    alpha(@highlight_color, 0.1),
+    alpha(@highlight_color, 0.15) 43%,
+    alpha(@highlight_color, 0) 44%
+    ),
+    -gtk-icontheme("audio-x-generic-symbolic"),
+    linear-gradient(to bottom, @base_color, @base_color
+    );
 }
 
 .play-info-info {
   margin: 9px;
+}
+
+.play-info-cover {
+  margin: 0px 15px 15px 15px;
 }
 
 .window-titlebar {

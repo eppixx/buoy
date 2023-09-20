@@ -8,12 +8,16 @@ use relm4::{
         },
     },
     prelude::{DynamicIndex, FactoryComponent},
-    FactorySender, RelmWidgetExt,
+    Component, ComponentController, FactorySender, RelmWidgetExt,
 };
 
 use crate::{
     client::Client,
-    components::{queue::QueueIn, seekbar},
+    components::{
+        cover::{Cover, CoverIn},
+        queue::QueueIn,
+        seekbar,
+    },
     css::DragState,
     play_state::PlayState,
     types::Id,
@@ -63,6 +67,8 @@ pub struct QueueSong {
     root_widget: gtk::ListBoxRow,
     info: Option<submarine::data::Child>,
     id: Id,
+    cover: relm4::Controller<Cover>,
+    playing: PlayState,
     title: String,
     artist: String,
     length: i64, //length of song in ms
@@ -70,7 +76,6 @@ pub struct QueueSong {
     index: DynamicIndex,
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
-    left_icon_stack: gtk::Stack,
 }
 
 impl QueueSong {
@@ -109,6 +114,8 @@ impl FactoryComponent for QueueSong {
             root_widget: gtk::ListBoxRow::new(),
             info: None,
             id,
+            cover: Cover::builder().launch(()).detach(),
+            playing: PlayState::Stop,
             title: String::from("song"),
             artist: String::from("Unknown Artist"),
             length: 0,
@@ -116,7 +123,6 @@ impl FactoryComponent for QueueSong {
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
-            left_icon_stack: gtk::Stack::default(),
         };
 
         sender.input(QueueSongIn::LoadSongInfo);
@@ -168,11 +174,7 @@ impl FactoryComponent for QueueSong {
                 }
             }
             QueueSongIn::DragLeave => DragState::reset(&mut self.root_widget),
-            QueueSongIn::NewState(state) => match state {
-                PlayState::Play => self.left_icon_stack.set_visible_child_name("status-play"),
-                PlayState::Pause => self.left_icon_stack.set_visible_child_name("status-pause"),
-                PlayState::Stop => self.left_icon_stack.set_visible_child_name("default-image"),
-            },
+            QueueSongIn::NewState(state) => self.playing = state,
             QueueSongIn::StarredClicked => {
                 let id = self.id.clone();
                 let favorite = self.favorited;
@@ -225,29 +227,28 @@ impl FactoryComponent for QueueSong {
             add_css_class: "queue-song",
 
             gtk::Box {
-                set_orientation: gtk::Orientation::Horizontal,
                 set_spacing: 10,
 
-                self.left_icon_stack.clone() -> gtk::Stack {
-                    add_child = &gtk::Image {
-                        add_css_class: "queue-default-cover",
-                        set_icon_name: Some("folder-music-symbolic"),
-                        set_height_request: 48,
-                        set_width_request: 48,
-                    } -> {
-                        set_name: "default-image",
-                    },
-                    add_child = &gtk::Image {
-                        set_icon_name: Some("audio-volume-high"),
-                    } -> {
-                        set_name: "status-play",
-                    },
-                    add_child = &gtk::Image {
-                        set_icon_name: Some("media-playback-pause-symbolic"),
-                    } -> {
-                        set_name: "status-pause",
+                #[transition = "Crossfade"]
+                append = match self.playing {
+                    PlayState::Play => {
+                        gtk::Image {
+                            add_css_class: "size50",
+                            set_icon_name: Some("audio-volume-high-symbolic"),
+                        }
                     }
-                    //TODO display real cover
+                    PlayState::Pause => {
+                        gtk::Image {
+                            add_css_class: "size50",
+                            set_icon_name: Some("media-playback-pause-symbolic"),
+                        }
+                    }
+                    PlayState::Stop => {
+                        &self.cover.widget().clone() {
+                            add_css_class: "size50",
+                            add_css_class: "cover",
+                        }
+                    }
                 },
 
                 gtk::Box {
@@ -378,6 +379,7 @@ impl FactoryComponent for QueueSong {
                 if child.starred.is_some() {
                     self.favorited = true;
                 }
+                self.cover.emit(CoverIn::LoadImage(child.cover_art.clone()));
                 self.info = Some(child);
             }
             QueueItemCmd::Favorited(state) => {

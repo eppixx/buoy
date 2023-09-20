@@ -6,11 +6,11 @@ use relm4::{
     Component, ComponentController,
 };
 
-use super::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder, DescriptiveCoverIn};
+use super::cover::{Cover, CoverIn};
 
 #[derive(Debug)]
 pub struct PlayInfo {
-    covers: relm4::Controller<DescriptiveCover>,
+    covers: relm4::Controller<Cover>,
     pub cover: Option<String>,
     pub title: String,
     pub artist: Option<String>,
@@ -20,9 +20,7 @@ pub struct PlayInfo {
 impl Default for PlayInfo {
     fn default() -> Self {
         Self {
-            covers: DescriptiveCover::builder()
-                .launch(DescriptiveCoverBuilder::default())
-                .detach(),
+            covers: Cover::builder().launch(()).detach(),
             title: String::from("Nothing is played currently"),
             cover: None,
             artist: None,
@@ -40,20 +38,21 @@ pub enum PlayInfoIn {
 impl relm4::SimpleComponent for PlayInfo {
     type Input = PlayInfoIn;
     type Output = ();
-    type Init = Option<PlayInfo>;
+    type Init = Option<submarine::data::Child>;
 
     fn init(
         init: Self::Init,
         root: &Self::Root,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = if let Some(init) = init {
-            init
-        } else {
-            Self::default()
-        };
-
+        let model = Self::default();
         let widgets = view_output!();
+
+        //init widget
+        if let Some(child) = init {
+            sender.input(PlayInfoIn::NewState(child));
+        }
+        model.covers.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }
     }
@@ -64,11 +63,12 @@ impl relm4::SimpleComponent for PlayInfo {
             add_css_class: "play-info",
 
             append = &model.covers.widget().clone() {
-                set_halign: gtk::Align::Start,
+                add_css_class: "play-info-cover",
             },
 
             gtk::Label {
                 add_css_class: "play-info-info",
+                set_hexpand: true,
                 #[watch]
                 set_markup: &style_label(&model.title, model.artist.as_deref(), model.album.as_deref()),
             },
@@ -83,8 +83,7 @@ impl relm4::SimpleComponent for PlayInfo {
                     self.artist = Some(artist);
                 }
                 if let Some(cover_id) = child.cover_art {
-                    self.covers
-                        .emit(DescriptiveCoverIn::LoadImage(Some(cover_id)));
+                    self.covers.emit(CoverIn::LoadImage(Some(cover_id)));
                 }
             }
         }
