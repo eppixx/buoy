@@ -57,27 +57,25 @@ impl relm4::Component for Cover {
     }
 
     view! {
-            gtk::Box {
+        gtk::Box {
+            #[transition = "Crossfade"]
+            if model.loading {
+                gtk::Box {
+                    add_css_class: "card",
 
-                #[transition = "Crossfade"]
-                if model.loading {
-                    gtk::Box {
-                        add_css_class: "card",
-
-                        gtk::Spinner {
-                            add_css_class: "size50",
-                            // set_hexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                            start: (),
-                        }
+                    gtk::Spinner {
+                        add_css_class: "size50",
+                        set_halign: gtk::Align::Center,
+                        set_valign: gtk::Align::Center,
+                        start: (),
                     }
-                } else {
-                    model.image.clone() -> gtk::Image {
-                        add_css_class: "cover",
-                    }
-                },
-            }
+                }
+            } else {
+                model.image.clone() -> gtk::Image {
+                    add_css_class: "cover",
+                }
+            },
+        }
     }
 
     fn update(
@@ -113,6 +111,7 @@ impl relm4::Component for Cover {
             CoverCmd::LoadedImage(None) => {
                 self.loading = false;
                 self.image.set_from_pixbuf(None);
+                self.image.add_css_class("cover");
             }
             CoverCmd::LoadedImage(Some(buffer)) => {
                 let bytes = gtk::glib::Bytes::from(&buffer.0);
@@ -121,6 +120,7 @@ impl relm4::Component for Cover {
                     Ok(pixbuf) => self.image.set_from_pixbuf(Some(&pixbuf)),
                     _ => self.image.set_from_pixbuf(None),
                 }
+                self.image.remove_css_class("cover");
                 self.loading = false;
             }
         }
