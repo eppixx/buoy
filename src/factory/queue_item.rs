@@ -180,16 +180,9 @@ impl FactoryComponent for QueueSong {
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
                     let empty: Vec<&str> = vec![];
                     let result = match favorite {
-                        true => {
-                            tracing::error!("unstar");
-                            client.unstar(vec![id.inner()], empty.clone(), empty).await
-                        }
-                        false => {
-                            tracing::error!("star");
-                            client.star(vec![id.inner()], empty.clone(), empty).await
-                        }
+                        true => client.unstar(vec![id.inner()], empty.clone(), empty).await,
+                        false => client.star(vec![id.inner()], empty.clone(), empty).await,
                     };
-                    tracing::error!("result: {result:?}");
                     match result {
                         Ok(_) => QueueItemCmd::Favorited(Some(!favorite)),
                         Err(_) => QueueItemCmd::Favorited(None),
