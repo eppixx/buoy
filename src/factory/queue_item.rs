@@ -89,7 +89,7 @@ impl QueueSong {
 
 #[derive(Debug)]
 pub enum QueueItemCmd {
-    LoadedTrack(Option<submarine::data::Child>),
+    LoadedTrack(Box<Option<submarine::data::Child>>),
     Favorited(Option<bool>), //None when request not successful
 }
 
@@ -215,8 +215,8 @@ impl FactoryComponent for QueueSong {
                 sender.oneshot_command(async move {
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
                     match client.get_song(id.inner()).await {
-                        Ok(child) => QueueItemCmd::LoadedTrack(Some(child)),
-                        Err(_) => QueueItemCmd::LoadedTrack(None),
+                        Ok(child) => QueueItemCmd::LoadedTrack(Box::new(Some(child))),
+                        Err(_) => QueueItemCmd::LoadedTrack(Box::new(None)),
                     }
                 });
             }
@@ -364,7 +364,7 @@ impl FactoryComponent for QueueSong {
     fn update_cmd(&mut self, message: Self::CommandOutput, _sender: relm4::FactorySender<Self>) {
         match message {
             QueueItemCmd::LoadedTrack(child) => {
-                let child = if let Some(child) = child {
+                let child = if let Some(child) = *child {
                     child
                 } else {
                     return;

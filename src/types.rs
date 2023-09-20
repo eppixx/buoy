@@ -30,10 +30,10 @@ impl Id {
 
     pub fn inner(&self) -> &str {
         match self {
-            Self::Song(id) => &id,
-            Self::Artist(id) => &id,
-            Self::Album(id) => &id,
-            Self::Playlist(id) => &id,
+            Self::Song(id) => id,
+            Self::Artist(id) => id,
+            Self::Album(id) => id,
+            Self::Playlist(id) => id,
         }
     }
 
