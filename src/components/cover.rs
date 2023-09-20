@@ -23,9 +23,19 @@ pub enum CoverIn {
     LoadImage(Option<String>),
 }
 
+pub struct Image(Vec<u8>);
+
+impl std::fmt::Debug for Image {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Image buffer")
+            .field(&format!("size: {}", self.0.len()))
+            .finish()
+    }
+}
+
 #[derive(Debug)]
 pub enum CoverCmd {
-    LoadedImage(Option<Vec<u8>>),
+    LoadedImage(Option<Image>),
 }
 
 #[relm4::component(pub)]
@@ -88,7 +98,7 @@ impl relm4::Component for Cover {
                     sender.oneshot_command(async move {
                         let client = Client::get().lock().unwrap().inner.clone().unwrap();
                         match client.get_cover_art(&id, Some(200)).await {
-                            Ok(buffer) => CoverCmd::LoadedImage(Some(buffer)),
+                            Ok(buffer) => CoverCmd::LoadedImage(Some(Image(buffer))),
                             Err(_) => CoverCmd::LoadedImage(None),
                         }
                     });
@@ -109,7 +119,7 @@ impl relm4::Component for Cover {
                 self.image.set_from_pixbuf(None);
             }
             CoverCmd::LoadedImage(Some(buffer)) => {
-                let bytes = gtk::glib::Bytes::from(&buffer);
+                let bytes = gtk::glib::Bytes::from(&buffer.0);
                 let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
                 match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
                     Ok(pixbuf) => self.image.set_from_pixbuf(Some(&pixbuf)),
