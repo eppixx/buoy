@@ -112,7 +112,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band0.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -124,9 +125,10 @@ impl relm4::SimpleComponent for Equalizer {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
                     append = &model.band1.clone() -> gtk::Scale {
-                        set_orientation: gtk::Orientation::Vertical,
                         set_vexpand: true,
-                        set_range: (-1.0, 1.0),
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -140,7 +142,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band2.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -154,7 +157,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band3.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -168,7 +172,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band4.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -182,7 +187,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band5.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -196,7 +202,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band6.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         set_show_fill_level: false,
                         connect_value_changed => EqualizerIn::StateChanged,
@@ -211,7 +218,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band7.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -225,7 +233,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band8.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
@@ -239,7 +248,8 @@ impl relm4::SimpleComponent for Equalizer {
                     append = &model.band9.clone() -> gtk::Scale {
                         set_vexpand: true,
                         set_orientation: gtk::Orientation::Vertical,
-                        set_range: (-1.0, 1.0),
+                        set_inverted: true,
+                        set_range: (-10.0, 10.0),
                         set_increments: (0.1, 0.1),
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
