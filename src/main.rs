@@ -176,14 +176,14 @@ impl SimpleComponent for AppModel {
                     }
                 }
             }
-            AppMsg::LoginForm(client) => {
-                // tracing::error!("msg from LoginForm: {msg:?}");
-                //TODO login
-                self.main_stack.set_visible_child_name("logged-in");
-                self.config_btn.set_sensitive(true);
-                self.equalizer_btn.set_sensitive(true);
-                self.volume_btn.set_sensitive(true);
-            }
+            AppMsg::LoginForm(client) => match client {
+                LoginFormOut::LoggedIn => {
+                    self.main_stack.set_visible_child_name("logged-in");
+                    self.config_btn.set_sensitive(true);
+                    self.equalizer_btn.set_sensitive(true);
+                    self.volume_btn.set_sensitive(true);
+                }
+            },
             AppMsg::Equalizer(changed) => {
                 self.playback.sync_equalizer();
             }

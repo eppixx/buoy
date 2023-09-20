@@ -24,7 +24,7 @@ pub enum LoginFormIn {
 
 #[derive(Debug)]
 pub enum LoginFormOut {
-    LoggedIn(submarine::Client),
+    LoggedIn,
 }
 
 #[component(pub, async)]
@@ -148,7 +148,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                             settings.login_salt = Some(salt);
                             settings.save();
                         }
-                        sender.output(LoginFormOut::LoggedIn(client)).unwrap();
+                        sender.output(LoginFormOut::LoggedIn).unwrap();
                     }
                     Err(e) => {
                         use submarine::SubsonicError;
