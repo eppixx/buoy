@@ -65,7 +65,7 @@ enum AppIn {
     Playback(PlaybackOutput),
     LoginForm(LoginFormOut),
     Equalizer(EqualizerOut),
-    Queue(QueueOut),
+    Queue(Box<QueueOut>),
 }
 
 #[relm4::component]
@@ -89,7 +89,7 @@ impl SimpleComponent for App {
             .forward(sender.input_sender(), AppIn::LoginForm);
         let queue: Controller<Queue> = Queue::builder()
             .launch(())
-            .forward(sender.input_sender(), AppIn::Queue);
+            .forward(sender.input_sender(), |msg| AppIn::Queue(Box::new(msg)));
         let play_controls = PlayControl::builder()
             .launch(PlayState::Pause) // TODO change to previous state
             .forward(sender.input_sender(), AppIn::PlayControlOutput);
@@ -203,7 +203,7 @@ impl SimpleComponent for App {
                 self.equalizer_btn.set_sensitive(false);
                 self.volume_btn.set_sensitive(false);
             }
-            AppIn::Queue(msg) => match msg {
+            AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
                     // update playcontrol
                     self.play_info.emit(PlayInfoIn::NewState(child.clone()));

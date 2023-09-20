@@ -48,7 +48,7 @@ pub enum QueueSongIn {
 
 #[derive(Debug)]
 pub enum QueueSongOut {
-    Activated(DynamicIndex, submarine::data::Child),
+    Activated(DynamicIndex, Box<submarine::data::Child>),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
     Remove,
@@ -154,7 +154,10 @@ impl FactoryComponent for QueueSong {
             QueueSongIn::Activated => {
                 if let Some(info) = &self.info {
                     self.new_play_state(PlayState::Play);
-                    sender.output(QueueSongOut::Activated(self.index.clone(), info.clone()));
+                    sender.output(QueueSongOut::Activated(
+                        self.index.clone(),
+                        Box::new(info.clone()),
+                    ));
                 }
             }
             QueueSongIn::DraggedOver(y) => {

@@ -1,8 +1,4 @@
-use relm4::{
-    gtk,
-    gtk::traits::{BoxExt, OrientableExt, WidgetExt},
-    RelmWidgetExt,
-};
+use relm4::{gtk, gtk::traits::WidgetExt};
 
 use crate::client::Client;
 

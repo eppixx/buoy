@@ -45,7 +45,7 @@ impl Queue {
 
 #[derive(Debug)]
 pub enum QueueIn {
-    Activated(DynamicIndex, submarine::data::Child),
+    Activated(DynamicIndex, Box<submarine::data::Child>),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
     Append(Id),
@@ -218,7 +218,7 @@ impl relm4::Component for Queue {
                     song.new_play_state(PlayState::Stop);
                 }
 
-                sender.output(QueueOut::Play(info)).unwrap();
+                sender.output(QueueOut::Play(*info)).unwrap();
             }
             QueueIn::Clicked(index) => {
                 for (_i, song) in self
