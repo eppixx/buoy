@@ -1,7 +1,7 @@
 use relm4::{
     gtk::{
         self,
-        traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        traits::{BoxExt, ButtonExt, FlowBoxChildExt, OrientableExt, WidgetExt},
     },
     loading_widgets::LoadingWidgets,
     view, Component, ComponentController,
@@ -187,7 +187,7 @@ impl relm4::SimpleComponent for AlbumElement {
     }
 
     view! {
-        gtk::Box {
+        gtk::FlowBoxChild {
             add_css_class: "albums-view-album",
 
             gtk::Button {
@@ -198,6 +198,7 @@ impl relm4::SimpleComponent for AlbumElement {
 
                 #[wrap(Some)]
                 set_child = &model.cover.widget().clone(),
+                //TODO add tooltip with info about album
             }
         }
     }
