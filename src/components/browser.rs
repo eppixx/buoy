@@ -180,11 +180,8 @@ impl relm4::SimpleComponent for Browser {
                 }
             },
 
-            //TODO implement stack of view here
             append = &model.content.clone() -> gtk::Viewport {
                 add_css_class: "browser-content",
-                // set_hexpand: true,
-                // set_vexpand: true,
             }
         }
     }
@@ -242,7 +239,6 @@ impl relm4::SimpleComponent for Browser {
                 self.back_btn.set_sensitive(true);
             }
             BrowserInput::ArtistsClicked => {
-                //TODO rename to ArtistsClicke
                 self.deactivate_all_buttons();
                 self.artists_btn.set_active(true);
 
@@ -258,7 +254,6 @@ impl relm4::SimpleComponent for Browser {
                 self.back_btn.set_sensitive(true);
             }
             BrowserInput::AlbumsClicked => {
-                // TODO rename to AlbumsClicked
                 self.deactivate_all_buttons();
                 self.albums_btn.set_active(true);
 
