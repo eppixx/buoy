@@ -11,7 +11,6 @@ use super::cover::{Cover, CoverIn};
 #[derive(Debug)]
 pub struct PlayInfo {
     covers: relm4::Controller<Cover>,
-    pub cover: Option<String>,
     pub title: String,
     pub artist: Option<String>,
     pub album: Option<String>,
@@ -22,7 +21,6 @@ impl Default for PlayInfo {
         Self {
             covers: Cover::builder().launch(()).detach(),
             title: String::from("Nothing is played currently"),
-            cover: None,
             artist: None,
             album: None,
         }
