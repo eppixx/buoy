@@ -219,3 +219,11 @@
 .artists-element {
   padding: 10px;
 }
+
+.album-view {
+  margin-top: 15px;
+}
+
+.album-view-tracks {
+  margin: 0px;
+}

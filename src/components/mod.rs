@@ -1,3 +1,4 @@
+pub mod album_tracks;
 pub mod album_view;
 pub mod albums_view;
 pub mod artists_view;
