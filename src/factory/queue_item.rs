@@ -30,7 +30,7 @@ struct Index(DynamicIndex);
 #[derive(Debug)]
 pub enum QueueSongInit {
     Id(Id),
-    Child(submarine::data::Child),
+    Child(Box<submarine::data::Child>),
 }
 
 #[derive(Debug)]
@@ -150,7 +150,7 @@ impl FactoryComponent for QueueSong {
                 model
                     .cover
                     .emit(CoverIn::LoadImage(child.cover_art.clone()));
-                model.info = Some(child);
+                model.info = Some(*child);
             }
         }
 

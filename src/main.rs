@@ -192,7 +192,7 @@ impl SimpleComponent for App {
                     self.volume_btn.set_sensitive(true);
                 }
             },
-            AppIn::Equalizer(changed) => {
+            AppIn::Equalizer(_changed) => {
                 self.playback.sync_equalizer();
             }
             AppIn::ResetLogin => {

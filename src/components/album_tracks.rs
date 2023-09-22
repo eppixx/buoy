@@ -2,7 +2,6 @@ use relm4::gtk::{
     self,
     traits::{ButtonExt, GridExt, WidgetExt},
 };
-use relm4::{Component, ComponentController, FactorySender, RelmWidgetExt};
 
 use crate::components::seekbar::convert_for_label;
 

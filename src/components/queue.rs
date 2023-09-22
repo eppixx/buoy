@@ -295,7 +295,7 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().lock().unwrap().inner.clone().unwrap();
                             let mut result = vec![];
-                            for album in (*artist).album {
+                            for album in artist.album {
                                 match client.get_album(album.id).await {
                                     Ok(mut album) => result.append(&mut album.song),
                                     Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
@@ -310,7 +310,9 @@ impl relm4::Component for Queue {
                 };
 
                 for song in songs.into_iter() {
-                    self.songs.guard().push_back(QueueSongInit::Child(song));
+                    self.songs
+                        .guard()
+                        .push_back(QueueSongInit::Child(Box::new(song)));
                 }
             }
             QueueIn::Clear => {
@@ -419,7 +421,9 @@ impl relm4::Component for Queue {
                 };
 
                 for entry in queue.entry {
-                    self.songs.guard().push_back(QueueSongInit::Child(entry));
+                    self.songs
+                        .guard()
+                        .push_back(QueueSongInit::Child(Box::new(entry)));
                 }
                 // TODO jump to current song
                 // TODO set seekbar
@@ -430,7 +434,9 @@ impl relm4::Component for Queue {
             QueueCmd::FetchedAppendItems(Err(e)) => {} //TODO error handling
             QueueCmd::FetchedAppendItems(Ok(children)) => {
                 for child in children {
-                    self.songs.guard().push_back(QueueSongInit::Child(child));
+                    self.songs
+                        .guard()
+                        .push_back(QueueSongInit::Child(Box::new(child)));
                 }
             }
         }

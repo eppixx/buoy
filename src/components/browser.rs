@@ -71,7 +71,7 @@ pub enum BrowserInput {
     PlaylistsClicked,
     Dashboard(DashboardOutput),
     AlbumsView(AlbumsViewOut),
-    AlbumView(AlbumViewOut),
+    AlbumView(Box<AlbumViewOut>),
     ArtistsView(ArtistsViewOut),
 }
 
@@ -282,7 +282,9 @@ impl relm4::SimpleComponent for Browser {
                     self.deactivate_all_buttons();
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
                         .launch(Id::album(id.inner()))
-                        .forward(sender.input_sender(), BrowserInput::AlbumView);
+                        .forward(sender.input_sender(), |msg| {
+                            BrowserInput::AlbumView(Box::new(msg))
+                        });
 
                     self.history_widget
                         .push(Views::Album(album.widget().clone()));
@@ -298,7 +300,7 @@ impl relm4::SimpleComponent for Browser {
                     // sender.input(BrowserInput::NewView(View::Id(id)))
                 }
             },
-            BrowserInput::AlbumView(msg) => match msg {
+            BrowserInput::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(id) => {} //TODO append to queue
                 AlbumViewOut::InsertAfterCurrentPLayed(id) => {} //TODO insert in queue
             },

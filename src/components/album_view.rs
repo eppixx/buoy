@@ -4,7 +4,7 @@ use relm4::{
         prelude::ToValue,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
-    Component, ComponentController,
+    ComponentController,
 };
 
 use super::cover::Cover;
