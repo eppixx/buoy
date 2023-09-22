@@ -1,6 +1,7 @@
 use relm4::{
     gtk::{
         self,
+        prelude::ToValue,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController,
@@ -10,7 +11,7 @@ use super::cover::Cover;
 use crate::{
     client::Client,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
-    types::Id,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -66,7 +67,7 @@ impl relm4::Component for AlbumView {
 
         let widgets = view_output!();
         model.cover.model().add_css_class_image("size100");
-        sender.input(AlbumViewIn::LoadChild(init));
+        sender.input(AlbumViewIn::LoadChild(init.clone()));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -79,8 +80,7 @@ impl relm4::Component for AlbumView {
             gtk::Box {
                 set_spacing: 15,
 
-                model.cover.widget().clone() -> gtk::Box {
-                },
+                model.cover.widget().clone() -> gtk::Box {},
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
@@ -146,6 +146,15 @@ impl relm4::Component for AlbumView {
                 tracing::error!("No child on server found");
             }
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
+                // update dragSource
+                let drop = Droppable::Album(Box::new(album.clone()));
+                let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+                let drag_src = gtk::DragSource::new();
+                drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+                drag_src.set_content(Some(&content));
+                self.cover.widget().add_controller(drag_src);
+
+                //update self
                 self.info = build_info_string(&album);
                 self.title = album.base.name;
                 self.artist = album.base.artist;

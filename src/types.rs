@@ -47,6 +47,17 @@ impl Id {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "Droppable")]
+pub enum Droppable {
+    Id(Id), //TODO maybe remove this later
+    Child(Box<submarine::data::Child>),
+    Album(Box<submarine::data::AlbumWithSongsId3>),
+    ArtistWithAlbums(Box<submarine::data::ArtistWithAlbumsId3>),
+    Artist(Box<submarine::data::ArtistId3>),
+    Playlist(Box<submarine::data::PlaylistWithSongs>),
+}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum IdConversionError {
     IdIsEmpty,

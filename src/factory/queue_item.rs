@@ -28,6 +28,12 @@ use crate::{
 struct Index(DynamicIndex);
 
 #[derive(Debug)]
+pub enum QueueSongInit {
+    Id(Id),
+    Child(submarine::data::Child),
+}
+
+#[derive(Debug)]
 pub enum QueueSongIn {
     Activated,
     DraggedOver(f64),
@@ -96,24 +102,24 @@ impl QueueSong {
 #[derive(Debug)]
 pub enum QueueItemCmd {
     LoadedTrack(Box<Option<submarine::data::Child>>),
-    Favorited(Option<bool>), //None when request not successful
+    Favorited(Result<bool, submarine::SubsonicError>),
 }
 
 #[relm4::factory(pub)]
 impl FactoryComponent for QueueSong {
-    type ParentWidget = gtk::ListBox;
-    type ParentInput = QueueIn;
-    type CommandOutput = QueueItemCmd;
+    type Init = QueueSongInit; // TODO improve handling of init data
     type Input = QueueSongIn;
     type Output = QueueSongOut;
-    type Init = Id;
+    type ParentWidget = gtk::ListBox;
+    type ParentInput = QueueIn;
     type Widgets = QueueSongWidgets;
+    type CommandOutput = QueueItemCmd;
 
-    fn init_model(id: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
+    fn init_model(init: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
             info: None,
-            id,
+            id: Id::song(""),
             cover: Cover::builder().launch(()).detach(),
             playing: PlayState::Stop,
             title: String::from("song"),
@@ -125,7 +131,28 @@ impl FactoryComponent for QueueSong {
             drag_src: gtk::DragSource::new(),
         };
 
-        sender.input(QueueSongIn::LoadSongInfo);
+        match init {
+            QueueSongInit::Id(id) => {
+                model.id = id;
+                sender.input(QueueSongIn::LoadSongInfo);
+            }
+            QueueSongInit::Child(child) => {
+                model.title = child.title.clone();
+                if let Some(artist) = &child.artist {
+                    model.artist = artist.clone();
+                }
+                if let Some(length) = &child.duration {
+                    model.length = *length as i64 * 1000;
+                }
+                if child.starred.is_some() {
+                    model.favorited = true;
+                }
+                model
+                    .cover
+                    .emit(CoverIn::LoadImage(child.cover_art.clone()));
+                model.info = Some(child);
+            }
+        }
 
         DragState::reset(&mut model.root_widget);
 
@@ -184,14 +211,12 @@ impl FactoryComponent for QueueSong {
                 sender.oneshot_command(async move {
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
                     let empty: Vec<&str> = vec![];
+
                     let result = match favorite {
                         true => client.unstar(vec![id.inner()], empty.clone(), empty).await,
                         false => client.star(vec![id.inner()], empty.clone(), empty).await,
                     };
-                    match result {
-                        Ok(_) => QueueItemCmd::Favorited(Some(!favorite)),
-                        Err(_) => QueueItemCmd::Favorited(None),
-                    }
+                    QueueItemCmd::Favorited(result.map(|_| !favorite))
                 });
             }
             QueueSongIn::DroppedItem { value, y } => {
@@ -385,12 +410,8 @@ impl FactoryComponent for QueueSong {
                 self.cover.emit(CoverIn::LoadImage(child.cover_art.clone()));
                 self.info = Some(child);
             }
-            QueueItemCmd::Favorited(state) => {
-                match state {
-                    Some(state) => self.favorited = state,
-                    None => {} //TODO some error handling
-                }
-            }
+            QueueItemCmd::Favorited(Err(e)) => {} //TODO error handling
+            QueueItemCmd::Favorited(Ok(state)) => self.favorited = state,
         }
     }
 }

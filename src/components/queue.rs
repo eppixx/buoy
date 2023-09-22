@@ -1,6 +1,7 @@
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt};
 use relm4::{
     factory::FactoryVecDeque,
+    gtk::gdk,
     gtk::{
         self,
         traits::{ListBoxRowExt, WidgetExt},
@@ -15,9 +16,9 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_item::QueueSong,
+    factory::queue_item::{QueueSong, QueueSongInit},
     play_state::PlayState,
-    types::Id,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -48,7 +49,6 @@ pub enum QueueIn {
     Activated(DynamicIndex, Box<submarine::data::Child>),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
-    Append(Id),
     Clear,
     Remove,
     DropAbove {
@@ -66,6 +66,7 @@ pub enum QueueIn {
     PlayNext,
     PlayPrevious,
     LoadPlayQueue,
+    Append(Droppable),
 }
 
 #[derive(Debug)]
@@ -76,6 +77,7 @@ pub enum QueueOut {
 #[derive(Debug)]
 pub enum QueueCmd {
     FetchedQueue(Option<submarine::data::PlayQueue>),
+    FetchedAppendItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
 }
 
 #[relm4::component(pub)]
@@ -153,6 +155,16 @@ impl relm4::Component for Queue {
                         add_css_class: "h3",
                         set_label: "Queue is empty\nDrop music here",
                         //TODO add DragDest
+                        add_controller = gtk::DropTarget {
+                            set_actions: gdk::DragAction::MOVE,
+                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                            connect_drop[sender] => move |_target, value, _x, _y| {
+                                if let Ok(drop) = value.get::<Droppable>() {
+                                    sender.input(QueueIn::Append(drop));
+                                }
+                                true
+                            },
+                        }
                     }
                 } else {
                     model.songs.widget().clone() -> gtk::ListBox {
@@ -174,7 +186,6 @@ impl relm4::Component for Queue {
                     set_tooltip: "add queue to playlists",
                     set_focus_on_click: false,
                     // TODO add new playlist
-                    connect_clicked => QueueIn::Append(Id::song("5555555")),
                 },
 
                 pack_end = &gtk::Label {
@@ -258,8 +269,49 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::Append(id) => {
-                let _ = self.songs.guard().push_back(id);
-                self.update_clear_btn_sensitivity();
+                let songs: Vec<submarine::data::Child> = match id {
+                    Droppable::Child(c) => vec![*c],
+                    Droppable::Album(album) => album.song,
+                    Droppable::Artist(artist) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let artist_with_albums = match client.get_artist(artist.id).await {
+                                Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
+                                Ok(artist) => artist,
+                            };
+
+                            let mut result = vec![];
+                            for album in artist_with_albums.album {
+                                match client.get_album(album.id).await {
+                                    Ok(mut album) => result.append(&mut album.song),
+                                    Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
+                                }
+                            }
+                            QueueCmd::FetchedAppendItems(Ok(result))
+                        });
+                        return;
+                    }
+                    Droppable::ArtistWithAlbums(artist) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let mut result = vec![];
+                            for album in (*artist).album {
+                                match client.get_album(album.id).await {
+                                    Ok(mut album) => result.append(&mut album.song),
+                                    Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
+                                }
+                            }
+                            QueueCmd::FetchedAppendItems(Ok(result))
+                        });
+                        return;
+                    }
+                    Droppable::Playlist(playlist) => playlist.entry,
+                    _ => vec![], //TODO add other types
+                };
+
+                for song in songs.into_iter() {
+                    self.songs.guard().push_back(QueueSongInit::Child(song));
+                }
             }
             QueueIn::Clear => {
                 self.songs.guard().clear();
@@ -366,14 +418,20 @@ impl relm4::Component for Queue {
                     return;
                 };
 
-                for entry in &queue.entry {
-                    self.songs.guard().push_back(Id::song(&entry.id));
+                for entry in queue.entry {
+                    self.songs.guard().push_back(QueueSongInit::Child(entry));
                 }
                 // TODO jump to current song
                 // TODO set seekbar
                 // TODO save queue
 
                 self.loading_queue = false;
+            }
+            QueueCmd::FetchedAppendItems(Err(e)) => {} //TODO error handling
+            QueueCmd::FetchedAppendItems(Ok(children)) => {
+                for child in children {
+                    self.songs.guard().push_back(QueueSongInit::Child(child));
+                }
             }
         }
     }
