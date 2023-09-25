@@ -59,6 +59,7 @@ struct App {
 #[derive(Debug)]
 enum AppIn {
     ResetLogin,
+    DeleteCache,
     PlayControlOutput(PlayControlOut),
     Seekbar(SeekbarOut),
     VolumeChange(f64),
@@ -232,6 +233,10 @@ impl SimpleComponent for App {
                     }
                 }
             },
+            AppIn::DeleteCache => {
+                //TODO delete cache
+                tracing::error!("cache button pressed");
+            }
         }
     }
 
@@ -285,12 +290,18 @@ impl SimpleComponent for App {
                             gtk::Box {
                                 add_css_class: "config-menu",
                                 set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 15,
 
                                 gtk::Button {
                                     add_css_class: "destructive-action",
                                     set_label: "Logout from Server",
                                     connect_clicked => AppIn::ResetLogin,
                                 },
+                                gtk::Button {
+                                    add_css_class: "destructive-action",
+                                    set_label: "Delete cache",
+                                    connect_clicked => AppIn::DeleteCache,
+                                }
                             },
                         },
                     },
