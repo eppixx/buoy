@@ -72,6 +72,7 @@ impl relm4::Component for Cover {
                 }
             } else {
                 model.image.clone() -> gtk::Image {
+                    add_css_class: "card",
                     add_css_class: "cover",
                 }
             },

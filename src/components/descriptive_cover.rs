@@ -3,10 +3,10 @@ use relm4::{
         self, glib, pango,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
-    RelmWidgetExt,
+    Component, ComponentController, RelmWidgetExt,
 };
 
-use crate::client::Client;
+use super::cover::{Cover, CoverIn};
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverBuilder {
@@ -41,24 +41,17 @@ pub enum DescriptiveCoverIn {
 
 #[derive(Debug)]
 pub struct DescriptiveCover {
-    loading: bool,
-    image: gtk::Image,
+    cover: relm4::Controller<Cover>,
     title: Option<String>,
     subtitle: Option<String>,
 }
 
-#[derive(Debug)]
-pub enum DescriptiveCoverCmd {
-    LoadedImage(Option<Vec<u8>>),
-}
-
 #[relm4::component(pub)]
-impl relm4::Component for DescriptiveCover {
+impl relm4::SimpleComponent for DescriptiveCover {
     type Init = DescriptiveCoverBuilder;
     type Input = DescriptiveCoverIn;
     type Output = ();
     type Widgets = CoverWidgets;
-    type CommandOutput = DescriptiveCoverCmd;
 
     fn init(
         init: Self::Init,
@@ -66,8 +59,7 @@ impl relm4::Component for DescriptiveCover {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
-            loading: false,
-            image: gtk::Image::default(),
+            cover: Cover::builder().launch(()).detach(),
             title: init.title,
             subtitle: init.subtitle,
         };
@@ -78,6 +70,7 @@ impl relm4::Component for DescriptiveCover {
         }
         widgets.invisible.set_visible(false);
         widgets.invisible2.set_visible(false);
+        model.cover.model().add_css_class_image("size100");
 
         relm4::ComponentParts { model, widgets }
     }
@@ -88,38 +81,13 @@ impl relm4::Component for DescriptiveCover {
             set_margin_all: 12,
             set_spacing: 5,
 
-            //test button
-            // gtk::Button {
-            //     set_label: "Start search",
-            //     connect_clicked => CoverIn::LoadImage(Some(String::from("al-e0efdaf212ce4152eab39fac22c5c9e7_6115467e"))),
-            //     #[watch]
-            //     set_sensitive: !model.loading,
-            // },
-
             gtk::Box {
                 // set_hexpand: true,
                 set_halign: gtk::Align::Center,
 
-                #[transition = "Crossfade"]
-                if model.loading {
-                    gtk::Box {
-                        add_css_class: "card",
-                        add_css_class: "size100",
-
-                        gtk::Spinner {
-                            add_css_class: "size50",
-                            set_hexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                            start: (),
-                        }
-                    }
-                } else {
-                    model.image.clone() -> gtk::Image {
-                        add_css_class: "card",
-                        add_css_class: "play-info-cover",
-                    }
-                },
+                model.cover.widget().clone() {
+                    add_css_class: "play-info-cover",
+                }
             },
 
             if model.title.is_some() {
@@ -158,55 +126,11 @@ impl relm4::Component for DescriptiveCover {
         }
     }
 
-    fn update(
-        &mut self,
-        msg: Self::Input,
-        sender: relm4::ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
+    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
-            DescriptiveCoverIn::LoadImage(id) => match id {
-                None => self.image.set_from_pixbuf(None),
-                Some(id) => {
-                    self.loading = true;
-                    sender.oneshot_command(async move {
-                        let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                        match client.get_cover_art(&id, Some(200)).await {
-                            Ok(buffer) => DescriptiveCoverCmd::LoadedImage(Some(buffer)),
-                            Err(_) => DescriptiveCoverCmd::LoadedImage(None),
-                        }
-                    });
-                }
-            },
+            DescriptiveCoverIn::LoadImage(id) => self.cover.emit(CoverIn::LoadImage(id)),
             DescriptiveCoverIn::SetTitle(title) => self.title = title,
             DescriptiveCoverIn::SetSubtitle(subtitle) => self.subtitle = subtitle,
-        }
-    }
-
-    fn update_cmd(
-        &mut self,
-        message: Self::CommandOutput,
-        _sender: relm4::ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        match message {
-            DescriptiveCoverCmd::LoadedImage(buffer) => {
-                let buffer = match buffer {
-                    None => {
-                        self.loading = false;
-                        return;
-                    }
-                    Some(buffer) => buffer,
-                };
-                let bytes = gtk::glib::Bytes::from(&buffer);
-                let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
-                match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
-                    Ok(pixbuf) => self.image.set_from_pixbuf(Some(&pixbuf)),
-                    _ => self.image.set_from_pixbuf(None),
-                }
-                println!("loaded ");
-                self.loading = false;
-            }
         }
     }
 }
