@@ -42,8 +42,8 @@ pub enum DescriptiveCoverIn {
 #[derive(Debug)]
 pub struct DescriptiveCover {
     cover: relm4::Controller<Cover>,
-    title: Option<String>,
-    subtitle: Option<String>,
+    title: gtk::Viewport,
+    subtitle: gtk::Viewport,
 }
 
 #[relm4::component(pub)]
@@ -60,17 +60,16 @@ impl relm4::SimpleComponent for DescriptiveCover {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder().launch(()).detach(),
-            title: init.title,
-            subtitle: init.subtitle,
+            title: gtk::Viewport::default(),
+            subtitle: gtk::Viewport::default(),
         };
         let widgets = view_output!();
 
-        if let Some(id) = init.image {
-            sender.input(DescriptiveCoverIn::LoadImage(Some(id)));
-        }
-        widgets.invisible.set_visible(false);
-        widgets.invisible2.set_visible(false);
         model.cover.model().add_css_class_image("size100");
+
+        sender.input(DescriptiveCoverIn::LoadImage(init.image));
+        sender.input(DescriptiveCoverIn::SetTitle(init.title));
+        sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -82,7 +81,6 @@ impl relm4::SimpleComponent for DescriptiveCover {
             set_spacing: 5,
 
             gtk::Box {
-                // set_hexpand: true,
                 set_halign: gtk::Align::Center,
 
                 model.cover.widget().clone() {
@@ -90,38 +88,12 @@ impl relm4::SimpleComponent for DescriptiveCover {
                 }
             },
 
-            if model.title.is_some() {
-                gtk::Label {
-                    set_halign: gtk::Align::Center,
-                    set_ellipsize: pango::EllipsizeMode::End,
-                    set_max_width_chars: 15,
-                    set_size_request: (150, -1),
-                    #[watch]
-                    set_label: model.title.as_ref().unwrap(),
-                }
-            } else {
-                #[name = "invisible"]
-                gtk::Label {
-                    set_visible: false,
-                    set_label: "invisible",
-                }
+            model.title.clone() -> gtk::Viewport {
+                set_halign: gtk::Align::Center,
             },
 
-            if let Some(subtitle) = &model.subtitle {
-                gtk::Label {
-                    set_halign: gtk::Align::Center,
-                    set_ellipsize: pango::EllipsizeMode::End,
-                    set_max_width_chars: 15,
-                    set_size_request: (150, -1),
-                    #[watch]
-                    set_markup: &format!("<span style=\"italic\">{}</span>", glib::markup_escape_text(subtitle)),
-                }
-            } else {
-                #[name = "invisible2"]
-                gtk::Label {
-                    set_visible: false,
-                    set_label: "invisible",
-                }
+            model.subtitle.clone() -> gtk::Viewport {
+                set_halign: gtk::Align::Center,
             }
         }
     }
@@ -129,8 +101,30 @@ impl relm4::SimpleComponent for DescriptiveCover {
     fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
             DescriptiveCoverIn::LoadImage(id) => self.cover.emit(CoverIn::LoadImage(id)),
-            DescriptiveCoverIn::SetTitle(title) => self.title = title,
-            DescriptiveCoverIn::SetSubtitle(subtitle) => self.subtitle = subtitle,
+            DescriptiveCoverIn::SetTitle(title) => {
+                if let Some(title) = title {
+                    let label = gtk::Label::new(Some(&title));
+                    label.set_halign(gtk::Align::Center);
+                    label.set_ellipsize(pango::EllipsizeMode::End);
+                    label.set_max_width_chars(15);
+                    label.set_size_request(150, -1);
+                    self.title.set_child(Some(&label));
+                } else {
+                    self.title.set_child(None::<gtk::Label>.as_ref());
+                }
+            }
+            DescriptiveCoverIn::SetSubtitle(subtitle) => {
+                if let Some(subtitle) = subtitle {
+                    let label = gtk::Label::new(Some(&subtitle));
+                    label.set_halign(gtk::Align::Center);
+                    label.set_ellipsize(pango::EllipsizeMode::End);
+                    label.set_max_width_chars(15);
+                    label.set_size_request(150, -1);
+                    self.subtitle.set_child(Some(&label));
+                } else {
+                    self.subtitle.set_child(None::<gtk::Label>.as_ref());
+                }
+            }
         }
     }
 }
