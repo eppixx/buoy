@@ -105,6 +105,7 @@ dependencies = [
  "relm4-components",
  "serde",
  "submarine",
+ "tokio",
  "toml",
  "tracing",
  "tracing-subscriber",
@@ -1561,7 +1562,7 @@ dependencies = [
 [[package]]
 name = "submarine"
 version = "0.1.0"
-source = "git+https://github.com/eppixx/submarine#11f6b32339c805e961b4769c15184f5f9879a46f"
+source = "git+https://github.com/eppixx/submarine#d46a71ade66c4a42f742c408c18154a4c8d9ac9b"
 dependencies = [
  "cfg-if",
  "chrono",

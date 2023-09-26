@@ -1,6 +1,6 @@
 use relm4::{gtk, gtk::traits::WidgetExt};
 
-use crate::client::Client;
+use crate::cache::Cache;
 
 #[derive(Debug)]
 pub struct Cover {
@@ -90,10 +90,10 @@ impl relm4::Component for Cover {
                 Some(id) => {
                     self.loading = true;
                     sender.oneshot_command(async move {
-                        let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                        match client.get_cover_art(&id, Some(200)).await {
-                            Ok(buffer) => CoverCmd::LoadedImage(Some(Image(buffer))),
-                            Err(_) => CoverCmd::LoadedImage(None),
+                        let mut cache = Cache::get().lock().await;
+                        match cache.cover(&id).await {
+                            None => CoverCmd::LoadedImage(None),
+                            Some(buffer) => CoverCmd::LoadedImage(Some(Image(buffer))),
                         }
                     });
                 }

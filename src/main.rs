@@ -1,6 +1,3 @@
-use components::{
-    play_controls::PlayControlIn, play_info::PlayInfoIn, queue::QueueOut, seekbar::SeekbarOut,
-};
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
@@ -18,9 +15,13 @@ use crate::components::{
     browser::Browser,
     equalizer::{Equalizer, EqualizerOut},
     login_form::{LoginForm, LoginFormOut},
+    play_controls::PlayControlIn,
     play_controls::{PlayControl, PlayControlOut},
     play_info::PlayInfo,
+    play_info::PlayInfoIn,
+    queue::QueueOut,
     queue::{Queue, QueueIn},
+    seekbar::SeekbarOut,
     seekbar::{Seekbar, SeekbarCurrent, SeekbarIn},
 };
 use crate::{
@@ -30,6 +31,7 @@ use crate::{
     settings::Settings,
 };
 
+pub mod cache;
 pub mod client;
 mod components;
 pub mod css;
@@ -366,7 +368,10 @@ impl SimpleComponent for App {
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        tracing::error!("shutdown called");
         self.playback.shutdown().unwrap();
+        Settings::get().lock().unwrap().save();
+        // Cache::get().lock().await.save();
     }
 }
 

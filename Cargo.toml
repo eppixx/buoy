@@ -16,6 +16,7 @@ relm4 = "0.6.2"
 relm4-components = "0.6.2"
 submarine = { git = "https://github.com/eppixx/submarine" }
 gstreamer = "0.21.0"
+tokio = "1.32.0"
 
 # converting strings on seekbar
 chrono = "0.4.30"
