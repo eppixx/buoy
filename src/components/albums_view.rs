@@ -98,12 +98,12 @@ impl relm4::component::AsyncComponent for AlbumsView {
         };
 
         // add albums with cover and title
-        for album in albums.into_iter().rev() {
+        for (i, album) in albums.into_iter().enumerate() {
             let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
                 .launch(album)
                 .forward(sender.input_sender(), AlbumsViewIn::AlbumElement);
-            model.albums.insert(cover.widget(), 0);
-            model.album_list.insert(0, cover);
+            model.albums.insert(cover.widget(), i as i32);
+            model.album_list.insert(i, cover);
         }
 
         relm4::component::AsyncComponentParts { model, widgets }
@@ -171,7 +171,7 @@ impl relm4::SimpleComponent for AlbumElement {
         // init cover
         let mut builder = DescriptiveCoverBuilder::default().title(&id.title);
         if let Some(id) = &id.cover_art {
-            // builder = builder.image(id);
+            builder = builder.image(id);
         }
         if let Some(artist) = &id.artist {
             builder = builder.subtitle(artist);
