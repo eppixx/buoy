@@ -2,6 +2,7 @@ pub mod album_element;
 pub mod album_tracks;
 pub mod album_view;
 pub mod albums_view;
+pub mod artist_element;
 pub mod artists_view;
 pub mod browser;
 pub mod cover;
