@@ -1,6 +1,6 @@
 use relm4::{
     gtk::{
-        self, glib, pango,
+        self, pango,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController, RelmWidgetExt,

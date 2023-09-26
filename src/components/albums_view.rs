@@ -1,7 +1,7 @@
 use relm4::{
     gtk::{
         self,
-        traits::{BoxExt, ButtonExt, FlowBoxChildExt, OrientableExt, WidgetExt},
+        traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     loading_widgets::LoadingWidgets,
     view, Component, ComponentController,

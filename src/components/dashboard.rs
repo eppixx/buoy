@@ -18,7 +18,7 @@ impl relm4::SimpleComponent for Dashboard {
     type Init = ();
 
     fn init(
-        path: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
