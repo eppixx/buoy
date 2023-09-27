@@ -33,7 +33,6 @@ pub enum AlbumViewOut {
 
 #[derive(Debug)]
 pub enum AlbumViewIn {
-    LoadChild(Id),
     AlbumTracks,
 }
 
@@ -67,7 +66,12 @@ impl relm4::Component for AlbumView {
 
         let widgets = view_output!();
         model.cover.model().add_css_class_image("size100");
-        sender.input(AlbumViewIn::LoadChild(init.clone()));
+
+        //load albums
+        sender.oneshot_command(async move {
+            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            AlbumViewCmd::LoadedAlbum(client.get_album(init.inner()).await)
+        });
 
         relm4::ComponentParts { model, widgets }
     }
@@ -120,16 +124,10 @@ impl relm4::Component for AlbumView {
     fn update(
         &mut self,
         msg: Self::Input,
-        sender: relm4::ComponentSender<Self>,
+        _sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
-            AlbumViewIn::LoadChild(id) => {
-                sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    AlbumViewCmd::LoadedAlbum(client.get_album(id.inner()).await)
-                });
-            }
             AlbumViewIn::AlbumTracks => {} //do nothing
         }
     }
