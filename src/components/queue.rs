@@ -271,7 +271,7 @@ impl relm4::Component for Queue {
             QueueIn::Append(id) => {
                 let songs: Vec<submarine::data::Child> = match id {
                     Droppable::Child(c) => vec![*c],
-                    Droppable::Album(album) => album.song,
+                    Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
                         sender.oneshot_command(async move {
                             let client = Client::get().lock().unwrap().inner.clone().unwrap();

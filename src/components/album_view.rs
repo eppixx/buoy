@@ -147,7 +147,7 @@ impl relm4::Component for AlbumView {
             }
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 // update dragSource
-                let drop = Droppable::Album(Box::new(album.clone()));
+                let drop = Droppable::AlbumWithSongs(Box::new(album.clone()));
                 let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
                 let drag_src = gtk::DragSource::new();
                 drag_src.set_actions(gtk::gdk::DragAction::MOVE);

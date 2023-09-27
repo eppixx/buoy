@@ -302,7 +302,7 @@ impl relm4::SimpleComponent for Browser {
                 ArtistsViewOut::ClickedArtist(id) => {
                     self.deactivate_all_buttons();
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
-                        .launch(Id::artist(id.inner()))
+                        .launch(id)
                         .forward(sender.input_sender(), |msg| {
                             BrowserInput::ArtistView(Box::new(msg))
                         });

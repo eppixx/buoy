@@ -9,7 +9,7 @@ use relm4::{
 
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -19,7 +19,7 @@ pub struct ArtistElement {
 
 #[derive(Debug)]
 pub enum ArtistElementOut {
-    Clicked(Id),
+    Clicked(submarine::data::ArtistId3),
 }
 
 #[relm4::component(pub)]
@@ -62,7 +62,7 @@ impl relm4::SimpleComponent for ArtistElement {
             gtk::Button {
                 add_css_class: "flat",
                 connect_clicked[sender, init] => move |_btn| {
-                    sender.output(ArtistElementOut::Clicked(Id::artist(&init.id))).unwrap();
+                    sender.output(ArtistElementOut::Clicked(init.clone())).unwrap();
                 },
 
                 #[wrap(Some)]

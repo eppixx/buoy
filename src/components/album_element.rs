@@ -1,6 +1,7 @@
 use relm4::{
     gtk::{
         self,
+        prelude::ToValue,
         traits::{ButtonExt, WidgetExt},
     },
     Component, ComponentController,
@@ -8,7 +9,7 @@ use relm4::{
 
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
-    types::Id,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -40,26 +41,26 @@ impl relm4::SimpleComponent for AlbumElement {
     ) -> relm4::ComponentParts<Self> {
         // init cover
         let mut builder = DescriptiveCoverBuilder::default();
-        let id = match init {
+        let (id, drop) = match init {
             AlbumElementInit::AlbumId3(id3) => {
-                builder = builder.title(id3.name);
+                builder = builder.title(id3.name.clone());
                 if let Some(id) = &id3.cover_art {
                     builder = builder.image(id);
                 }
                 if let Some(artist) = &id3.artist {
                     builder = builder.subtitle(artist);
                 }
-                id3.id
+                (id3.id.clone(), Droppable::Album(Box::new(id3)))
             }
             AlbumElementInit::Child(child) => {
-                builder = builder.title(child.title);
+                builder = builder.title(child.title.clone());
                 if let Some(id) = &child.cover_art {
                     builder = builder.image(id);
                 }
                 if let Some(artist) = &child.artist {
                     builder = builder.subtitle(artist);
                 }
-                child.id
+                (child.id.clone(), Droppable::AlbumChild(Box::new(child)))
             }
         };
 
@@ -68,6 +69,13 @@ impl relm4::SimpleComponent for AlbumElement {
         let model = Self { cover };
 
         let widgets = view_output!();
+
+        //setup DropSource
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        let drag_src = gtk::DragSource::new();
+        drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+        drag_src.set_content(Some(&content));
+        model.cover.widget().add_controller(drag_src);
 
         relm4::ComponentParts { model, widgets }
     }

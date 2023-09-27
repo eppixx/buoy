@@ -1,12 +1,16 @@
 use relm4::{
     gtk::{
         self,
+        prelude::ToValue,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
     view, ComponentController,
 };
 
-use crate::{client::Client, types::Id};
+use crate::{
+    client::Client,
+    types::{Droppable, Id},
+};
 
 use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
@@ -25,7 +29,6 @@ pub struct ArtistView {
 
 #[derive(Debug)]
 pub enum ArtistViewIn {
-    LoadArtist(Id),
     AlbumElement(AlbumElementOut),
 }
 
@@ -38,12 +41,11 @@ pub enum ArtistViewOut {
 pub enum ArtistViewCmd {
     LoadedAlbums(Result<submarine::data::ArtistWithAlbumsId3, submarine::SubsonicError>),
     LoadedArtist(Result<submarine::data::ArtistInfo, submarine::SubsonicError>),
-    LoadedArtistInfo(Result<submarine::data::ArtistId3, submarine::SubsonicError>),
 }
 
 #[relm4::component(pub)]
 impl relm4::Component for ArtistView {
-    type Init = Id;
+    type Init = submarine::data::ArtistId3;
     type Input = ArtistViewIn;
     type Output = ArtistViewOut;
     type Widgets = ArtistViewWidgets;
@@ -56,7 +58,7 @@ impl relm4::Component for ArtistView {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder().launch(()).detach(),
-            title: String::from("Unkonwn Title"),
+            title: init.name.clone(),
             bio: String::new(),
             loaded_albums: false,
             albums: gtk::FlowBox::default(),
@@ -64,8 +66,31 @@ impl relm4::Component for ArtistView {
         };
         let widgets = view_output!();
 
-        // model.cover.model().add_css_class_image("size100");
-        sender.input(ArtistViewIn::LoadArtist(init.clone()));
+        //setup DropSource
+        let drop = Droppable::Artist(Box::new(init.clone()));
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        let drag_src = gtk::DragSource::new();
+        drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+        drag_src.set_content(Some(&content));
+        model.cover.widget().add_controller(drag_src);
+
+        // load cover
+        model.cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
+        model.cover.model().add_css_class_image("size100");
+
+        // load albums
+        let id = init.id.clone();
+        sender.oneshot_command(async move {
+            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            ArtistViewCmd::LoadedAlbums(client.get_artist(id).await)
+        });
+
+        // load metainfo on artist
+        let id = init.id.clone();
+        sender.oneshot_command(async move {
+            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            ArtistViewCmd::LoadedArtist(client.get_artist_info2(id, Some(5), Some(false)).await)
+        });
 
         relm4::ComponentParts { model, widgets }
     }
@@ -113,34 +138,6 @@ impl relm4::Component for ArtistView {
         _root: &Self::Root,
     ) {
         match msg {
-            ArtistViewIn::LoadArtist(id) => {
-                // load albums of artist
-                let id2 = id.clone();
-                sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    ArtistViewCmd::LoadedAlbums(client.get_artist(id2.inner()).await)
-                });
-                // load metainfo on artist
-                let id2 = id.clone();
-                sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    ArtistViewCmd::LoadedArtist(
-                        client
-                            .get_artist_info2(id2.inner(), Some(5), Some(false))
-                            .await,
-                    )
-                });
-                // load artist info
-                sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    ArtistViewCmd::LoadedArtistInfo(
-                        client
-                            .get_artist(id.inner())
-                            .await
-                            .map(|artist| artist.base),
-                    )
-                });
-            }
             ArtistViewIn::AlbumElement(msg) => match msg {
                 AlbumElementOut::Clicked(id) => {
                     sender.output(ArtistViewOut::AlbumClicked(id)).unwrap()
@@ -171,11 +168,6 @@ impl relm4::Component for ArtistView {
                     self.albums.append(element.widget());
                     self.album_elements.push(element);
                 }
-            }
-            ArtistViewCmd::LoadedArtistInfo(Err(e)) => {} //TODO error handling
-            ArtistViewCmd::LoadedArtistInfo(Ok(info)) => {
-                self.title = info.name;
-                self.cover.emit(CoverIn::LoadImage(info.cover_art));
             }
         }
     }

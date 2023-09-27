@@ -8,7 +8,7 @@ use relm4::{
 };
 
 use super::artist_element::ArtistElementOut;
-use crate::{client::Client, components::artist_element::ArtistElement, types::Id};
+use crate::{client::Client, components::artist_element::ArtistElement};
 
 #[derive(Debug, Default)]
 pub struct ArtistsView {
@@ -18,7 +18,7 @@ pub struct ArtistsView {
 
 #[derive(Debug)]
 pub enum ArtistsViewOut {
-    ClickedArtist(Id),
+    ClickedArtist(submarine::data::ArtistId3),
 }
 
 #[derive(Debug)]

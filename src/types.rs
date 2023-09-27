@@ -52,7 +52,9 @@ impl Id {
 pub enum Droppable {
     Id(Id), //TODO maybe remove this later
     Child(Box<submarine::data::Child>),
-    Album(Box<submarine::data::AlbumWithSongsId3>),
+    AlbumWithSongs(Box<submarine::data::AlbumWithSongsId3>),
+    Album(Box<submarine::data::AlbumId3>),
+    AlbumChild(Box<submarine::data::Child>),
     ArtistWithAlbums(Box<submarine::data::ArtistWithAlbumsId3>),
     Artist(Box<submarine::data::ArtistId3>),
     Playlist(Box<submarine::data::PlaylistWithSongs>),
