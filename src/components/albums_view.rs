@@ -7,7 +7,7 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use crate::components::album_element::AlbumElement;
+use crate::components::album_element::{AlbumElement, AlbumElementInit};
 use crate::{client::Client, types::Id};
 
 use super::album_element::AlbumElementOut;
@@ -102,7 +102,7 @@ impl relm4::component::AsyncComponent for AlbumsView {
         // add albums with cover and title
         for (i, album) in albums.into_iter().enumerate() {
             let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
-                .launch(album)
+                .launch(AlbumElementInit::Child(album))
                 .forward(sender.input_sender(), AlbumsViewIn::AlbumElement);
             model.albums.insert(cover.widget(), i as i32);
             model.album_list.insert(i, cover);

@@ -10,11 +10,12 @@ use relm4::{
 use super::{
     album_view::AlbumViewOut,
     albums_view::{AlbumsView, AlbumsViewOut},
+    artist_view::ArtistViewOut,
     artists_view::{ArtistsView, ArtistsViewOut},
     dashboard::DashboardOutput,
 };
 use crate::{
-    components::{album_view::AlbumView, dashboard::Dashboard},
+    components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard},
     types::Id,
 };
 
@@ -58,6 +59,7 @@ pub struct Browser {
     artistss: Vec<relm4::component::AsyncController<ArtistsView>>,
     albumss: Vec<relm4::component::AsyncController<AlbumsView>>,
     album_views: Vec<relm4::Controller<AlbumView>>,
+    artist_views: Vec<relm4::Controller<ArtistView>>,
 }
 
 #[derive(Debug)]
@@ -73,6 +75,7 @@ pub enum BrowserInput {
     AlbumsView(AlbumsViewOut),
     AlbumView(Box<AlbumViewOut>),
     ArtistsView(ArtistsViewOut),
+    ArtistView(Box<ArtistViewOut>),
 }
 
 #[relm4::component(pub)]
@@ -100,6 +103,7 @@ impl relm4::SimpleComponent for Browser {
             artistss: vec![],
             albumss: vec![],
             album_views: vec![],
+            artist_views: vec![],
         };
         let widgets = view_output!();
 
@@ -296,13 +300,41 @@ impl relm4::SimpleComponent for Browser {
             },
             BrowserInput::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
-                    tracing::error!("clicked album");
-                    // sender.input(BrowserInput::NewView(View::Id(id)))
+                    self.deactivate_all_buttons();
+                    let artist: relm4::Controller<ArtistView> = ArtistView::builder()
+                        .launch(Id::artist(id.inner()))
+                        .forward(sender.input_sender(), |msg| {
+                            BrowserInput::ArtistView(Box::new(msg))
+                        });
+
+                    self.history_widget
+                        .push(Views::Artist(artist.widget().clone()));
+                    self.artist_views.push(artist);
+                    self.content
+                        .set_child(Some(self.history_widget.last().unwrap().widget()));
+                    self.back_btn.set_sensitive(true);
                 }
             },
             BrowserInput::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(id) => {} //TODO append to queue
                 AlbumViewOut::InsertAfterCurrentPLayed(id) => {} //TODO insert in queue
+            },
+            BrowserInput::ArtistView(msg) => match *msg {
+                ArtistViewOut::AlbumClicked(id) => {
+                    self.deactivate_all_buttons();
+                    let album: relm4::Controller<AlbumView> = AlbumView::builder()
+                        .launch(Id::album(id.inner()))
+                        .forward(sender.input_sender(), |msg| {
+                            BrowserInput::AlbumView(Box::new(msg))
+                        });
+
+                    self.history_widget
+                        .push(Views::Album(album.widget().clone()));
+                    self.album_views.push(album);
+                    self.content
+                        .set_child(Some(self.history_widget.last().unwrap().widget()));
+                    self.back_btn.set_sensitive(true);
+                }
             },
         }
     }

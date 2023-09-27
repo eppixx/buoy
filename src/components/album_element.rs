@@ -21,25 +21,47 @@ pub enum AlbumElementOut {
     Clicked(Id),
 }
 
+#[derive(Debug)]
+pub enum AlbumElementInit {
+    Child(submarine::data::Child),
+    AlbumId3(submarine::data::AlbumId3),
+}
+
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for AlbumElement {
+    type Init = AlbumElementInit;
     type Input = ();
     type Output = AlbumElementOut;
-    type Init = submarine::data::Child;
 
     fn init(
-        id: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         // init cover
-        let mut builder = DescriptiveCoverBuilder::default().title(&id.title);
-        if let Some(id) = &id.cover_art {
-            builder = builder.image(id);
-        }
-        if let Some(artist) = &id.artist {
-            builder = builder.subtitle(artist);
-        }
+        let mut builder = DescriptiveCoverBuilder::default();
+        let id = match init {
+            AlbumElementInit::AlbumId3(id3) => {
+                builder = builder.title(id3.name);
+                if let Some(id) = &id3.cover_art {
+                    builder = builder.image(id);
+                }
+                if let Some(artist) = &id3.artist {
+                    builder = builder.subtitle(artist);
+                }
+                id3.id
+            }
+            AlbumElementInit::Child(child) => {
+                builder = builder.title(child.title);
+                if let Some(id) = &child.cover_art {
+                    builder = builder.image(id);
+                }
+                if let Some(artist) = &child.artist {
+                    builder = builder.subtitle(artist);
+                }
+                child.id
+            }
+        };
 
         let cover: relm4::Controller<DescriptiveCover> =
             DescriptiveCover::builder().launch(builder).detach();
@@ -57,7 +79,7 @@ impl relm4::SimpleComponent for AlbumElement {
             gtk::Button {
                 add_css_class: "flat",
                 connect_clicked[sender, id] => move |_btn| {
-                    sender.output(AlbumElementOut::Clicked(Id::album(&id.id))).unwrap();
+                    sender.output(AlbumElementOut::Clicked(Id::album(&id))).unwrap();
                 },
 
                 #[wrap(Some)]
