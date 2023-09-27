@@ -4,7 +4,7 @@ use relm4::{
         prelude::ToValue,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
-    view, ComponentController,
+    ComponentController,
 };
 
 use crate::{
@@ -163,8 +163,8 @@ impl relm4::Component for ArtistView {
             ArtistViewCmd::LoadedAlbums(Ok(artist)) => {
                 for album in artist.album {
                     let element = AlbumElement::builder()
-                        .launch(AlbumElementInit::AlbumId3(album))
-                        .forward(sender.input_sender(), |msg| ArtistViewIn::AlbumElement(msg));
+                        .launch(AlbumElementInit::AlbumId3(Box::new(album)))
+                        .forward(sender.input_sender(), ArtistViewIn::AlbumElement);
                     self.albums.append(element.widget());
                     self.album_elements.push(element);
                 }

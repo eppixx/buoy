@@ -24,8 +24,8 @@ pub enum AlbumElementOut {
 
 #[derive(Debug)]
 pub enum AlbumElementInit {
-    Child(submarine::data::Child),
-    AlbumId3(submarine::data::AlbumId3),
+    Child(Box<submarine::data::Child>),
+    AlbumId3(Box<submarine::data::AlbumId3>),
 }
 
 #[relm4::component(pub)]
@@ -50,7 +50,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 if let Some(artist) = &id3.artist {
                     builder = builder.subtitle(artist);
                 }
-                (id3.id.clone(), Droppable::Album(Box::new(id3)))
+                (id3.id.clone(), Droppable::Album(Box::new(*id3)))
             }
             AlbumElementInit::Child(child) => {
                 builder = builder.title(child.title.clone());
@@ -60,7 +60,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 if let Some(artist) = &child.artist {
                     builder = builder.subtitle(artist);
                 }
-                (child.id.clone(), Droppable::AlbumChild(Box::new(child)))
+                (child.id.clone(), Droppable::AlbumChild(Box::new(*child)))
             }
         };
 
