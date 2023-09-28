@@ -11,7 +11,7 @@ use super::cover::Cover;
 use crate::{
     client::Client,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -23,6 +23,12 @@ pub struct AlbumView {
     view: gtk::Viewport,
     loaded_tracks: bool,
     tracks: Option<relm4::Controller<AlbumTracks>>,
+}
+
+#[derive(Debug)]
+pub enum AlbumViewInit {
+    Child(Box<submarine::data::Child>),
+    AlbumId3(Box<submarine::data::AlbumId3>),
 }
 
 #[derive(Debug)]
@@ -43,7 +49,7 @@ pub enum AlbumViewCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for AlbumView {
-    type Init = Id;
+    type Init = AlbumViewInit;
     type Input = AlbumViewIn;
     type Output = AlbumViewOut;
     type Widgets = AlbumViewWidgets;
@@ -70,7 +76,14 @@ impl relm4::Component for AlbumView {
         //load albums
         sender.oneshot_command(async move {
             let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            AlbumViewCmd::LoadedAlbum(client.get_album(init.inner()).await)
+            match &init {
+                AlbumViewInit::Child(child) => {
+                    AlbumViewCmd::LoadedAlbum(client.get_album(&child.id).await)
+                }
+                AlbumViewInit::AlbumId3(album) => {
+                    AlbumViewCmd::LoadedAlbum(client.get_album(&album.id).await)
+                }
+            }
         });
 
         relm4::ComponentParts { model, widgets }

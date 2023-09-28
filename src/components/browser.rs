@@ -8,16 +8,14 @@ use relm4::{
 };
 
 use super::{
-    album_view::AlbumViewOut,
+    album_element::AlbumElementInit,
+    album_view::{AlbumViewInit, AlbumViewOut},
     albums_view::{AlbumsView, AlbumsViewOut},
     artist_view::ArtistViewOut,
     artists_view::{ArtistsView, ArtistsViewOut},
     dashboard::DashboardOutput,
 };
-use crate::{
-    components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard},
-    types::Id,
-};
+use crate::components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Views {
@@ -281,11 +279,14 @@ impl relm4::SimpleComponent for Browser {
                 //TODO react to output
             }
             BrowserInput::AlbumsView(msg) => match msg {
-                AlbumsViewOut::ClickedAlbum(id) => {
-                    tracing::error!("received click in browser");
+                AlbumsViewOut::Clicked(id) => {
                     self.deactivate_all_buttons();
+                    let init: AlbumViewInit = match id {
+                        AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
+                        AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
+                    };
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch(Id::album(id.inner()))
+                        .launch(init)
                         .forward(sender.input_sender(), |msg| {
                             BrowserInput::AlbumView(Box::new(msg))
                         });
@@ -322,8 +323,12 @@ impl relm4::SimpleComponent for Browser {
             BrowserInput::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
                     self.deactivate_all_buttons();
+                    let init: AlbumViewInit = match id {
+                        AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
+                        AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
+                    };
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch(Id::album(id.inner()))
+                        .launch(init)
                         .forward(sender.input_sender(), |msg| {
                             BrowserInput::AlbumView(Box::new(msg))
                         });

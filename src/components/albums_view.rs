@@ -7,10 +7,9 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use crate::components::album_element::{AlbumElement, AlbumElementInit};
-use crate::{client::Client, types::Id};
-
 use super::album_element::AlbumElementOut;
+use crate::client::Client;
+use crate::components::album_element::{AlbumElement, AlbumElementInit};
 
 #[derive(Debug, Default)]
 pub struct AlbumsView {
@@ -20,7 +19,7 @@ pub struct AlbumsView {
 
 #[derive(Debug)]
 pub enum AlbumsViewOut {
-    ClickedAlbum(Id),
+    Clicked(AlbumElementInit),
 }
 
 #[derive(Debug)]
@@ -30,9 +29,9 @@ pub enum AlbumsViewIn {
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for AlbumsView {
+    type Init = ();
     type Input = AlbumsViewIn;
     type Output = AlbumsViewOut;
-    type Init = ();
     type CommandOutput = ();
 
     fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
@@ -141,8 +140,8 @@ impl relm4::component::AsyncComponent for AlbumsView {
     ) {
         match msg {
             AlbumsViewIn::AlbumElement(msg) => match msg {
-                AlbumElementOut::Clicked(id) => {
-                    sender.output(AlbumsViewOut::ClickedAlbum(id)).unwrap()
+                AlbumElementOut::Clicked(clicked) => {
+                    sender.output(AlbumsViewOut::Clicked(clicked)).unwrap()
                 }
             },
         }

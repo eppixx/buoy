@@ -9,7 +9,7 @@ use relm4::{
 
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -19,10 +19,10 @@ pub struct AlbumElement {
 
 #[derive(Debug)]
 pub enum AlbumElementOut {
-    Clicked(Id),
+    Clicked(AlbumElementInit),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AlbumElementInit {
     Child(Box<submarine::data::Child>),
     AlbumId3(Box<submarine::data::AlbumId3>),
@@ -41,7 +41,7 @@ impl relm4::SimpleComponent for AlbumElement {
     ) -> relm4::ComponentParts<Self> {
         // init cover
         let mut builder = DescriptiveCoverBuilder::default();
-        let (id, drop) = match init {
+        let drop = match &init {
             AlbumElementInit::AlbumId3(id3) => {
                 builder = builder.title(id3.name.clone());
                 if let Some(id) = &id3.cover_art {
@@ -50,7 +50,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 if let Some(artist) = &id3.artist {
                     builder = builder.subtitle(artist);
                 }
-                (id3.id.clone(), Droppable::Album(Box::new(*id3)))
+                Droppable::Album(id3.clone())
             }
             AlbumElementInit::Child(child) => {
                 builder = builder.title(child.title.clone());
@@ -60,7 +60,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 if let Some(artist) = &child.artist {
                     builder = builder.subtitle(artist);
                 }
-                (child.id.clone(), Droppable::AlbumChild(Box::new(*child)))
+                Droppable::AlbumChild(child.clone())
             }
         };
 
@@ -86,8 +86,8 @@ impl relm4::SimpleComponent for AlbumElement {
 
             gtk::Button {
                 add_css_class: "flat",
-                connect_clicked[sender, id] => move |_btn| {
-                    sender.output(AlbumElementOut::Clicked(Id::album(&id))).unwrap();
+                connect_clicked[sender, init] => move |_btn| {
+                    sender.output(AlbumElementOut::Clicked(init.clone())).unwrap();
                 },
 
                 #[wrap(Some)]

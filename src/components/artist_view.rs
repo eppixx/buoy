@@ -7,15 +7,11 @@ use relm4::{
     ComponentController,
 };
 
-use crate::{
-    client::Client,
-    types::{Droppable, Id},
-};
-
 use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn},
 };
+use crate::{client::Client, types::Droppable};
 
 #[derive(Debug)]
 pub struct ArtistView {
@@ -34,7 +30,7 @@ pub enum ArtistViewIn {
 
 #[derive(Debug)]
 pub enum ArtistViewOut {
-    AlbumClicked(Id),
+    AlbumClicked(AlbumElementInit),
 }
 
 #[derive(Debug)]
