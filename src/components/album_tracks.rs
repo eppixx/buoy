@@ -1,13 +1,14 @@
 use relm4::gtk::{
     self,
-    traits::{ButtonExt, GridExt, WidgetExt},
+    traits::{ButtonExt, GridExt, OrientableExt, WidgetExt},
 };
 
-use crate::components::seekbar::convert_for_label;
+use crate::{components::seekbar::convert_for_label, factory::album_song::AlbumSong};
 
 #[derive(Debug)]
 pub struct AlbumTracks {
     tracks: Vec<submarine::data::Child>,
+    songs: relm4::factory::FactoryVecDeque<AlbumSong>,
 }
 
 #[derive(Debug)]
@@ -35,49 +36,17 @@ impl relm4::SimpleComponent for AlbumTracks {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Self { tracks: init };
+        let mut model = Self {
+            tracks: init,
+            songs: relm4::factory::FactoryVecDeque::new(
+                gtk::ListBox::default(),
+                sender.input_sender(),
+            ),
+        };
         let widgets = view_output!();
-        //TODO dragndrop
-        //TODO highlighting rows
 
-        for (index, track) in model.tracks.iter().enumerate() {
-            //number
-            let number = gtk::Label::new(Some(
-                track.track.map(|t| t.to_string()).as_deref().unwrap_or(""),
-            ));
-            number.set_height_request(30);
-            widgets.grid.attach(&number, 0, index as i32 + 1, 1, 1);
-
-            //title
-            let title = gtk::Label::new(Some(&track.title));
-            title.set_halign(gtk::Align::Start);
-            widgets.grid.attach(&title, 1, index as i32 + 1, 1, 1);
-
-            //artist
-            let artist = gtk::Label::new(Some(
-                track
-                    .artist
-                    .as_ref()
-                    .map(|t| t.to_string())
-                    .as_deref()
-                    .unwrap_or("Unknows Artist"),
-            ));
-            artist.set_halign(gtk::Align::Start);
-            widgets.grid.attach(&artist, 2, index as i32 + 1, 1, 1);
-
-            //length
-            let length = gtk::Label::new(Some(
-                track
-                    .duration
-                    .map(|l| convert_for_label(l as i64 * 1000))
-                    .as_deref()
-                    .unwrap_or("-:--"),
-            ));
-            widgets.grid.attach(&length, 3, index as i32 + 1, 1, 1);
-
-            //favorite
-            let favorite = gtk::Image::from_icon_name("starred");
-            widgets.grid.attach(&favorite, 4, index as i32 + 1, 1, 1);
+        for track in &model.tracks {
+            model.songs.guard().push_back(track.clone());
         }
 
         relm4::ComponentParts { model, widgets }
@@ -86,58 +55,50 @@ impl relm4::SimpleComponent for AlbumTracks {
     view! {
         gtk::Box {
             add_css_class: "album-view-tracks",
+            set_orientation: gtk::Orientation::Vertical,
 
-            #[transition = "Crossfade"]
-            if !model.tracks.is_empty() {
-                gtk::ScrolledWindow {
-                    #[name = "grid"]
-                    gtk::Grid {
-                        set_column_spacing: 10,
+            gtk::Grid {
+                set_column_spacing: 10,
 
-                        attach[0, 0, 1, 1] = &gtk::Button {
-                            add_css_class: "flat",
-                            connect_clicked => AlbumTracksIn::Sort(Column::TrackNumber),
+                attach[0, 0, 1, 1] = &gtk::Button {
+                    add_css_class: "flat",
+                    connect_clicked => AlbumTracksIn::Sort(Column::TrackNumber),
 
-                            gtk::Label {
-                                add_css_class: "h4",
-                                set_halign: gtk::Align::Start,
-                                set_label: "#",
-                            }
-                        },
-                        attach[1, 0, 1, 1] = &gtk::Label {
-                            add_css_class: "h4",
-                            set_halign: gtk::Align::Start,
-                            set_label: "Title",
-                            set_hexpand: true,
-                        },
-                        attach[2, 0, 1, 1] = &gtk::Label {
-                            add_css_class: "h4",
-                            set_halign: gtk::Align::Start,
-                            set_label: "Artist",
-                            set_hexpand: true,
-                        },
-                        attach[3, 0, 1, 1] = &gtk::Label {
-                            add_css_class: "h4",
-                            set_halign: gtk::Align::Start,
-                            set_label: "Length",
-                        },
-                        attach[4, 0, 1, 1] = &gtk::Label {
-                            add_css_class: "h4",
-                            set_halign: gtk::Align::Start,
-                            set_label: "Favorite",
-                        },
+                    gtk::Label {
+                        add_css_class: "h4",
+                        set_halign: gtk::Align::Start,
+                        set_label: "#",
                     }
-                }
-            } else {
-                gtk::Label {
-                    add_css_class: "h3",
-                    set_label: "Album is empty",
+                },
+                attach[1, 0, 1, 1] = &gtk::Label {
+                    add_css_class: "h4",
+                    set_halign: gtk::Align::Start,
+                    set_label: "Title",
                     set_hexpand: true,
-                    set_vexpand: true,
-                    set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Center,
-                }
-            }
+                },
+                attach[2, 0, 1, 1] = &gtk::Label {
+                    add_css_class: "h4",
+                    set_halign: gtk::Align::Start,
+                    set_label: "Artist",
+                    set_hexpand: true,
+                },
+                attach[3, 0, 1, 1] = &gtk::Label {
+                    add_css_class: "h4",
+                    set_halign: gtk::Align::Start,
+                    set_label: "Length",
+                },
+                attach[4, 0, 1, 1] = &gtk::Label {
+                    add_css_class: "h4",
+                    set_halign: gtk::Align::Start,
+                    set_label: "Favorite",
+                },
+            },
+
+            gtk::ScrolledWindow {
+                set_vexpand: true,
+
+                model.songs.widget().clone() -> gtk::ListBox {},
+            },
         }
     }
 

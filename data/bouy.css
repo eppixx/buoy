@@ -232,3 +232,10 @@
 .album-view-tracks {
   margin: 0px;
 }
+
+.album-song {
+  border-radius: 8px;
+  padding: 4px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
