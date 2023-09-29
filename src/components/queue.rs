@@ -16,7 +16,7 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song::{QueueSong, QueueSongIn, QueueSongInit},
+    factory::queue_song::{QueueSong, QueueSongInit},
     play_state::PlayState,
     types::{Droppable, Id},
 };
@@ -75,7 +75,7 @@ pub enum QueueIn {
 
 #[derive(Debug)]
 pub enum QueueOut {
-    Play(submarine::data::Child),
+    Play(Box<submarine::data::Child>),
     Stop,
 }
 
@@ -235,7 +235,7 @@ impl relm4::Component for Queue {
                 }
 
                 self.playing_index = Some(index);
-                sender.output(QueueOut::Play(*info)).unwrap();
+                sender.output(QueueOut::Play(Box::new(*info))).unwrap();
             }
             QueueIn::Clicked(index) => {
                 for (_i, song) in self
