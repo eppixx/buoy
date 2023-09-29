@@ -51,11 +51,11 @@ pub enum QueueIn {
     ShiftClicked(DynamicIndex),
     Clear,
     Remove,
-    DropAbove {
+    MoveAbove {
         src: DynamicIndex,
         dest: DynamicIndex,
     },
-    DropBelow {
+    MoveBelow {
         src: DynamicIndex,
         dest: DynamicIndex,
     },
@@ -66,6 +66,14 @@ pub enum QueueIn {
     PlayNext,
     PlayPrevious,
     LoadPlayQueue,
+    DropAbove {
+        src: Vec<submarine::data::Child>,
+        dest: DynamicIndex,
+    },
+    DropBelow {
+        src: Vec<submarine::data::Child>,
+        dest: DynamicIndex,
+    },
     Append(Droppable),
 }
 
@@ -340,13 +348,13 @@ impl relm4::Component for Queue {
 
                 self.update_clear_btn_sensitivity();
             }
-            QueueIn::DropAbove { src, dest } => {
+            QueueIn::MoveAbove { src, dest } => {
                 let mut guard = self.songs.guard();
                 let src = src.current_index();
                 let dest = dest.current_index();
                 guard.move_to(src, dest);
             }
-            QueueIn::DropBelow { src, dest } => {
+            QueueIn::MoveBelow { src, dest } => {
                 let mut guard = self.songs.guard();
                 let src = src.current_index();
                 let dest = dest.current_index();
@@ -354,6 +362,24 @@ impl relm4::Component for Queue {
                     guard.move_to(src, dest);
                 } else {
                     guard.move_to(src, dest + 1);
+                }
+            }
+            QueueIn::DropAbove { src, dest } => {
+                let mut guard = self.songs.guard();
+                for (i, child) in src.iter().enumerate() {
+                    guard.insert(
+                        dest.current_index() + i,
+                        QueueSongInit::Child(Box::new(child.clone())),
+                    );
+                }
+            }
+            QueueIn::DropBelow { src, dest } => {
+                let mut guard = self.songs.guard();
+                for (i, child) in src.iter().enumerate() {
+                    guard.insert(
+                        dest.current_index() + i + 1,
+                        QueueSongInit::Child(Box::new(child.clone())),
+                    );
                 }
             }
             QueueIn::NewState(state) => {
