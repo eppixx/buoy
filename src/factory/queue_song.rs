@@ -362,19 +362,16 @@ impl FactoryComponent for QueueSong {
                 append = match self.playing {
                     PlayState::Play => {
                         gtk::Image {
-                            add_css_class: "size50",
                             set_icon_name: Some("audio-volume-high-symbolic"),
                         }
                     }
                     PlayState::Pause => {
                         gtk::Image {
-                            add_css_class: "size50",
                             set_icon_name: Some("media-playback-pause-symbolic"),
                         }
                     }
                     PlayState::Stop => {
                         &self.cover.widget().clone() {
-                            add_css_class: "size50",
                             add_css_class: "cover",
                         }
                     }

@@ -207,6 +207,11 @@
   min-height: 100px;
 }
 
+.size32 {
+  min-width: 32px;
+  min-height: 32px;
+}
+
 .size50 {
   min-width: 50px;
   min-height: 50px;

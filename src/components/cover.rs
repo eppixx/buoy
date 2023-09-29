@@ -64,7 +64,7 @@ impl relm4::Component for Cover {
                     add_css_class: "card",
 
                     gtk::Spinner {
-                        add_css_class: "size50",
+                        add_css_class: "size32",
                         set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
                         start: (),
