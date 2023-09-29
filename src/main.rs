@@ -154,20 +154,18 @@ impl SimpleComponent for App {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            AppIn::PlayControlOutput(PlayControlOut::Next) => {
-                _ = self.queue.sender().send(QueueIn::PlayNext);
-            }
-            AppIn::PlayControlOutput(PlayControlOut::Previous) => {
-                _ = self.queue.sender().send(QueueIn::PlayPrevious);
-            }
-            AppIn::PlayControlOutput(PlayControlOut::Status(status)) => {
-                match status {
-                    PlayState::Pause => self.playback.pause().unwrap(),
-                    PlayState::Play => self.playback.play().unwrap(),
-                    PlayState::Stop => self.playback.stop().unwrap(),
-                };
-                self.queue.sender().send(QueueIn::NewState(status)).unwrap();
-            }
+            AppIn::PlayControlOutput(input) => match input {
+                PlayControlOut::Next => self.queue.emit(QueueIn::PlayNext),
+                PlayControlOut::Previous => self.queue.emit(QueueIn::PlayPrevious),
+                PlayControlOut::Status(status) => {
+                    match status {
+                        PlayState::Pause => self.playback.pause().unwrap(),
+                        PlayState::Play => self.playback.play().unwrap(),
+                        PlayState::Stop => self.playback.stop().unwrap(),
+                    }
+                    self.queue.emit(QueueIn::NewState(status));
+                }
+            },
             AppIn::Seekbar(msg) => match msg {
                 SeekbarOut::SeekDragged(seek_in_ms) => self.playback.set_position(seek_in_ms),
             },
