@@ -16,7 +16,7 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_item::{QueueSong, QueueSongInit},
+    factory::queue_song::{QueueSong, QueueSongInit},
     play_state::PlayState,
     types::{Droppable, Id},
 };

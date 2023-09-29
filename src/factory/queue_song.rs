@@ -40,8 +40,8 @@ pub enum QueueSongIn {
     DragLeave,
     NewState(PlayState),
     StarredClicked,
-    DroppedItem { drop: Droppable, y: f64 },
-    MoveItem { index: Index, y: f64 },
+    DroppedSong { drop: Droppable, y: f64 },
+    MoveSong { index: Index, y: f64 },
     LoadSongInfo,
 }
 
@@ -101,7 +101,7 @@ impl QueueSong {
 }
 
 #[derive(Debug)]
-pub enum QueueItemCmd {
+pub enum QueueSongCmd {
     LoadedTrack(Box<Option<submarine::data::Child>>),
     Favorited(Result<bool, submarine::SubsonicError>),
     InsertChildrenAbove(
@@ -120,7 +120,7 @@ impl FactoryComponent for QueueSong {
     type ParentWidget = gtk::ListBox;
     type ParentInput = QueueIn;
     type Widgets = QueueSongWidgets;
-    type CommandOutput = QueueItemCmd;
+    type CommandOutput = QueueSongCmd;
 
     fn init_model(init: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
         let mut model = Self {
@@ -217,10 +217,10 @@ impl FactoryComponent for QueueSong {
                         true => client.unstar(vec![id.inner()], empty.clone(), empty).await,
                         false => client.star(vec![id.inner()], empty.clone(), empty).await,
                     };
-                    QueueItemCmd::Favorited(result.map(|_| !favorite))
+                    QueueSongCmd::Favorited(result.map(|_| !favorite))
                 });
             }
-            QueueSongIn::DroppedItem { drop, y } => {
+            QueueSongIn::DroppedSong { drop, y } => {
                 sender.input(QueueSongIn::DragLeave);
                 let widget_height = self.root_widget.height();
                 let index = self.index.clone();
@@ -233,12 +233,12 @@ impl FactoryComponent for QueueSong {
                     Droppable::Album(album) => {
                         sender.oneshot_command(async move {
                             match client.get_album(album.id).await {
-                                Err(e) => QueueItemCmd::InsertChildrenBelow(Err(e)),
+                                Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
                                 Ok(album) if y < widget_height as f64 * 0.5f64 => {
-                                    QueueItemCmd::InsertChildrenAbove(Ok((index, album.song)))
+                                    QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
                                 }
                                 Ok(album) => {
-                                    QueueItemCmd::InsertChildrenBelow(Ok((index, album.song)))
+                                    QueueSongCmd::InsertChildrenBelow(Ok((index, album.song)))
                                 }
                             }
                         });
@@ -247,21 +247,21 @@ impl FactoryComponent for QueueSong {
                     Droppable::Artist(artist) => {
                         sender.oneshot_command(async move {
                             match client.get_artist(artist.id).await {
-                                Err(e) => QueueItemCmd::InsertChildrenBelow(Err(e)),
+                                Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
                                 Ok(artist) => {
                                     let mut songs = vec![];
                                     for album in artist.album {
                                         match client.get_album(album.id).await {
                                             Err(e) => {
-                                                return QueueItemCmd::InsertChildrenBelow(Err(e))
+                                                return QueueSongCmd::InsertChildrenBelow(Err(e))
                                             }
                                             Ok(mut album) => songs.append(&mut album.song),
                                         }
                                     }
                                     if y < widget_height as f64 * 0.5f64 {
-                                        QueueItemCmd::InsertChildrenAbove(Ok((index, songs)))
+                                        QueueSongCmd::InsertChildrenAbove(Ok((index, songs)))
                                     } else {
-                                        QueueItemCmd::InsertChildrenBelow(Ok((index, songs)))
+                                        QueueSongCmd::InsertChildrenBelow(Ok((index, songs)))
                                     }
                                 }
                             }
@@ -273,14 +273,14 @@ impl FactoryComponent for QueueSong {
                             let mut songs = vec![];
                             for album in artist.album {
                                 match client.get_album(album.id).await {
-                                    Err(e) => return QueueItemCmd::InsertChildrenBelow(Err(e)),
+                                    Err(e) => return QueueSongCmd::InsertChildrenBelow(Err(e)),
                                     Ok(mut album) => songs.append(&mut album.song),
                                 }
                             }
                             if y < widget_height as f64 * 0.5f64 {
-                                QueueItemCmd::InsertChildrenAbove(Ok((index, songs)))
+                                QueueSongCmd::InsertChildrenAbove(Ok((index, songs)))
                             } else {
-                                QueueItemCmd::InsertChildrenBelow(Ok((index, songs)))
+                                QueueSongCmd::InsertChildrenBelow(Ok((index, songs)))
                             }
                         });
                         vec![]
@@ -288,12 +288,12 @@ impl FactoryComponent for QueueSong {
                     Droppable::AlbumChild(album) => {
                         sender.oneshot_command(async move {
                             match client.get_album(album.id).await {
-                                Err(e) => QueueItemCmd::InsertChildrenBelow(Err(e)),
+                                Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
                                 Ok(album) if y < widget_height as f64 * 0.5f64 => {
-                                    QueueItemCmd::InsertChildrenAbove(Ok((index, album.song)))
+                                    QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
                                 }
                                 Ok(album) => {
-                                    QueueItemCmd::InsertChildrenAbove(Ok((index, album.song)))
+                                    QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
                                 }
                             }
                         });
@@ -316,7 +316,7 @@ impl FactoryComponent for QueueSong {
                     });
                 }
             }
-            QueueSongIn::MoveItem { index, y } => {
+            QueueSongIn::MoveSong { index, y } => {
                 sender.input(QueueSongIn::DragLeave);
 
                 let widget_height = self.root_widget.height();
@@ -337,8 +337,8 @@ impl FactoryComponent for QueueSong {
                 sender.oneshot_command(async move {
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
                     match client.get_song(id.inner()).await {
-                        Ok(child) => QueueItemCmd::LoadedTrack(Box::new(Some(child))),
-                        Err(_) => QueueItemCmd::LoadedTrack(Box::new(None)),
+                        Ok(child) => QueueSongCmd::LoadedTrack(Box::new(Some(child))),
+                        Err(_) => QueueSongCmd::LoadedTrack(Box::new(None)),
                     }
                 });
             }
@@ -434,10 +434,10 @@ impl FactoryComponent for QueueSong {
 
                 connect_drop[sender] => move |_target, value, _x, y| {
                     if let Ok(index) = value.get::<Index>() {
-                        sender.input(QueueSongIn::MoveItem { index, y });
+                        sender.input(QueueSongIn::MoveSong { index, y });
                     }
                     if let Ok(drop) = value.get::<Droppable>() {
-                        sender.input(QueueSongIn::DroppedItem { drop, y });
+                        sender.input(QueueSongIn::DroppedSong { drop, y });
                     }
                     true
                 },
@@ -486,7 +486,7 @@ impl FactoryComponent for QueueSong {
 
     fn update_cmd(&mut self, message: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
         match message {
-            QueueItemCmd::LoadedTrack(child) => {
+            QueueSongCmd::LoadedTrack(child) => {
                 let child = if let Some(child) = *child {
                     child
                 } else {
@@ -507,17 +507,17 @@ impl FactoryComponent for QueueSong {
                 self.cover.emit(CoverIn::LoadImage(child.cover_art.clone()));
                 self.info = Some(child);
             }
-            QueueItemCmd::Favorited(Err(e)) => {} //TODO error handling
-            QueueItemCmd::Favorited(Ok(state)) => self.favorited = state,
-            QueueItemCmd::InsertChildrenAbove(Err(e)) => {} //TODO error handling
-            QueueItemCmd::InsertChildrenAbove(Ok((index, songs))) => {
+            QueueSongCmd::Favorited(Err(e)) => {} //TODO error handling
+            QueueSongCmd::Favorited(Ok(state)) => self.favorited = state,
+            QueueSongCmd::InsertChildrenAbove(Err(e)) => {} //TODO error handling
+            QueueSongCmd::InsertChildrenAbove(Ok((index, songs))) => {
                 sender.output(QueueSongOut::DropAbove {
                     src: songs,
                     dest: index,
                 });
             }
-            QueueItemCmd::InsertChildrenBelow(Err(e)) => {} //TODO error handling
-            QueueItemCmd::InsertChildrenBelow(Ok((index, songs))) => {
+            QueueSongCmd::InsertChildrenBelow(Err(e)) => {} //TODO error handling
+            QueueSongCmd::InsertChildrenBelow(Ok((index, songs))) => {
                 sender.output(QueueSongOut::DropBelow {
                     src: songs,
                     dest: index,
