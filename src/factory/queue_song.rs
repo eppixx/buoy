@@ -162,9 +162,7 @@ impl FactoryComponent for QueueSong {
                         }
                     }
                     PlayState::Stop => {
-                        &self.cover.widget().clone() {
-                            add_css_class: "cover",
-                        }
+                        &self.cover.widget().clone() {}
                     }
                 },
 
@@ -181,7 +179,7 @@ impl FactoryComponent for QueueSong {
                     },
                     gtk:: Label {
                         set_markup: &format!("<span style=\"italic\">{}</span>"
-                                             , self.info.artist.clone().unwrap_or(String::from("Unknown Artist"))),
+                                             , self.info.artist.as_deref().unwrap_or("Unknown Artist")),
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
@@ -190,8 +188,7 @@ impl FactoryComponent for QueueSong {
                 },
 
                 gtk::Label {
-                    #[watch]
-                    set_label: &seekbar::convert_for_label(self.info.duration.clone().unwrap_or(0) as i64 * 1000),
+                    set_label: &seekbar::convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
                 },
 
                 #[transition = "Crossfade"]
