@@ -16,7 +16,7 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song::{QueueSong, QueueSongInit},
+    factory::queue_song::{QueueSong, QueueSongIn, QueueSongInit},
     play_state::PlayState,
     types::{Droppable, Id},
 };
@@ -234,9 +234,10 @@ impl relm4::Component for Queue {
                     .filter(|(i, _)| i != &index.current_index())
                 {
                     self.songs.widget().unselect_row(song.root_widget());
-                    song.new_play_state(PlayState::Stop);
+                    song.new_play_state(&PlayState::Stop);
                 }
 
+                self.playing_index = Some(index);
                 sender.output(QueueOut::Play(*info)).unwrap();
             }
             QueueIn::Clicked(index) => {
@@ -387,22 +388,10 @@ impl relm4::Component for Queue {
                     return;
                 }
 
-                match state {
-                    PlayState::Play => {
-                        // let (index, id) = if let Some(index) = &self.playing_index {
-                        //     // play current index
-                        //     let index = self.playing_index.unwrap().current_index();
-                        //     self.songs.get(index).unwrap().new_play_state(state)
-                        // } else {
-                        //     // no song playing, start at front of playlist
-                        //     self.songs.front().unwrap().new_play_state(state)
-                        // };
-                        // self.playing_index = index;
-                        // sender.output(QueueOutput::Play(id.unwrap()));
-                        println!("TODO implement play in queue");
+                if let Some(index) = &self.playing_index {
+                    if let Some(song) = self.songs.get(index.current_index()) {
+                        song.new_play_state(&state);
                     }
-                    PlayState::Pause => println!("TODO implement pause in queue"),
-                    PlayState::Stop => println!("TODO implement stop in queue"),
                 }
             }
             QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),

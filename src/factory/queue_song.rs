@@ -86,7 +86,7 @@ pub struct QueueSong {
 }
 
 impl QueueSong {
-    pub fn new_play_state(&self, state: PlayState) -> (Option<DynamicIndex>, Option<Id>) {
+    pub fn new_play_state(&self, state: &PlayState) -> (Option<DynamicIndex>, Option<Id>) {
         self.sender.input(QueueSongIn::NewState(state.clone()));
         match state {
             PlayState::Play => (Some(self.index.clone()), Some(self.id.clone())),
@@ -97,6 +97,10 @@ impl QueueSong {
 
     pub fn root_widget(&self) -> &gtk::ListBoxRow {
         &self.root_widget
+    }
+
+    pub fn activate(&self) {
+        self.sender.input(QueueSongIn::Activated);
     }
 }
 
@@ -189,7 +193,7 @@ impl FactoryComponent for QueueSong {
         match message {
             QueueSongIn::Activated => {
                 if let Some(info) = &self.info {
-                    self.new_play_state(PlayState::Play);
+                    self.new_play_state(&PlayState::Play);
                     sender.output(QueueSongOut::Activated(
                         self.index.clone(),
                         Box::new(info.clone()),
@@ -205,7 +209,9 @@ impl FactoryComponent for QueueSong {
                 }
             }
             QueueSongIn::DragLeave => DragState::reset(&mut self.root_widget),
-            QueueSongIn::NewState(state) => self.playing = state,
+            QueueSongIn::NewState(state) => {
+                self.playing = state;
+            }
             QueueSongIn::StarredClicked => {
                 let id = self.id.clone();
                 let favorite = self.favorited;
