@@ -65,13 +65,9 @@ pub enum QueueSongOut {
 #[derive(Debug)]
 pub struct QueueSong {
     root_widget: gtk::ListBoxRow,
-    info: Option<submarine::data::Child>,
-    id: Id,
+    info: submarine::data::Child,
     cover: relm4::Controller<Cover>,
     playing: PlayState,
-    title: String,
-    artist: String,
-    length: i64, //length of song in ms
     favorited: bool,
     index: DynamicIndex,
     sender: FactorySender<Self>,
@@ -82,7 +78,10 @@ impl QueueSong {
     pub fn new_play_state(&self, state: &PlayState) -> (Option<DynamicIndex>, Option<Id>) {
         self.sender.input(QueueSongIn::NewState(state.clone()));
         match state {
-            PlayState::Play => (Some(self.index.clone()), Some(self.id.clone())),
+            PlayState::Play => (
+                Some(self.index.clone()),
+                Some(Id::song(self.info.id.clone())),
+            ),
             PlayState::Pause => (Some(self.index.clone()), None),
             PlayState::Stop => (None, None),
         }
@@ -119,33 +118,18 @@ impl FactoryComponent for QueueSong {
     type CommandOutput = QueueSongCmd;
 
     fn init_model(init: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
+        let cover = Cover::builder().launch(()).detach();
+        cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
-            info: None,
-            id: Id::song(""),
-            cover: Cover::builder().launch(()).detach(),
+            info: init.clone(),
+            cover,
             playing: PlayState::Stop,
-            title: String::from("song"),
-            artist: String::from("Unknown Artist"),
-            length: 0,
-            favorited: false,
+            favorited: init.starred.is_some(),
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
         };
-
-        model.title = init.title.clone();
-        if let Some(artist) = &init.artist {
-            model.artist = artist.clone();
-        }
-        if let Some(length) = &init.duration {
-            model.length = *length as i64 * 1000;
-        }
-        if init.starred.is_some() {
-            model.favorited = true;
-        }
-        model.cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
-        model.info = Some(init);
 
         DragState::reset(&mut model.root_widget);
 
@@ -189,16 +173,15 @@ impl FactoryComponent for QueueSong {
                     set_valign: gtk::Align::Center,
 
                     gtk::Label {
-                        #[watch]
-                        set_label: &self.title,
+                        set_label: &self.info.title,
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
                         set_ellipsize: pango::EllipsizeMode::End,
                     },
                     gtk:: Label {
-                        #[watch]
-                        set_markup: &format!("<span style=\"italic\">{}</span>", self.artist),
+                        set_markup: &format!("<span style=\"italic\">{}</span>"
+                                             , self.info.artist.clone().unwrap_or(String::from("Unknown Artist"))),
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
@@ -208,7 +191,7 @@ impl FactoryComponent for QueueSong {
 
                 gtk::Label {
                     #[watch]
-                    set_label: &seekbar::convert_for_label(self.length),
+                    set_label: &seekbar::convert_for_label(self.info.duration.clone().unwrap_or(0) as i64 * 1000),
                 },
 
                 #[transition = "Crossfade"]
@@ -297,13 +280,11 @@ impl FactoryComponent for QueueSong {
     fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
             QueueSongIn::Activated => {
-                if let Some(info) = &self.info {
-                    self.new_play_state(&PlayState::Play);
-                    sender.output(QueueSongOut::Activated(
-                        self.index.clone(),
-                        Box::new(info.clone()),
-                    ));
-                }
+                self.new_play_state(&PlayState::Play);
+                sender.output(QueueSongOut::Activated(
+                    self.index.clone(),
+                    Box::new(self.info.clone()),
+                ));
             }
             QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
@@ -318,15 +299,15 @@ impl FactoryComponent for QueueSong {
                 self.playing = state;
             }
             QueueSongIn::StarredClicked => {
-                let id = self.id.clone();
+                let id = self.info.id.clone();
                 let favorite = self.favorited;
                 sender.oneshot_command(async move {
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
                     let empty: Vec<&str> = vec![];
 
                     let result = match favorite {
-                        true => client.unstar(vec![id.inner()], empty.clone(), empty).await,
-                        false => client.star(vec![id.inner()], empty.clone(), empty).await,
+                        true => client.unstar(vec![id], empty.clone(), empty).await,
+                        false => client.star(vec![id], empty.clone(), empty).await,
                     };
                     QueueSongCmd::Favorited(result.map(|_| !favorite))
                 });
