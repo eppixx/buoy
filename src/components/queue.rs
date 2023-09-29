@@ -405,24 +405,31 @@ impl relm4::Component for Queue {
 
                 match &self.playing_index {
                     None => self.songs.front().unwrap().activate(),
-                    Some(index) if index.current_index() + 1 == self.songs.len() => {
-                        sender.output(QueueOut::Stop).unwrap();
-                        self.songs
-                            .get(index.current_index())
-                            .unwrap()
-                            .new_play_state(&PlayState::Stop);
-                        self.playing_index = None;
-                    }
                     Some(index) => {
-                        self.songs
-                            .get(index.current_index() + 1)
-                            .unwrap()
-                            .activate();
+                        match index.current_index() {
+                            // at end of queue
+                            i if i + 1 == self.songs.len() => {
+                                sender.output(QueueOut::Stop).unwrap();
+                                self.songs.get(i).unwrap().new_play_state(&PlayState::Stop);
+                                self.playing_index = None;
+                            }
+                            i => self.songs.get(i + 1).unwrap().activate(),
+                        }
                     }
                 }
             }
             QueueIn::PlayPrevious => {
-                //TODO fth useful
+                if self.songs.is_empty() {
+                    return;
+                }
+
+                if let Some(index) = &self.playing_index {
+                    match index.current_index() {
+                        // at start of queue
+                        0 => self.songs.get(0).unwrap().activate(),
+                        i => self.songs.get(i + 1).unwrap().activate(),
+                    }
+                }
             }
             QueueIn::LoadPlayQueue => {
                 self.loading_queue = true;
