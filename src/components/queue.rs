@@ -427,7 +427,7 @@ impl relm4::Component for Queue {
                     match index.current_index() {
                         // at start of queue
                         0 => self.songs.get(0).unwrap().activate(),
-                        i => self.songs.get(i + 1).unwrap().activate(),
+                        i => self.songs.get(i - 1).unwrap().activate(),
                     }
                 }
             }
