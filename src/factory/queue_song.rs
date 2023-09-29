@@ -28,12 +28,6 @@ use crate::{
 pub struct Index(DynamicIndex);
 
 #[derive(Debug)]
-pub enum QueueSongInit {
-    Id(Id),
-    Child(Box<submarine::data::Child>),
-}
-
-#[derive(Debug)]
 pub enum QueueSongIn {
     Activated,
     DraggedOver(f64),
@@ -42,7 +36,6 @@ pub enum QueueSongIn {
     StarredClicked,
     DroppedSong { drop: Droppable, y: f64 },
     MoveSong { index: Index, y: f64 },
-    LoadSongInfo,
 }
 
 #[derive(Debug)]
@@ -106,7 +99,6 @@ impl QueueSong {
 
 #[derive(Debug)]
 pub enum QueueSongCmd {
-    LoadedTrack(Box<Option<submarine::data::Child>>),
     Favorited(Result<bool, submarine::SubsonicError>),
     InsertChildrenAbove(
         Result<(DynamicIndex, Vec<submarine::data::Child>), submarine::SubsonicError>,
@@ -118,7 +110,7 @@ pub enum QueueSongCmd {
 
 #[relm4::factory(pub)]
 impl FactoryComponent for QueueSong {
-    type Init = QueueSongInit; // TODO improve handling of init data
+    type Init = submarine::data::Child;
     type Input = QueueSongIn;
     type Output = QueueSongOut;
     type ParentWidget = gtk::ListBox;
@@ -142,28 +134,18 @@ impl FactoryComponent for QueueSong {
             drag_src: gtk::DragSource::new(),
         };
 
-        match init {
-            QueueSongInit::Id(id) => {
-                model.id = id;
-                sender.input(QueueSongIn::LoadSongInfo);
-            }
-            QueueSongInit::Child(child) => {
-                model.title = child.title.clone();
-                if let Some(artist) = &child.artist {
-                    model.artist = artist.clone();
-                }
-                if let Some(length) = &child.duration {
-                    model.length = *length as i64 * 1000;
-                }
-                if child.starred.is_some() {
-                    model.favorited = true;
-                }
-                model
-                    .cover
-                    .emit(CoverIn::LoadImage(child.cover_art.clone()));
-                model.info = Some(*child);
-            }
+        model.title = init.title.clone();
+        if let Some(artist) = &init.artist {
+            model.artist = artist.clone();
         }
+        if let Some(length) = &init.duration {
+            model.length = *length as i64 * 1000;
+        }
+        if init.starred.is_some() {
+            model.favorited = true;
+        }
+        model.cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
+        model.info = Some(init);
 
         DragState::reset(&mut model.root_widget);
 
@@ -176,16 +158,139 @@ impl FactoryComponent for QueueSong {
         model
     }
 
-    fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
-        match output {
-            QueueSongOut::Activated(index, info) => Some(QueueIn::Activated(index, info)),
-            QueueSongOut::Clicked(index) => Some(QueueIn::Clicked(index)),
-            QueueSongOut::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
-            QueueSongOut::Remove => Some(QueueIn::Remove),
-            QueueSongOut::MoveAbove { src, dest } => Some(QueueIn::MoveAbove { src, dest }),
-            QueueSongOut::MoveBelow { src, dest } => Some(QueueIn::MoveBelow { src, dest }),
-            QueueSongOut::DropAbove { src, dest } => Some(QueueIn::DropAbove { src, dest }),
-            QueueSongOut::DropBelow { src, dest } => Some(QueueIn::DropBelow { src, dest }),
+    view! {
+        self.root_widget.clone() -> gtk::ListBoxRow {
+            add_css_class: "queue-song",
+
+            gtk::Box {
+                set_spacing: 10,
+
+                #[transition = "Crossfade"]
+                append = match self.playing {
+                    PlayState::Play => {
+                        gtk::Image {
+                            set_icon_name: Some("audio-volume-high-symbolic"),
+                        }
+                    }
+                    PlayState::Pause => {
+                        gtk::Image {
+                            set_icon_name: Some("media-playback-pause-symbolic"),
+                        }
+                    }
+                    PlayState::Stop => {
+                        &self.cover.widget().clone() {
+                            add_css_class: "cover",
+                        }
+                    }
+                },
+
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_valign: gtk::Align::Center,
+
+                    gtk::Label {
+                        #[watch]
+                        set_label: &self.title,
+                        set_width_chars: 3,
+                        set_hexpand: true,
+                        set_halign: gtk::Align::Start,
+                        set_ellipsize: pango::EllipsizeMode::End,
+                    },
+                    gtk:: Label {
+                        #[watch]
+                        set_markup: &format!("<span style=\"italic\">{}</span>", self.artist),
+                        set_width_chars: 3,
+                        set_hexpand: true,
+                        set_halign: gtk::Align::Start,
+                        set_ellipsize: pango::EllipsizeMode::End,
+                    }
+                },
+
+                gtk::Label {
+                    #[watch]
+                    set_label: &seekbar::convert_for_label(self.length),
+                },
+
+                #[transition = "Crossfade"]
+                if self.favorited {
+                    gtk::Button {
+                        set_icon_name: "starred",
+                        set_tooltip: "Click to unfavorite song",
+                        set_focus_on_click: false,
+                        connect_clicked => QueueSongIn::StarredClicked,
+                    }
+                } else {
+                    gtk::Button {
+                        set_icon_name: "non-starred",
+                        set_tooltip: "Click to favorite song",
+                        set_focus_on_click: false,
+                        connect_clicked => QueueSongIn::StarredClicked,
+                    }
+                },
+            },
+
+            // make item draggable
+            add_controller: self.drag_src.clone(),
+
+            // activate is when pressed enter on item
+            connect_activate => QueueSongIn::Activated,
+
+            // accept drop from queue items and id's and render drop indicators
+            add_controller = gtk::DropTarget {
+                set_actions: gdk::DragAction::MOVE,
+                set_types: &[<Index as gtk::prelude::StaticType>::static_type(),
+                             <Droppable as gtk::prelude::StaticType>::static_type(),
+                ],
+
+                connect_drop[sender] => move |_target, value, _x, y| {
+                    if let Ok(index) = value.get::<Index>() {
+                        sender.input(QueueSongIn::MoveSong { index, y });
+                    }
+                    if let Ok(drop) = value.get::<Droppable>() {
+                        sender.input(QueueSongIn::DroppedSong { drop, y });
+                    }
+                    true
+                },
+
+                connect_motion[sender] => move |_widget, _x, y| {
+                    sender.input(QueueSongIn::DraggedOver(y));
+                    //may need to return other value for drag in future
+                    gdk::DragAction::MOVE
+                },
+
+                connect_leave => QueueSongIn::DragLeave,
+            },
+
+            // double left click activates item
+            add_controller = gtk::GestureClick {
+                set_button: 1,
+                connect_pressed[sender, index] => move |_widget, n, _x, _y|{
+                    if n == 1 {
+                        let state = _widget.current_event_state();
+                        if !(state.contains(gdk::ModifierType::SHIFT_MASK)
+                             || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
+                            // normal click
+                            sender.output(QueueSongOut::Clicked(index.clone()));
+                        } else if state.contains(gdk::ModifierType::SHIFT_MASK) {
+                            // shift click
+                            sender.output(QueueSongOut::ShiftClicked(index.clone()));
+                        }
+                    }
+                    else if n == 2 {
+                        sender.input(QueueSongIn::Activated);
+                    }
+                }
+            },
+
+            // connect key presses
+            add_controller = gtk::EventControllerKey {
+                connect_key_pressed[sender] => move |_widget, key, _code, _state| {
+                    if key == gtk::gdk::Key::Delete {
+                        sender.output(QueueSongOut::Remove);
+                    }
+                    gtk::Inhibit(false)
+                }
+            },
         }
     }
 
@@ -338,178 +443,24 @@ impl FactoryComponent for QueueSong {
                     });
                 }
             }
-            QueueSongIn::LoadSongInfo => {
-                let id = self.id.clone();
-                sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    match client.get_song(id.inner()).await {
-                        Ok(child) => QueueSongCmd::LoadedTrack(Box::new(Some(child))),
-                        Err(_) => QueueSongCmd::LoadedTrack(Box::new(None)),
-                    }
-                });
-            }
         }
     }
 
-    view! {
-        self.root_widget.clone() -> gtk::ListBoxRow {
-            add_css_class: "queue-song",
-
-            gtk::Box {
-                set_spacing: 10,
-
-                #[transition = "Crossfade"]
-                append = match self.playing {
-                    PlayState::Play => {
-                        gtk::Image {
-                            set_icon_name: Some("audio-volume-high-symbolic"),
-                        }
-                    }
-                    PlayState::Pause => {
-                        gtk::Image {
-                            set_icon_name: Some("media-playback-pause-symbolic"),
-                        }
-                    }
-                    PlayState::Stop => {
-                        &self.cover.widget().clone() {
-                            add_css_class: "cover",
-                        }
-                    }
-                },
-
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_valign: gtk::Align::Center,
-
-                    gtk::Label {
-                        #[watch]
-                        set_label: &self.title,
-                        set_width_chars: 3,
-                        set_hexpand: true,
-                        set_halign: gtk::Align::Start,
-                        set_ellipsize: pango::EllipsizeMode::End,
-                    },
-                    gtk:: Label {
-                        #[watch]
-                        set_markup: &format!("<span style=\"italic\">{}</span>", self.artist),
-                        set_width_chars: 3,
-                        set_hexpand: true,
-                        set_halign: gtk::Align::Start,
-                        set_ellipsize: pango::EllipsizeMode::End,
-                    }
-                },
-
-                gtk::Label {
-                    #[watch]
-                    set_label: &seekbar::convert_for_label(self.length),
-                },
-
-                #[transition = "Crossfade"]
-                if self.favorited {
-                    gtk::Button {
-                        set_icon_name: "starred",
-                        set_tooltip: "Click to unfavorite song",
-                        set_focus_on_click: false,
-                        connect_clicked => QueueSongIn::StarredClicked,
-                    }
-                } else {
-                    gtk::Button {
-                        set_icon_name: "non-starred",
-                        set_tooltip: "Click to favorite song",
-                        set_focus_on_click: false,
-                        connect_clicked => QueueSongIn::StarredClicked,
-                    }
-                },
-            },
-
-            // make item draggable
-            add_controller: self.drag_src.clone(),
-
-            // activate is when pressed enter on item
-            connect_activate => QueueSongIn::Activated,
-
-            // accept drop from queue items and id's and render drop indicators
-            add_controller = gtk::DropTarget {
-                set_actions: gdk::DragAction::MOVE,
-                set_types: &[<Index as gtk::prelude::StaticType>::static_type(),
-                             <Droppable as gtk::prelude::StaticType>::static_type(),
-                ],
-
-                connect_drop[sender] => move |_target, value, _x, y| {
-                    if let Ok(index) = value.get::<Index>() {
-                        sender.input(QueueSongIn::MoveSong { index, y });
-                    }
-                    if let Ok(drop) = value.get::<Droppable>() {
-                        sender.input(QueueSongIn::DroppedSong { drop, y });
-                    }
-                    true
-                },
-
-                connect_motion[sender] => move |_widget, _x, y| {
-                    sender.input(QueueSongIn::DraggedOver(y));
-                    //may need to return other value for drag in future
-                    gdk::DragAction::MOVE
-                },
-
-                connect_leave => QueueSongIn::DragLeave,
-            },
-
-            // double left click activates item
-            add_controller = gtk::GestureClick {
-                set_button: 1,
-                connect_pressed[sender, index] => move |_widget, n, _x, _y|{
-                    if n == 1 {
-                        let state = _widget.current_event_state();
-                        if !(state.contains(gdk::ModifierType::SHIFT_MASK)
-                             || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
-                            // normal click
-                            sender.output(QueueSongOut::Clicked(index.clone()));
-                        } else if state.contains(gdk::ModifierType::SHIFT_MASK) {
-                            // shift click
-                            sender.output(QueueSongOut::ShiftClicked(index.clone()));
-                        }
-                    }
-                    else if n == 2 {
-                        sender.input(QueueSongIn::Activated);
-                    }
-                }
-            },
-
-            // connect key presses
-            add_controller = gtk::EventControllerKey {
-                connect_key_pressed[sender] => move |_widget, key, _code, _state| {
-                    if key == gtk::gdk::Key::Delete {
-                        sender.output(QueueSongOut::Remove);
-                    }
-                    gtk::Inhibit(false)
-                }
-            },
+    fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
+        match output {
+            QueueSongOut::Activated(index, info) => Some(QueueIn::Activated(index, info)),
+            QueueSongOut::Clicked(index) => Some(QueueIn::Clicked(index)),
+            QueueSongOut::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
+            QueueSongOut::Remove => Some(QueueIn::Remove),
+            QueueSongOut::MoveAbove { src, dest } => Some(QueueIn::MoveAbove { src, dest }),
+            QueueSongOut::MoveBelow { src, dest } => Some(QueueIn::MoveBelow { src, dest }),
+            QueueSongOut::DropAbove { src, dest } => Some(QueueIn::DropAbove { src, dest }),
+            QueueSongOut::DropBelow { src, dest } => Some(QueueIn::DropBelow { src, dest }),
         }
     }
 
     fn update_cmd(&mut self, message: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
         match message {
-            QueueSongCmd::LoadedTrack(child) => {
-                let child = if let Some(child) = *child {
-                    child
-                } else {
-                    return;
-                };
-
-                // settings song data
-                self.title = child.title.clone();
-                if let Some(artist) = &child.artist {
-                    self.artist = artist.clone();
-                }
-                if let Some(length) = &child.duration {
-                    self.length = *length as i64 * 1000;
-                }
-                if child.starred.is_some() {
-                    self.favorited = true;
-                }
-                self.cover.emit(CoverIn::LoadImage(child.cover_art.clone()));
-                self.info = Some(child);
-            }
             QueueSongCmd::Favorited(Err(e)) => {} //TODO error handling
             QueueSongCmd::Favorited(Ok(state)) => self.favorited = state,
             QueueSongCmd::InsertChildrenAbove(Err(e)) => {} //TODO error handling

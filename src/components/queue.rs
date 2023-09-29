@@ -16,9 +16,9 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song::{QueueSong, QueueSongInit},
+    factory::queue_song::QueueSong,
     play_state::PlayState,
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -159,7 +159,7 @@ impl relm4::Component for Queue {
                     gtk::Label {
                         add_css_class: "h3",
                         set_label: "Queue is empty\nDrop music here",
-                        //TODO add DragDest
+
                         add_controller = gtk::DropTarget {
                             set_actions: gdk::DragAction::MOVE,
                             set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
@@ -312,13 +312,31 @@ impl relm4::Component for Queue {
                         return;
                     }
                     Droppable::Playlist(playlist) => playlist.entry,
-                    _ => vec![], //TODO add other types
+                    Droppable::AlbumChild(child) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            match client.get_album(child.id).await {
+                                Err(e) => QueueCmd::FetchedAppendItems(Err(e)),
+                                Ok(album) => QueueCmd::FetchedAppendItems(Ok(album.song)),
+                            }
+                        });
+                        return;
+                    }
+                    Droppable::Album(album) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            match client.get_album(album.id).await {
+                                Err(e) => QueueCmd::FetchedAppendItems(Err(e)),
+                                Ok(album) => QueueCmd::FetchedAppendItems(Ok(album.song)),
+                            }
+                        });
+                        return;
+                    }
+                    Droppable::Id(_) => vec![], //TODO remove eventually
                 };
 
                 for song in songs.into_iter() {
-                    self.songs
-                        .guard()
-                        .push_back(QueueSongInit::Child(Box::new(song)));
+                    self.songs.guard().push_back(song);
                 }
             }
             QueueIn::Clear => {
@@ -365,19 +383,13 @@ impl relm4::Component for Queue {
             QueueIn::DropAbove { src, dest } => {
                 let mut guard = self.songs.guard();
                 for (i, child) in src.iter().enumerate() {
-                    guard.insert(
-                        dest.current_index() + i,
-                        QueueSongInit::Child(Box::new(child.clone())),
-                    );
+                    guard.insert(dest.current_index() + i, child.clone());
                 }
             }
             QueueIn::DropBelow { src, dest } => {
                 let mut guard = self.songs.guard();
                 for (i, child) in src.iter().enumerate() {
-                    guard.insert(
-                        dest.current_index() + i + 1,
-                        QueueSongInit::Child(Box::new(child.clone())),
-                    );
+                    guard.insert(dest.current_index() + i + 1, child.clone());
                 }
             }
             QueueIn::NewState(state) => {
@@ -478,9 +490,7 @@ impl relm4::Component for Queue {
                 };
 
                 for entry in queue.entry {
-                    self.songs
-                        .guard()
-                        .push_back(QueueSongInit::Child(Box::new(entry)));
+                    self.songs.guard().push_back(entry);
                 }
                 // TODO jump to current song
                 // TODO set seekbar
@@ -491,9 +501,7 @@ impl relm4::Component for Queue {
             QueueCmd::FetchedAppendItems(Err(e)) => {} //TODO error handling
             QueueCmd::FetchedAppendItems(Ok(children)) => {
                 for child in children {
-                    self.songs
-                        .guard()
-                        .push_back(QueueSongInit::Child(Box::new(child)));
+                    self.songs.guard().push_back(child);
                 }
             }
         }
