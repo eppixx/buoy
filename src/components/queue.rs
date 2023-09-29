@@ -38,10 +38,6 @@ impl Queue {
         self.clear_items
             .set_sensitive(!self.songs.guard().is_empty());
     }
-
-    fn shuffle(&self) -> bool {
-        self.shuffle.model().current() == &Shuffle::Sequential
-    }
 }
 
 #[derive(Debug)]
