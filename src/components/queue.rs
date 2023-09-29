@@ -80,6 +80,7 @@ pub enum QueueIn {
 #[derive(Debug)]
 pub enum QueueOut {
     Play(submarine::data::Child),
+    Stop,
 }
 
 #[derive(Debug)]
@@ -408,9 +409,13 @@ impl relm4::Component for Queue {
 
                 match &self.playing_index {
                     None => self.songs.front().unwrap().activate(),
-                    Some(index) if index.current_index() == self.songs.len() => {
-                        tracing::error!("at end");
-                        self.songs.get(0).unwrap().activate();
+                    Some(index) if index.current_index() + 1 == self.songs.len() => {
+                        sender.output(QueueOut::Stop).unwrap();
+                        self.songs
+                            .get(index.current_index())
+                            .unwrap()
+                            .new_play_state(&PlayState::Stop);
+                        self.playing_index = None;
                     }
                     Some(index) => {
                         self.songs
@@ -419,7 +424,6 @@ impl relm4::Component for Queue {
                             .activate();
                     }
                 }
-                //TODO fth useful
             }
             QueueIn::PlayPrevious => {
                 //TODO fth useful

@@ -232,6 +232,11 @@ impl SimpleComponent for App {
                         Err(_) => {} //TODO error handling
                     }
                 }
+                QueueOut::Stop => {
+                    self.playback.stop().unwrap(); //TODO error handling
+                    self.play_controls
+                        .emit(PlayControlIn::NewState(PlayState::Stop));
+                }
             },
             AppIn::DeleteCache => {
                 //TODO delete cache
