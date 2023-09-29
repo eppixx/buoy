@@ -402,6 +402,23 @@ impl relm4::Component for Queue {
                 //TODO sth useful
             }
             QueueIn::PlayNext => {
+                if self.songs.is_empty() {
+                    return;
+                }
+
+                match &self.playing_index {
+                    None => self.songs.front().unwrap().activate(),
+                    Some(index) if index.current_index() == self.songs.len() => {
+                        tracing::error!("at end");
+                        self.songs.get(0).unwrap().activate();
+                    }
+                    Some(index) => {
+                        self.songs
+                            .get(index.current_index() + 1)
+                            .unwrap()
+                            .activate();
+                    }
+                }
                 //TODO fth useful
             }
             QueueIn::PlayPrevious => {
