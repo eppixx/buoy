@@ -7,8 +7,8 @@ use crate::{components::seekbar::convert_for_label, factory::album_song::AlbumSo
 
 #[derive(Debug)]
 pub struct AlbumTracks {
-    tracks: Vec<submarine::data::Child>,
     songs: relm4::factory::FactoryVecDeque<AlbumSong>,
+    size_groups: [gtk::SizeGroup; 5], // sizegroup for every collum
 }
 
 #[derive(Debug)]
@@ -37,16 +37,30 @@ impl relm4::SimpleComponent for AlbumTracks {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut model = Self {
-            tracks: init,
             songs: relm4::factory::FactoryVecDeque::new(
                 gtk::ListBox::default(),
                 sender.input_sender(),
             ),
+            size_groups: [
+                gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
+                gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
+                gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
+                gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
+                gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
+            ],
         };
         let widgets = view_output!();
 
-        for track in &model.tracks {
-            model.songs.guard().push_back(track.clone());
+        // add widgets to group to make them the same size
+        model.size_groups[0].add_widget(&widgets.track_number);
+        model.size_groups[1].add_widget(&widgets.title);
+        model.size_groups[2].add_widget(&widgets.artist);
+        model.size_groups[3].add_widget(&widgets.length);
+        model.size_groups[4].add_widget(&widgets.favorite);
+
+        for track in &init {
+            let sizes = model.size_groups.clone();
+            model.songs.guard().push_back((track.clone(), sizes));
         }
 
         relm4::ComponentParts { model, widgets }
@@ -61,6 +75,7 @@ impl relm4::SimpleComponent for AlbumTracks {
                 set_column_spacing: 10,
                 add_css_class: "album-tracks-header",
 
+                #[name = "track_number"]
                 attach[0, 0, 1, 1] = &gtk::Button {
                     add_css_class: "flat",
                     connect_clicked => AlbumTracksIn::Sort(Column::TrackNumber),
@@ -71,23 +86,27 @@ impl relm4::SimpleComponent for AlbumTracks {
                         set_label: "#",
                     }
                 },
+                #[name = "title"]
                 attach[1, 0, 1, 1] = &gtk::Label {
                     add_css_class: "h4",
                     set_halign: gtk::Align::Start,
                     set_label: "Title",
                     set_hexpand: true,
                 },
+                #[name = "artist"]
                 attach[2, 0, 1, 1] = &gtk::Label {
                     add_css_class: "h4",
                     set_halign: gtk::Align::Start,
                     set_label: "Artist",
                     set_hexpand: true,
                 },
+                #[name = "length"]
                 attach[3, 0, 1, 1] = &gtk::Label {
                     add_css_class: "h4",
                     set_halign: gtk::Align::Start,
                     set_label: "Length",
                 },
+                #[name = "favorite"]
                 attach[4, 0, 1, 1] = &gtk::Label {
                     add_css_class: "h4",
                     set_halign: gtk::Align::Start,

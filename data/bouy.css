@@ -236,12 +236,11 @@
 }
 
 .album-tracks-header {
-  margin-left: 5px;
-  margin-right: 5px;
+  margin: 0px 4px;
 }
 
 .album-song {
   border-radius: 8px;
   margin: 1px 4px;
-  padding: 6px 8px;
+  padding: 5px 0px;
 }

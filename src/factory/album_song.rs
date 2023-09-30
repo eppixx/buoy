@@ -20,9 +20,13 @@ use crate::{
 #[derive(Debug)]
 pub struct AlbumSong {
     info: submarine::data::Child,
-    favorited: bool,
+    track_number: gtk::Label,
     title: gtk::Label,
     artist: gtk::Label,
+    length: gtk::Label,
+    favorited: bool,
+    fav_widget: gtk::Image,
+    unfav_widget: gtk::Image,
     drag_src: gtk::DragSource,
 }
 
@@ -43,7 +47,7 @@ pub enum AlbumSongCmd {
 
 #[relm4::factory(pub)]
 impl relm4::factory::FactoryComponent for AlbumSong {
-    type Init = submarine::data::Child;
+    type Init = (submarine::data::Child, [gtk::SizeGroup; 5]);
     type Input = AlbumSongIn;
     type Output = AlbumSongOut;
     type ParentWidget = gtk::ListBox;
@@ -52,29 +56,29 @@ impl relm4::factory::FactoryComponent for AlbumSong {
     type CommandOutput = AlbumSongCmd;
 
     fn init_model(
-        init: Self::Init,
+        (child, groups): Self::Init,
         _index: &relm4::prelude::DynamicIndex,
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         let model = Self {
-            info: init.clone(),
-            favorited: init.starred.is_some(),
+            info: child.clone(),
+            track_number: gtk::Label::default(),
             title: gtk::Label::default(),
             artist: gtk::Label::default(),
+            length: gtk::Label::default(),
+            favorited: child.starred.is_some(),
+            fav_widget: gtk::Image::default(),
+            unfav_widget: gtk::Image::default(),
             drag_src: gtk::DragSource::default(),
         };
 
-        //TODO fix layout
-        // let layout = gtk::ConstraintLayout::default();
-        // let vfl = "V:-[title]-[artist(==title)]";
-        // layout
-        //     .add_constraints_from_description(
-        //         vec![vfl],
-        //         1,
-        //         1,
-        //         vec![("title", &model.title), ("artist", &model.artist)],
-        //     )
-        //     .unwrap();
+        // add widgets to group to make them the same size
+        groups[0].add_widget(&model.track_number);
+        groups[1].add_widget(&model.title);
+        groups[2].add_widget(&model.artist);
+        groups[3].add_widget(&model.length);
+        groups[4].add_widget(&model.fav_widget);
+        groups[4].add_widget(&model.unfav_widget);
 
         let src = Droppable::Child(Box::new(model.info.clone()));
         let content = gdk::ContentProvider::for_value(&src.to_value());
@@ -92,7 +96,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
             gtk::Box {
                 set_spacing: 10,
 
-                gtk::Label {
+                self.track_number.clone() -> gtk::Label {
                     set_label: &self.info.track.map_or(String::from("-"), |t| t.to_string()),
                 },
 
@@ -112,16 +116,16 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                     set_label: &self.info.artist.as_deref().unwrap_or("Unknown Artist"),
                     set_widget_name: "artist",
                 },
-                gtk::Label {
+                self.length.clone() -> gtk::Label {
                     set_halign: gtk::Align::Start,
                     set_label: &seekbar::convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
                 },
                 if self.favorited {
-                    gtk::Image {
+                    self.fav_widget.clone() -> gtk::Image {
                         set_icon_name: Some("starred"),
                     }
                 } else {
-                    gtk::Image {
+                    self.unfav_widget.clone() -> gtk::Image {
                         set_icon_name: Some("non-starred"),
                     }
                 },
