@@ -86,6 +86,8 @@ impl relm4::SimpleComponent for AlbumElement {
 
             gtk::Button {
                 add_css_class: "flat",
+                set_halign: gtk::Align::Center,
+
                 connect_clicked[sender, init] => move |_btn| {
                     sender.output(AlbumElementOut::Clicked(init.clone())).unwrap();
                 },

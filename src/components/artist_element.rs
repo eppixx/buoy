@@ -61,6 +61,8 @@ impl relm4::SimpleComponent for ArtistElement {
 
             gtk::Button {
                 add_css_class: "flat",
+                set_halign: gtk::Align::Center,
+
                 connect_clicked[sender, init] => move |_btn| {
                     sender.output(ArtistElementOut::Clicked(init.clone())).unwrap();
                 },
