@@ -6,44 +6,44 @@ use relm4::{
     Component, ComponentController,
 };
 
-use super::cover::{Cover, CoverIn};
+use super::cover::{Cover, CoverIn, CoverOut};
 
 #[derive(Debug)]
 pub struct PlayInfo {
     covers: relm4::Controller<Cover>,
-    pub title: String,
-    pub artist: Option<String>,
-    pub album: Option<String>,
-}
-
-impl Default for PlayInfo {
-    fn default() -> Self {
-        Self {
-            covers: Cover::builder().launch(()).detach(),
-            title: String::from("Nothing is played currently"),
-            artist: None,
-            album: None,
-        }
-    }
+    title: String,
+    artist: Option<String>,
+    album: Option<String>,
 }
 
 #[derive(Debug)]
 pub enum PlayInfoIn {
     NewState(submarine::data::Child),
+    Cover(CoverOut),
 }
+
+#[derive(Debug)]
+pub enum PlayInfoOut {}
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for PlayInfo {
-    type Input = PlayInfoIn;
-    type Output = ();
     type Init = Option<submarine::data::Child>;
+    type Input = PlayInfoIn;
+    type Output = PlayInfoOut;
 
     fn init(
         init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Self::default();
+        let model = Self {
+            covers: Cover::builder()
+                .launch(())
+                .forward(sender.input_sender(), PlayInfoIn::Cover),
+            title: String::from("Nothing is played currently"),
+            artist: None,
+            album: None,
+        };
         let widgets = view_output!();
 
         //init widget
@@ -84,6 +84,7 @@ impl relm4::SimpleComponent for PlayInfo {
                     self.covers.emit(CoverIn::LoadImage(Some(cover_id)));
                 }
             }
+            PlayInfoIn::Cover(msg) => match msg {},
         }
     }
 }

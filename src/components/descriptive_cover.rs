@@ -6,7 +6,7 @@ use relm4::{
     Component, ComponentController, RelmWidgetExt,
 };
 
-use super::cover::{Cover, CoverIn};
+use super::cover::{Cover, CoverIn, CoverOut};
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverBuilder {
@@ -37,6 +37,7 @@ pub enum DescriptiveCoverIn {
     LoadImage(Option<String>),
     SetTitle(Option<String>),
     SetSubtitle(Option<String>),
+    Cover(CoverOut),
 }
 
 #[derive(Debug)]
@@ -46,11 +47,14 @@ pub struct DescriptiveCover {
     subtitle: gtk::Viewport,
 }
 
+#[derive(Debug)]
+pub enum DescriptiveCoverOut {}
+
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for DescriptiveCover {
     type Init = DescriptiveCoverBuilder;
     type Input = DescriptiveCoverIn;
-    type Output = ();
+    type Output = DescriptiveCoverOut;
     type Widgets = CoverWidgets;
 
     fn init(
@@ -59,7 +63,9 @@ impl relm4::SimpleComponent for DescriptiveCover {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
-            cover: Cover::builder().launch(()).detach(),
+            cover: Cover::builder()
+                .launch(())
+                .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: gtk::Viewport::default(),
             subtitle: gtk::Viewport::default(),
         };
@@ -125,6 +131,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
                     self.subtitle.set_child(None::<gtk::Label>.as_ref());
                 }
             }
+            DescriptiveCoverIn::Cover(msg) => match msg {},
         }
     }
 }

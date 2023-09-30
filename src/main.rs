@@ -1,3 +1,4 @@
+use components::play_info::PlayInfoOut;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
@@ -12,7 +13,7 @@ use relm4::{
 };
 
 use crate::components::{
-    browser::Browser,
+    browser::{Browser, BrowserOut},
     equalizer::{Equalizer, EqualizerOut},
     login_form::{LoginForm, LoginFormOut},
     play_controls::PlayControlIn,
@@ -27,7 +28,7 @@ use crate::components::{
 use crate::{
     client::Client,
     play_state::PlayState,
-    playback::{Playback, PlaybackOutput},
+    playback::{Playback, PlaybackOut},
     settings::Settings,
 };
 
@@ -65,10 +66,12 @@ enum AppIn {
     PlayControlOutput(PlayControlOut),
     Seekbar(SeekbarOut),
     VolumeChange(f64),
-    Playback(PlaybackOutput),
+    Playback(PlaybackOut),
     LoginForm(LoginFormOut),
     Equalizer(EqualizerOut),
     Queue(Box<QueueOut>),
+    Browser(BrowserOut),
+    PlayInfo(PlayInfoOut),
 }
 
 #[relm4::component]
@@ -101,8 +104,10 @@ impl SimpleComponent for App {
             .forward(sender.input_sender(), AppIn::Seekbar);
         let play_info = PlayInfo::builder()
             .launch(None) // TODO change to previous state
-            .detach();
-        let browser = Browser::builder().launch(()).detach();
+            .forward(sender.input_sender(), AppIn::PlayInfo);
+        let browser = Browser::builder()
+            .launch(())
+            .forward(sender.input_sender(), AppIn::Browser);
         let equalizer = Equalizer::builder()
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
@@ -176,8 +181,8 @@ impl SimpleComponent for App {
                 settings.save();
             }
             AppIn::Playback(playback) => match playback {
-                PlaybackOutput::TrackEnd => self.queue.emit(QueueIn::PlayNext),
-                PlaybackOutput::Seek(ms) => {
+                PlaybackOut::TrackEnd => self.queue.emit(QueueIn::PlayNext),
+                PlaybackOut::Seek(ms) => {
                     self.seekbar.emit(SeekbarIn::SeekTo(ms));
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Play));
@@ -240,6 +245,8 @@ impl SimpleComponent for App {
                 //TODO delete cache
                 tracing::error!("cache button pressed");
             }
+            AppIn::Browser(msg) => match msg {},
+            AppIn::PlayInfo(msg) => match msg {},
         }
     }
 

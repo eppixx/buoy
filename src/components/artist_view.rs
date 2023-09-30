@@ -9,7 +9,7 @@ use relm4::{
 
 use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
-    cover::{Cover, CoverIn},
+    cover::{Cover, CoverIn, CoverOut},
 };
 use crate::{client::Client, types::Droppable};
 
@@ -26,6 +26,7 @@ pub struct ArtistView {
 #[derive(Debug)]
 pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
+    Cover(CoverOut),
 }
 
 #[derive(Debug)]
@@ -53,7 +54,9 @@ impl relm4::Component for ArtistView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
-            cover: Cover::builder().launch(()).detach(),
+            cover: Cover::builder()
+                .launch(())
+                .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),
             loaded_albums: false,
@@ -139,6 +142,7 @@ impl relm4::Component for ArtistView {
                     sender.output(ArtistViewOut::AlbumClicked(id)).unwrap()
                 }
             },
+            ArtistViewIn::Cover(msg) => match msg {},
         }
     }
 

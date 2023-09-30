@@ -61,7 +61,7 @@ pub struct Browser {
 }
 
 #[derive(Debug)]
-pub enum BrowserInput {
+pub enum BrowserIn {
     SearchChanged(String),
     BackClicked,
     DashboardClicked,
@@ -76,11 +76,14 @@ pub enum BrowserInput {
     ArtistView(Box<ArtistViewOut>),
 }
 
+#[derive(Debug)]
+pub enum BrowserOut {}
+
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for Browser {
-    type Input = BrowserInput;
-    type Output = ();
     type Init = ();
+    type Input = BrowserIn;
+    type Output = BrowserOut;
 
     fn init(
         _init: Self::Init,
@@ -106,8 +109,8 @@ impl relm4::SimpleComponent for Browser {
         let widgets = view_output!();
 
         //TODO swtich default view
-        sender.input(BrowserInput::DashboardClicked);
-        sender.input(BrowserInput::AlbumsClicked);
+        sender.input(BrowserIn::DashboardClicked);
+        sender.input(BrowserIn::AlbumsClicked);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -177,7 +180,7 @@ impl relm4::SimpleComponent for Browser {
                     set_placeholder_text: Some("Search..."),
                     grab_focus: (),
                     connect_search_changed[sender] => move |w| {
-                        sender.input(BrowserInput::SearchChanged(w.text().to_string()));
+                        sender.input(BrowserIn::SearchChanged(w.text().to_string()));
                     }
                 }
             },
@@ -190,10 +193,10 @@ impl relm4::SimpleComponent for Browser {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            BrowserInput::SearchChanged(search) => {
+            BrowserIn::SearchChanged(search) => {
                 tracing::warn!("new search {search}");
             }
-            BrowserInput::BackClicked => {
+            BrowserIn::BackClicked => {
                 if self.history_widget.len() > 1 {
                     // remove current view from history
                     let _ = self.history_widget.pop();
@@ -226,13 +229,13 @@ impl relm4::SimpleComponent for Browser {
                     self.back_btn.set_sensitive(false);
                 }
             }
-            BrowserInput::DashboardClicked => {
+            BrowserIn::DashboardClicked => {
                 self.deactivate_all_buttons();
                 self.dashboard_btn.set_active(true);
 
                 let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
                     .launch(())
-                    .forward(sender.input_sender(), BrowserInput::Dashboard);
+                    .forward(sender.input_sender(), BrowserIn::Dashboard);
                 self.history_widget
                     .push(Views::Dashboard(dashboard.widget().clone()));
                 self.dashboards.push(dashboard);
@@ -240,14 +243,14 @@ impl relm4::SimpleComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 self.back_btn.set_sensitive(true);
             }
-            BrowserInput::ArtistsClicked => {
+            BrowserIn::ArtistsClicked => {
                 self.deactivate_all_buttons();
                 self.artists_btn.set_active(true);
 
                 let artists: relm4::component::AsyncController<ArtistsView> =
                     ArtistsView::builder()
                         .launch(())
-                        .forward(sender.input_sender(), BrowserInput::ArtistsView);
+                        .forward(sender.input_sender(), BrowserIn::ArtistsView);
                 self.history_widget
                     .push(Views::Artists(artists.widget().clone()));
                 self.artistss.push(artists);
@@ -255,13 +258,13 @@ impl relm4::SimpleComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 self.back_btn.set_sensitive(true);
             }
-            BrowserInput::AlbumsClicked => {
+            BrowserIn::AlbumsClicked => {
                 self.deactivate_all_buttons();
                 self.albums_btn.set_active(true);
 
                 let albums: relm4::component::AsyncController<AlbumsView> = AlbumsView::builder()
                     .launch(())
-                    .forward(sender.input_sender(), BrowserInput::AlbumsView);
+                    .forward(sender.input_sender(), BrowserIn::AlbumsView);
                 self.history_widget
                     .push(Views::Albums(albums.widget().clone()));
                 self.albumss.push(albums);
@@ -269,16 +272,16 @@ impl relm4::SimpleComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 self.back_btn.set_sensitive(true);
             }
-            BrowserInput::TracksClicked => {
+            BrowserIn::TracksClicked => {
                 //TODO
             }
-            BrowserInput::PlaylistsClicked => {
+            BrowserIn::PlaylistsClicked => {
                 //TODO
             }
-            BrowserInput::Dashboard(output) => {
+            BrowserIn::Dashboard(output) => {
                 //TODO react to output
             }
-            BrowserInput::AlbumsView(msg) => match msg {
+            BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
                     self.deactivate_all_buttons();
                     let init: AlbumViewInit = match id {
@@ -288,7 +291,7 @@ impl relm4::SimpleComponent for Browser {
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
                         .launch(init)
                         .forward(sender.input_sender(), |msg| {
-                            BrowserInput::AlbumView(Box::new(msg))
+                            BrowserIn::AlbumView(Box::new(msg))
                         });
 
                     self.history_widget
@@ -299,13 +302,13 @@ impl relm4::SimpleComponent for Browser {
                     self.back_btn.set_sensitive(true);
                 }
             },
-            BrowserInput::ArtistsView(msg) => match msg {
+            BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
                     self.deactivate_all_buttons();
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
                         .launch(id)
                         .forward(sender.input_sender(), |msg| {
-                            BrowserInput::ArtistView(Box::new(msg))
+                            BrowserIn::ArtistView(Box::new(msg))
                         });
 
                     self.history_widget
@@ -316,11 +319,11 @@ impl relm4::SimpleComponent for Browser {
                     self.back_btn.set_sensitive(true);
                 }
             },
-            BrowserInput::AlbumView(msg) => match *msg {
+            BrowserIn::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(id) => {} //TODO append to queue
                 AlbumViewOut::InsertAfterCurrentPLayed(id) => {} //TODO insert in queue
             },
-            BrowserInput::ArtistView(msg) => match *msg {
+            BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
                     self.deactivate_all_buttons();
                     let init: AlbumViewInit = match id {
@@ -330,7 +333,7 @@ impl relm4::SimpleComponent for Browser {
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
                         .launch(init)
                         .forward(sender.input_sender(), |msg| {
-                            BrowserInput::AlbumView(Box::new(msg))
+                            BrowserIn::AlbumView(Box::new(msg))
                         });
 
                     self.history_widget

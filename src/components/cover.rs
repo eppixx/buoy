@@ -30,6 +30,9 @@ impl std::fmt::Debug for Image {
 }
 
 #[derive(Debug)]
+pub enum CoverOut {}
+
+#[derive(Debug)]
 pub enum CoverCmd {
     LoadedImage(Option<Image>),
 }
@@ -38,7 +41,7 @@ pub enum CoverCmd {
 impl relm4::Component for Cover {
     type Init = ();
     type Input = CoverIn;
-    type Output = ();
+    type Output = CoverOut;
     type Widgets = CoverWidgets;
     type CommandOutput = CoverCmd;
 

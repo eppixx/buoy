@@ -7,7 +7,7 @@ use relm4::{
     ComponentController,
 };
 
-use super::cover::Cover;
+use super::cover::{Cover, CoverOut};
 use crate::{
     client::Client,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
@@ -40,6 +40,7 @@ pub enum AlbumViewOut {
 #[derive(Debug)]
 pub enum AlbumViewIn {
     AlbumTracks,
+    Cover(CoverOut),
 }
 
 #[derive(Debug)]
@@ -61,7 +62,9 @@ impl relm4::Component for AlbumView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
-            cover: Cover::builder().launch(()).detach(),
+            cover: Cover::builder()
+                .launch(())
+                .forward(sender.input_sender(), AlbumViewIn::Cover),
             title: String::from("Unkonwn Title"),
             artist: None,
             info: String::new(),
@@ -143,6 +146,7 @@ impl relm4::Component for AlbumView {
     ) {
         match msg {
             AlbumViewIn::AlbumTracks => {} //do nothing
+            AlbumViewIn::Cover(msg) => match msg {},
         }
     }
 

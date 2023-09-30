@@ -14,7 +14,7 @@ use relm4::{
 use crate::{
     client::Client,
     components::{
-        cover::{Cover, CoverIn},
+        cover::{Cover, CoverIn, CoverOut},
         queue::QueueIn,
         seekbar,
     },
@@ -36,6 +36,7 @@ pub enum QueueSongIn {
     StarredClicked,
     DroppedSong { drop: Droppable, y: f64 },
     MoveSong { index: Index, y: f64 },
+    Cover(CoverOut),
 }
 
 #[derive(Debug)]
@@ -118,7 +119,9 @@ impl FactoryComponent for QueueSong {
     type CommandOutput = QueueSongCmd;
 
     fn init_model(init: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
-        let cover = Cover::builder().launch(()).detach();
+        let cover = Cover::builder()
+            .launch(())
+            .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
@@ -423,6 +426,7 @@ impl FactoryComponent for QueueSong {
                     });
                 }
             }
+            QueueSongIn::Cover(msg) => match msg {},
         }
     }
 

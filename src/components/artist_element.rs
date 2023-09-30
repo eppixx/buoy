@@ -12,9 +12,16 @@ use crate::{
     types::Droppable,
 };
 
+use super::descriptive_cover::DescriptiveCoverOut;
+
 #[derive(Debug)]
 pub struct ArtistElement {
     cover: relm4::Controller<DescriptiveCover>,
+}
+
+#[derive(Debug)]
+pub enum ArtistElementIn {
+    DescriptiveCover(DescriptiveCoverOut),
 }
 
 #[derive(Debug)]
@@ -25,7 +32,7 @@ pub enum ArtistElementOut {
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for ArtistElement {
     type Init = submarine::data::ArtistId3;
-    type Input = ();
+    type Input = ArtistElementIn;
     type Output = ArtistElementOut;
 
     fn init(
@@ -38,8 +45,9 @@ impl relm4::SimpleComponent for ArtistElement {
         if let Some(id) = &init.cover_art {
             builder = builder.image(id);
         }
-        let cover: relm4::Controller<DescriptiveCover> =
-            DescriptiveCover::builder().launch(builder).detach();
+        let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
+            .launch(builder)
+            .forward(sender.input_sender(), ArtistElementIn::DescriptiveCover);
         let model = Self { cover };
 
         let widgets = view_output!();

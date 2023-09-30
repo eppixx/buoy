@@ -12,9 +12,16 @@ use crate::{
     types::Droppable,
 };
 
+use super::{cover::CoverOut, descriptive_cover::DescriptiveCoverOut};
+
 #[derive(Debug)]
 pub struct AlbumElement {
     cover: relm4::Controller<DescriptiveCover>,
+}
+
+#[derive(Debug)]
+pub enum AlbumElementIn {
+    DescriptiveCover(DescriptiveCoverOut),
 }
 
 #[derive(Debug)]
@@ -31,7 +38,7 @@ pub enum AlbumElementInit {
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for AlbumElement {
     type Init = AlbumElementInit;
-    type Input = ();
+    type Input = AlbumElementIn;
     type Output = AlbumElementOut;
 
     fn init(
@@ -64,8 +71,9 @@ impl relm4::SimpleComponent for AlbumElement {
             }
         };
 
-        let cover: relm4::Controller<DescriptiveCover> =
-            DescriptiveCover::builder().launch(builder).detach();
+        let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
+            .launch(builder)
+            .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self { cover };
 
         let widgets = view_output!();
@@ -96,6 +104,12 @@ impl relm4::SimpleComponent for AlbumElement {
                 set_child = &model.cover.widget().clone(),
                 //TODO add tooltip with info about album
             }
+        }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+        match msg {
+            AlbumElementIn::DescriptiveCover(msg) => match msg {},
         }
     }
 }

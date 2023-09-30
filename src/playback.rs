@@ -20,14 +20,14 @@ pub struct Playback {
 const TICK: u64 = 250;
 
 #[derive(Debug)]
-pub enum PlaybackOutput {
+pub enum PlaybackOut {
     TrackEnd,
     Seek(i64), // in ms
 }
 
 impl Playback {
     pub fn new(
-        sender: &gtk::glib::Sender<PlaybackOutput>,
+        sender: &gtk::glib::Sender<PlaybackOut>,
         // settings: &Arc<RwLock<settings::Settings>>,
     ) -> anyhow::Result<Self> {
         gst::init()?;
@@ -85,8 +85,8 @@ impl Playback {
             for msg in bus.iter_timed(gst::ClockTime::NONE) {
                 use gstreamer::MessageView;
                 match msg.view() {
-                    MessageView::Eos(..) => send.send(PlaybackOutput::TrackEnd).unwrap(),
-                    MessageView::StreamStart(..) => send.send(PlaybackOutput::Seek(0)).unwrap(),
+                    MessageView::Eos(..) => send.send(PlaybackOut::TrackEnd).unwrap(),
+                    MessageView::StreamStart(..) => send.send(PlaybackOut::Seek(0)).unwrap(),
                     _ => {}
                 }
             }
@@ -113,7 +113,7 @@ impl Playback {
                     Some(clock) => clock.seconds() as i64,
                     None => 0,
                 };
-                send.send(PlaybackOutput::Seek(seconds * 1000)).unwrap();
+                send.send(PlaybackOut::Seek(seconds * 1000)).unwrap();
                 stamp.replace(current);
             }
 
