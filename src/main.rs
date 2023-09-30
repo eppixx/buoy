@@ -175,16 +175,14 @@ impl SimpleComponent for App {
                 settings.volume = value;
                 settings.save();
             }
-            AppIn::Playback(playback) => {
-                match playback {
-                    PlaybackOutput::TrackEnd => {} //TODO play next
-                    PlaybackOutput::Seek(ms) => {
-                        self.seekbar.emit(SeekbarIn::SeekTo(ms));
-                        self.play_controls
-                            .emit(PlayControlIn::NewState(PlayState::Play));
-                    }
+            AppIn::Playback(playback) => match playback {
+                PlaybackOutput::TrackEnd => self.queue.emit(QueueIn::PlayNext),
+                PlaybackOutput::Seek(ms) => {
+                    self.seekbar.emit(SeekbarIn::SeekTo(ms));
+                    self.play_controls
+                        .emit(PlayControlIn::NewState(PlayState::Play));
                 }
-            }
+            },
             AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
                     self.main_stack.set_visible_child_name("logged-in");
