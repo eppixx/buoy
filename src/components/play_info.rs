@@ -59,6 +59,7 @@ impl relm4::SimpleComponent for PlayInfo {
         #[root]
         gtk::Box {
             add_css_class: "play-info",
+            set_hexpand: true,
 
             append = &model.covers.widget().clone() {
                 add_css_class: "play-info-cover",
@@ -66,7 +67,6 @@ impl relm4::SimpleComponent for PlayInfo {
 
             gtk::Label {
                 add_css_class: "play-info-info",
-                set_hexpand: true,
                 #[watch]
                 set_markup: &style_label(&model.title, model.artist.as_deref(), model.album.as_deref()),
             },
