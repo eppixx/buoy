@@ -18,7 +18,7 @@ pub struct PlayInfo {
 
 #[derive(Debug)]
 pub enum PlayInfoIn {
-    NewState(submarine::data::Child),
+    NewState(Box<submarine::data::Child>),
     Cover(CoverOut),
 }
 
@@ -48,7 +48,7 @@ impl relm4::SimpleComponent for PlayInfo {
 
         //init widget
         if let Some(child) = init {
-            sender.input(PlayInfoIn::NewState(child));
+            sender.input(PlayInfoIn::NewState(Box::new(child)));
         }
         model.covers.model().add_css_class_image("size150");
 

@@ -18,7 +18,6 @@ pub struct ArtistView {
     cover: relm4::Controller<Cover>,
     title: String,
     bio: String,
-    loaded_albums: bool,
     albums: gtk::FlowBox,
     album_elements: Vec<relm4::Controller<AlbumElement>>,
 }
@@ -59,7 +58,6 @@ impl relm4::Component for ArtistView {
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),
-            loaded_albums: false,
             albums: gtk::FlowBox::default(),
             album_elements: vec![],
         };

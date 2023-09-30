@@ -1,19 +1,12 @@
-use relm4::{
-    gtk::{
-        self, gdk, pango,
-        prelude::ToValue,
-        traits::{BoxExt, WidgetExt},
-    },
-    Component, ComponentController,
+use relm4::gtk::{
+    self, gdk, pango,
+    prelude::ToValue,
+    traits::{BoxExt, WidgetExt},
 };
 
 use crate::{
     client::Client,
-    components::{
-        album_tracks::AlbumTracksIn,
-        cover::{Cover, CoverIn},
-        seekbar,
-    },
+    components::{album_tracks::AlbumTracksIn, seekbar},
     types::Droppable,
 };
 
@@ -113,7 +106,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                     set_halign: gtk::Align::Start,
                     set_ellipsize: pango::EllipsizeMode::End,
                     set_width_chars: 3,
-                    set_label: &self.info.artist.as_deref().unwrap_or("Unknown Artist"),
+                    set_label: self.info.artist.as_deref().unwrap_or("Unknown Artist"),
                     set_widget_name: "artist",
                 },
                 self.length.clone() -> gtk::Label {
@@ -159,7 +152,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
         None
     }
 
-    fn update_cmd(&mut self, msg: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
+    fn update_cmd(&mut self, msg: Self::CommandOutput, _sender: relm4::FactorySender<Self>) {
         match msg {
             AlbumSongCmd::Favorited(Err(e)) => {} //TODO error handling
             AlbumSongCmd::Favorited(Ok(state)) => self.favorited = state,

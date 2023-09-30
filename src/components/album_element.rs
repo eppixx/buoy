@@ -7,12 +7,11 @@ use relm4::{
     Component, ComponentController,
 };
 
+use super::descriptive_cover::DescriptiveCoverOut;
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
     types::Droppable,
 };
-
-use super::{cover::CoverOut, descriptive_cover::DescriptiveCoverOut};
 
 #[derive(Debug)]
 pub struct AlbumElement {

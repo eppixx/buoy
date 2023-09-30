@@ -210,7 +210,8 @@ impl SimpleComponent for App {
             AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
                     // update playcontrol
-                    self.play_info.emit(PlayInfoIn::NewState(*child.clone()));
+                    self.play_info
+                        .emit(PlayInfoIn::NewState(Box::new(*child.clone())));
 
                     // set playback
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();

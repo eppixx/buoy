@@ -3,7 +3,7 @@ use relm4::gtk::{
     traits::{ButtonExt, GridExt, OrientableExt, WidgetExt},
 };
 
-use crate::{components::seekbar::convert_for_label, factory::album_song::AlbumSong};
+use crate::factory::album_song::AlbumSong;
 
 #[derive(Debug)]
 pub struct AlbumTracks {
