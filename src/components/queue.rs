@@ -514,6 +514,7 @@ impl relm4::Component for Queue {
                 for child in children {
                     self.songs.guard().push_back(child);
                 }
+                self.clear_items.set_sensitive(!self.songs.is_empty());
             }
         }
     }
