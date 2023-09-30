@@ -118,7 +118,7 @@ impl relm4::SimpleComponent for Browser {
             set_orientation: gtk::Orientation::Vertical,
 
             gtk::Box {
-                add_css_class: "pathbar",
+                add_css_class: "browser-pathbar",
 
                 append = &model.back_btn.clone() {
                     gtk::Box {

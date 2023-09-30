@@ -5,7 +5,24 @@
   border-left: 1px solid LightGray; /* TODO change for dark theme */
 }
 
+.window-titlebar {
+  min-height: 35px;
+  margin: 0px 5px;
+}
+
 .main-window {
+}
+
+.main-box {
+  
+}
+
+.main-paned {
+  
+}
+
+.main-paned.wide {
+  min-width: 10px;
 }
 
 .padd-item {
@@ -21,6 +38,22 @@
 .drag-indicator-bottom {
   border-bottom: 1px solid @accent_color_100;
   margin-top: 1px;
+}
+
+.login-form {
+  margin: 15px;
+}
+
+.equalizer {
+   margin: 15px;
+}
+
+.equalizer-bands {
+  min-height: 300px;
+}
+
+.config-menu {
+  margin: 15px;
 }
 
 .destructive-button-spacer {
@@ -114,6 +147,26 @@
   margin: 15px;
 }
 
+.size32 {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.size50 {
+  min-width: 50px;
+  min-height: 50px;
+}
+
+.size150 {
+  min-width: 150px;
+  min-height: 150px;
+}
+
+.size100 {
+  min-width: 100px;
+  min-height: 100px;
+}
+
 .cover {
   border-radius: 3px;
   border-top: 1px solid LightGray;  /* TODO change for dark theme */
@@ -139,29 +192,13 @@
   margin: 0px 15px 15px 15px;
 }
 
-.window-titlebar {
-  min-height: 35px;
-  margin: 0px 5px;
-}
-
-.main-box {
-  
-}
-
-.main-paned {
-  
-}
-.main-paned.wide {
-  min-width: 10px;
-}
-
 .browser {
-  padding: 5px;
+  padding: 0px;
   border-top: 1px solid LightGray; /* TODO change for dark theme */
 }
 
-.pathbar {
-  
+.browser-pathbar {
+  margin: 5px;
 }
 
 .pathbar-space {
@@ -172,49 +209,9 @@
   
 }
 
-.login-form {
-  margin: 15px;
-}
-
-.equalizer {
-   margin: 15px;
-}
-
-.equalizer-bands {
-  min-height: 300px;
-}
-
-.config-menu {
-  margin: 15px;
-}
-
-.browser-content {
-  
-}
-
 .artist-cover {
   /*min-width: 150px;*/
   /*min-height: 150px;*/
-}
-
-.size150 {
-  min-width: 150px;
-  min-height: 150px;
-}
-
-.size100 {
-  min-width: 100px;
-  min-height: 100px;
-}
-
-.size32 {
-  min-width: 32px;
-  min-height: 32px;
-}
-
-.size50 {
-  min-width: 50px;
-  min-height: 50px;
 }
 
 .artists-view {
@@ -229,13 +226,22 @@
   margin-top: 15px;
 }
 
-.album-view-tracks {
+.album-view-info {
+  margin: 5px;
+  margin-bottom: 15px;
+}
+
+.album-tracks {
   margin: 0px;
+}
+
+.album-tracks-header {
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .album-song {
   border-radius: 8px;
-  padding: 4px;
-  margin-left: 5px;
-  margin-right: 5px;
+  margin: 1px 4px;
+  padding: 6px 8px;
 }

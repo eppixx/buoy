@@ -54,11 +54,12 @@ impl relm4::SimpleComponent for AlbumTracks {
 
     view! {
         gtk::Box {
-            add_css_class: "album-view-tracks",
+            add_css_class: "album-tracks",
             set_orientation: gtk::Orientation::Vertical,
 
             gtk::Grid {
                 set_column_spacing: 10,
+                add_css_class: "album-tracks-header",
 
                 attach[0, 0, 1, 1] = &gtk::Button {
                     add_css_class: "flat",

@@ -96,6 +96,7 @@ impl relm4::Component for AlbumView {
 
             gtk::Box {
                 set_spacing: 15,
+                add_css_class: "album-view-info",
 
                 model.cover.widget().clone() -> gtk::Box {},
 

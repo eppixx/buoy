@@ -102,6 +102,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                     set_ellipsize: pango::EllipsizeMode::End,
                     set_width_chars: 3,
                     set_label: &self.info.title,
+                    set_widget_name: "title",
                 },
                 self.artist.clone() -> gtk::Label {
                     set_hexpand: true,
@@ -109,6 +110,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                     set_ellipsize: pango::EllipsizeMode::End,
                     set_width_chars: 3,
                     set_label: &self.info.artist.as_deref().unwrap_or("Unknown Artist"),
+                    set_widget_name: "artist",
                 },
                 gtk::Label {
                     set_halign: gtk::Align::Start,
