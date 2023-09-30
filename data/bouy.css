@@ -101,6 +101,14 @@
   margin-right: 5px;
 }
 
+.queue-song-state {
+  border-radius: 4px;
+  border-top: 1px solid Gray; /* TODO change for dark theme */
+  border-bottom: 1px solid Gray; /* TODO change for dark theme */
+  border-left: 1px solid Gray; /* TODO change for dark theme */
+  border-right: 1px solid Gray; /* TODO change for dark theme */
+}
+
 .play-control {
   margin: 3px;
 }

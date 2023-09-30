@@ -153,11 +153,13 @@ impl FactoryComponent for QueueSong {
                 append = match self.playing {
                     PlayState::Play => {
                         gtk::Image {
+                            add_css_class: "queue-song-state",
                             set_icon_name: Some("audio-volume-high-symbolic"),
                         }
                     }
                     PlayState::Pause => {
                         gtk::Image {
+                            add_css_class: "queue-song-state",
                             set_icon_name: Some("media-playback-pause-symbolic"),
                         }
                     }
