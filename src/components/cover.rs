@@ -19,6 +19,7 @@ pub enum CoverIn {
     LoadImage(Option<String>),
 }
 
+// use tuple struct to keep the logging small
 pub struct Image(Vec<u8>);
 
 impl std::fmt::Debug for Image {
