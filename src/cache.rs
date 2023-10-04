@@ -40,6 +40,13 @@ impl Cache {
         std::fs::write(cache_path, cache).unwrap();
     }
 
+    pub fn remove() {
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
+        if let Some(cache_path) = xdg_dirs.find_cache_file(FILE_NAME) {
+            std::fs::remove_file(cache_path).unwrap();
+        }
+    }
+
     // used singleton from https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
     pub fn get() -> &'static Mutex<Cache> {
         static CACHE: OnceLock<Mutex<Cache>> = OnceLock::new();

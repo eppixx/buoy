@@ -1,3 +1,4 @@
+use cache::Cache;
 use components::play_info::PlayInfoOut;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
@@ -269,10 +270,7 @@ impl SimpleComponent for App {
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                 }
             },
-            AppIn::DeleteCache => {
-                //TODO delete cache
-                tracing::error!("cache button pressed");
-            }
+            AppIn::DeleteCache => Cache::remove(),
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
