@@ -105,7 +105,7 @@ impl relm4::Component for AlbumView {
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
-                    set_spacing: 15,
+                    set_spacing: 8,
 
                     gtk::Label {
                         add_css_class: "h3",
