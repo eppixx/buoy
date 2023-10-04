@@ -99,7 +99,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     }
     if let Some(ref artist) = artist {
         result.push_str(&format!(
-            "from <span font_size=\"large\" style=\"italic\">{}</span>",
+            "by <span font_size=\"large\" style=\"italic\">{}</span>",
             artist
         ));
     }

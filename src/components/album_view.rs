@@ -116,7 +116,8 @@ impl relm4::Component for AlbumView {
                     },
                     gtk::Label {
                         #[watch]
-                        set_label: &format!("by {}", model.artist.as_deref().unwrap_or("Unkown Artist")),
+                        set_markup: &format!("by <span style=\"italic\">{}</span>",
+                                             model.artist.as_deref().unwrap_or("Unkown Artist")),
                         set_halign: gtk::Align::Start,
                     },
                     gtk::Label {
@@ -234,5 +235,22 @@ impl relm4::Component for AlbumView {
 }
 
 fn build_info_string(child: &submarine::data::AlbumWithSongsId3) -> String {
-    format!("TODO build info string")
+    let songs = format!("Songs: {}", child.song.len());
+    let length = format!(
+        " - Length: {}",
+        convert_for_label(child.base.duration as i64 * 1000)
+    );
+    let year = match child.base.year {
+        None => String::new(),
+        Some(year) => format!(" - Release: {}", year.to_string()),
+    };
+    let played = match child.base.play_count {
+        None => String::new(),
+        Some(count) => format!(" - played {} times", count.to_string()),
+    };
+    let genre = match &child.base.genre {
+        None => String::new(),
+        Some(genre) => format!(" - Genre: {genre}"),
+    };
+    format!("{}{}{}{}{}", songs, length, year, played, genre)
 }
