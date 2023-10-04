@@ -395,7 +395,6 @@ impl SimpleComponent for App {
                     },
                     gtk::Paned {
                         add_css_class: "main-paned",
-                        // set_wide_handle: true,
                         set_position: 300, // TODO set from previous state
 
                         set_start_child: Some(model.queue.widget()),
@@ -412,7 +411,6 @@ impl SimpleComponent for App {
         tracing::error!("shutdown called");
         self.playback.shutdown().unwrap();
         Settings::get().lock().unwrap().save();
-        // Cache::get().lock().await.save();
     }
 }
 

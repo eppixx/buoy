@@ -27,12 +27,11 @@ impl Cache {
                 self.save(); // TODO save at closing app
                 Some(self.covers.get(id).unwrap().clone())
             }
-            Err(_) => None,
+            Err(_) => None, // TODO error handling
         }
     }
 
     pub fn save(&self) {
-        // let cache = toml::to_string(self).unwrap();
         let cache = postcard::to_allocvec(self).unwrap();
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
         let cache_path = xdg_dirs
@@ -56,9 +55,6 @@ impl Cache {
                 let cache = match std::fs::File::open(cache_path) {
                     Ok(mut file) => {
                         // load file content
-                        // let mut content = String::new();
-                        // file.read_to_string(&mut content).unwrap_or_default();
-                        // toml::from_str::<Cache>(&content).unwrap_or_default()
                         let mut content = vec![];
                         file.read_to_end(&mut content).unwrap();
                         postcard::from_bytes::<Cache>(&content).unwrap_or_default()
