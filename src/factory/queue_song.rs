@@ -13,6 +13,7 @@ use relm4::{
 
 use crate::{
     client::Client,
+    common::convert_for_label,
     components::{
         cover::{Cover, CoverIn, CoverOut},
         queue::QueueIn,
@@ -193,7 +194,7 @@ impl FactoryComponent for QueueSong {
                 },
 
                 gtk::Label {
-                    set_label: &seekbar::convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
+                    set_label: &convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
                 },
 
                 #[transition = "Crossfade"]

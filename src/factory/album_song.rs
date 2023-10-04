@@ -6,6 +6,7 @@ use relm4::gtk::{
 
 use crate::{
     client::Client,
+    common::convert_for_label,
     components::{album_tracks::AlbumTracksIn, seekbar},
     types::Droppable,
 };
@@ -111,7 +112,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                 },
                 self.length.clone() -> gtk::Label {
                     set_halign: gtk::Align::Start,
-                    set_label: &seekbar::convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
+                    set_label: &convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
                 },
                 if self.favorited {
                     self.fav_widget.clone() -> gtk::Image {

@@ -35,6 +35,7 @@ use crate::{
 
 pub mod cache;
 pub mod client;
+pub mod common;
 mod components;
 pub mod css;
 mod factory;

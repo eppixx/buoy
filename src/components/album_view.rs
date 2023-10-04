@@ -10,6 +10,7 @@ use relm4::{
 use super::cover::{Cover, CoverOut};
 use crate::{
     client::Client,
+    common::convert_for_label,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
     types::Droppable,
 };
