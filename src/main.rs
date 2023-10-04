@@ -1,12 +1,12 @@
 use components::play_info::PlayInfoOut;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
+    actions::AccelsPlus,
     component::{AsyncComponent, AsyncComponentController, AsyncController},
     gtk::{
         self,
-        gio::SimpleAction,
-        prelude::{ActionMapExt, ApplicationExt},
-        traits::{GtkApplicationExt, PopoverExt, WidgetExt},
+        prelude::ApplicationExt,
+        traits::{PopoverExt, WidgetExt},
     },
     Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
     SimpleComponent,
@@ -74,6 +74,10 @@ enum AppIn {
     PlayInfo(PlayInfoOut),
 }
 
+relm4::new_action_group!(WindowActionGroup, "win");
+relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
+relm4::new_stateless_action!(ReloadCssAction, WindowActionGroup, "reload-css");
+
 #[relm4::component]
 impl SimpleComponent for App {
     type Input = AppIn;
@@ -130,6 +134,29 @@ impl SimpleComponent for App {
         };
 
         let widgets = view_output!();
+
+        // set application shortcuts
+        // quit
+        let application = relm4::main_application();
+        application.set_accelerators_for_action::<QuitAction>(&["<Primary>Q"]);
+        let app = application.clone();
+        let quit_action: relm4::actions::RelmAction<QuitAction> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                tracing::error!("quit called");
+                app.quit();
+            });
+        // reload css
+        application.set_accelerators_for_action::<ReloadCssAction>(&["<Primary><Shift>C"]);
+        let reload_css_action: relm4::actions::RelmAction<ReloadCssAction> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                tracing::error!("quit called");
+                css::setup_css().unwrap();
+            });
+
+        let mut group = relm4::actions::RelmActionGroup::<WindowActionGroup>::new();
+        group.add_action(quit_action);
+        group.add_action(reload_css_action);
+        group.register_for_widget(&widgets.main_window);
 
         //init widgets
         {
@@ -258,7 +285,7 @@ impl SimpleComponent for App {
 
     view! {
         #[root]
-        gtk::Window {
+        main_window = gtk::Window {
             add_css_class: "main-window",
             set_title: Some("Bouy"),
             set_default_width: 900,
@@ -400,25 +427,6 @@ fn main() -> anyhow::Result<()> {
     {
         let _settings = Settings::get().lock().unwrap();
     }
-
-    let application = relm4::main_application();
-
-    // quit action
-    let quit = SimpleAction::new("quit", None);
-    let app = application.clone();
-    quit.connect_activate(move |_action, _parameter| {
-        app.quit();
-    });
-    application.set_accels_for_action("app.quit", &["<Primary>Q"]);
-    application.add_action(&quit);
-
-    //relaod css action
-    let reload_css = SimpleAction::new("reload_css", None);
-    reload_css.connect_activate(move |_action, _parameter| {
-        css::setup_css().unwrap();
-    });
-    application.set_accels_for_action("app.reload_css", &["<Primary><Shift>C"]);
-    application.add_action(&reload_css);
 
     let app = RelmApp::new("com.github.eppixx.bouy");
     css::setup_css()?;
