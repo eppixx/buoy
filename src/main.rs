@@ -246,7 +246,12 @@ impl SimpleComponent for App {
                 //TODO delete cache
                 tracing::error!("cache button pressed");
             }
-            AppIn::Browser(msg) => match msg {},
+            AppIn::Browser(msg) => match msg {
+                BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
+                BrowserOut::InsertAfterCurrentInQueue(drop) => {
+                    self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop))
+                }
+            },
             AppIn::PlayInfo(msg) => match msg {},
         }
     }

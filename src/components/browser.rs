@@ -15,7 +15,10 @@ use super::{
     artists_view::{ArtistsView, ArtistsViewOut},
     dashboard::DashboardOutput,
 };
-use crate::components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard};
+use crate::{
+    components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard},
+    types::Droppable,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Views {
@@ -77,7 +80,10 @@ pub enum BrowserIn {
 }
 
 #[derive(Debug)]
-pub enum BrowserOut {}
+pub enum BrowserOut {
+    AppendToQueue(Droppable),
+    InsertAfterCurrentInQueue(Droppable),
+}
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for Browser {
@@ -320,8 +326,12 @@ impl relm4::SimpleComponent for Browser {
                 }
             },
             BrowserIn::AlbumView(msg) => match *msg {
-                AlbumViewOut::AppendAlbum(id) => {} //TODO append to queue
-                AlbumViewOut::InsertAfterCurrentPLayed(id) => {} //TODO insert in queue
+                AlbumViewOut::AppendAlbum(drop) => {
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                }
+                AlbumViewOut::InsertAfterCurrentPLayed(drop) => sender
+                    .output(BrowserOut::InsertAfterCurrentInQueue(drop))
+                    .unwrap(),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {

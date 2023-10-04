@@ -71,6 +71,7 @@ pub enum QueueIn {
         dest: DynamicIndex,
     },
     Append(Droppable),
+    InsertAfterCurrentlyPlayed(Droppable),
 }
 
 #[derive(Debug)]
@@ -83,6 +84,7 @@ pub enum QueueOut {
 pub enum QueueCmd {
     FetchedQueue(Option<submarine::data::PlayQueue>),
     FetchedAppendItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
+    FetchedInsertItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
 }
 
 #[relm4::component(pub)]
@@ -350,6 +352,71 @@ impl relm4::Component for Queue {
                     self.songs.guard().push_back(song);
                 }
             }
+            QueueIn::InsertAfterCurrentlyPlayed(drop) => {
+                let songs: Vec<submarine::data::Child> = match drop {
+                    Droppable::Child(c) => vec![*c],
+                    Droppable::AlbumWithSongs(album) => album.song,
+                    Droppable::Artist(artist) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let artist_with_albums = match client.get_artist(artist.id).await {
+                                Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
+                                Ok(artist) => artist,
+                            };
+
+                            let mut result = vec![];
+                            for album in artist_with_albums.album {
+                                match client.get_album(album.id).await {
+                                    Ok(mut album) => result.append(&mut album.song),
+                                    Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
+                                }
+                            }
+                            QueueCmd::FetchedInsertItems(Ok(result))
+                        });
+                        return;
+                    }
+                    Droppable::ArtistWithAlbums(artist) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let mut result = vec![];
+                            for album in artist.album {
+                                match client.get_album(album.id).await {
+                                    Ok(mut album) => result.append(&mut album.song),
+                                    Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
+                                }
+                            }
+                            QueueCmd::FetchedInsertItems(Ok(result))
+                        });
+                        return;
+                    }
+                    Droppable::Playlist(playlist) => playlist.entry,
+                    Droppable::AlbumChild(child) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            match client.get_album(child.id).await {
+                                Err(e) => QueueCmd::FetchedInsertItems(Err(e)),
+                                Ok(album) => QueueCmd::FetchedInsertItems(Ok(album.song)),
+                            }
+                        });
+                        return;
+                    }
+                    Droppable::Album(album) => {
+                        sender.oneshot_command(async move {
+                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            match client.get_album(album.id).await {
+                                Err(e) => QueueCmd::FetchedInsertItems(Err(e)),
+                                Ok(album) => QueueCmd::FetchedInsertItems(Ok(album.song)),
+                            }
+                        });
+                        return;
+                    }
+                    Droppable::Id(_) => vec![], //TODO remove eventually
+                };
+
+                for song in songs.into_iter() {
+                    self.songs.guard().push_back(song);
+                }
+            }
             QueueIn::Clear => {
                 self.songs.guard().clear();
                 self.update_clear_btn_sensitivity();
@@ -513,6 +580,17 @@ impl relm4::Component for Queue {
             QueueCmd::FetchedAppendItems(Ok(children)) => {
                 for child in children {
                     self.songs.guard().push_back(child);
+                }
+                self.clear_items.set_sensitive(!self.songs.is_empty());
+            }
+            QueueCmd::FetchedInsertItems(Err(e)) => {} //TODO error handling
+            QueueCmd::FetchedInsertItems(Ok(children)) => {
+                for (i, child) in children.iter().enumerate() {
+                    let current = match &self.playing_index {
+                        None => 0,
+                        Some(i) => i.current_index(),
+                    };
+                    self.songs.guard().insert(current + i + 1, child.clone());
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
             }
