@@ -18,6 +18,7 @@ pub enum SeekbarIn {
     SeekbarDragged,
     NewRange(i64), // in ms
     SeekTo(i64),   // in ms
+    Disable,
 }
 
 #[derive(Debug)]
@@ -65,6 +66,7 @@ impl relm4::SimpleComponent for Seekbar {
                 widgets.current.set_label(&convert_for_label(model.current));
             }
         }
+        model.scale.set_sensitive(false);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -107,6 +109,7 @@ impl relm4::SimpleComponent for Seekbar {
                 sender.output(SeekbarOut::SeekDragged(value)).unwrap();
             }
             SeekbarIn::NewRange(total) => {
+                self.scale.set_sensitive(true);
                 self.scale.set_range(0.0, total as f64);
                 self.total = total;
             }
@@ -114,6 +117,7 @@ impl relm4::SimpleComponent for Seekbar {
                 self.scale.set_value(ms as f64);
                 self.current = ms;
             }
+            SeekbarIn::Disable => self.scale.set_sensitive(false),
         }
     }
 }

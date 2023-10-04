@@ -268,6 +268,7 @@ impl SimpleComponent for App {
                     self.playback.stop().unwrap(); //TODO error handling
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Stop));
+                    self.seekbar.emit(SeekbarIn::Disable);
                 }
             },
             AppIn::DeleteCache => Cache::remove(),
