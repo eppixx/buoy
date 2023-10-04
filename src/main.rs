@@ -270,6 +270,8 @@ impl SimpleComponent for App {
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.seekbar.emit(SeekbarIn::Disable);
                 }
+                QueueOut::QueueEmpty => self.play_controls.emit(PlayControlIn::Disable),
+                QueueOut::QueueNotEmpty => self.play_controls.emit(PlayControlIn::Enable),
             },
             AppIn::DeleteCache => Cache::remove(),
             AppIn::Browser(msg) => match msg {

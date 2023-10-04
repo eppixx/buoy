@@ -78,6 +78,8 @@ pub enum QueueIn {
 pub enum QueueOut {
     Play(Box<submarine::data::Child>),
     Stop,
+    QueueEmpty,
+    QueueNotEmpty,
 }
 
 #[derive(Debug)]
@@ -89,9 +91,9 @@ pub enum QueueCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Queue {
+    type Init = ();
     type Input = QueueIn;
     type Output = QueueOut;
-    type Init = ();
     type Widgets = QueueWidgets;
     type CommandOutput = QueueCmd;
 
@@ -351,6 +353,10 @@ impl relm4::Component for Queue {
                 for song in songs.into_iter() {
                     self.songs.guard().push_back(song);
                 }
+
+                if !self.songs.is_empty() {
+                    sender.output(QueueOut::QueueNotEmpty).unwrap();
+                }
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs: Vec<submarine::data::Child> = match drop {
@@ -416,11 +422,16 @@ impl relm4::Component for Queue {
                 for song in songs.into_iter() {
                     self.songs.guard().push_back(song);
                 }
+
+                if !self.songs.is_empty() {
+                    sender.output(QueueOut::QueueNotEmpty).unwrap();
+                }
             }
             QueueIn::Clear => {
                 self.songs.guard().clear();
                 self.update_clear_btn_sensitivity();
                 self.last_selected = None;
+                sender.output(QueueOut::QueueEmpty).unwrap();
             }
             QueueIn::Remove => {
                 let selected_indices: Vec<usize> = self
@@ -438,6 +449,10 @@ impl relm4::Component for Queue {
                 for index in selected_indices.iter().rev() {
                     let mut guard = self.songs.guard();
                     guard.remove(*index);
+                }
+
+                if self.songs.is_empty() {
+                    sender.output(QueueOut::QueueEmpty).unwrap();
                 }
 
                 self.update_clear_btn_sensitivity();
@@ -556,7 +571,7 @@ impl relm4::Component for Queue {
     fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -570,6 +585,11 @@ impl relm4::Component for Queue {
                 for entry in queue.entry {
                     self.songs.guard().push_back(entry);
                 }
+
+                if self.songs.is_empty() {
+                    sender.output(QueueOut::QueueEmpty).unwrap();
+                }
+
                 // TODO jump to current song
                 // TODO set seekbar
                 // TODO save queue
@@ -582,6 +602,10 @@ impl relm4::Component for Queue {
                     self.songs.guard().push_back(child);
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
+
+                if !self.songs.is_empty() {
+                    sender.output(QueueOut::QueueNotEmpty).unwrap();
+                }
             }
             QueueCmd::FetchedInsertItems(Err(e)) => {} //TODO error handling
             QueueCmd::FetchedInsertItems(Ok(children)) => {
@@ -593,6 +617,10 @@ impl relm4::Component for Queue {
                     self.songs.guard().insert(current + i + 1, child.clone());
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
+
+                if !self.songs.is_empty() {
+                    sender.output(QueueOut::QueueNotEmpty).unwrap();
+                }
             }
         }
     }

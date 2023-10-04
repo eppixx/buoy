@@ -19,6 +19,8 @@ pub struct PlayControl {
 #[derive(Debug)]
 pub enum PlayControlIn {
     NewState(PlayState),
+    Disable,
+    Enable,
 }
 
 #[derive(Debug)]
@@ -106,6 +108,16 @@ impl SimpleComponent for PlayControl {
             }
             PlayControlIn::NewState(PlayState::Stop) => {
                 self.play_btn.set_icon_name("media-playback-start-symbolic");
+            }
+            PlayControlIn::Disable => {
+                self.prev_btn.set_sensitive(false);
+                self.play_btn.set_sensitive(false);
+                self.next_btn.set_sensitive(false);
+            }
+            PlayControlIn::Enable => {
+                self.prev_btn.set_sensitive(true);
+                self.play_btn.set_sensitive(true);
+                self.next_btn.set_sensitive(true);
             }
         }
     }
