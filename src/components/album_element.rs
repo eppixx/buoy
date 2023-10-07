@@ -9,6 +9,7 @@ use relm4::{
 
 use super::descriptive_cover::DescriptiveCoverOut;
 use crate::{
+    common::convert_for_label,
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
     types::Droppable,
 };
@@ -75,6 +76,34 @@ impl relm4::SimpleComponent for AlbumElement {
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self { cover };
 
+        // tooltip string
+        let tooltip = match &init {
+            AlbumElementInit::AlbumId3(album) => {
+                let year = match album.year {
+                    Some(year) => format!("Year: {year} • "),
+                    None => String::new(),
+                };
+                format!(
+                    "{year}{} songs • Length: {}",
+                    album.song_count,
+                    convert_for_label(album.duration as i64 * 1000)
+                )
+            }
+            AlbumElementInit::Child(child) => {
+                let year = match child.year {
+                    Some(year) => format!("Year: {year} • "),
+                    None => String::new(),
+                };
+                let duration = match child.duration {
+                    Some(duration) => {
+                        format!("Length: {}", convert_for_label(duration as i64 * 1000))
+                    }
+                    None => String::new(),
+                };
+                format!("{year}{duration}")
+            }
+        };
+
         let widgets = view_output!();
 
         //setup DropSource
@@ -100,7 +129,9 @@ impl relm4::SimpleComponent for AlbumElement {
                 },
 
                 #[wrap(Some)]
-                set_child = &model.cover.widget().clone(),
+                set_child = &model.cover.widget().clone() {
+                    set_tooltip_text: Some(&tooltip),
+                }
                 //TODO add tooltip with info about album
             }
         }
