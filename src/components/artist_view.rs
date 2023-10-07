@@ -99,6 +99,7 @@ impl relm4::Component for ArtistView {
 
             gtk::Box {
                 set_spacing: 15,
+                add_css_class: "artist-view-info",
 
                 model.cover.widget().clone() -> gtk::Box {},
 

@@ -76,7 +76,6 @@ impl relm4::Component for Cover {
                 }
             } else {
                 model.image.clone() -> gtk::Image {
-                    set_valign: gtk::Align::Center,
                     add_css_class: "card",
                     add_css_class: "cover",
                 }
