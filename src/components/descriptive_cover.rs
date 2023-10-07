@@ -82,16 +82,14 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
     view! {
         gtk::Box {
+            add_css_class: "descriptive-cover",
             set_orientation: gtk::Orientation::Vertical,
-            set_margin_all: 12,
             set_spacing: 5,
 
             gtk::Box {
                 set_halign: gtk::Align::Center,
 
-                model.cover.widget().clone() {
-                    add_css_class: "play-info-cover",
-                }
+                model.cover.widget().clone(),
             },
 
             model.title.clone() -> gtk::Viewport {

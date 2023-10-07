@@ -145,6 +145,10 @@
     );
 }
 
+.descriptive-cover {
+  margin: 5px;
+}
+
 .play-info {
   margin: 4px;
   min-width: 350px;
