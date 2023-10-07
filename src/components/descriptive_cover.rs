@@ -71,7 +71,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
         };
         let widgets = view_output!();
 
-        model.cover.model().add_css_class_image("size100");
+        model.cover.model().add_css_class_image("size150");
 
         sender.input(DescriptiveCoverIn::LoadImage(init.image));
         sender.input(DescriptiveCoverIn::SetTitle(init.title));
