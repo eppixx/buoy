@@ -69,6 +69,19 @@ impl relm4::SimpleComponent for Equalizer {
             }
         }
 
+        // set uniform size
+        let group = gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal);
+        group.add_widget(&widgets.box0);
+        group.add_widget(&widgets.box1);
+        group.add_widget(&widgets.box2);
+        group.add_widget(&widgets.box3);
+        group.add_widget(&widgets.box4);
+        group.add_widget(&widgets.box5);
+        group.add_widget(&widgets.box6);
+        group.add_widget(&widgets.box7);
+        group.add_widget(&widgets.box8);
+        group.add_widget(&widgets.box9);
+
         relm4::ComponentParts { model, widgets }
     }
 
@@ -105,6 +118,7 @@ impl relm4::SimpleComponent for Equalizer {
                 set_vexpand: true,
                 set_spacing: 7,
 
+                #[name = "box0"]
                 gtk::Box {
                     set_hexpand: true,
                     set_orientation: gtk::Orientation::Vertical,
@@ -121,6 +135,7 @@ impl relm4::SimpleComponent for Equalizer {
                         set_label: "29Hz",
                     }
                 },
+                #[name = "box1"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -136,6 +151,7 @@ impl relm4::SimpleComponent for Equalizer {
                         set_label: "59Hz",
                     }
                 },
+                #[name = "box2"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -151,6 +167,7 @@ impl relm4::SimpleComponent for Equalizer {
                         set_label: "119Hz",
                     }
                 },
+                #[name = "box3"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -166,6 +183,7 @@ impl relm4::SimpleComponent for Equalizer {
                         set_label: "237Hz",
                     }
                 },
+                #[name = "box4"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -181,6 +199,7 @@ impl relm4::SimpleComponent for Equalizer {
                         set_label: "474Hz",
                     }
                 },
+                #[name = "box5"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -196,6 +215,7 @@ impl relm4::SimpleComponent for Equalizer {
                         set_label: "947Hz",
                     }
                 },
+                #[name = "box6"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -209,9 +229,10 @@ impl relm4::SimpleComponent for Equalizer {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
-                        set_label: "1889Hz",
+                        set_label: "1,8kHz",
                     }
                 },
+                #[name = "box7"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -224,9 +245,10 @@ impl relm4::SimpleComponent for Equalizer {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
-                        set_label: "3770Hz",
+                        set_label: "3,7kHz",
                     }
                 },
+                #[name = "box8"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -239,9 +261,10 @@ impl relm4::SimpleComponent for Equalizer {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
-                        set_label: "7523Hz",
+                        set_label: "7,5Hz",
                     }
                 },
+                #[name = "box9"]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
@@ -254,7 +277,7 @@ impl relm4::SimpleComponent for Equalizer {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
-                        set_label: "15011Hz",
+                        set_label: "15kHz",
                     }
                 },
             },
