@@ -118,7 +118,7 @@ impl relm4::SimpleComponent for AlbumElement {
 
     view! {
         gtk::FlowBoxChild {
-            add_css_class: "albums-view-album",
+            add_css_class: "album-element",
 
             gtk::Button {
                 add_css_class: "flat",

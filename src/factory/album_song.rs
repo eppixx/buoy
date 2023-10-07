@@ -84,7 +84,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
 
     view! {
         gtk::ListBoxRow {
-            add_css_class: "album-song",
+            add_css_class: "album-tracks-song",
             add_controller: self.drag_src.clone(),
 
             gtk::Box {

@@ -65,7 +65,7 @@ impl relm4::SimpleComponent for ArtistElement {
 
     view! {
         gtk::Box {
-            add_css_class: "artists-view-artist",
+            add_css_class: "artist-element",
 
             gtk::Button {
                 add_css_class: "flat",

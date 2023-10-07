@@ -142,7 +142,7 @@ impl relm4::SimpleComponent for Browser {
                 },
 
                 gtk::Label {
-                    add_css_class: "pathbar-space",
+                    add_css_class: "browser-pathbar-space",
                 },
 
                 gtk::Box {
@@ -179,7 +179,7 @@ impl relm4::SimpleComponent for Browser {
 
                 gtk::Label {
                     set_hexpand: true,
-                    add_css_class: "pathbar-space",
+                    add_css_class: "browser-pathbar-space",
                 },
 
                 gtk::SearchEntry {
