@@ -13,6 +13,7 @@ pub struct Settings {
     pub window_width: i32,
     pub window_height: i32,
     pub window_maximized: bool,
+    pub paned_position: i32,
 
     pub login_uri: Option<String>,
     pub login_username: Option<String>,
@@ -31,6 +32,7 @@ impl Default for Settings {
             window_width: 1200,
             window_height: 900,
             window_maximized: false,
+            paned_position: 400,
             login_uri: Default::default(),
             login_username: Default::default(),
             login_hash: Default::default(),

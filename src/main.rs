@@ -396,9 +396,11 @@ impl SimpleComponent for App {
                             }
                         },
                     },
+                    #[name = "paned"]
                     gtk::Paned {
                         add_css_class: "main-paned",
-                        set_position: 300, // TODO set from previous state
+                        set_position: Settings::get().lock().unwrap().paned_position,
+                        set_shrink_start_child: true,
 
                         set_start_child: Some(model.queue.widget()),
                         set_end_child: Some(model.browser.widget()),
@@ -417,6 +419,7 @@ impl SimpleComponent for App {
         settings.window_width = widgets.main_window.default_width();
         settings.window_height = widgets.main_window.default_height();
         settings.window_maximized = widgets.main_window.is_maximized();
+        settings.paned_position = widgets.paned.position();
         settings.save();
     }
 }
