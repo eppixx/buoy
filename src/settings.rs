@@ -5,6 +5,9 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+const PREFIX: &str = "Bouy";
+const FILE_NAME: &str = "config.toml";
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Settings {
     pub login_uri: Option<String>,
@@ -25,7 +28,7 @@ impl Default for Settings {
             login_username: Default::default(),
             login_hash: Default::default(),
             login_salt: Default::default(),
-            volume: 75.0,
+            volume: 0.75,
             equalizer_enabled: false,
             equalizer_bands: [0.0; 10],
         }
@@ -36,9 +39,9 @@ impl Default for Settings {
 impl Settings {
     pub fn get() -> &'static Mutex<Settings> {
         static SETTING: OnceLock<Mutex<Settings>> = OnceLock::new();
-        let xdg_dirs = xdg::BaseDirectories::with_prefix("Buoy").unwrap();
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
         let config_path = xdg_dirs
-            .place_config_file("config.toml")
+            .place_config_file(FILE_NAME)
             .expect("cannot create configuration directory");
         let mut config_file = match std::fs::File::open(&config_path) {
             Ok(file) => file,
@@ -52,9 +55,9 @@ impl Settings {
 
     pub fn save(&self) {
         let settings = toml::to_string(self).unwrap();
-        let xdg_dirs = xdg::BaseDirectories::with_prefix("Buoy").unwrap();
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
         let config_path = xdg_dirs
-            .place_config_file("config.toml")
+            .place_config_file(FILE_NAME)
             .expect("cannot create configuration directory");
         std::fs::write(config_path, settings).unwrap();
     }
