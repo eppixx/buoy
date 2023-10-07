@@ -92,7 +92,7 @@ impl relm4::Component for Cover {
     ) {
         match msg {
             CoverIn::LoadImage(id) => match id {
-                None => self.image.set_from_pixbuf(None),
+                None => self.image.clear(),
                 Some(id) => {
                     self.loading = true;
                     sender.oneshot_command(async move {
@@ -116,7 +116,7 @@ impl relm4::Component for Cover {
         match message {
             CoverCmd::LoadedImage(None) => {
                 self.loading = false;
-                self.image.set_from_pixbuf(None);
+                self.image.clear();
                 self.image.add_css_class("cover");
             }
             CoverCmd::LoadedImage(Some(buffer)) => {
@@ -124,7 +124,7 @@ impl relm4::Component for Cover {
                 let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
                 match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
                     Ok(pixbuf) => self.image.set_from_pixbuf(Some(&pixbuf)),
-                    _ => self.image.set_from_pixbuf(None),
+                    _ => self.image.clear(),
                 }
                 self.image.remove_css_class("cover");
                 self.loading = false;
