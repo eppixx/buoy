@@ -290,8 +290,9 @@ impl SimpleComponent for App {
         main_window = gtk::Window {
             add_css_class: "main-window",
             set_title: Some("Bouy"),
-            set_default_width: 900,
-            set_default_height: 700,
+            set_default_width: Settings::get().lock().unwrap().window_width,
+            set_default_height: Settings::get().lock().unwrap().window_height,
+            set_maximized: Settings::get().lock().unwrap().window_maximized,
 
             #[wrap(Some)]
             set_titlebar = &gtk::WindowHandle {
@@ -409,10 +410,14 @@ impl SimpleComponent for App {
         }
     }
 
-    fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+    fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         tracing::error!("shutdown called");
         self.playback.shutdown().unwrap();
-        Settings::get().lock().unwrap().save();
+        let mut settings = Settings::get().lock().unwrap();
+        settings.window_width = widgets.main_window.default_width();
+        settings.window_height = widgets.main_window.default_height();
+        settings.window_maximized = widgets.main_window.is_maximized();
+        settings.save();
     }
 }
 

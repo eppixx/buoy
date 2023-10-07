@@ -10,6 +10,10 @@ const FILE_NAME: &str = "config.toml";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Settings {
+    pub window_width: i32,
+    pub window_height: i32,
+    pub window_maximized: bool,
+
     pub login_uri: Option<String>,
     pub login_username: Option<String>,
     pub login_hash: Option<String>,
@@ -24,6 +28,9 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            window_width: 1200,
+            window_height: 900,
+            window_maximized: false,
             login_uri: Default::default(),
             login_username: Default::default(),
             login_hash: Default::default(),
