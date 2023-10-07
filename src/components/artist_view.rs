@@ -116,6 +116,9 @@ impl relm4::Component for ArtistView {
                         #[watch]
                         set_label: &model.bio,
                         set_halign: gtk::Align::Start,
+                        set_single_line_mode: false,
+                        set_lines: -1,
+                        set_wrap: true,
                     }
                 }
             },
