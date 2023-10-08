@@ -90,19 +90,17 @@ impl relm4::Component for Cover {
         _root: &Self::Root,
     ) {
         match msg {
-            CoverIn::LoadImage(id) => match id {
-                None => self.image.clear(),
-                Some(id) => {
-                    self.loading = true;
-                    sender.oneshot_command(async move {
-                        let mut cache = Cache::get().lock().await;
-                        match cache.cover(&id).await {
-                            None => CoverCmd::LoadedImage(None),
-                            Some(buffer) => CoverCmd::LoadedImage(Some(Image(buffer))),
-                        }
-                    });
-                }
-            },
+            CoverIn::LoadImage(None) => self.image.clear(),
+            CoverIn::LoadImage(Some(id)) => {
+                self.loading = true;
+                sender.oneshot_command(async move {
+                    let mut cache = Cache::get().lock().await;
+                    match cache.cover(&id).await {
+                        None => CoverCmd::LoadedImage(None),
+                        Some(buffer) => CoverCmd::LoadedImage(Some(Image(buffer))),
+                    }
+                });
+            }
         }
     }
 

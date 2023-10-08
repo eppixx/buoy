@@ -38,11 +38,27 @@ impl Queue {
         self.clear_items
             .set_sensitive(!self.songs.guard().is_empty());
     }
+
+    pub fn songs(&self) -> Vec<submarine::data::Child> {
+        self.songs.iter().map(|c| c.info().clone()).collect()
+    }
+
+    pub fn playing_index(&self) -> &Option<DynamicIndex> {
+        &self.playing_index
+    }
+
+    pub fn current_song(&self) -> Option<submarine::data::Child> {
+        self.playing_index
+            .as_ref()
+            .map(|i| self.songs.get(i.current_index()).map(|s| s.info().clone()))
+            .flatten()
+    }
 }
 
 #[derive(Debug)]
 pub enum QueueIn {
     Activated(DynamicIndex, Box<submarine::data::Child>),
+    SetCurrent(Option<usize>),
     Clicked(DynamicIndex),
     ShiftClicked(DynamicIndex),
     Clear,
@@ -61,7 +77,6 @@ pub enum QueueIn {
     RepeatPressed,
     PlayNext,
     PlayPrevious,
-    LoadPlayQueue,
     DropAbove {
         src: Vec<submarine::data::Child>,
         dest: DynamicIndex,
@@ -84,21 +99,20 @@ pub enum QueueOut {
 
 #[derive(Debug)]
 pub enum QueueCmd {
-    FetchedQueue(Option<submarine::data::PlayQueue>),
     FetchedAppendItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
     FetchedInsertItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
 }
 
 #[relm4::component(pub)]
 impl relm4::Component for Queue {
-    type Init = ();
+    type Init = (Vec<submarine::data::Child>, Option<usize>);
     type Input = QueueIn;
     type Output = QueueOut;
     type Widgets = QueueWidgets;
     type CommandOutput = QueueCmd;
 
     fn init(
-        _init: Self::Init,
+        (songs, index): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -126,7 +140,8 @@ impl relm4::Component for Queue {
         };
 
         //init queue
-        sender.input(QueueIn::LoadPlayQueue);
+        sender.input(QueueIn::Append(Droppable::Queue(songs)));
+        sender.input(QueueIn::SetCurrent(index));
 
         let widgets = view_output!();
 
@@ -252,6 +267,16 @@ impl relm4::Component for Queue {
                 self.playing_index = Some(index);
                 sender.output(QueueOut::Play(Box::new(*info))).unwrap();
             }
+            QueueIn::SetCurrent(None) => {
+                self.playing_index = None;
+                sender.input(QueueIn::NewState(PlayState::Stop));
+            }
+            QueueIn::SetCurrent(Some(index)) => {
+                if let Some(song) = self.songs.get(index) {
+                    self.playing_index = Some(song.index().clone());
+                    sender.input(QueueIn::NewState(PlayState::Pause));
+                }
+            }
             QueueIn::Clicked(index) => {
                 for (_i, song) in self
                     .songs
@@ -291,6 +316,7 @@ impl relm4::Component for Queue {
             }
             QueueIn::Append(id) => {
                 let songs: Vec<submarine::data::Child> = match id {
+                    Droppable::Queue(ids) => ids,
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
@@ -360,6 +386,7 @@ impl relm4::Component for Queue {
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs: Vec<submarine::data::Child> = match drop {
+                    Droppable::Queue(ids) => ids,
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
@@ -554,17 +581,6 @@ impl relm4::Component for Queue {
                     }
                 }
             }
-            QueueIn::LoadPlayQueue => {
-                self.loading_queue = true;
-                sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    if let Ok(Ok(queue)) = client.get_play_queue().await {
-                        QueueCmd::FetchedQueue(Some(queue))
-                    } else {
-                        QueueCmd::FetchedQueue(None)
-                    }
-                });
-            }
         }
     }
 
@@ -575,27 +591,6 @@ impl relm4::Component for Queue {
         _root: &Self::Root,
     ) {
         match message {
-            QueueCmd::FetchedQueue(queue) => {
-                let queue = if let Some(queue) = queue {
-                    queue
-                } else {
-                    return;
-                };
-
-                for entry in queue.entry {
-                    self.songs.guard().push_back(entry);
-                }
-
-                if self.songs.is_empty() {
-                    sender.output(QueueOut::QueueEmpty).unwrap();
-                }
-
-                // TODO jump to current song
-                // TODO set seekbar
-                // TODO save queue
-
-                self.loading_queue = false;
-            }
             QueueCmd::FetchedAppendItems(Err(e)) => {} //TODO error handling
             QueueCmd::FetchedAppendItems(Ok(children)) => {
                 for child in children {

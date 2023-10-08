@@ -94,22 +94,80 @@ impl SimpleComponent for App {
     ) -> ComponentParts<Self> {
         let (playback_sender, receiver) =
             gtk::glib::MainContext::channel(gtk::glib::Priority::default());
-        let playback = Playback::new(&playback_sender).unwrap();
+        let mut playback = Playback::new(&playback_sender).unwrap();
+
+        // load from settings
+        let (queue, queue_index, current_song, seekbar, controls) = {
+            let settings = Settings::get().lock().unwrap();
+            //queue
+            let queue = settings.queue_ids.clone();
+            let queue_index = settings.queue_current.clone();
+
+            // play info
+            let current_song = if let Some(index) = settings.queue_current {
+                settings.queue_ids.get(index).cloned()
+            } else {
+                None
+            };
+
+            // seekbar
+            let mut seekbar = None;
+            if let Some(index) = settings.queue_current {
+                if let Some(song) = settings.queue_ids.get(index) {
+                    if let Some(duration) = song.duration {
+                        seekbar = Some(SeekbarCurrent::new(
+                            duration as i64 * 1000,
+                            None,
+                            // Some(settings.queue_seek as i64),
+                        ));
+                    }
+                }
+            };
+
+            //TODO set playback seek
+
+            // controls
+            let controls = match settings.queue_current {
+                Some(_) => PlayState::Pause,
+                None => PlayState::Stop,
+            };
+            (queue, queue_index, current_song, seekbar, controls)
+        };
+
+        // set playback song from settings
+        if let Some(child) = &current_song {
+            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            match client.stream_url(
+                &child.id,
+                None,
+                None::<&str>,
+                None,
+                None::<&str>,
+                None,
+                None,
+            ) {
+                Ok(url) => {
+                    playback.set_track(url);
+                }
+                Err(_) => {} //TODO error handling
+            }
+            playback.pause().unwrap();
+        }
 
         let login_form: AsyncController<LoginForm> = LoginForm::builder()
             .launch(())
             .forward(sender.input_sender(), AppIn::LoginForm);
         let queue: Controller<Queue> = Queue::builder()
-            .launch(())
+            .launch((queue, queue_index))
             .forward(sender.input_sender(), |msg| AppIn::Queue(Box::new(msg)));
         let play_controls = PlayControl::builder()
-            .launch(PlayState::Pause) // TODO change to previous state
+            .launch(controls)
             .forward(sender.input_sender(), AppIn::PlayControlOutput);
         let seekbar = Seekbar::builder()
-            .launch(Some(SeekbarCurrent::new(1000 * 60, None))) // TODO change to previous state
+            .launch(seekbar)
             .forward(sender.input_sender(), AppIn::Seekbar);
         let play_info = PlayInfo::builder()
-            .launch(None) // TODO change to previous state
+            .launch(current_song)
             .forward(sender.input_sender(), AppIn::PlayInfo);
         let browser = Browser::builder()
             .launch(())
@@ -151,7 +209,7 @@ impl SimpleComponent for App {
         application.set_accelerators_for_action::<ReloadCssAction>(&["<Primary><Shift>C"]);
         let reload_css_action: relm4::actions::RelmAction<ReloadCssAction> =
             relm4::actions::RelmAction::new_stateless(move |_| {
-                tracing::error!("quit called");
+                tracing::error!("reload css");
                 css::setup_css().unwrap();
             });
 
@@ -240,7 +298,7 @@ impl SimpleComponent for App {
                 QueueOut::Play(child) => {
                     // update playcontrol
                     self.play_info
-                        .emit(PlayInfoIn::NewState(Box::new(*child.clone())));
+                        .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
 
                     // set playback
                     let client = Client::get().lock().unwrap().inner.clone().unwrap();
@@ -415,7 +473,20 @@ impl SimpleComponent for App {
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         tracing::error!("shutdown called");
         self.playback.shutdown().unwrap();
+
         let mut settings = Settings::get().lock().unwrap();
+
+        //save queue
+        settings.queue_ids = self.queue.model().songs();
+        settings.queue_current = self
+            .queue
+            .model()
+            .playing_index()
+            .as_ref()
+            .map(|i| i.current_index());
+        settings.queue_seek = self.seekbar.model().current();
+
+        //save window state
         settings.window_width = widgets.main_window.default_width();
         settings.window_height = widgets.main_window.default_height();
         settings.window_maximized = widgets.main_window.is_maximized();

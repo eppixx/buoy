@@ -15,6 +15,10 @@ pub struct Settings {
     pub window_maximized: bool,
     pub paned_position: i32,
 
+    pub queue_ids: Vec<submarine::data::Child>,
+    pub queue_current: Option<usize>,
+    pub queue_seek: f64,
+
     pub login_uri: Option<String>,
     pub login_username: Option<String>,
     pub login_hash: Option<String>,
@@ -33,6 +37,9 @@ impl Default for Settings {
             window_height: 900,
             window_maximized: false,
             paned_position: 400,
+            queue_ids: vec![],
+            queue_current: None,
+            queue_seek: 0.0f64,
             login_uri: Default::default(),
             login_username: Default::default(),
             login_hash: Default::default(),

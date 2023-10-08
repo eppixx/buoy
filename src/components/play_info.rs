@@ -6,6 +6,8 @@ use relm4::{
     Component, ComponentController,
 };
 
+use crate::settings::Settings;
+
 use super::cover::{Cover, CoverIn, CoverOut};
 
 #[derive(Debug)]
@@ -18,7 +20,7 @@ pub struct PlayInfo {
 
 #[derive(Debug)]
 pub enum PlayInfoIn {
-    NewState(Box<submarine::data::Child>),
+    NewState(Box<Option<submarine::data::Child>>),
     Cover(CoverOut),
 }
 
@@ -44,12 +46,11 @@ impl relm4::SimpleComponent for PlayInfo {
             artist: None,
             album: None,
         };
+
         let widgets = view_output!();
 
         //init widget
-        if let Some(child) = init {
-            sender.input(PlayInfoIn::NewState(Box::new(child)));
-        }
+        sender.input(PlayInfoIn::NewState(Box::new(init)));
         model.covers.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }
@@ -75,15 +76,24 @@ impl relm4::SimpleComponent for PlayInfo {
 
     fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
-            PlayInfoIn::NewState(child) => {
-                self.title = child.title;
-                if let Some(artist) = child.artist {
-                    self.artist = Some(artist);
+            PlayInfoIn::NewState(child) => match *child {
+                None => {
+                    tracing::error!("none given");
+                    self.covers.emit(CoverIn::LoadImage(None));
+                    self.title = String::from("Nothing is played currently");
+                    self.artist = None;
+                    self.album = None;
                 }
-                if let Some(cover_id) = child.cover_art {
-                    self.covers.emit(CoverIn::LoadImage(Some(cover_id)));
+                Some(child) => {
+                    self.title = child.title;
+                    if let Some(artist) = child.artist {
+                        self.artist = Some(artist);
+                    }
+                    if let Some(cover_id) = child.cover_art {
+                        self.covers.emit(CoverIn::LoadImage(Some(cover_id)));
+                    }
                 }
-            }
+            },
             PlayInfoIn::Cover(msg) => match msg {},
         }
     }

@@ -6,13 +6,23 @@ use relm4::{
     },
 };
 
-use crate::common::convert_for_label;
+use crate::{common::convert_for_label, settings::Settings};
 
 #[derive(Debug, Default)]
 pub struct Seekbar {
     current: i64,
     scale: gtk::Scale,
     total: i64,
+}
+
+impl Seekbar {
+    pub fn current(&self) -> f64 {
+        self.scale.value()
+    }
+
+    pub fn set_current(&self, value: f64) {
+        self.scale.set_value(value);
+    }
 }
 
 #[derive(Debug)]
@@ -25,8 +35,8 @@ pub enum SeekbarIn {
 
 #[derive(Debug)]
 pub struct SeekbarCurrent {
-    seek_in_ms: Option<i64>,
-    total_in_ms: i64,
+    pub seek_in_ms: Option<i64>,
+    pub total_in_ms: i64,
 }
 
 #[derive(Debug)]
@@ -68,7 +78,6 @@ impl relm4::SimpleComponent for Seekbar {
                 widgets.current.set_label(&convert_for_label(model.current));
             }
         }
-        model.scale.set_sensitive(false);
 
         relm4::ComponentParts { model, widgets }
     }

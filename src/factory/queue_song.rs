@@ -96,6 +96,14 @@ impl QueueSong {
     pub fn activate(&self) {
         self.sender.input(QueueSongIn::Activated);
     }
+
+    pub fn info(&self) -> &submarine::data::Child {
+        &self.info
+    }
+
+    pub fn index(&self) -> &DynamicIndex {
+        &self.index
+    }
 }
 
 #[derive(Debug)]
@@ -322,6 +330,7 @@ impl FactoryComponent for QueueSong {
                 let client = Client::get().lock().unwrap().inner.clone().unwrap();
 
                 let songs = match drop {
+                    Droppable::Queue(ids) => ids,
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Playlist(playlist) => playlist.entry,
