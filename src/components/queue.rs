@@ -46,13 +46,6 @@ impl Queue {
     pub fn playing_index(&self) -> &Option<DynamicIndex> {
         &self.playing_index
     }
-
-    pub fn current_song(&self) -> Option<submarine::data::Child> {
-        self.playing_index
-            .as_ref()
-            .map(|i| self.songs.get(i.current_index()).map(|s| s.info().clone()))
-            .flatten()
-    }
 }
 
 #[derive(Debug)]

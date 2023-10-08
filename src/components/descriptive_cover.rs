@@ -3,7 +3,7 @@ use relm4::{
         self, pango,
         traits::{BoxExt, OrientableExt, WidgetExt},
     },
-    Component, ComponentController, RelmWidgetExt,
+    Component, ComponentController,
 };
 
 use super::cover::{Cover, CoverIn, CoverOut};

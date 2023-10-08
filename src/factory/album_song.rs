@@ -5,9 +5,7 @@ use relm4::gtk::{
 };
 
 use crate::{
-    client::Client,
-    common::convert_for_label,
-    components::{album_tracks::AlbumTracksIn, seekbar},
+    client::Client, common::convert_for_label, components::album_tracks::AlbumTracksIn,
     types::Droppable,
 };
 
@@ -147,9 +145,6 @@ impl relm4::factory::FactoryComponent for AlbumSong {
     }
 
     fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        match output {
-						//
-        }
         None
     }
 

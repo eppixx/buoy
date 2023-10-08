@@ -5,10 +5,7 @@ use relm4::gtk;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::client::Client;
 use crate::settings::Settings;
-
-// use crate::store::settings;
 
 #[derive(Debug)]
 pub struct Playback {

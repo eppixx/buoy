@@ -6,8 +6,6 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::settings::Settings;
-
 use super::cover::{Cover, CoverIn, CoverOut};
 
 #[derive(Debug)]

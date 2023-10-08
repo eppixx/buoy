@@ -17,7 +17,6 @@ use crate::{
     components::{
         cover::{Cover, CoverIn, CoverOut},
         queue::QueueIn,
-        seekbar,
     },
     css::DragState,
     play_state::PlayState,

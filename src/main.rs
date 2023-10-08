@@ -101,7 +101,7 @@ impl SimpleComponent for App {
             let settings = Settings::get().lock().unwrap();
             //queue
             let queue = settings.queue_ids.clone();
-            let queue_index = settings.queue_current.clone();
+            let queue_index = settings.queue_current;
 
             // play info
             let current_song = if let Some(index) = settings.queue_current {

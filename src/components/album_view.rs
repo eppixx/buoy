@@ -242,11 +242,11 @@ fn build_info_string(child: &submarine::data::AlbumWithSongsId3) -> String {
     );
     let year = match child.base.year {
         None => String::new(),
-        Some(year) => format!(" • Release: {}", year.to_string()),
+        Some(year) => format!(" • Release: {}", year),
     };
     let played = match child.base.play_count {
         None => String::new(),
-        Some(count) => format!(" • played {} times", count.to_string()),
+        Some(count) => format!(" • played {} times", count),
     };
     let genre = match &child.base.genre {
         None => String::new(),

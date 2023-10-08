@@ -6,7 +6,7 @@ use relm4::{
     },
 };
 
-use crate::{common::convert_for_label, settings::Settings};
+use crate::common::convert_for_label;
 
 #[derive(Debug, Default)]
 pub struct Seekbar {
@@ -18,10 +18,6 @@ pub struct Seekbar {
 impl Seekbar {
     pub fn current(&self) -> f64 {
         self.scale.value()
-    }
-
-    pub fn set_current(&self, value: f64) {
-        self.scale.set_value(value);
     }
 }
 
