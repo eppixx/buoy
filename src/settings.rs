@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-const PREFIX: &str = "Bouy";
+const PREFIX: &str = "Buoy";
 const FILE_NAME: &str = "config.toml";
 
 #[derive(Debug, Deserialize, Serialize)]

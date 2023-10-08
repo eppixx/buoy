@@ -29,9 +29,9 @@ pub enum LoginFormOut {
 
 #[component(pub, async)]
 impl relm4::component::AsyncComponent for LoginForm {
+    type Init = ();
     type Input = LoginFormIn;
     type Output = LoginFormOut;
-    type Init = ();
     type CommandOutput = ();
 
     async fn init(

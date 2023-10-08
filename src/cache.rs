@@ -5,7 +5,7 @@ use std::{collections::HashMap, io::Read, sync::OnceLock};
 
 use crate::client::Client;
 
-const PREFIX: &str = "Bouy";
+const PREFIX: &str = "Buoy";
 const FILE_NAME: &str = "images";
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]

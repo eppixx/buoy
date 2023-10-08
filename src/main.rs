@@ -82,9 +82,9 @@ relm4::new_stateless_action!(ReloadCssAction, WindowActionGroup, "reload-css");
 
 #[relm4::component]
 impl SimpleComponent for App {
+    type Init = ();
     type Input = AppIn;
     type Output = ();
-    type Init = ();
 
     // Initialize the UI.
     fn init(
@@ -289,7 +289,7 @@ impl SimpleComponent for App {
         #[root]
         main_window = gtk::Window {
             add_css_class: "main-window",
-            set_title: Some("Bouy"),
+            set_title: Some("Buoy"),
             set_default_width: Settings::get().lock().unwrap().window_width,
             set_default_height: Settings::get().lock().unwrap().window_height,
             set_maximized: Settings::get().lock().unwrap().window_maximized,
@@ -305,7 +305,7 @@ impl SimpleComponent for App {
 
                     //title
                     gtk::Label {
-                        set_markup: "<span weight=\"bold\">Bouy</span>",
+                        set_markup: "<span weight=\"bold\">Buoy</span>",
                         set_hexpand: true,
                     },
 

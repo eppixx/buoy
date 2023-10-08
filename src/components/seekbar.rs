@@ -45,9 +45,9 @@ impl SeekbarCurrent {
 
 #[component(pub)]
 impl relm4::SimpleComponent for Seekbar {
+    type Init = Option<SeekbarCurrent>;
     type Input = SeekbarIn;
     type Output = SeekbarOut;
-    type Init = Option<SeekbarCurrent>;
 
     fn init(
         init: Self::Init,

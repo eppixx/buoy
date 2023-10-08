@@ -32,9 +32,9 @@ pub enum PlayControlOut {
 
 #[component(pub)]
 impl SimpleComponent for PlayControl {
+    type Init = PlayState;
     type Input = PlayControlIn;
     type Output = PlayControlOut;
-    type Init = PlayState;
 
     fn init(
         state: Self::Init,
