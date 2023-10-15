@@ -167,22 +167,6 @@ impl relm4::Component for Queue {
                             start: (),
                         }
                     }
-                } else if model.songs.is_empty() {
-                    gtk::Label {
-                        add_css_class: "h3",
-                        set_label: "Queue is empty\nDrop music here",
-
-                        add_controller = gtk::DropTarget {
-                            set_actions: gdk::DragAction::MOVE,
-                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
-                            connect_drop[sender] => move |_target, value, _x, _y| {
-                                if let Ok(drop) = value.get::<Droppable>() {
-                                    sender.input(QueueIn::Append(drop));
-                                }
-                                true
-                            },
-                        }
-                    }
                 } else {
                     model.songs.widget().clone() -> gtk::ListBox {
                         set_selection_mode: gtk::SelectionMode::Multiple,
@@ -190,6 +174,23 @@ impl relm4::Component for Queue {
                         connect_selected_rows_changed[sender] => move |widget| {
                             sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
                         },
+
+                        #[wrap(Some)]
+                        set_placeholder = &gtk::Label {
+                            add_css_class: "h3",
+                            set_label: "Queue is empty\nDrop music here",
+
+                            add_controller = gtk::DropTarget {
+                                set_actions: gdk::DragAction::MOVE,
+                                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                                connect_drop[sender] => move |_target, value, _x, _y| {
+                                    if let Ok(drop) = value.get::<Droppable>() {
+                                        sender.input(QueueIn::Append(drop));
+                                    }
+                                    true
+                                },
+                            }
+                        }
                     }
                 },
 
