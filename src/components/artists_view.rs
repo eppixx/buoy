@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
@@ -8,10 +10,11 @@ use relm4::{
 };
 
 use super::artist_element::ArtistElementOut;
-use crate::{client::Client, components::artist_element::ArtistElement};
+use crate::{components::artist_element::ArtistElement, subsonic::Subsonic};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ArtistsView {
+    subsonic: Rc<RefCell<Subsonic>>,
     artists: gtk::FlowBox,
     artist_list: Vec<relm4::Controller<ArtistElement>>,
 }
@@ -28,9 +31,9 @@ pub enum ArtistsViewIn {
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for ArtistsView {
+    type Init = Rc<RefCell<Subsonic>>;
     type Input = ArtistsViewIn;
     type Output = ArtistsViewOut;
-    type Init = ();
     type CommandOutput = ();
 
     fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
@@ -44,11 +47,6 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     set_spacing: 30,
                     set_halign: gtk::Align::Center,
                     set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::Label {
-                        add_css_class: "h2",
-                        set_label: "Loading artists",
-                    },
 
                     gtk::Spinner {
                         add_css_class: "size100",
@@ -64,24 +62,21 @@ impl relm4::component::AsyncComponent for ArtistsView {
     }
 
     async fn init(
-        _init: Self::Init,
+        init: Self::Init,
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
-        let mut model = Self::default();
+        let mut model = Self {
+            subsonic: init,
+            artists: gtk::FlowBox::default(),
+            artist_list: vec![],
+        };
         let widgets = view_output!();
 
-        // get artists
-        let artists: Vec<submarine::data::ArtistId3> = {
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            let indexes: Vec<submarine::data::IndexId3> = client.get_artists(None).await.unwrap();
-            indexes.into_iter().flat_map(|i| i.artist).collect()
-        };
-
         // add artists with cover and title
-        for (i, artist) in artists.into_iter().enumerate() {
+        for (i, artist) in model.subsonic.borrow().artists().iter().enumerate() {
             let cover: relm4::Controller<ArtistElement> = ArtistElement::builder()
-                .launch(artist)
+                .launch(artist.clone())
                 .forward(sender.input_sender(), ArtistsViewIn::ArtistElement);
             model.artists.insert(cover.widget(), i as i32);
             model.artist_list.insert(i, cover);

@@ -3,14 +3,13 @@ use components::play_info::PlayInfoOut;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     actions::AccelsPlus,
-    component::{AsyncComponent, AsyncComponentController, AsyncController},
+    component::{AsyncComponentController, AsyncController},
     gtk::{
         self,
         prelude::ApplicationExt,
         traits::{PopoverExt, WidgetExt},
     },
-    Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
-    SimpleComponent,
+    Component, ComponentController, Controller, RelmApp,
 };
 
 use crate::components::{
@@ -42,6 +41,7 @@ mod factory;
 mod play_state;
 mod playback;
 pub mod settings;
+pub mod subsonic;
 pub mod types;
 
 struct App {
@@ -80,18 +80,22 @@ relm4::new_action_group!(WindowActionGroup, "win");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
 relm4::new_stateless_action!(ReloadCssAction, WindowActionGroup, "reload-css");
 
-#[relm4::component]
-impl SimpleComponent for App {
+#[relm4::component(async)]
+impl relm4::component::AsyncComponent for App {
     type Init = ();
     type Input = AppIn;
     type Output = ();
+    type CommandOutput = ();
 
     // Initialize the UI.
-    fn init(
+    async fn init(
         _init: Self::Init,
-        root: &Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        root: Self::Root,
+        sender: relm4::AsyncComponentSender<Self>,
+    ) -> relm4::component::AsyncComponentParts<Self> {
+        let subsonic = subsonic::Subsonic::load_or_create().await.unwrap();
+        let subsonic = std::rc::Rc::new(std::cell::RefCell::new(subsonic));
+
         let (playback_sender, receiver) =
             gtk::glib::MainContext::channel(gtk::glib::Priority::default());
         let mut playback = Playback::new(&playback_sender).unwrap();
@@ -170,7 +174,7 @@ impl SimpleComponent for App {
             .launch(current_song)
             .forward(sender.input_sender(), AppIn::PlayInfo);
         let browser = Browser::builder()
-            .launch(())
+            .launch(subsonic)
             .forward(sender.input_sender(), AppIn::Browser);
         let equalizer = Equalizer::builder()
             .launch(())
@@ -241,10 +245,15 @@ impl SimpleComponent for App {
             }
         }
 
-        ComponentParts { model, widgets }
+        relm4::component::AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        msg: Self::Input,
+        _sender: relm4::AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
             AppIn::PlayControlOutput(input) => match input {
                 PlayControlOut::Next => self.queue.emit(QueueIn::PlayNext),
@@ -341,6 +350,30 @@ impl SimpleComponent for App {
             },
             AppIn::PlayInfo(msg) => match msg {},
         }
+    }
+
+    fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        tracing::error!("shutdown called");
+        self.playback.shutdown().unwrap();
+
+        let mut settings = Settings::get().lock().unwrap();
+
+        //save queue
+        settings.queue_ids = self.queue.model().songs();
+        settings.queue_current = self
+            .queue
+            .model()
+            .playing_index()
+            .as_ref()
+            .map(|i| i.current_index());
+        settings.queue_seek = self.seekbar.model().current();
+
+        //save window state
+        settings.window_width = widgets.main_window.default_width();
+        settings.window_height = widgets.main_window.default_height();
+        settings.window_maximized = widgets.main_window.is_maximized();
+        settings.paned_position = widgets.paned.position();
+        settings.save();
     }
 
     view! {
@@ -469,30 +502,6 @@ impl SimpleComponent for App {
             },
         }
     }
-
-    fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        tracing::error!("shutdown called");
-        self.playback.shutdown().unwrap();
-
-        let mut settings = Settings::get().lock().unwrap();
-
-        //save queue
-        settings.queue_ids = self.queue.model().songs();
-        settings.queue_current = self
-            .queue
-            .model()
-            .playing_index()
-            .as_ref()
-            .map(|i| i.current_index());
-        settings.queue_seek = self.seekbar.model().current();
-
-        //save window state
-        settings.window_width = widgets.main_window.default_width();
-        settings.window_height = widgets.main_window.default_height();
-        settings.window_maximized = widgets.main_window.is_maximized();
-        settings.paned_position = widgets.paned.position();
-        settings.save();
-    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -509,6 +518,6 @@ fn main() -> anyhow::Result<()> {
 
     let app = RelmApp::new("com.github.eppixx.bouy");
     css::setup_css()?;
-    app.run::<App>(());
+    app.run_async::<App>(());
     Ok(())
 }

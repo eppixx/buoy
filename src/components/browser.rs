@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     component::{AsyncComponent, AsyncComponentController},
     gtk::{
@@ -17,6 +19,7 @@ use super::{
 };
 use crate::{
     components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard},
+    subsonic::Subsonic,
     types::Droppable,
 };
 
@@ -47,6 +50,7 @@ impl Views {
 
 #[derive(Debug)]
 pub struct Browser {
+    subsonic: Rc<RefCell<Subsonic>>,
     history_widget: Vec<Views>,
     content: gtk::Viewport,
     back_btn: gtk::Button,
@@ -58,7 +62,7 @@ pub struct Browser {
 
     dashboards: Vec<relm4::Controller<Dashboard>>,
     artistss: Vec<relm4::component::AsyncController<ArtistsView>>,
-    albumss: Vec<relm4::component::AsyncController<AlbumsView>>,
+    albumss: Vec<relm4::component::Controller<AlbumsView>>,
     album_views: Vec<relm4::Controller<AlbumView>>,
     artist_views: Vec<relm4::Controller<ArtistView>>,
 }
@@ -87,16 +91,17 @@ pub enum BrowserOut {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for Browser {
-    type Init = ();
+    type Init = Rc<RefCell<Subsonic>>;
     type Input = BrowserIn;
     type Output = BrowserOut;
 
     fn init(
-        _init: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
+            subsonic: init,
             history_widget: vec![],
             content: gtk::Viewport::default(),
             back_btn: gtk::Button::default(),
@@ -116,7 +121,7 @@ impl relm4::SimpleComponent for Browser {
 
         //TODO swtich default view
         sender.input(BrowserIn::DashboardClicked);
-        sender.input(BrowserIn::AlbumsClicked);
+        // sender.input(BrowserIn::AlbumsClicked);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -255,7 +260,7 @@ impl relm4::SimpleComponent for Browser {
 
                 let artists: relm4::component::AsyncController<ArtistsView> =
                     ArtistsView::builder()
-                        .launch(())
+                        .launch(self.subsonic.clone())
                         .forward(sender.input_sender(), BrowserIn::ArtistsView);
                 self.history_widget
                     .push(Views::Artists(artists.widget().clone()));
@@ -268,8 +273,8 @@ impl relm4::SimpleComponent for Browser {
                 self.deactivate_all_buttons();
                 self.albums_btn.set_active(true);
 
-                let albums: relm4::component::AsyncController<AlbumsView> = AlbumsView::builder()
-                    .launch(())
+                let albums: relm4::component::Controller<AlbumsView> = AlbumsView::builder()
+                    .launch(self.subsonic.clone())
                     .forward(sender.input_sender(), BrowserIn::AlbumsView);
                 self.history_widget
                     .push(Views::Albums(albums.widget().clone()));

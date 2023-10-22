@@ -1,15 +1,18 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
-        traits::{BoxExt, OrientableExt, WidgetExt},
+        traits::{OrientableExt, WidgetExt},
     },
-    loading_widgets::LoadingWidgets,
-    view, Component, ComponentController,
+    ComponentController,
 };
 
 use super::album_element::AlbumElementOut;
-use crate::client::Client;
-use crate::components::album_element::{AlbumElement, AlbumElementInit};
+use crate::{
+    components::album_element::{AlbumElement, AlbumElementInit},
+    subsonic::Subsonic,
+};
 
 #[derive(Debug, Default)]
 pub struct AlbumsView {
@@ -27,87 +30,31 @@ pub enum AlbumsViewIn {
     AlbumElement(AlbumElementOut),
 }
 
-#[relm4::component(async, pub)]
-impl relm4::component::AsyncComponent for AlbumsView {
-    type Init = ();
+#[relm4::component(pub)]
+impl relm4::component::Component for AlbumsView {
+    type Init = Rc<RefCell<Subsonic>>;
     type Input = AlbumsViewIn;
     type Output = AlbumsViewOut;
     type CommandOutput = ();
 
-    fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
-        view! {
-            append = root.clone() -> gtk::Box {
-                add_css_class: "albums-view",
-
-                #[name(loading_box)]
-                gtk::Box {
-                    set_hexpand: true,
-                    set_spacing: 30,
-                    set_halign: gtk::Align::Center,
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::Label {
-                        add_css_class: "h2",
-                        set_label: "Loading albums",
-                    },
-
-                    gtk::Spinner {
-                        add_css_class: "size100",
-                        set_halign: gtk::Align::Center,
-                        start: (),
-                    }
-                }
-            }
-        }
-
-        // removes widget loading_box when function init finishes
-        Some(LoadingWidgets::new(root, loading_box))
-    }
-
-    async fn init(
-        _init: Self::Init,
-        root: Self::Root,
-        sender: relm4::AsyncComponentSender<Self>,
-    ) -> relm4::component::AsyncComponentParts<Self> {
+    fn init(
+        init: Self::Init,
+        root: &Self::Root,
+        sender: relm4::ComponentSender<Self>,
+    ) -> relm4::component::ComponentParts<Self> {
         let mut model = Self::default();
         let widgets = view_output!();
 
-        // get albums
-        let albums: Vec<submarine::data::Child> = {
-            let mut albums = vec![];
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            let mut offset = 0;
-            loop {
-                let mut part = client
-                    .get_album_list2(
-                        submarine::api::get_album_list::Order::AlphabeticalByName,
-                        Some(500),
-                        Some(offset),
-                        None::<&str>,
-                    )
-                    .await
-                    .unwrap();
-                if part.len() < 500 || part.is_empty() {
-                    albums.append(&mut part);
-                    break;
-                } else {
-                    albums.append(&mut part);
-                    offset += 500;
-                }
-            }
-            albums
-        };
-
         // add albums with cover and title
-        for (i, album) in albums.into_iter().enumerate() {
+        for album in init.borrow().albums().iter() {
             let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
-                .launch(AlbumElementInit::Child(Box::new(album)))
+                .launch(AlbumElementInit::Child(Box::new(album.clone())))
                 .forward(sender.input_sender(), AlbumsViewIn::AlbumElement);
-            model.albums.insert(cover.widget(), i as i32);
-            model.album_list.insert(i, cover);
+            model.albums.append(cover.widget());
+            model.album_list.push(cover);
         }
 
-        relm4::component::AsyncComponentParts { model, widgets }
+        relm4::component::ComponentParts { model, widgets }
     }
 
     view! {
@@ -132,10 +79,10 @@ impl relm4::component::AsyncComponent for AlbumsView {
         }
     }
 
-    async fn update(
+    fn update(
         &mut self,
         msg: Self::Input,
-        sender: relm4::AsyncComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
