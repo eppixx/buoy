@@ -35,12 +35,9 @@ impl Subsonic {
         let cache_path = xdg_dirs
             .place_cache_file(FILE_NAME)
             .expect("cannot create cache directory");
-        // let mut content = vec![];
         let mut content = String::new();
         let mut file = std::fs::File::open(cache_path)?;
         file.read_to_string(&mut content)?;
-        // file.read_to_end(&mut content)?;
-        // Ok(postcard::from_bytes::<Self>(&content)?)
         Ok(toml::from_str::<Self>(&content)?)
     }
 
