@@ -57,7 +57,7 @@ impl Cache {
                 let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
                 let cache_path = xdg_dirs
                     .place_cache_file(FILE_NAME)
-                    .expect("cannot create configuration directory");
+                    .expect("cannot create cache directory");
 
                 let cache = match std::fs::File::open(cache_path) {
                     Ok(mut file) => {
