@@ -210,7 +210,18 @@ impl relm4::SimpleComponent for Browser {
             BrowserIn::BackClicked => {
                 if self.history_widget.len() > 1 {
                     // remove current view from history
-                    let _ = self.history_widget.pop();
+                    match self.history_widget.pop() {
+                        None => {}
+                        Some(view) => match view {
+                            Views::Dashboard(_) => _ = self.dashboards.pop(),
+                            Views::Artists(_) => _ = self.artistss.pop(),
+                            Views::Artist(_) => _ = self.artist_views.pop(),
+                            Views::Albums(_) => _ = self.albumss.pop(),
+                            Views::Album(_) => _ = self.album_views.pop(),
+                            Views::Tracks(_) => todo!(),
+                            Views::Playlists(_) => todo!(),
+                        },
+                    }
 
                     // untoggle all buttons
                     self.dashboard_btn.set_active(false);
@@ -300,7 +311,7 @@ impl relm4::SimpleComponent for Browser {
                         AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
                     };
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch(init)
+                        .launch((self.subsonic.clone(), init))
                         .forward(sender.input_sender(), |msg| {
                             BrowserIn::AlbumView(Box::new(msg))
                         });
@@ -317,7 +328,7 @@ impl relm4::SimpleComponent for Browser {
                 ArtistsViewOut::ClickedArtist(id) => {
                     self.deactivate_all_buttons();
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
-                        .launch(id)
+                        .launch((self.subsonic.clone(), id))
                         .forward(sender.input_sender(), |msg| {
                             BrowserIn::ArtistView(Box::new(msg))
                         });
@@ -346,7 +357,7 @@ impl relm4::SimpleComponent for Browser {
                         AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
                     };
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch(init)
+                        .launch((self.subsonic.clone(), init))
                         .forward(sender.input_sender(), |msg| {
                             BrowserIn::AlbumView(Box::new(msg))
                         });

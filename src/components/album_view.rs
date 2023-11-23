@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
@@ -12,6 +14,7 @@ use crate::{
     client::Client,
     common::convert_for_label,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
+    subsonic::Subsonic,
     types::Droppable,
 };
 
@@ -51,20 +54,20 @@ pub enum AlbumViewCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for AlbumView {
-    type Init = AlbumViewInit;
+    type Init = (Rc<RefCell<Subsonic>>, AlbumViewInit);
     type Input = AlbumViewIn;
     type Output = AlbumViewOut;
     type Widgets = AlbumViewWidgets;
     type CommandOutput = AlbumViewCmd;
 
     fn init(
-        init: Self::Init,
+        (subsonic, init): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch(())
+                .launch(subsonic.clone())
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             title: String::from("Unkonwn Title"),
             artist: None,
@@ -77,17 +80,15 @@ impl relm4::Component for AlbumView {
         let widgets = view_output!();
         model.cover.model().add_css_class_image("size100");
 
-        //load albums
+        //load album
         sender.oneshot_command(async move {
+            let id = match &init {
+                AlbumViewInit::Child(child) => &child.id,
+                AlbumViewInit::AlbumId3(album) => &album.id,
+            };
+
             let client = Client::get().lock().unwrap().inner.clone().unwrap();
-            match &init {
-                AlbumViewInit::Child(child) => {
-                    AlbumViewCmd::LoadedAlbum(client.get_album(&child.id).await)
-                }
-                AlbumViewInit::AlbumId3(album) => {
-                    AlbumViewCmd::LoadedAlbum(client.get_album(&album.id).await)
-                }
-            }
+            AlbumViewCmd::LoadedAlbum(client.get_album(id).await)
         });
 
         relm4::ComponentParts { model, widgets }

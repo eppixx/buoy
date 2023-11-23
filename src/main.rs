@@ -1,4 +1,5 @@
-use cache::Cache;
+use std::{cell::RefCell, rc::Rc};
+
 use components::play_info::PlayInfoOut;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
@@ -11,6 +12,7 @@ use relm4::{
     },
     Component, ComponentController, Controller, RelmApp,
 };
+use subsonic::Subsonic;
 
 use crate::components::{
     browser::{Browser, BrowserOut},
@@ -32,7 +34,6 @@ use crate::{
     settings::Settings,
 };
 
-pub mod cache;
 pub mod client;
 pub mod common;
 mod components;
@@ -46,6 +47,7 @@ pub mod types;
 
 struct App {
     playback: Playback,
+    subsonic: Rc<RefCell<Subsonic>>,
 
     login_form: AsyncController<LoginForm>,
     queue: Controller<Queue>,
@@ -162,7 +164,7 @@ impl relm4::component::AsyncComponent for App {
             .launch(())
             .forward(sender.input_sender(), AppIn::LoginForm);
         let queue: Controller<Queue> = Queue::builder()
-            .launch((queue, queue_index))
+            .launch((subsonic.clone(), queue, queue_index))
             .forward(sender.input_sender(), |msg| AppIn::Queue(Box::new(msg)));
         let play_controls = PlayControl::builder()
             .launch(controls)
@@ -171,10 +173,10 @@ impl relm4::component::AsyncComponent for App {
             .launch(seekbar)
             .forward(sender.input_sender(), AppIn::Seekbar);
         let play_info = PlayInfo::builder()
-            .launch(current_song)
+            .launch((subsonic.clone(), current_song))
             .forward(sender.input_sender(), AppIn::PlayInfo);
         let browser = Browser::builder()
-            .launch(subsonic)
+            .launch(subsonic.clone())
             .forward(sender.input_sender(), AppIn::Browser);
         let equalizer = Equalizer::builder()
             .launch(())
@@ -182,6 +184,7 @@ impl relm4::component::AsyncComponent for App {
 
         let model = App {
             playback,
+            subsonic,
 
             login_form,
             queue,
@@ -341,7 +344,7 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::QueueEmpty => self.play_controls.emit(PlayControlIn::Disable),
                 QueueOut::QueueNotEmpty => self.play_controls.emit(PlayControlIn::Enable),
             },
-            AppIn::DeleteCache => Cache::remove(),
+            AppIn::DeleteCache => todo!(),
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
@@ -374,13 +377,15 @@ impl relm4::component::AsyncComponent for App {
         settings.window_maximized = widgets.main_window.is_maximized();
         settings.paned_position = widgets.paned.position();
         settings.save();
+
+        //save subsonic cache
+        self.subsonic.borrow().save();
     }
 
     view! {
         #[root]
         main_window = gtk::Window {
             add_css_class: "main-window",
-            set_title: Some("Buoy"),
             set_default_width: Settings::get().lock().unwrap().window_width,
             set_default_height: Settings::get().lock().unwrap().window_height,
             set_maximized: Settings::get().lock().unwrap().window_maximized,

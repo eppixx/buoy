@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt};
 use relm4::{
     factory::FactoryVecDeque,
@@ -18,11 +20,13 @@ use crate::{
     },
     factory::queue_song::QueueSong,
     play_state::PlayState,
+    subsonic::Subsonic,
     types::Droppable,
 };
 
 #[derive(Debug)]
 pub struct Queue {
+    subsonic: Rc<RefCell<Subsonic>>,
     songs: FactoryVecDeque<QueueSong>,
     loading_queue: bool,
     playing_index: Option<DynamicIndex>,
@@ -98,14 +102,18 @@ pub enum QueueCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Queue {
-    type Init = (Vec<submarine::data::Child>, Option<usize>);
+    type Init = (
+        Rc<RefCell<Subsonic>>,
+        Vec<submarine::data::Child>,
+        Option<usize>,
+    );
     type Input = QueueIn;
     type Output = QueueOut;
     type Widgets = QueueWidgets;
     type CommandOutput = QueueCmd;
 
     fn init(
-        (songs, index): Self::Init,
+        (subsonic, songs, index): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -122,6 +130,7 @@ impl relm4::Component for Queue {
             });
 
         let mut model = Queue {
+            subsonic,
             songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
             loading_queue: false,
             playing_index: None,
@@ -371,7 +380,7 @@ impl relm4::Component for Queue {
                 };
 
                 for song in songs.into_iter() {
-                    self.songs.guard().push_back(song);
+                    self.songs.guard().push_back((self.subsonic.clone(), song));
                 }
 
                 if !self.songs.is_empty() {
@@ -441,7 +450,7 @@ impl relm4::Component for Queue {
                 };
 
                 for song in songs.into_iter() {
-                    self.songs.guard().push_back(song);
+                    self.songs.guard().push_back((self.subsonic.clone(), song));
                 }
 
                 if !self.songs.is_empty() {
@@ -497,13 +506,19 @@ impl relm4::Component for Queue {
             QueueIn::DropAbove { src, dest } => {
                 let mut guard = self.songs.guard();
                 for (i, child) in src.iter().enumerate() {
-                    guard.insert(dest.current_index() + i, child.clone());
+                    guard.insert(
+                        dest.current_index() + i,
+                        (self.subsonic.clone(), child.clone()),
+                    );
                 }
             }
             QueueIn::DropBelow { src, dest } => {
                 let mut guard = self.songs.guard();
                 for (i, child) in src.iter().enumerate() {
-                    guard.insert(dest.current_index() + i + 1, child.clone());
+                    guard.insert(
+                        dest.current_index() + i + 1,
+                        (self.subsonic.clone(), child.clone()),
+                    );
                 }
             }
             QueueIn::NewState(state) => {
@@ -588,7 +603,7 @@ impl relm4::Component for Queue {
             QueueCmd::FetchedAppendItems(Err(e)) => {} //TODO error handling
             QueueCmd::FetchedAppendItems(Ok(children)) => {
                 for child in children {
-                    self.songs.guard().push_back(child);
+                    self.songs.guard().push_back((self.subsonic.clone(), child));
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
 
@@ -603,7 +618,9 @@ impl relm4::Component for Queue {
                         None => 0,
                         Some(i) => i.current_index(),
                     };
-                    self.songs.guard().insert(current + i + 1, child.clone());
+                    self.songs
+                        .guard()
+                        .insert(current + i + 1, (self.subsonic.clone(), child.clone()));
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
 

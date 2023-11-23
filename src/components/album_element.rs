@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
@@ -11,6 +13,7 @@ use super::descriptive_cover::DescriptiveCoverOut;
 use crate::{
     common::convert_for_label,
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
+    subsonic::Subsonic,
     types::Droppable,
 };
 
@@ -37,12 +40,12 @@ pub enum AlbumElementInit {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for AlbumElement {
-    type Init = AlbumElementInit;
+    type Init = (Rc<RefCell<Subsonic>>, AlbumElementInit);
     type Input = AlbumElementIn;
     type Output = AlbumElementOut;
 
     fn init(
-        init: Self::Init,
+        (subsonic, init): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -72,7 +75,7 @@ impl relm4::SimpleComponent for AlbumElement {
         };
 
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch(builder)
+            .launch((subsonic, builder))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self { cover };
 

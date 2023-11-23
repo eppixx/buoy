@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
@@ -11,10 +13,11 @@ use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
-use crate::{client::Client, types::Droppable};
+use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug)]
 pub struct ArtistView {
+    subsonic: Rc<RefCell<Subsonic>>,
     cover: relm4::Controller<Cover>,
     title: String,
     bio: String,
@@ -41,20 +44,21 @@ pub enum ArtistViewCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for ArtistView {
-    type Init = submarine::data::ArtistId3;
+    type Init = (Rc<RefCell<Subsonic>>, submarine::data::ArtistId3);
     type Input = ArtistViewIn;
     type Output = ArtistViewOut;
     type Widgets = ArtistViewWidgets;
     type CommandOutput = ArtistViewCmd;
 
     fn init(
-        init: Self::Init,
+        (subsonic, init): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
+            subsonic: subsonic.clone(),
             cover: Cover::builder()
-                .launch(())
+                .launch(subsonic)
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),
@@ -165,7 +169,10 @@ impl relm4::Component for ArtistView {
             ArtistViewCmd::LoadedAlbums(Ok(artist)) => {
                 for album in artist.album {
                     let element = AlbumElement::builder()
-                        .launch(AlbumElementInit::AlbumId3(Box::new(album)))
+                        .launch((
+                            self.subsonic.clone(),
+                            AlbumElementInit::AlbumId3(Box::new(album)),
+                        ))
                         .forward(sender.input_sender(), ArtistViewIn::AlbumElement);
                     self.albums.append(element.widget());
                     self.album_elements.push(element);

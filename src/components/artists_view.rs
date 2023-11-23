@@ -14,7 +14,6 @@ use crate::{components::artist_element::ArtistElement, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct ArtistsView {
-    subsonic: Rc<RefCell<Subsonic>>,
     artists: gtk::FlowBox,
     artist_list: Vec<relm4::Controller<ArtistElement>>,
 }
@@ -67,16 +66,15 @@ impl relm4::component::AsyncComponent for ArtistsView {
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
         let mut model = Self {
-            subsonic: init,
             artists: gtk::FlowBox::default(),
             artist_list: vec![],
         };
         let widgets = view_output!();
 
         // add artists with cover and title
-        for (i, artist) in model.subsonic.borrow().artists().iter().enumerate() {
+        for (i, artist) in init.borrow().artists().iter().enumerate() {
             let cover: relm4::Controller<ArtistElement> = ArtistElement::builder()
-                .launch(artist.clone())
+                .launch((init.clone(), artist.clone()))
                 .forward(sender.input_sender(), ArtistsViewIn::ArtistElement);
             model.artists.insert(cover.widget(), i as i32);
             model.artist_list.insert(i, cover);

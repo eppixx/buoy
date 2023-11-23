@@ -1,11 +1,15 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{gtk, gtk::traits::WidgetExt};
 
-use crate::cache::Cache;
+use crate::{client::Client, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct Cover {
+    subsonic: Rc<RefCell<Subsonic>>,
     image: gtk::Image,
     loading: bool,
+    id: Option<String>,
 }
 
 impl Cover {
@@ -40,20 +44,22 @@ pub enum CoverCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
-    type Init = ();
+    type Init = Rc<RefCell<Subsonic>>;
     type Input = CoverIn;
     type Output = CoverOut;
     type Widgets = CoverWidgets;
     type CommandOutput = CoverCmd;
 
     fn init(
-        _init: Self::Init,
+        subsonic: Self::Init,
         root: &Self::Root,
         _sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
+            subsonic,
             loading: false,
             image: gtk::Image::default(),
+            id: None,
         };
         let widgets = view_output!();
 
@@ -92,14 +98,12 @@ impl relm4::Component for Cover {
         match msg {
             CoverIn::LoadImage(None) => self.image.clear(),
             CoverIn::LoadImage(Some(id)) => {
-                self.loading = true;
-                sender.oneshot_command(async move {
-                    let mut cache = Cache::get().lock().await;
-                    match cache.cover(&id).await {
-                        None => CoverCmd::LoadedImage(None),
-                        Some(buffer) => CoverCmd::LoadedImage(Some(Image(buffer))),
-                    }
-                });
+                self.id = Some(id.clone());
+                if let Some(cover) = self.subsonic.borrow().cover(&id) {
+                    self.image.set_from_pixbuf(Some(cover));
+                    self.image.remove_css_class("cover");
+                    return;
+                }
             }
         }
     }
@@ -117,13 +121,18 @@ impl relm4::Component for Cover {
                 self.image.add_css_class("cover");
             }
             CoverCmd::LoadedImage(Some(buffer)) => {
-                let bytes = gtk::glib::Bytes::from(&buffer.0);
-                let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
-                match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
-                    Ok(pixbuf) => self.image.set_from_pixbuf(Some(&pixbuf)),
-                    _ => self.image.clear(),
-                }
-                self.image.remove_css_class("cover");
+                // let bytes = gtk::glib::Bytes::from(&buffer.0);
+                // let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
+                // match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
+                //     Ok(pixbuf) => {
+                //         self.subsonic
+                //             .borrow_mut()
+                //             .cover_insert(self.id.clone().unwrap(), pixbuf.clone());
+                //         self.image.set_from_pixbuf(Some(&pixbuf));
+                //     }
+                //     _ => self.image.clear(),
+                // }
+                // self.image.remove_css_class("cover");
                 self.loading = false;
             }
         }

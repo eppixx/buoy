@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
@@ -9,6 +11,7 @@ use relm4::{
 
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
+    subsonic::Subsonic,
     types::Droppable,
 };
 
@@ -31,12 +34,12 @@ pub enum ArtistElementOut {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for ArtistElement {
-    type Init = submarine::data::ArtistId3;
+    type Init = (Rc<RefCell<Subsonic>>, submarine::data::ArtistId3);
     type Input = ArtistElementIn;
     type Output = ArtistElementOut;
 
     fn init(
-        init: Self::Init,
+        (subsonic, init): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -46,7 +49,7 @@ impl relm4::SimpleComponent for ArtistElement {
             builder = builder.image(id);
         }
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch(builder)
+            .launch((subsonic, builder))
             .forward(sender.input_sender(), ArtistElementIn::DescriptiveCover);
         let model = Self { cover };
 

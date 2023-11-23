@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self, gdk, glib, pango,
@@ -20,6 +22,7 @@ use crate::{
     },
     css::DragState,
     play_state::PlayState,
+    subsonic::Subsonic,
     types::{Droppable, Id},
 };
 
@@ -118,7 +121,7 @@ pub enum QueueSongCmd {
 
 #[relm4::factory(pub)]
 impl FactoryComponent for QueueSong {
-    type Init = submarine::data::Child;
+    type Init = (Rc<RefCell<Subsonic>>, submarine::data::Child);
     type Input = QueueSongIn;
     type Output = QueueSongOut;
     type ParentWidget = gtk::ListBox;
@@ -126,9 +129,13 @@ impl FactoryComponent for QueueSong {
     type Widgets = QueueSongWidgets;
     type CommandOutput = QueueSongCmd;
 
-    fn init_model(init: Self::Init, index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
+    fn init_model(
+        (subsonic, init): Self::Init,
+        index: &DynamicIndex,
+        sender: FactorySender<Self>,
+    ) -> Self {
         let cover = Cover::builder()
-            .launch(())
+            .launch(subsonic)
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
         let mut model = Self {

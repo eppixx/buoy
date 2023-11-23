@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self,
@@ -5,6 +7,8 @@ use relm4::{
     },
     Component, ComponentController,
 };
+
+use crate::subsonic::Subsonic;
 
 use super::cover::{Cover, CoverIn, CoverOut};
 
@@ -27,7 +31,7 @@ pub enum PlayInfoOut {}
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for PlayInfo {
-    type Init = Option<submarine::data::Child>;
+    type Init = (Rc<RefCell<Subsonic>>, Option<submarine::data::Child>);
     type Input = PlayInfoIn;
     type Output = PlayInfoOut;
 
@@ -38,7 +42,7 @@ impl relm4::SimpleComponent for PlayInfo {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             covers: Cover::builder()
-                .launch(())
+                .launch(init.0)
                 .forward(sender.input_sender(), PlayInfoIn::Cover),
             title: String::from("Nothing is played currently"),
             artist: None,
@@ -48,7 +52,7 @@ impl relm4::SimpleComponent for PlayInfo {
         let widgets = view_output!();
 
         //init widget
-        sender.input(PlayInfoIn::NewState(Box::new(init)));
+        sender.input(PlayInfoIn::NewState(Box::new(init.1)));
         model.covers.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }

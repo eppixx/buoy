@@ -48,7 +48,10 @@ impl relm4::component::Component for AlbumsView {
         // add albums with cover and title
         for album in init.borrow().albums().iter() {
             let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
-                .launch(AlbumElementInit::Child(Box::new(album.clone())))
+                .launch((
+                    init.clone(),
+                    AlbumElementInit::Child(Box::new(album.clone())),
+                ))
                 .forward(sender.input_sender(), AlbumsViewIn::AlbumElement);
             model.albums.append(cover.widget());
             model.album_list.push(cover);

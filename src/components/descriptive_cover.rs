@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::{
     gtk::{
         self, pango,
@@ -5,6 +7,8 @@ use relm4::{
     },
     Component, ComponentController,
 };
+
+use crate::subsonic::Subsonic;
 
 use super::cover::{Cover, CoverIn, CoverOut};
 
@@ -52,7 +56,7 @@ pub enum DescriptiveCoverOut {}
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for DescriptiveCover {
-    type Init = DescriptiveCoverBuilder;
+    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverBuilder);
     type Input = DescriptiveCoverIn;
     type Output = DescriptiveCoverOut;
     type Widgets = CoverWidgets;
@@ -64,7 +68,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch(())
+                .launch(init.0)
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: gtk::Viewport::default(),
             subtitle: gtk::Viewport::default(),
@@ -73,9 +77,9 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
         model.cover.model().add_css_class_image("size150");
 
-        sender.input(DescriptiveCoverIn::LoadImage(init.image));
-        sender.input(DescriptiveCoverIn::SetTitle(init.title));
-        sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
+        sender.input(DescriptiveCoverIn::LoadImage(init.1.image));
+        sender.input(DescriptiveCoverIn::SetTitle(init.1.title));
+        sender.input(DescriptiveCoverIn::SetSubtitle(init.1.subtitle));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -104,7 +108,10 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
     fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
-            DescriptiveCoverIn::LoadImage(id) => self.cover.emit(CoverIn::LoadImage(id)),
+            DescriptiveCoverIn::LoadImage(id) => {
+                tracing::error!("dddd");
+                self.cover.emit(CoverIn::LoadImage(id));
+            }
             DescriptiveCoverIn::SetTitle(title) => {
                 if let Some(title) = title {
                     let label = gtk::Label::new(Some(&title));
