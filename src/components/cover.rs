@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use relm4::{gtk, gtk::traits::WidgetExt};
 
-use crate::{client::Client, subsonic::Subsonic};
+use crate::{client::Client, subsonic::Subsonic, types::Id};
 
 #[derive(Debug)]
 pub struct Cover {
@@ -44,21 +44,21 @@ pub enum CoverCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
-    type Init = Rc<RefCell<Subsonic>>;
+    type Init = (Rc<RefCell<Subsonic>>, Id);
     type Input = CoverIn;
     type Output = CoverOut;
     type Widgets = CoverWidgets;
     type CommandOutput = CoverCmd;
 
     fn init(
-        subsonic: Self::Init,
+        (subsonic, id): Self::Init,
         root: &Self::Root,
         _sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             subsonic,
             loading: false,
-            image: gtk::Image::default(),
+            image: subsonic.borrow().cover(&id).unwrap().clone(),
             id: None,
         };
         let widgets = view_output!();
@@ -98,12 +98,13 @@ impl relm4::Component for Cover {
         match msg {
             CoverIn::LoadImage(None) => self.image.clear(),
             CoverIn::LoadImage(Some(id)) => {
-                self.id = Some(id.clone());
-                if let Some(cover) = self.subsonic.borrow().cover(&id) {
-                    self.image.set_from_pixbuf(Some(cover));
-                    self.image.remove_css_class("cover");
-                    return;
-                }
+                // self.id = Some(id.clone());
+                // if let Some(cover) = self.subsonic.borrow().cover(&id) {
+                //     // self.image.set_from_pixbuf(Some(cover));
+                //     self.image = cover.clone();
+                //     self.image.remove_css_class("cover");
+                //     return;
+                // }
             }
         }
     }

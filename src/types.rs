@@ -102,6 +102,12 @@ impl TryFrom<&String> for Id {
     }
 }
 
+impl AsRef<str> for Id {
+    fn as_ref(&self) -> &str {
+        std::ops::Deref::deref(&self).as_ref()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Id, IdConversionError};

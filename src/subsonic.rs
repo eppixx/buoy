@@ -15,11 +15,9 @@ pub struct Subsonic {
     album_list: Vec<submarine::data::Child>,
     // scan_status: submarine::data::ScanStatus,
     #[serde(skip)]
-    covers: HashMap<String, Option<gtk::gdk_pixbuf::Pixbuf>>,
-    // covers: HashMap<String, Option<gtk::gdk_pixbuf::Pixbuf>>,
+    covers: HashMap<String, Option<gtk::Image>>,
     #[serde(skip)]
     cached_images: HashMap<String, Option<Vec<u8>>>,
-    in_loading_covers: bool,
 }
 
 impl Subsonic {
@@ -74,12 +72,12 @@ impl Subsonic {
                     let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
                     match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE)
                     {
-                        Ok(pixbuf) => (id.into(), Some(pixbuf)),
+                        Ok(pixbuf) => (id.into(), Some(gtk::Image::from_pixbuf(Some(&pixbuf)))),
                         _ => (id.into(), None),
                     }
                 }
             })
-            .collect::<HashMap<String, Option<gtk::gdk_pixbuf::Pixbuf>>>();
+            .collect::<HashMap<String, Option<gtk::Image>>>();
         tracing::error!("len of pixbuf: {}", result.covers.len());
         Ok(result)
     }
@@ -123,7 +121,6 @@ impl Subsonic {
             album_list,
             cached_images: HashMap::default(),
             covers: HashMap::default(),
-            in_loading_covers: false,
         };
         result.cached_images = result.load_all_covers().await;
 
@@ -159,7 +156,7 @@ impl Subsonic {
         &self.album_list
     }
 
-    pub fn cover(&self, id: impl AsRef<str>) -> Option<&gtk::gdk_pixbuf::Pixbuf> {
+    pub fn cover(&self, id: impl AsRef<str>) -> Option<&gtk::Image> {
         match self.covers.get(id.as_ref()) {
             None => None,
             Some(None) => None,
