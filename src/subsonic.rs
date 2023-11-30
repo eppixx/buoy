@@ -1,3 +1,4 @@
+use futures::StreamExt;
 use relm4::gtk;
 use serde::{Deserialize, Serialize};
 
@@ -182,8 +183,14 @@ impl Subsonic {
                 });
             }
         }
+
         tracing::info!("number of albums to fetch {}", tasks.len());
-        let results = futures::future::join_all(tasks).await;
+        let stream = futures::stream::iter(tasks)
+            .buffered(100)
+            .collect::<Vec<_>>();
+        let results = stream.await;
+
+        // let results = futures::future::join_all(tasks).await;
         for (id, cover) in results {
             match cover {
                 Ok(cover) => _ = covers.insert(id.clone(), Some(cover)),
