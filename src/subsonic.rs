@@ -84,8 +84,18 @@ impl Subsonic {
             .collect::<HashMap<String, Option<gtk::Image>>>();
         tracing::error!("len of pixbuf: {}", result.covers.len());
 
-				let ids: Vec<String> = result.album_list.iter().filter_map(|album| album.cover_art.clone()).collect();
-				result.coverss.work(Some(ids)).await;
+        let ids: Vec<String> = result
+            .album_list
+            .iter()
+            .filter_map(|album| album.cover_art.clone())
+            .chain(
+                result
+                    .artists
+                    .iter()
+                    .filter_map(|artist| artist.cover_art.clone()),
+            )
+            .collect();
+        result.coverss.work(ids).await;
         Ok(result)
     }
 
@@ -130,7 +140,7 @@ impl Subsonic {
             covers: HashMap::default(),
             coverss: SubsonicCovers::default(),
         };
-				result.coverss.work(None).await;
+        result.coverss.work(vec![]).await;
         result.cached_images = result.load_all_covers().await;
 
         tracing::info!("finished loading subsonic info");

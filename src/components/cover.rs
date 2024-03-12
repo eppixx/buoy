@@ -5,7 +5,6 @@ use relm4::{gtk, gtk::traits::WidgetExt};
 use crate::{
     subsonic::Subsonic,
     subsonic_cover::{self},
-    client::Client, types::Id,
 };
 
 #[derive(Debug)]
@@ -93,16 +92,6 @@ impl relm4::Component for Cover {
                     add_css_class: "card",
                     add_css_class: "cover",
                 },
-                add_named[Some("loading")] = &gtk::Box {
-                    add_css_class: "card",
-
-                    gtk::Spinner {
-                        add_css_class: "size32",
-                        set_valign: gtk::Align::Center,
-                        set_halign: gtk::Align::Center,
-                        start: ()
-                    }
-                },
                 add_named[Some("cover")] = &model.cover.clone(),
             }
         }
@@ -128,16 +117,6 @@ impl relm4::Component for Cover {
 						CoverIn::LoadImage(Some(id)) => {
 								match self.subsonic.borrow_mut().coverss.cover(&id) {
 										subsonic_cover::Response::Empty => self.stack.set_visible_child_name("stock"),
-										subsonic_cover::Response::InLoading(receiver) => {
-												self.stack.set_visible_child_name("loading");
-												let receiver = std::sync::Mutex::new(receiver);
-												sender.oneshot_command(async move {
-														match receiver.lock().unwrap().recv() {
-																Err(_e) => CoverCmd::LoadedImage(false),
-																Ok(_buffer) => CoverCmd::LoadedImage(true),
-														}
-												});
-										}
 										subsonic_cover::Response::Loaded(pixbuf) => {
 												self.cover.set_from_pixbuf(Some(&pixbuf));
 												self.stack.set_visible_child_name("cover");
@@ -184,9 +163,6 @@ impl relm4::Component for Cover {
 								tracing::error!("getting some loaded image");
                 if let Some(id) = &self.id {
                     match self.subsonic.borrow_mut().coverss.cover(id) {
-                        subsonic_cover::Response::InLoading(_) => {
-                            self.stack.set_visible_child_name("loading")
-                        }
                         subsonic_cover::Response::Empty => {
                             self.stack.set_visible_child_name("stock")
                         }
