@@ -135,9 +135,10 @@ impl FactoryComponent for QueueSong {
         sender: FactorySender<Self>,
     ) -> Self {
         let cover = Cover::builder()
-            .launch(subsonic)
+            .launch((subsonic, init.cover_art.clone()))
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
+        // cover.emit(CoverIn::LoadCoverForChild(init.clone()));
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
             info: init.clone(),
@@ -319,7 +320,7 @@ impl FactoryComponent for QueueSong {
                 let id = self.info.id.clone();
                 let favorite = self.favorited;
                 sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    let client = Client::get().unwrap();
                     let empty: Vec<&str> = vec![];
 
                     let result = match favorite {
@@ -333,7 +334,7 @@ impl FactoryComponent for QueueSong {
                 sender.input(QueueSongIn::DragLeave);
                 let widget_height = self.root_widget.height();
                 let index = self.index.clone();
-                let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                let client = Client::get().unwrap();
 
                 let songs = match drop {
                     Droppable::Queue(ids) => ids,

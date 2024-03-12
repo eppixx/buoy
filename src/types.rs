@@ -1,6 +1,8 @@
+use std::fmt::Display;
+
 use relm4::gtk::glib;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, glib::Boxed)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, glib::Boxed)]
 #[boxed_type(name = "MediaId")]
 pub enum Id {
     Song(String),
@@ -34,6 +36,15 @@ impl Id {
             Self::Artist(id) => id,
             Self::Album(id) => id,
             Self::Playlist(id) => id,
+        }
+    }
+
+    pub fn kind(&self) -> String {
+        match self {
+            Self::Song(_) => String::from("Song"),
+            Self::Artist(_) => String::from("Artist"),
+            Self::Album(_) => String::from("Album"),
+            Self::Playlist(_) => String::from("Playlist"),
         }
     }
 
@@ -104,7 +115,13 @@ impl TryFrom<&String> for Id {
 
 impl AsRef<str> for Id {
     fn as_ref(&self) -> &str {
-        std::ops::Deref::deref(&self).as_ref()
+				self.inner()
+    }
+}
+
+impl Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Id: {{{}:{}}}", self.kind(), self.inner())
     }
 }
 

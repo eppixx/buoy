@@ -131,7 +131,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                 let id = self.info.id.clone();
                 let favorite = self.favorited;
                 sender.oneshot_command(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    let client = Client::get().unwrap();
                     let empty: Vec<&str> = vec![];
 
                     let result = match favorite {

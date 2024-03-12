@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, io::Read};
 
-use crate::client::Client;
+use crate::{client::Client, subsonic_cover::SubsonicCovers, types::Id};
 
 const PREFIX: &str = "Buoy";
 const MUSIC_INFOS: &str = "Music-Infos";
@@ -19,11 +19,14 @@ pub struct Subsonic {
     covers: HashMap<String, Option<gtk::Image>>,
     #[serde(skip)]
     cached_images: HashMap<String, Option<Vec<u8>>>,
+    #[serde(skip)]
+    pub coverss: SubsonicCovers,
 }
 
 impl Subsonic {
+    // this is the main way to create a Subsonic object
     pub async fn load_or_create() -> anyhow::Result<Self> {
-        match Self::load() {
+        match Self::load().await {
             Ok(subsonic) => Ok(subsonic),
             Err(_e) => {
                 tracing::warn!("no cache found");
@@ -35,7 +38,7 @@ impl Subsonic {
         }
     }
 
-    pub fn load() -> anyhow::Result<Self> {
+    pub async fn load() -> anyhow::Result<Self> {
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
         let cache_path = xdg_dirs
             .place_cache_file(MUSIC_INFOS)
@@ -80,12 +83,15 @@ impl Subsonic {
             })
             .collect::<HashMap<String, Option<gtk::Image>>>();
         tracing::error!("len of pixbuf: {}", result.covers.len());
+
+				let ids: Vec<String> = result.album_list.iter().filter_map(|album| album.cover_art.clone()).collect();
+				result.coverss.work(Some(ids)).await;
         Ok(result)
     }
 
     pub async fn new() -> anyhow::Result<Self> {
         tracing::info!("create subsonic cache");
-        let client = Client::get().lock().unwrap().inner.clone().unwrap();
+        let client = Client::get().unwrap();
 
         //fetch artists
         tracing::info!("fetching artists");
@@ -122,7 +128,9 @@ impl Subsonic {
             album_list,
             cached_images: HashMap::default(),
             covers: HashMap::default(),
+            coverss: SubsonicCovers::default(),
         };
+				result.coverss.work(None).await;
         result.cached_images = result.load_all_covers().await;
 
         tracing::info!("finished loading subsonic info");
@@ -166,60 +174,72 @@ impl Subsonic {
     }
 
     pub async fn load_all_covers(&mut self) -> HashMap<String, Option<Vec<u8>>> {
-        let client = Client::get().lock().unwrap().inner.clone().unwrap();
+        const COVER_SIZE: Option<i32> = Some(200);
         let mut covers = std::collections::HashMap::new();
 
         //load album art
         tracing::info!("fetching album art from server");
         let mut tasks = vec![];
-        for album in &self.album_list {
-            if let Some(cover) = &album.cover_art {
-                tasks.push(async move {
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    (
-                        album.id.clone(),
-                        client.get_cover_art(cover, Some(200)).await,
-                    )
-                });
-            }
+
+        // create tasks
+        for (id, cover) in self
+            .artists
+            .iter()
+            .filter_map(|artist| {
+                if let Some(cover) = &artist.cover_art {
+                    Some((artist.id.clone(), cover))
+                } else {
+                    None
+                }
+            })
+            .chain::<Vec<(String, &String)>>(
+                self.album_list
+                    .iter()
+                    .filter_map(|album| {
+                        if let Some(cover) = &album.cover_art {
+                            Some((album.id.clone(), cover))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<(String, &String)>>(),
+            )
+        // TODO fetch playlist covers
+        // .chain::<Vec<String, &String>>(self.playlists.iter().filter_map(|playlist| {
+        //     if let Some(cover) = &playlist.cover_art {
+        //         Some((playlist.id.clone(), cover))
+        //     } else {
+        //         None
+        //     }
+        // }))
+        {
+            tasks.push(async move {
+                let client = Client::get().unwrap();
+                (id.clone(), client.get_cover_art(cover, COVER_SIZE).await)
+            });
         }
 
+        // buffer tasks so only 100 will be simultaniously loaded
         tracing::info!("number of albums to fetch {}", tasks.len());
         let stream = futures::stream::iter(tasks)
             .buffered(100)
             .collect::<Vec<_>>();
         let results = stream.await;
 
-        // let results = futures::future::join_all(tasks).await;
+        // actual fetch
         for (id, cover) in results {
             match cover {
                 Ok(cover) => _ = covers.insert(id.clone(), Some(cover)),
                 Err(e) => {
                     tracing::error!("error fetching: {e}");
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
-                    match client.get_cover_art(&id, Some(200)).await {
+                    let client = Client::get().unwrap();
+                    match client.get_cover_art(&id, COVER_SIZE).await {
                         Ok(cover) => _ = covers.insert(id, Some(cover)),
                         Err(e) => tracing::error!("refetching resulted in error {e}"),
                     }
                 }
             }
         }
-
-        //load artist art
-        tracing::info!("fetchung artist art from server");
-        tracing::info!("number of artists to fetch {}", self.artists.len());
-        for artist in &self.artists {
-            tracing::warn!("new art");
-            match &artist.cover_art {
-                None => _ = covers.insert(artist.id.clone(), None),
-                Some(cover) => match client.get_cover_art(cover, Some(200)).await {
-                    Ok(cover) => _ = covers.insert(artist.id.clone(), Some(cover)),
-                    Err(e) => tracing::error!("error fetching:{e}"),
-                },
-            }
-        }
-
-        //TODO load playlist art
 
         covers
     }

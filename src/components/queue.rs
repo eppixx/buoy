@@ -324,7 +324,7 @@ impl relm4::Component for Queue {
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             let artist_with_albums = match client.get_artist(artist.id).await {
                                 Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
                                 Ok(artist) => artist,
@@ -343,7 +343,7 @@ impl relm4::Component for Queue {
                     }
                     Droppable::ArtistWithAlbums(artist) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             let mut result = vec![];
                             for album in artist.album {
                                 match client.get_album(album.id).await {
@@ -358,7 +358,7 @@ impl relm4::Component for Queue {
                     Droppable::Playlist(playlist) => playlist.entry,
                     Droppable::AlbumChild(child) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             match client.get_album(child.id).await {
                                 Err(e) => QueueCmd::FetchedAppendItems(Err(e)),
                                 Ok(album) => QueueCmd::FetchedAppendItems(Ok(album.song)),
@@ -368,7 +368,7 @@ impl relm4::Component for Queue {
                     }
                     Droppable::Album(album) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             match client.get_album(album.id).await {
                                 Err(e) => QueueCmd::FetchedAppendItems(Err(e)),
                                 Ok(album) => QueueCmd::FetchedAppendItems(Ok(album.song)),
@@ -394,7 +394,7 @@ impl relm4::Component for Queue {
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             let artist_with_albums = match client.get_artist(artist.id).await {
                                 Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
                                 Ok(artist) => artist,
@@ -413,7 +413,7 @@ impl relm4::Component for Queue {
                     }
                     Droppable::ArtistWithAlbums(artist) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             let mut result = vec![];
                             for album in artist.album {
                                 match client.get_album(album.id).await {
@@ -428,7 +428,7 @@ impl relm4::Component for Queue {
                     Droppable::Playlist(playlist) => playlist.entry,
                     Droppable::AlbumChild(child) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             match client.get_album(child.id).await {
                                 Err(e) => QueueCmd::FetchedInsertItems(Err(e)),
                                 Ok(album) => QueueCmd::FetchedInsertItems(Ok(album.song)),
@@ -438,7 +438,7 @@ impl relm4::Component for Queue {
                     }
                     Droppable::Album(album) => {
                         sender.oneshot_command(async move {
-                            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                            let client = Client::get().unwrap();
                             match client.get_album(album.id).await {
                                 Err(e) => QueueCmd::FetchedInsertItems(Err(e)),
                                 Ok(album) => QueueCmd::FetchedInsertItems(Ok(album.song)),

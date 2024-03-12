@@ -1,26 +1,36 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::mpsc::Receiver};
 
 use relm4::{gtk, gtk::traits::WidgetExt};
 
-use crate::{client::Client, subsonic::Subsonic, types::Id};
+use crate::{
+    subsonic::Subsonic,
+    subsonic_cover::{self},
+    client::Client, types::Id,
+};
 
 #[derive(Debug)]
 pub struct Cover {
     subsonic: Rc<RefCell<Subsonic>>,
-    image: gtk::Image,
-    loading: bool,
+
+    // stack shows either a stock image, a loading wheel or a loaded cover
+    stack: gtk::Stack,
+    cover: gtk::Image,
+
     id: Option<String>,
 }
 
 impl Cover {
     pub fn add_css_class_image(&self, class: &str) {
-        self.image.add_css_class(class);
+        self.stack.add_css_class(class);
     }
 }
 
 #[derive(Debug)]
 pub enum CoverIn {
+    WaitForImage(Receiver<Option<Vec<u8>>>),
     LoadImage(Option<String>),
+		// LoadCoverForChild(submarine::data::Child),
+		// LoadId(Option<Id>),
 }
 
 // use tuple struct to keep the logging small
@@ -39,12 +49,13 @@ pub enum CoverOut {}
 
 #[derive(Debug)]
 pub enum CoverCmd {
-    LoadedImage(Option<Image>),
+    LoadedImage(bool),
+		// LoadChild(submarine::data::Child),
 }
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
-    type Init = (Rc<RefCell<Subsonic>>, Id);
+    type Init = (Rc<RefCell<Subsonic>>, Option<String>);
     type Input = CoverIn;
     type Output = CoverOut;
     type Widgets = CoverWidgets;
@@ -53,39 +64,47 @@ impl relm4::Component for Cover {
     fn init(
         (subsonic, id): Self::Init,
         root: &Self::Root,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+
         let model = Self {
             subsonic,
-            loading: false,
-            image: subsonic.borrow().cover(&id).unwrap().clone(),
-            id: None,
+            stack: gtk::Stack::default(),
+            cover: gtk::Image::default(),
+
+            id,
         };
+
         let widgets = view_output!();
+
+				if let Some(id) = &model.id {
+						sender.input(CoverIn::LoadImage(Some(id.clone())));
+				} else {
+						sender.input(CoverIn::LoadImage(None));
+				}
 
         relm4::ComponentParts { model, widgets }
     }
 
     view! {
         gtk::Box {
-            #[transition = "Crossfade"]
-            if model.loading {
-                gtk::Box {
+            model.stack.clone() -> gtk::Stack {
+                add_named[Some("stock")] = &gtk::Box {
+                    add_css_class: "card",
+                    add_css_class: "cover",
+                },
+                add_named[Some("loading")] = &gtk::Box {
                     add_css_class: "card",
 
                     gtk::Spinner {
                         add_css_class: "size32",
-                        set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
-                        start: (),
+                        set_halign: gtk::Align::Center,
+                        start: ()
                     }
-                }
-            } else {
-                model.image.clone() -> gtk::Image {
-                    add_css_class: "card",
-                    add_css_class: "cover",
-                }
-            },
+                },
+                add_named[Some("cover")] = &model.cover.clone(),
+            }
         }
     }
 
@@ -96,17 +115,56 @@ impl relm4::Component for Cover {
         _root: &Self::Root,
     ) {
         match msg {
-            CoverIn::LoadImage(None) => self.image.clear(),
-            CoverIn::LoadImage(Some(id)) => {
-                // self.id = Some(id.clone());
-                // if let Some(cover) = self.subsonic.borrow().cover(&id) {
-                //     // self.image.set_from_pixbuf(Some(cover));
-                //     self.image = cover.clone();
-                //     self.image.remove_css_class("cover");
-                //     return;
-                // }
+            CoverIn::WaitForImage(receiver) => {
+                let receiver = std::sync::Mutex::new(receiver);
+                sender.oneshot_command(async move {
+                    match receiver.lock().unwrap().recv() {
+                        Err(_e) => CoverCmd::LoadedImage(false),
+                        Ok(_buffer) => CoverCmd::LoadedImage(true),
+                    }
+                })
             }
-        }
+            CoverIn::LoadImage(None) => self.stack.set_visible_child_name("stock"),
+						CoverIn::LoadImage(Some(id)) => {
+								match self.subsonic.borrow_mut().coverss.cover(&id) {
+										subsonic_cover::Response::Empty => self.stack.set_visible_child_name("stock"),
+										subsonic_cover::Response::InLoading(receiver) => {
+												self.stack.set_visible_child_name("loading");
+												let receiver = std::sync::Mutex::new(receiver);
+												sender.oneshot_command(async move {
+														match receiver.lock().unwrap().recv() {
+																Err(_e) => CoverCmd::LoadedImage(false),
+																Ok(_buffer) => CoverCmd::LoadedImage(true),
+														}
+												});
+										}
+										subsonic_cover::Response::Loaded(pixbuf) => {
+												self.cover.set_from_pixbuf(Some(&pixbuf));
+												self.stack.set_visible_child_name("cover");
+										}
+								}
+						}
+						// CoverIn::LoadCoverForChild(child) => {
+						// 		sender.clone().oneshot_command(async move {
+						// 				match child.album_id {
+						// 						None => sender.input(CoverIn::LoadImage(child.cover_art)),
+						// 						Some(album_id) => {
+						// 								let client = Client::get().unwrap();
+						// 								match client.get_album(album_id).await {
+						// 										Err(e) => sender.input(CoverIn::LoadImage(child.cover_art)),
+						// 										Ok(album) => sender.input(CoverIn::LoadImage(album.base.cover_art)),
+						// 								}
+						// 						}
+						// 				}
+						// 				CoverCmd::LoadedImage(false)
+						// 		})
+						// }
+						// CoverIn::LoadId(None) => self.stack.set_visible_child_name("stock"),
+						// CoverIn::LoadId(Some(Id::Song(id))) => {
+
+						// }
+						// CoverIn::LoadId(_) => {}
+				}
     }
 
     fn update_cmd(
@@ -116,25 +174,32 @@ impl relm4::Component for Cover {
         _root: &Self::Root,
     ) {
         match message {
-            CoverCmd::LoadedImage(None) => {
-                self.loading = false;
-                self.image.clear();
-                self.image.add_css_class("cover");
+						// CoverCmd::LoadChild(child) => {
+
+						// }
+            CoverCmd::LoadedImage(false) => {
+                self.stack.set_visible_child_name("stock");
             }
-            CoverCmd::LoadedImage(Some(buffer)) => {
-                // let bytes = gtk::glib::Bytes::from(&buffer.0);
-                // let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
-                // match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE) {
-                //     Ok(pixbuf) => {
-                //         self.subsonic
-                //             .borrow_mut()
-                //             .cover_insert(self.id.clone().unwrap(), pixbuf.clone());
-                //         self.image.set_from_pixbuf(Some(&pixbuf));
-                //     }
-                //     _ => self.image.clear(),
-                // }
-                // self.image.remove_css_class("cover");
-                self.loading = false;
+            CoverCmd::LoadedImage(true) => {
+								tracing::error!("getting some loaded image");
+                if let Some(id) = &self.id {
+                    match self.subsonic.borrow_mut().coverss.cover(id) {
+                        subsonic_cover::Response::InLoading(_) => {
+                            self.stack.set_visible_child_name("loading")
+                        }
+                        subsonic_cover::Response::Empty => {
+                            self.stack.set_visible_child_name("stock")
+                        }
+                        subsonic_cover::Response::Loaded(pixbuf) => {
+														tracing::error!("replacing cover");
+                            self.cover.set_from_pixbuf(Some(&pixbuf));
+                            self.stack.set_visible_child_name("cover");
+                        }
+                    }
+                    self.stack.set_visible_child_name("")
+                } else {
+                    self.stack.set_visible_child_name("stock");
+                }
             }
         }
     }

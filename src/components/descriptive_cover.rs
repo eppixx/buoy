@@ -8,12 +8,13 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::subsonic::Subsonic;
+use crate::{subsonic::Subsonic, types::Id};
 
 use super::cover::{Cover, CoverIn, CoverOut};
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverBuilder {
+    id: Option<Id>,
     image: Option<String>,
     title: Option<String>,
     subtitle: Option<String>,
@@ -62,13 +63,13 @@ impl relm4::SimpleComponent for DescriptiveCover {
     type Widgets = CoverWidgets;
 
     fn init(
-        init: Self::Init,
+        (subsonic, init): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch(init.0)
+                .launch((subsonic, None)) //TODO fix me
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: gtk::Viewport::default(),
             subtitle: gtk::Viewport::default(),
@@ -77,9 +78,9 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
         model.cover.model().add_css_class_image("size150");
 
-        sender.input(DescriptiveCoverIn::LoadImage(init.1.image));
-        sender.input(DescriptiveCoverIn::SetTitle(init.1.title));
-        sender.input(DescriptiveCoverIn::SetSubtitle(init.1.subtitle));
+        sender.input(DescriptiveCoverIn::LoadImage(init.image));
+        sender.input(DescriptiveCoverIn::SetTitle(init.title));
+        sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
 
         relm4::ComponentParts { model, widgets }
     }

@@ -8,7 +8,7 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::subsonic::Subsonic;
+use crate::{subsonic::Subsonic, types::Id};
 
 use super::cover::{Cover, CoverIn, CoverOut};
 
@@ -36,13 +36,13 @@ impl relm4::SimpleComponent for PlayInfo {
     type Output = PlayInfoOut;
 
     fn init(
-        init: Self::Init,
+        (subsonic, child): Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             covers: Cover::builder()
-                .launch(init.0)
+                .launch((subsonic, child.clone().map(|child| child.cover_art).flatten()))
                 .forward(sender.input_sender(), PlayInfoIn::Cover),
             title: String::from("Nothing is played currently"),
             artist: None,
@@ -52,7 +52,7 @@ impl relm4::SimpleComponent for PlayInfo {
         let widgets = view_output!();
 
         //init widget
-        sender.input(PlayInfoIn::NewState(Box::new(init.1)));
+        sender.input(PlayInfoIn::NewState(Box::new(child)));
         model.covers.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }

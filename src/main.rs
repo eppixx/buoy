@@ -43,6 +43,7 @@ mod play_state;
 mod playback;
 pub mod settings;
 pub mod subsonic;
+pub mod subsonic_cover;
 pub mod types;
 
 struct App {
@@ -142,7 +143,7 @@ impl relm4::component::AsyncComponent for App {
 
         // set playback song from settings
         if let Some(child) = &current_song {
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            let client = Client::get().unwrap();
             match client.stream_url(
                 &child.id,
                 None,
@@ -237,7 +238,7 @@ impl relm4::component::AsyncComponent for App {
         });
 
         {
-            let client = Client::get().lock().unwrap();
+            let client = Client::get_mut().lock().unwrap();
             model.config_btn.set_sensitive(client.inner.is_some());
             model.equalizer_btn.set_sensitive(client.inner.is_some());
             model.volume_btn.set_sensitive(client.inner.is_some());
@@ -313,7 +314,7 @@ impl relm4::component::AsyncComponent for App {
                         .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
 
                     // set playback
-                    let client = Client::get().lock().unwrap().inner.clone().unwrap();
+                    let client = Client::get().unwrap();
                     match client.stream_url(
                         child.id,
                         None,

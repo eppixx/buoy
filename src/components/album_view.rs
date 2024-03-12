@@ -15,7 +15,7 @@ use crate::{
     common::convert_for_label,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -65,9 +65,14 @@ impl relm4::Component for AlbumView {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+				let cover = match init.clone() {
+						AlbumViewInit::Child(child) => child.cover_art,
+						AlbumViewInit::AlbumId3(album) => album.cover_art,
+				};
+
         let model = Self {
             cover: Cover::builder()
-                .launch(subsonic.clone())
+                .launch((subsonic.clone(), cover))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             title: String::from("Unkonwn Title"),
             artist: None,
@@ -87,7 +92,7 @@ impl relm4::Component for AlbumView {
                 AlbumViewInit::AlbumId3(album) => &album.id,
             };
 
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            let client = Client::get().unwrap();
             AlbumViewCmd::LoadedAlbum(client.get_album(id).await)
         });
 
@@ -206,7 +211,7 @@ impl relm4::Component for AlbumView {
         _root: &Self::Root,
     ) {
         match msg {
-            AlbumViewCmd::LoadedAlbum(Err(e)) => {
+            AlbumViewCmd::LoadedAlbum(Err(_e)) => {
                 //TODO error handling
                 tracing::error!("No child on server found");
             }

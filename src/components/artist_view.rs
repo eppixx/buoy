@@ -13,7 +13,11 @@ use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
-use crate::{client::Client, subsonic::Subsonic, types::Droppable};
+use crate::{
+    client::Client,
+    subsonic::Subsonic,
+    types::{Droppable, Id},
+};
 
 #[derive(Debug)]
 pub struct ArtistView {
@@ -58,7 +62,7 @@ impl relm4::Component for ArtistView {
         let model = Self {
             subsonic: subsonic.clone(),
             cover: Cover::builder()
-                .launch(subsonic)
+                .launch((subsonic, init.clone().cover_art))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),
@@ -82,14 +86,14 @@ impl relm4::Component for ArtistView {
         // load albums
         let id = init.id.clone();
         sender.oneshot_command(async move {
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            let client = Client::get().unwrap();
             ArtistViewCmd::LoadedAlbums(client.get_artist(id).await)
         });
 
         // load metainfo on artist
         let id = init.id.clone();
         sender.oneshot_command(async move {
-            let client = Client::get().lock().unwrap().inner.clone().unwrap();
+            let client = Client::get().unwrap();
             ArtistViewCmd::LoadedArtist(client.get_artist_info2(id, Some(5), Some(false)).await)
         });
 
@@ -159,13 +163,13 @@ impl relm4::Component for ArtistView {
         _root: &Self::Root,
     ) {
         match msg {
-            ArtistViewCmd::LoadedArtist(Err(e)) => {} //TODO error handling
-            ArtistViewCmd::LoadedArtist(Ok(artist)) => {
+            ArtistViewCmd::LoadedArtist(Err(_e)) => {} //TODO error handling
+            ArtistViewCmd::LoadedArtist(Ok(_artist)) => {
                 // self.bio = artist.base.biography;
                 // TODO do smth with biography
                 // TODO do smth with similar artists
             }
-            ArtistViewCmd::LoadedAlbums(Err(e)) => {} //TODO error handling
+            ArtistViewCmd::LoadedAlbums(Err(_e)) => {} //TODO error handling
             ArtistViewCmd::LoadedAlbums(Ok(artist)) => {
                 for album in artist.album {
                     let element = AlbumElement::builder()
