@@ -137,6 +137,7 @@ impl FactoryComponent for QueueSong {
         let cover = Cover::builder()
             .launch((subsonic, init.cover_art.clone()))
             .forward(sender.input_sender(), QueueSongIn::Cover);
+				cover.model().add_css_class_image("size32");
         cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
         // cover.emit(CoverIn::LoadCoverForChild(init.clone()));
         let mut model = Self {
