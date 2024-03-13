@@ -78,7 +78,6 @@ impl SubsonicCovers {
                             gtk::gio::Cancellable::NONE,
                         ) {
                             Ok(pixbuf) => {
-                                tracing::error!("loaded cached cover {id}");
                                 self.covers.insert(id.into(), Some(pixbuf.clone()));
                                 Response::Loaded(pixbuf)
                             }

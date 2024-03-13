@@ -3,8 +3,10 @@ use std::{cell::RefCell, rc::Rc, sync::mpsc::Receiver};
 use relm4::{gtk, gtk::traits::WidgetExt};
 
 use crate::{
+    client::{self, Client},
     subsonic::Subsonic,
     subsonic_cover::{self},
+    types::Id,
 };
 
 #[derive(Debug)]
@@ -15,7 +17,7 @@ pub struct Cover {
     stack: gtk::Stack,
     cover: gtk::Image,
 
-		//raw cover id
+    //raw cover id
     id: Option<String>,
 }
 
@@ -29,7 +31,8 @@ impl Cover {
 pub enum CoverIn {
     LoadImage(Option<String>),
     // LoadCoverForChild(submarine::data::Child),
-    // LoadId(Option<Id>),
+    LoadId(Option<Id>),
+    ChangeImage(subsonic_cover::Response),
 }
 
 // use tuple struct to keep the logging small
@@ -48,7 +51,7 @@ pub enum CoverOut {}
 
 #[derive(Debug)]
 pub enum CoverCmd {
-    // LoadChild(submarine::data::Child),
+    ChangeImage(Option<String>),
 }
 
 #[relm4::component(pub)]
@@ -74,7 +77,7 @@ impl relm4::Component for Cover {
 
         let widgets = view_output!();
 
-				sender.input(CoverIn::LoadImage(model.id.clone()));
+        sender.input(CoverIn::LoadImage(model.id.clone()));
         relm4::ComponentParts { model, widgets }
     }
 
@@ -93,49 +96,80 @@ impl relm4::Component for Cover {
     fn update(
         &mut self,
         msg: Self::Input,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
-            CoverIn::LoadImage(None) => self.stack.set_visible_child_name("stock"),
-            CoverIn::LoadImage(Some(id)) => match self.subsonic.borrow_mut().coverss.cover(&id) {
+            CoverIn::ChangeImage(response) => match response {
                 subsonic_cover::Response::Empty => self.stack.set_visible_child_name("stock"),
                 subsonic_cover::Response::Loaded(pixbuf) => {
                     self.cover.set_from_pixbuf(Some(&pixbuf));
                     self.stack.set_visible_child_name("cover");
                 }
-            }, // CoverIn::LoadCoverForChild(child) => {
-               // 		sender.clone().oneshot_command(async move {
-               // 				match child.album_id {
-               // 						None => sender.input(CoverIn::LoadImage(child.cover_art)),
-               // 						Some(album_id) => {
-               // 								let client = Client::get().unwrap();
-               // 								match client.get_album(album_id).await {
-               // 										Err(e) => sender.input(CoverIn::LoadImage(child.cover_art)),
-               // 										Ok(album) => sender.input(CoverIn::LoadImage(album.base.cover_art)),
-               // 								}
-               // 						}
-               // 				}
-               // 				CoverCmd::LoadedImage(false)
-               // 		})
-               // }
-               // CoverIn::LoadId(None) => self.stack.set_visible_child_name("stock"),
-               // CoverIn::LoadId(Some(Id::Song(id))) => {
-
-               // }
-               // CoverIn::LoadId(_) => {}
+            },
+            CoverIn::LoadImage(None) => self.stack.set_visible_child_name("stock"),
+            CoverIn::LoadImage(Some(id)) => sender.input(CoverIn::ChangeImage(
+                self.subsonic.borrow_mut().coverss.cover(&id),
+            )),
+            CoverIn::LoadId(None) => {
+                self.stack.set_visible_child_name("stock");
+            }
+            CoverIn::LoadId(Some(Id::Song(id))) => sender.oneshot_command(async move {
+                let client = Client::get().unwrap();
+                match client.get_song(id).await {
+                    Err(e) => CoverCmd::ChangeImage(None),
+                    Ok(child) => match child.album_id {
+                        None => CoverCmd::ChangeImage(child.cover_art),
+                        Some(album_id) => match client.get_album(album_id).await {
+                            Err(e) => CoverCmd::ChangeImage(child.cover_art),
+                            Ok(album) => CoverCmd::ChangeImage(album.base.cover_art),
+                        },
+                    },
+                }
+            }),
+            CoverIn::LoadId(Some(Id::Album(id))) => {
+                sender.oneshot_command(async move {
+                    let client = Client::get().unwrap();
+                    match client.get_album(id).await {
+                        Err(e) => CoverCmd::ChangeImage(None),
+                        Ok(album) => CoverCmd::ChangeImage(album.base.cover_art),
+                    }
+                });
+            }
+            CoverIn::LoadId(Some(Id::Artist(id))) => {
+                sender.oneshot_command(async move {
+                    let client = Client::get().unwrap();
+                    match client.get_artist(id).await {
+                        Err(e) => CoverCmd::ChangeImage(None),
+                        Ok(artist) => CoverCmd::ChangeImage(artist.base.cover_art),
+                    }
+                });
+            }
+            CoverIn::LoadId(Some(Id::Playlist(id))) => {
+                sender.oneshot_command(async move {
+                    let client = Client::get().unwrap();
+                    match client.get_playlist(id).await {
+                        Err(e) => CoverCmd::ChangeImage(None),
+                        Ok(playlist) => CoverCmd::ChangeImage(playlist.base.cover_art),
+                    }
+                });
+            }
         }
     }
 
     fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
-            // CoverCmd::LoadChild(child) => {
-            // }
+            CoverCmd::ChangeImage(id) => match id {
+                None => self.stack.set_visible_child_name("stock"),
+                Some(id) => sender.input(CoverIn::ChangeImage(
+                    self.subsonic.borrow_mut().coverss.cover(&id),
+                )),
+            },
         }
     }
 }
