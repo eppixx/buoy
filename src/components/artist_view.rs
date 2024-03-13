@@ -90,7 +90,8 @@ impl relm4::Component for ArtistView {
         let id = init.id.clone();
         sender.oneshot_command(async move {
             let client = Client::get().unwrap();
-            ArtistViewCmd::LoadedArtist(client.get_artist_info2(id, Some(5), Some(false)).await)
+            let info = client.get_artist_info2(id, Some(5), Some(false)).await;
+            ArtistViewCmd::LoadedArtist(info)
         });
 
         relm4::ComponentParts { model, widgets }
@@ -105,7 +106,10 @@ impl relm4::Component for ArtistView {
                 set_spacing: 15,
                 add_css_class: "artist-view-info",
 
-                model.cover.widget().clone() -> gtk::Box {},
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    model.cover.widget().clone() -> gtk::Box {},
+                },
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
@@ -160,9 +164,11 @@ impl relm4::Component for ArtistView {
     ) {
         match msg {
             ArtistViewCmd::LoadedArtist(Err(_e)) => {} //TODO error handling
-            ArtistViewCmd::LoadedArtist(Ok(_artist)) => {
-                // self.bio = artist.base.biography;
-                // TODO do smth with biography
+            ArtistViewCmd::LoadedArtist(Ok(artist)) => {
+                if let Some(bio) = artist.base.biography {
+                    self.bio = bio;
+                }
+
                 // TODO do smth with similar artists
             }
             ArtistViewCmd::LoadedAlbums(Err(_e)) => {} //TODO error handling

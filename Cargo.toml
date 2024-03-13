@@ -15,7 +15,7 @@ anyhow = "1.0.72"
 relm4 = "0.6.2"
 relm4-components = "0.6.2"
 #submarine = { git = "https://github.com/eppixx/submarine" }
-submarine = { path = "../submarine" }
+submarine = { path = "../submarine", features = ["navidrome"] }
 gstreamer = "0.21.0"
 tokio = "1.32.0"
 futures = "0.3.29"
