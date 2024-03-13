@@ -8,8 +8,8 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::subsonic::Subsonic;
 use crate::components::cover::{Cover, CoverIn, CoverOut};
+use crate::{subsonic::Subsonic, types::Id};
 
 #[derive(Debug)]
 pub struct PlayInfo {
@@ -79,7 +79,6 @@ impl relm4::SimpleComponent for PlayInfo {
         match msg {
             PlayInfoIn::NewState(child) => match *child {
                 None => {
-                    tracing::error!("none given");
                     self.covers.emit(CoverIn::LoadImage(None));
                     self.title = String::from("Nothing is played currently");
                     self.artist = None;
@@ -87,12 +86,10 @@ impl relm4::SimpleComponent for PlayInfo {
                 }
                 Some(child) => {
                     self.title = child.title;
-                    if let Some(artist) = child.artist {
-                        self.artist = Some(artist);
-                    }
-                    if let Some(cover_id) = child.cover_art {
-                        self.covers.emit(CoverIn::LoadImage(Some(cover_id)));
-                    }
+                    self.artist = child.artist;
+                    self.album = child.album;
+                    self.covers
+                        .emit(CoverIn::LoadId(Some(Id::song(child.id.clone()))));
                 }
             },
             PlayInfoIn::Cover(msg) => match msg {},
@@ -102,7 +99,7 @@ impl relm4::SimpleComponent for PlayInfo {
 
 fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String {
     let mut result = format!(
-        "<span font_size=\"x-large\" weight=\"bold\">{}</span>",
+        "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
         title
     );
     if artist.is_some() || album.is_some() {
@@ -110,7 +107,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     }
     if let Some(ref artist) = artist {
         result.push_str(&format!(
-            "by <span font_size=\"large\" style=\"italic\">{}</span>",
+            "by <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             artist
         ));
     }
@@ -119,7 +116,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     }
     if let Some(album) = album {
         result.push_str(&format!(
-            "on <span font_size=\"large\" style=\"italic\">{}</span>",
+            "on <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             album
         ));
     }
