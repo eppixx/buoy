@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{mpsc::Receiver, Arc, Mutex},
-};
+use std::collections::HashMap;
 
 use futures::StreamExt;
 use relm4::gtk;
@@ -14,7 +11,7 @@ const CONCURRENT_FETCH: usize = 300;
 #[derive(Default, Debug)]
 pub struct SubsonicCovers {
     // the raw buffers that are send from server
-    buffers: Arc<Mutex<HashMap<String, Option<Vec<u8>>>>>,
+    buffers: HashMap<String, Option<Vec<u8>>>,
     // coverted from buffers, can be copied
     covers: HashMap<String, Option<gtk::gdk_pixbuf::Pixbuf>>,
 }
@@ -29,9 +26,7 @@ pub enum Response {
 }
 
 impl SubsonicCovers {
-    pub async fn work(&self, start_requests: Vec<String>) {
-        let buffers = self.buffers.clone();
-
+    pub async fn work(&mut self, start_requests: Vec<String>) {
         //build futures
         let tasks: Vec<_> = start_requests
             .iter()
@@ -50,9 +45,7 @@ impl SubsonicCovers {
         let results = stream.await;
 
         for (id, cover) in results {
-            buffers
-                .lock()
-                .unwrap()
+            self.buffers
                 .entry(id.clone())
                 .and_modify(|buf| *buf = Some(cover.clone()))
                 .or_insert(Some(cover.clone()));
@@ -68,7 +61,7 @@ impl SubsonicCovers {
             }
             Some(None) => Response::Empty,
             None => {
-                match self.buffers.lock().unwrap().get(id) {
+                match self.buffers.get(id) {
                     Some(Some(buffer)) => {
                         // converting buffer to image
                         let bytes = gtk::glib::Bytes::from(buffer);

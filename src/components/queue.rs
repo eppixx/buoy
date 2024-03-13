@@ -549,12 +549,12 @@ impl relm4::Component for Queue {
                     Some(index) => {
                         match index.current_index() {
                             // at end of queue with repeat current song
-                            i if *self.repeat.model().current() == Repeat::RepeatOne => {
+                            i if *self.repeat.model().current() == Repeat::One => {
                                 self.songs.get(i).unwrap().activate();
                             }
                             // at end of queue with repeat queue
                             i if i + 1 == self.songs.len()
-                                && *self.repeat.model().current() == Repeat::RepeatAll =>
+                                && *self.repeat.model().current() == Repeat::All =>
                             {
                                 self.songs.get(0).unwrap().activate();
                             }
@@ -577,11 +577,11 @@ impl relm4::Component for Queue {
                 if let Some(index) = &self.playing_index {
                     match index.current_index() {
                         // previous with repeat current song
-                        i if *self.repeat.model().current() == Repeat::RepeatOne => {
+                        i if *self.repeat.model().current() == Repeat::One => {
                             self.songs.get(i).unwrap().activate();
                         }
                         // at start of queue with repeat queue
-                        0 if *self.repeat.model().current() == Repeat::RepeatAll => {
+                        0 if *self.repeat.model().current() == Repeat::All => {
                             self.songs.get(self.songs.len() - 1).unwrap().activate();
                         }
                         // at start of queue

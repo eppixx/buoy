@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, io::Read};
 
-use crate::{client::Client, subsonic_cover::SubsonicCovers, types::Id};
+use crate::{client::Client, subsonic_cover::SubsonicCovers};
 
 const PREFIX: &str = "Buoy";
 const MUSIC_INFOS: &str = "Music-Infos";
@@ -196,21 +196,19 @@ impl Subsonic {
             .artists
             .iter()
             .filter_map(|artist| {
-                if let Some(cover) = &artist.cover_art {
-                    Some((artist.id.clone(), cover))
-                } else {
-                    None
-                }
+                artist
+                    .cover_art
+                    .as_ref()
+                    .map(|cover| (artist.id.clone(), cover))
             })
             .chain::<Vec<(String, &String)>>(
                 self.album_list
                     .iter()
                     .filter_map(|album| {
-                        if let Some(cover) = &album.cover_art {
-                            Some((album.id.clone(), cover))
-                        } else {
-                            None
-                        }
+                        album
+                            .cover_art
+                            .as_ref()
+                            .map(|cover| (album.id.clone(), cover))
                     })
                     .collect::<Vec<(String, &String)>>(),
             )

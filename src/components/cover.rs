@@ -1,9 +1,9 @@
-use std::{cell::RefCell, rc::Rc, sync::mpsc::Receiver};
+use std::{cell::RefCell, rc::Rc};
 
 use relm4::{gtk, gtk::traits::WidgetExt};
 
 use crate::{
-    client::{self, Client},
+    client::Client,
     subsonic::Subsonic,
     subsonic_cover::{self},
     types::Id,

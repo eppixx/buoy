@@ -13,11 +13,7 @@ use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
-use crate::{
-    client::Client,
-    subsonic::Subsonic,
-    types::{Droppable, Id},
-};
+use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug)]
 pub struct ArtistView {

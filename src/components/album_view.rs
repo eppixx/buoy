@@ -15,7 +15,7 @@ use crate::{
     common::convert_for_label,
     components::{album_tracks::AlbumTracks, cover::CoverIn},
     subsonic::Subsonic,
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -65,10 +65,10 @@ impl relm4::Component for AlbumView {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-				let cover = match init.clone() {
-						AlbumViewInit::Child(child) => child.cover_art,
-						AlbumViewInit::AlbumId3(album) => album.cover_art,
-				};
+        let cover = match init.clone() {
+            AlbumViewInit::Child(child) => child.cover_art,
+            AlbumViewInit::AlbumId3(album) => album.cover_art,
+        };
 
         let model = Self {
             cover: Cover::builder()
