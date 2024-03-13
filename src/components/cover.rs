@@ -30,7 +30,6 @@ impl Cover {
 #[derive(Debug)]
 pub enum CoverIn {
     LoadImage(Option<String>),
-    // LoadCoverForChild(submarine::data::Child),
     LoadId(Option<Id>),
     ChangeImage(subsonic_cover::Response),
 }
@@ -85,10 +84,11 @@ impl relm4::Component for Cover {
         gtk::Box {
             model.stack.clone() -> gtk::Stack {
                 add_named[Some("stock")] = &gtk::Box {
-                    add_css_class: "card",
                     add_css_class: "cover",
                 },
-                add_named[Some("cover")] = &model.cover.clone(),
+                add_named[Some("cover")] = &model.cover.clone() -> gtk::Image {
+                    add_css_class: "card",
+                },
             }
         }
     }
@@ -111,9 +111,7 @@ impl relm4::Component for Cover {
             CoverIn::LoadImage(Some(id)) => sender.input(CoverIn::ChangeImage(
                 self.subsonic.borrow_mut().coverss.cover(&id),
             )),
-            CoverIn::LoadId(None) => {
-                self.stack.set_visible_child_name("stock");
-            }
+            CoverIn::LoadId(None) => self.stack.set_visible_child_name("stock"),
             CoverIn::LoadId(Some(Id::Song(id))) => sender.oneshot_command(async move {
                 let client = Client::get().unwrap();
                 match client.get_song(id).await {
