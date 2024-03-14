@@ -77,14 +77,18 @@ impl Playback {
         });
 
         //check for pipline messages
-        let  send = sender.clone();
+        let send = sender.clone();
         let bus = pipeline.bus().unwrap();
         std::thread::spawn(move || {
             for msg in bus.iter_timed(gst::ClockTime::NONE) {
                 use gstreamer::MessageView;
                 match msg.view() {
-                    MessageView::Eos(..) => send.try_send(PlaybackOut::TrackEnd).unwrap(),
-                    MessageView::StreamStart(..) => send.try_send(PlaybackOut::Seek(0)).unwrap(),
+                    MessageView::Eos(..) => {
+                        send.try_send(PlaybackOut::TrackEnd);
+                    }
+                    MessageView::StreamStart(..) => {
+                        send.try_send(PlaybackOut::Seek(0));
+                    }
                     _ => {}
                 }
             }
@@ -102,7 +106,7 @@ impl Playback {
 
             //dont send messages when not playing a stream
             if pipeline.current_state() != gst::State::Playing {
-								return gtk::glib::ControlFlow::Continue;
+                return gtk::glib::ControlFlow::Continue;
             }
 
             let current = pipeline.query_position::<gst::ClockTime>();
@@ -111,11 +115,11 @@ impl Playback {
                     Some(clock) => clock.seconds() as i64,
                     None => 0,
                 };
-                send.try_send(PlaybackOut::Seek(seconds * 1000)).unwrap();
+                send.try_send(PlaybackOut::Seek(seconds * 1000));
                 stamp.replace(current);
             }
 
-						gtk::glib::ControlFlow::Continue
+            gtk::glib::ControlFlow::Continue
         });
 
         let mut play = Self {

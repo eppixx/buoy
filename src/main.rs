@@ -97,8 +97,7 @@ impl relm4::component::AsyncComponent for App {
         let subsonic = subsonic::Subsonic::load_or_create().await.unwrap();
         let subsonic = std::rc::Rc::new(std::cell::RefCell::new(subsonic));
 
-        let (playback_sender, mut receiver) = // std::sync::mpsc::channel();
-						async_channel::bounded(1);
+        let (playback_sender, receiver) = async_channel::unbounded();
         let mut playback = Playback::new(&playback_sender).unwrap();
 
         // load from settings
@@ -222,11 +221,11 @@ impl relm4::component::AsyncComponent for App {
             model.volume_btn.set_value(settings.volume);
         }
 
-				gtk::glib::spawn_future_local(async move {
-						while let Ok(msg) = receiver.recv().await {
-								sender.input(AppIn::Playback(msg));
-						}
-				});
+        gtk::glib::spawn_future_local(async move {
+            while let Ok(msg) = receiver.recv().await {
+                sender.input(AppIn::Playback(msg));
+            }
+        });
 
         {
             let client = Client::get_mut().lock().unwrap();
