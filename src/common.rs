@@ -17,7 +17,7 @@ pub fn convert_for_label(time: i64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::components::seekbar::convert_for_label;
+    use super::convert_for_label;
 
     #[test]
     fn convert_time() {
