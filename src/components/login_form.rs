@@ -1,4 +1,4 @@
-use relm4::gtk::traits::{
+use relm4::gtk::prelude::{
     BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
 };
 use relm4::{component, gtk, RelmWidgetExt};

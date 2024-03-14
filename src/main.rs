@@ -7,8 +7,7 @@ use relm4::{
     component::{AsyncComponentController, AsyncController},
     gtk::{
         self,
-        prelude::ApplicationExt,
-        traits::{PopoverExt, WidgetExt},
+        prelude::{ApplicationExt, PopoverExt, WidgetExt},
     },
     Component, ComponentController, Controller, RelmApp,
 };
@@ -81,7 +80,6 @@ enum AppIn {
 
 relm4::new_action_group!(WindowActionGroup, "win");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
-relm4::new_stateless_action!(ReloadCssAction, WindowActionGroup, "reload-css");
 
 #[relm4::component(async)]
 impl relm4::component::AsyncComponent for App {
@@ -99,8 +97,8 @@ impl relm4::component::AsyncComponent for App {
         let subsonic = subsonic::Subsonic::load_or_create().await.unwrap();
         let subsonic = std::rc::Rc::new(std::cell::RefCell::new(subsonic));
 
-        let (playback_sender, receiver) =
-            gtk::glib::MainContext::channel(gtk::glib::Priority::default());
+        let (playback_sender, mut receiver) = // std::sync::mpsc::channel();
+						async_channel::bounded(1);
         let mut playback = Playback::new(&playback_sender).unwrap();
 
         // load from settings
@@ -213,17 +211,9 @@ impl relm4::component::AsyncComponent for App {
                 tracing::error!("quit called");
                 app.quit();
             });
-        // reload css
-        application.set_accelerators_for_action::<ReloadCssAction>(&["<Primary><Shift>C"]);
-        let reload_css_action: relm4::actions::RelmAction<ReloadCssAction> =
-            relm4::actions::RelmAction::new_stateless(move |_| {
-                tracing::error!("reload css");
-                css::setup_css().unwrap();
-            });
 
         let mut group = relm4::actions::RelmActionGroup::<WindowActionGroup>::new();
         group.add_action(quit_action);
-        group.add_action(reload_css_action);
         group.register_for_widget(&widgets.main_window);
 
         //init widgets
@@ -232,10 +222,11 @@ impl relm4::component::AsyncComponent for App {
             model.volume_btn.set_value(settings.volume);
         }
 
-        receiver.attach(None, move |msg| {
-            sender.input(AppIn::Playback(msg));
-            gtk::prelude::Continue(true)
-        });
+				gtk::glib::spawn_future_local(async move {
+						while let Ok(msg) = receiver.recv().await {
+								sender.input(AppIn::Playback(msg));
+						}
+				});
 
         {
             let client = Client::get_mut().lock().unwrap();
@@ -523,7 +514,11 @@ fn main() -> anyhow::Result<()> {
     }
 
     let app = RelmApp::new("com.github.eppixx.bouy");
-    css::setup_css()?;
+
+    //setup css
+    let data = std::fs::read_to_string("data/bouy.css")?;
+    app.set_global_css(&data);
+
     app.run_async::<App>(());
     Ok(())
 }

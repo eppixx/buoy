@@ -4,7 +4,7 @@ use relm4::{
     component::{AsyncComponent, AsyncComponentController},
     gtk::{
         self,
-        traits::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
     },
     Component, ComponentController, RelmWidgetExt,
 };
@@ -97,7 +97,7 @@ impl relm4::SimpleComponent for Browser {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {

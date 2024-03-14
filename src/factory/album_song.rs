@@ -1,11 +1,10 @@
 use relm4::gtk::{
     self, gdk, pango,
-    prelude::ToValue,
-    traits::{BoxExt, WidgetExt},
+    prelude::{ToValue, BoxExt, WidgetExt},
 };
 
 use crate::{
-    client::Client, common::convert_for_label, components::album_tracks::AlbumTracksIn,
+    client::Client, common::convert_for_label,
     types::Droppable,
 };
 
@@ -43,7 +42,7 @@ impl relm4::factory::FactoryComponent for AlbumSong {
     type Input = AlbumSongIn;
     type Output = AlbumSongOut;
     type ParentWidget = gtk::ListBox;
-    type ParentInput = AlbumTracksIn;
+    // type ParentInput = AlbumTracksIn;
     type Widgets = AlbumSongWidgets;
     type CommandOutput = AlbumSongCmd;
 
@@ -142,10 +141,6 @@ impl relm4::factory::FactoryComponent for AlbumSong {
                 });
             }
         }
-    }
-
-    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        None
     }
 
     fn update_cmd(&mut self, msg: Self::CommandOutput, _sender: relm4::FactorySender<Self>) {

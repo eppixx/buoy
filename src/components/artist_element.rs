@@ -3,8 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        prelude::ToValue,
-        traits::{ButtonExt, WidgetExt},
+        prelude::{ButtonExt, ToValue, WidgetExt},
     },
     Component, ComponentController,
 };
@@ -12,7 +11,7 @@ use relm4::{
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 use super::descriptive_cover::DescriptiveCoverOut;
@@ -40,11 +39,13 @@ impl relm4::SimpleComponent for ArtistElement {
 
     fn init(
         (subsonic, init): Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         // init cover
-        let mut builder = DescriptiveCoverBuilder::default().title(&init.name);
+        let mut builder = DescriptiveCoverBuilder::default()
+            .title(&init.name)
+            .id(Id::artist(init.id.clone()));
         if let Some(id) = &init.cover_art {
             builder = builder.image(id);
         }

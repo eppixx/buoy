@@ -1,12 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
-use gtk::prelude::{BoxExt, ButtonExt, OrientableExt};
 use relm4::{
     factory::FactoryVecDeque,
     gtk::gdk,
     gtk::{
         self,
-        traits::{ListBoxRowExt, WidgetExt},
+        prelude::{ListBoxRowExt, WidgetExt, BoxExt, ButtonExt, OrientableExt},
     },
     prelude::DynamicIndex,
     ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
@@ -18,7 +17,7 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song::QueueSong,
+    factory::queue_song::{QueueSong, QueueSongOut},
     play_state::PlayState,
     subsonic::Subsonic,
     types::Droppable,
@@ -114,15 +113,15 @@ impl relm4::Component for Queue {
 
     fn init(
         (subsonic, songs, index): Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let shuffle: relm4::Controller<SequenceButton<Shuffle>> =
             SequenceButton::<Shuffle>::builder()
-                .launch(Shuffle::Sequential)
-                .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOut::Clicked => QueueIn::ToggleShuffle,
-                });
+            .launch(Shuffle::Sequential)
+            .forward(sender.input_sender(), |msg| match msg {
+                SequenceButtonOut::Clicked => QueueIn::ToggleShuffle,
+            });
         let repeat: relm4::Controller<SequenceButton<Repeat>> = SequenceButton::<Repeat>::builder()
             .launch(Repeat::Normal)
             .forward(sender.input_sender(), |msg| match msg {
@@ -131,7 +130,21 @@ impl relm4::Component for Queue {
 
         let mut model = Queue {
             subsonic,
-            songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
+            // songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
+            songs: FactoryVecDeque::builder().launch(gtk::ListBox::default())
+                .forward(sender.input_sender(), |output|
+												 match output {
+														 QueueSongOut::Activated(index, info) => QueueIn::Activated(index, info),
+														 QueueSongOut::Clicked(index) => QueueIn::Clicked(index),
+														 QueueSongOut::ShiftClicked(index) => QueueIn::ShiftClicked(index),
+														 QueueSongOut::Remove => QueueIn::Remove,
+														 QueueSongOut::MoveAbove { src, dest } => QueueIn::MoveAbove { src, dest },
+														 QueueSongOut::MoveBelow { src, dest } => QueueIn::MoveBelow { src, dest },
+														 QueueSongOut::DropAbove { src, dest } => QueueIn::DropAbove { src, dest },
+														 QueueSongOut::DropBelow { src, dest } => QueueIn::DropBelow { src, dest },
+												 }
+								)
+								,
             loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),

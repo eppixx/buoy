@@ -1,6 +1,6 @@
 use relm4::gtk::{
     self,
-    traits::{OrientableExt, WidgetExt},
+    prelude::{OrientableExt, WidgetExt},
 };
 
 #[derive(Debug, Default)]
@@ -19,7 +19,7 @@ impl relm4::SimpleComponent for Dashboard {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Dashboard::default();

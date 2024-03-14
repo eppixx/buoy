@@ -3,8 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        prelude::ToValue,
-        traits::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        prelude::{ToValue, BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     ComponentController,
 };
@@ -62,7 +61,7 @@ impl relm4::Component for AlbumView {
 
     fn init(
         (subsonic, init): Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let cover = match init.clone() {

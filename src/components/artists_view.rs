@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        traits::{BoxExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, OrientableExt, WidgetExt},
     },
     loading_widgets::LoadingWidgets,
     view, Component, ComponentController,
@@ -35,7 +35,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
     type Output = ArtistsViewOut;
     type CommandOutput = ();
 
-    fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
+    fn init_loading_widgets(root: Self::Root) -> Option<LoadingWidgets> {
         view! {
             append = root.clone() -> gtk::Box {
                 add_css_class: "artists-view",

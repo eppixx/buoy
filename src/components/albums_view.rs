@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        traits::{OrientableExt, WidgetExt},
+        prelude::{OrientableExt, WidgetExt},
     },
     ComponentController,
 };
@@ -39,7 +39,7 @@ impl relm4::component::Component for AlbumsView {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::component::ComponentParts<Self> {
         let mut model = Self::default();

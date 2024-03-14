@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self, pango,
-        traits::{BoxExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController,
 };
@@ -21,6 +21,11 @@ pub struct DescriptiveCoverBuilder {
 }
 
 impl DescriptiveCoverBuilder {
+		pub fn id(mut self, id: Id) -> Self {
+				self.id = Some(id);
+				self
+		}
+
     pub fn image(mut self, image: impl Into<String>) -> Self {
         self.image = Some(image.into());
         self
@@ -63,7 +68,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
     fn init(
         (subsonic, init): Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
@@ -79,6 +84,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
         sender.input(DescriptiveCoverIn::SetTitle(init.title));
         sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
+				tracing::error!("cover {:?}", init.id);
 				model.cover.emit(CoverIn::LoadId(init.id));
 
         relm4::ComponentParts { model, widgets }

@@ -2,7 +2,7 @@ use relm4::{
     component,
     gtk::{
         self,
-        traits::{BoxExt, ButtonExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, WidgetExt},
     },
     ComponentParts, ComponentSender, SimpleComponent,
 };
@@ -38,7 +38,7 @@ impl SimpleComponent for PlayControl {
 
     fn init(
         state: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = PlayControl::default();

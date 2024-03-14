@@ -1,6 +1,6 @@
 use relm4::gtk::{
     self,
-    traits::{BoxExt, ButtonExt, WidgetExt},
+    prelude::{BoxExt, ButtonExt, WidgetExt},
 };
 
 /// Intended to be use with a SequenceButton
@@ -44,7 +44,7 @@ impl<T: Sequence> relm4::SimpleComponent for SequenceButton<T> {
 
     fn init(
         params: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = SequenceButton {

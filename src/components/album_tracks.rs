@@ -1,6 +1,6 @@
 use relm4::gtk::{
     self,
-    traits::{ButtonExt, GridExt, OrientableExt, WidgetExt},
+    prelude::{ButtonExt, GridExt, OrientableExt, WidgetExt},
 };
 
 use crate::factory::album_song::AlbumSong;
@@ -33,14 +33,13 @@ impl relm4::SimpleComponent for AlbumTracks {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut model = Self {
-            songs: relm4::factory::FactoryVecDeque::new(
-                gtk::ListBox::default(),
-                sender.input_sender(),
-            ),
+            songs: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::ListBox::default())
+                .detach(),
             size_groups: [
                 gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
                 gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),

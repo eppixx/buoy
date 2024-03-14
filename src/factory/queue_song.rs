@@ -3,10 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self, gdk, glib, pango,
-        prelude::ToValue,
-        traits::{
-            BoxExt, ButtonExt, EventControllerExt, GestureSingleExt, ListBoxRowExt, OrientableExt,
-            WidgetExt,
+        prelude::{ToValue, WidgetExt, BoxExt, ButtonExt, EventControllerExt, GestureSingleExt, ListBoxRowExt, OrientableExt
         },
     },
     prelude::{DynamicIndex, FactoryComponent},
@@ -18,7 +15,6 @@ use crate::{
     common::convert_for_label,
     components::{
         cover::{Cover, CoverIn, CoverOut},
-        queue::QueueIn,
     },
     css::DragState,
     play_state::PlayState,
@@ -125,7 +121,6 @@ impl FactoryComponent for QueueSong {
     type Input = QueueSongIn;
     type Output = QueueSongOut;
     type ParentWidget = gtk::ListBox;
-    type ParentInput = QueueIn;
     type Widgets = QueueSongWidgets;
     type CommandOutput = QueueSongCmd;
 
@@ -289,7 +284,7 @@ impl FactoryComponent for QueueSong {
                     if key == gtk::gdk::Key::Delete {
                         sender.output(QueueSongOut::Remove);
                     }
-                    gtk::Inhibit(false)
+										gtk::glib::Propagation::Stop
                 }
             },
         }
@@ -444,19 +439,6 @@ impl FactoryComponent for QueueSong {
                 }
             }
             QueueSongIn::Cover(msg) => match msg {},
-        }
-    }
-
-    fn forward_to_parent(output: Self::Output) -> Option<QueueIn> {
-        match output {
-            QueueSongOut::Activated(index, info) => Some(QueueIn::Activated(index, info)),
-            QueueSongOut::Clicked(index) => Some(QueueIn::Clicked(index)),
-            QueueSongOut::ShiftClicked(index) => Some(QueueIn::ShiftClicked(index)),
-            QueueSongOut::Remove => Some(QueueIn::Remove),
-            QueueSongOut::MoveAbove { src, dest } => Some(QueueIn::MoveAbove { src, dest }),
-            QueueSongOut::MoveBelow { src, dest } => Some(QueueIn::MoveBelow { src, dest }),
-            QueueSongOut::DropAbove { src, dest } => Some(QueueIn::DropAbove { src, dest }),
-            QueueSongOut::DropBelow { src, dest } => Some(QueueIn::DropBelow { src, dest }),
         }
     }
 

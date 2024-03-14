@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use relm4::{gtk, gtk::traits::WidgetExt};
+use relm4::{gtk, gtk::prelude::WidgetExt};
 
 use crate::{
     client::Client,
@@ -63,7 +63,7 @@ impl relm4::Component for Cover {
 
     fn init(
         (subsonic, id): Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {

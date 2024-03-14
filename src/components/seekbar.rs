@@ -2,7 +2,7 @@ use relm4::{
     component,
     gtk::{
         self,
-        traits::{BoxExt, RangeExt, WidgetExt},
+        prelude::{BoxExt, RangeExt, WidgetExt},
     },
 };
 
@@ -57,7 +57,7 @@ impl relm4::SimpleComponent for Seekbar {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut model = Self::default();
@@ -95,7 +95,7 @@ impl relm4::SimpleComponent for Seekbar {
                 set_hexpand: true,
                 connect_change_value[sender] => move |_scale, _, _value| {
                     sender.input(SeekbarIn::SeekbarDragged);
-                    gtk::Inhibit(false)
+										gtk::glib::Propagation::Stop
                 }
             },
 

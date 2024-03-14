@@ -1,6 +1,6 @@
 use relm4::gtk::{
     self,
-    traits::{BoxExt, ButtonExt, OrientableExt, RangeExt, WidgetExt},
+    prelude::{BoxExt, ButtonExt, OrientableExt, RangeExt, WidgetExt},
 };
 
 use crate::settings::Settings;
@@ -41,7 +41,7 @@ impl relm4::SimpleComponent for Equalizer {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Equalizer::default();
@@ -108,7 +108,7 @@ impl relm4::SimpleComponent for Equalizer {
                 set_end_widget = &model.enabled.clone() -> gtk::Switch {
                     connect_state_set[sender] => move |_swtich, state| {
                         sender.input(EqualizerIn::Enabled(state));
-                        gtk::Inhibit(true)
+												gtk::glib::Propagation::Proceed
                     }
                 }
             },

@@ -12,13 +12,14 @@ tracing-subscriber = "0.3.17"
 anyhow = "1.0.72"
 
 # core components
-relm4 = "0.6.2"
-relm4-components = "0.6.2"
+relm4 = "0.8.1"
+relm4-components = "0.8.1"
 #submarine = { git = "https://github.com/eppixx/submarine" }
 submarine = { path = "../submarine", features = ["navidrome"] }
 gstreamer = "0.21.0"
 tokio = "1.32.0"
 futures = "0.3.29"
+async-channel = "2.2.0"
 
 # converting strings on seekbar
 chrono = "0.4.30"

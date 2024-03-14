@@ -1,10 +1,4 @@
-use relm4::gtk::traits::WidgetExt;
-
-pub fn setup_css() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data/bouy.css")?;
-    relm4::set_global_css(&data);
-    Ok(())
-}
+use relm4::gtk::prelude::WidgetExt;
 
 pub struct DragState {}
 

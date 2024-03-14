@@ -3,8 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        prelude::ToValue,
-        traits::{BoxExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, OrientableExt, ToValue, WidgetExt},
     },
     ComponentController,
 };
@@ -52,7 +51,7 @@ impl relm4::Component for ArtistView {
 
     fn init(
         (subsonic, init): Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {

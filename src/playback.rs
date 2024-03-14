@@ -25,7 +25,7 @@ pub enum PlaybackOut {
 
 impl Playback {
     pub fn new(
-        sender: &gtk::glib::Sender<PlaybackOut>,
+        sender: &async_channel::Sender<PlaybackOut>,
         // settings: &Arc<RwLock<settings::Settings>>,
     ) -> anyhow::Result<Self> {
         gst::init()?;
@@ -77,14 +77,14 @@ impl Playback {
         });
 
         //check for pipline messages
-        let send = sender.clone();
+        let  send = sender.clone();
         let bus = pipeline.bus().unwrap();
         std::thread::spawn(move || {
             for msg in bus.iter_timed(gst::ClockTime::NONE) {
                 use gstreamer::MessageView;
                 match msg.view() {
-                    MessageView::Eos(..) => send.send(PlaybackOut::TrackEnd).unwrap(),
-                    MessageView::StreamStart(..) => send.send(PlaybackOut::Seek(0)).unwrap(),
+                    MessageView::Eos(..) => send.try_send(PlaybackOut::TrackEnd).unwrap(),
+                    MessageView::StreamStart(..) => send.try_send(PlaybackOut::Seek(0)).unwrap(),
                     _ => {}
                 }
             }
@@ -97,12 +97,12 @@ impl Playback {
         gtk::glib::source::timeout_add_local(std::time::Duration::from_millis(TICK), move || {
             let pipeline = match pipeline_weak.upgrade() {
                 Some(pipeline) => pipeline,
-                None => return gtk::prelude::Continue(true),
+                None => return gtk::glib::ControlFlow::Continue,
             };
 
             //dont send messages when not playing a stream
             if pipeline.current_state() != gst::State::Playing {
-                return gtk::prelude::Continue(true);
+								return gtk::glib::ControlFlow::Continue;
             }
 
             let current = pipeline.query_position::<gst::ClockTime>();
@@ -111,11 +111,11 @@ impl Playback {
                     Some(clock) => clock.seconds() as i64,
                     None => 0,
                 };
-                send.send(PlaybackOut::Seek(seconds * 1000)).unwrap();
+                send.try_send(PlaybackOut::Seek(seconds * 1000)).unwrap();
                 stamp.replace(current);
             }
 
-            gtk::prelude::Continue(true)
+						gtk::glib::ControlFlow::Continue
         });
 
         let mut play = Self {
