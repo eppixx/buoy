@@ -78,14 +78,13 @@ impl relm4::SimpleComponent for DescriptiveCover {
             title: gtk::Viewport::default(),
             subtitle: gtk::Viewport::default(),
         };
-        let widgets = view_output!();
 
-        model.cover.model().add_css_class_image("size150");
+        let widgets = view_output!();
 
         sender.input(DescriptiveCoverIn::SetTitle(init.title));
         sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
-				tracing::error!("cover {:?}", init.id);
 				model.cover.emit(CoverIn::LoadId(init.id));
+        model.cover.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }
     }
