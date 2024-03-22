@@ -95,7 +95,7 @@ impl relm4::SimpleComponent for Seekbar {
                 set_hexpand: true,
                 connect_change_value[sender] => move |_scale, _, value| {
                     sender.input(SeekbarIn::SeekbarDragged(value));
-										gtk::glib::Propagation::Stop
+                    gtk::glib::Propagation::Stop
                 }
             },
 
@@ -112,8 +112,10 @@ impl relm4::SimpleComponent for Seekbar {
         match msg {
             SeekbarIn::SeekbarDragged(value) => {
                 self.current = value as i64;
-								self.scale.set_value(value);
-                sender.output(SeekbarOut::SeekDragged(value as i64)).unwrap();
+                self.scale.set_value(value);
+                sender
+                    .output(SeekbarOut::SeekDragged(value as i64))
+                    .unwrap();
             }
             SeekbarIn::NewRange(total) => {
                 self.scale.set_sensitive(true);
