@@ -23,7 +23,7 @@ impl Seekbar {
 
 #[derive(Debug)]
 pub enum SeekbarIn {
-    SeekbarDragged,
+    SeekbarDragged(f64),
     NewRange(i64), // in ms
     SeekTo(i64),   // in ms
     Disable,
@@ -93,8 +93,8 @@ impl relm4::SimpleComponent for Seekbar {
             append = &model.scale.clone() -> gtk::Scale {
                 add_css_class: "seekbar-scale",
                 set_hexpand: true,
-                connect_change_value[sender] => move |_scale, _, _value| {
-                    sender.input(SeekbarIn::SeekbarDragged);
+                connect_change_value[sender] => move |_scale, _, value| {
+                    sender.input(SeekbarIn::SeekbarDragged(value));
 										gtk::glib::Propagation::Stop
                 }
             },
@@ -110,10 +110,10 @@ impl relm4::SimpleComponent for Seekbar {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            SeekbarIn::SeekbarDragged => {
-                let value = self.scale.value() as i64;
-                self.current = value;
-                sender.output(SeekbarOut::SeekDragged(value)).unwrap();
+            SeekbarIn::SeekbarDragged(value) => {
+                self.current = value as i64;
+								self.scale.set_value(value);
+                sender.output(SeekbarOut::SeekDragged(value as i64)).unwrap();
             }
             SeekbarIn::NewRange(total) => {
                 self.scale.set_sensitive(true);
