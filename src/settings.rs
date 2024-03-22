@@ -10,24 +10,54 @@ const FILE_NAME: &str = "config.toml";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Settings {
+		#[serde(default = "default_window_width")]
     pub window_width: i32,
+		#[serde(default = "default_window_height")]
     pub window_height: i32,
+		#[serde(default)] //defaults to false
     pub window_maximized: bool,
+		#[serde(default = "default_paned_position")]
     pub paned_position: i32,
 
+		#[serde(default)] //defaults to Vec::new()
     pub queue_ids: Vec<submarine::data::Child>,
+		#[serde(default)] //defaults to None
     pub queue_current: Option<usize>,
+		#[serde(default)] //defaults to 0.0f64
     pub queue_seek: f64,
 
+		#[serde(default)] //defaults to None
     pub login_uri: Option<String>,
+		#[serde(default)] //defaults to None
     pub login_username: Option<String>,
+		#[serde(default)] //defaults to None
     pub login_hash: Option<String>,
+		#[serde(default)] //defaults to None
     pub login_salt: Option<String>,
 
+		#[serde(default = "default_volume")]
     pub volume: f64,
 
+		#[serde(default)] //defaults to false
     pub equalizer_enabled: bool,
+		#[serde(default)] //defaults to [0.0f64; 10]
     pub equalizer_bands: [f64; 10],
+}
+
+fn default_window_width() -> i32 {
+		1200
+}
+
+fn default_window_height() -> i32 {
+		1200
+}
+
+fn default_paned_position() -> i32 {
+		400
+}
+
+fn default_volume() -> f64 {
+		0.75
 }
 
 impl Default for Settings {
@@ -46,7 +76,7 @@ impl Default for Settings {
             login_salt: Default::default(),
             volume: 0.75,
             equalizer_enabled: false,
-            equalizer_bands: [0.0; 10],
+            equalizer_bands: [0.0f64; 10],
         }
     }
 }
