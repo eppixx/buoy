@@ -36,6 +36,7 @@
 
 .login-form {
   margin: 15px;
+  min-width: 350px;
 }
 
 .equalizer {

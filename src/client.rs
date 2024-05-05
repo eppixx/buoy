@@ -32,10 +32,11 @@ impl Client {
                         inner: Some(submarine::Client::new(uri, auth)),
                     };
                     let client = CLIENT.get_or_init(|| Mutex::new(client));
-										client.lock().unwrap().inner.clone()
+                    client.lock().unwrap().inner.clone()
                 } else {
-                    let client = CLIENT.get_or_init(|| Mutex::new(Client::default()));
-										client.lock().unwrap().inner.clone()
+                    tracing::warn!("no login config found");
+                    // no settings for login found; show LoginForm
+                    None
                 }
             }
         }

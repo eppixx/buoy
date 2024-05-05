@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        prelude::{ToValue, ButtonExt, WidgetExt},
+        prelude::{ButtonExt, ToValue, WidgetExt},
     },
     Component, ComponentController,
 };

@@ -21,10 +21,10 @@ pub struct DescriptiveCoverBuilder {
 }
 
 impl DescriptiveCoverBuilder {
-		pub fn id(mut self, id: Id) -> Self {
-				self.id = Some(id);
-				self
-		}
+    pub fn id(mut self, id: Id) -> Self {
+        self.id = Some(id);
+        self
+    }
 
     pub fn image(mut self, image: impl Into<String>) -> Self {
         self.image = Some(image.into());
@@ -83,7 +83,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
         sender.input(DescriptiveCoverIn::SetTitle(init.title));
         sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
-				model.cover.emit(CoverIn::LoadId(init.id));
+        model.cover.emit(CoverIn::LoadId(init.id));
         model.cover.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }

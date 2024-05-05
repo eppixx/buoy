@@ -108,7 +108,7 @@ impl relm4::SimpleComponent for Equalizer {
                 set_end_widget = &model.enabled.clone() -> gtk::Switch {
                     connect_state_set[sender] => move |_swtich, state| {
                         sender.input(EqualizerIn::Enabled(state));
-												gtk::glib::Propagation::Proceed
+                                                gtk::glib::Propagation::Proceed
                     }
                 }
             },

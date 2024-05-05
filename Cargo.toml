@@ -17,7 +17,7 @@ relm4-components = "0.8.1"
 #submarine = { git = "https://github.com/eppixx/submarine" }
 submarine = { path = "../submarine", features = ["navidrome"] }
 gstreamer = "0.22.3"
-tokio = "1.36.0"
+tokio = { version = "1.36.0", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.30"
 async-channel = "2.2.0"
 

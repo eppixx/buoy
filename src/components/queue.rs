@@ -5,7 +5,7 @@ use relm4::{
     gtk::gdk,
     gtk::{
         self,
-        prelude::{ListBoxRowExt, WidgetExt, BoxExt, ButtonExt, OrientableExt},
+        prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
     },
     prelude::DynamicIndex,
     ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
@@ -118,10 +118,10 @@ impl relm4::Component for Queue {
     ) -> relm4::ComponentParts<Self> {
         let shuffle: relm4::Controller<SequenceButton<Shuffle>> =
             SequenceButton::<Shuffle>::builder()
-            .launch(Shuffle::Sequential)
-            .forward(sender.input_sender(), |msg| match msg {
-                SequenceButtonOut::Clicked => QueueIn::ToggleShuffle,
-            });
+                .launch(Shuffle::Sequential)
+                .forward(sender.input_sender(), |msg| match msg {
+                    SequenceButtonOut::Clicked => QueueIn::ToggleShuffle,
+                });
         let repeat: relm4::Controller<SequenceButton<Repeat>> = SequenceButton::<Repeat>::builder()
             .launch(Repeat::Normal)
             .forward(sender.input_sender(), |msg| match msg {
@@ -131,20 +131,18 @@ impl relm4::Component for Queue {
         let mut model = Queue {
             subsonic,
             // songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
-            songs: FactoryVecDeque::builder().launch(gtk::ListBox::default())
-                .forward(sender.input_sender(), |output|
-												 match output {
-														 QueueSongOut::Activated(index, info) => QueueIn::Activated(index, info),
-														 QueueSongOut::Clicked(index) => QueueIn::Clicked(index),
-														 QueueSongOut::ShiftClicked(index) => QueueIn::ShiftClicked(index),
-														 QueueSongOut::Remove => QueueIn::Remove,
-														 QueueSongOut::MoveAbove { src, dest } => QueueIn::MoveAbove { src, dest },
-														 QueueSongOut::MoveBelow { src, dest } => QueueIn::MoveBelow { src, dest },
-														 QueueSongOut::DropAbove { src, dest } => QueueIn::DropAbove { src, dest },
-														 QueueSongOut::DropBelow { src, dest } => QueueIn::DropBelow { src, dest },
-												 }
-								)
-								,
+            songs: FactoryVecDeque::builder()
+                .launch(gtk::ListBox::default())
+                .forward(sender.input_sender(), |output| match output {
+                    QueueSongOut::Activated(index, info) => QueueIn::Activated(index, info),
+                    QueueSongOut::Clicked(index) => QueueIn::Clicked(index),
+                    QueueSongOut::ShiftClicked(index) => QueueIn::ShiftClicked(index),
+                    QueueSongOut::Remove => QueueIn::Remove,
+                    QueueSongOut::MoveAbove { src, dest } => QueueIn::MoveAbove { src, dest },
+                    QueueSongOut::MoveBelow { src, dest } => QueueIn::MoveBelow { src, dest },
+                    QueueSongOut::DropAbove { src, dest } => QueueIn::DropAbove { src, dest },
+                    QueueSongOut::DropBelow { src, dest } => QueueIn::DropBelow { src, dest },
+                }),
             loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),

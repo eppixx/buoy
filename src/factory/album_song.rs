@@ -1,12 +1,9 @@
 use relm4::gtk::{
     self, gdk, pango,
-    prelude::{ToValue, BoxExt, WidgetExt},
+    prelude::{BoxExt, ToValue, WidgetExt},
 };
 
-use crate::{
-    client::Client, common::convert_for_label,
-    types::Droppable,
-};
+use crate::{client::Client, common::convert_for_label, types::Droppable};
 
 #[derive(Debug)]
 pub struct AlbumSong {

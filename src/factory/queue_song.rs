@@ -3,7 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self, gdk, glib, pango,
-        prelude::{ToValue, WidgetExt, BoxExt, ButtonExt, EventControllerExt, GestureSingleExt, ListBoxRowExt, OrientableExt
+        prelude::{
+            BoxExt, ButtonExt, EventControllerExt, GestureSingleExt, ListBoxRowExt, OrientableExt,
+            ToValue, WidgetExt,
         },
     },
     prelude::{DynamicIndex, FactoryComponent},
@@ -13,9 +15,7 @@ use relm4::{
 use crate::{
     client::Client,
     common::convert_for_label,
-    components::{
-        cover::{Cover, CoverIn, CoverOut},
-    },
+    components::cover::{Cover, CoverIn, CoverOut},
     css::DragState,
     play_state::PlayState,
     subsonic::Subsonic,
@@ -163,29 +163,29 @@ impl FactoryComponent for QueueSong {
             gtk::Box {
                 set_spacing: 10,
 
-								gtk::Box {
-										set_orientation: gtk::Orientation::Vertical,
-										set_valign: gtk::Align::Center,
+                                gtk::Box {
+                                        set_orientation: gtk::Orientation::Vertical,
+                                        set_valign: gtk::Align::Center,
 
-										#[transition = "Crossfade"]
-										append = match self.playing {
-												PlayState::Play => {
-														gtk::Image {
-																add_css_class: "queue-song-state",
-																set_icon_name: Some("audio-volume-high-symbolic"),
-														}
-												}
-												PlayState::Pause => {
-														gtk::Image {
-																add_css_class: "queue-song-state",
-																set_icon_name: Some("media-playback-pause-symbolic"),
-														}
-												}
-												PlayState::Stop => {
-														&self.cover.widget().clone() {}
-												}
-										},
-								},
+                                        #[transition = "Crossfade"]
+                                        append = match self.playing {
+                                                PlayState::Play => {
+                                                        gtk::Image {
+                                                                add_css_class: "queue-song-state",
+                                                                set_icon_name: Some("audio-volume-high-symbolic"),
+                                                        }
+                                                }
+                                                PlayState::Pause => {
+                                                        gtk::Image {
+                                                                add_css_class: "queue-song-state",
+                                                                set_icon_name: Some("media-playback-pause-symbolic"),
+                                                        }
+                                                }
+                                                PlayState::Stop => {
+                                                        &self.cover.widget().clone() {}
+                                                }
+                                        },
+                                },
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
@@ -289,7 +289,7 @@ impl FactoryComponent for QueueSong {
                     if key == gtk::gdk::Key::Delete {
                         sender.output(QueueSongOut::Remove);
                     }
-										gtk::glib::Propagation::Stop
+                                        gtk::glib::Propagation::Stop
                 }
             },
         }

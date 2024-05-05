@@ -1,14 +1,17 @@
+use serde::{Deserialize, Serialize};
+
 use std::{
     io::Read,
     sync::{Mutex, OnceLock},
 };
 
-use serde::{Deserialize, Serialize};
+use crate::client::Client;
 
 const PREFIX: &str = "Buoy";
 const FILE_NAME: &str = "config.toml";
 
-#[derive(Debug, Deserialize, Serialize)]
+/// Stores all main settings of the window, queue and login information
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Settings {
     #[serde(default = "default_window_width")]
     pub window_width: i32,
@@ -114,5 +117,17 @@ impl Settings {
         self.login_hash = None;
         self.login_salt = None;
         self.save();
+    }
+
+    /// pings server with current settings and checks if they are correct
+    pub async fn valid_login(&self) -> bool {
+        if let Some(client) = Client::get() {
+            // let ping = futures::executor::block_on(async move { client.ping().await });
+            let ping = client.ping().await;
+            tracing::error!("{ping:?}");
+            ping.is_ok()
+        } else {
+            false
+        }
     }
 }

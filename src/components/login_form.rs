@@ -77,6 +77,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 0, 1, 1] = &model.uri.clone() {
+                                        set_hexpand: true,
                     set_placeholder_text: Some("http(s)://..."),
                     connect_changed => LoginFormIn::UriChanged,
                     connect_changed => LoginFormIn::FormChanged,

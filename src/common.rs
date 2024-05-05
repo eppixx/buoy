@@ -1,10 +1,12 @@
 pub fn convert_for_label(time: i64) -> String {
-		//TODO error handling
+    //TODO error handling
     let time = chrono::TimeDelta::try_milliseconds(time).unwrap();
     let hours = time.num_hours();
     let minutes = (time - chrono::TimeDelta::try_hours(hours).unwrap()).num_minutes();
-    let seconds =
-        (time - chrono::TimeDelta::try_hours(hours).unwrap() - chrono::TimeDelta::try_minutes(minutes).unwrap()).num_seconds();
+    let seconds = (time
+        - chrono::TimeDelta::try_hours(hours).unwrap()
+        - chrono::TimeDelta::try_minutes(minutes).unwrap())
+    .num_seconds();
 
     let mut result = String::new();
     if hours > 0 {
