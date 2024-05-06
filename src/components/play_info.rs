@@ -100,7 +100,7 @@ impl relm4::SimpleComponent for PlayInfo {
 fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String {
     let mut result = format!(
         "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
-        title
+        glib::markup_escape_text(title)
     );
     if artist.is_some() || album.is_some() {
         result.push('\n');
@@ -108,7 +108,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     if let Some(ref artist) = artist {
         result.push_str(&format!(
             "by <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
-            artist
+            glib::markup_escape_text(artist)
         ));
     }
     if artist.is_some() || album.is_some() {
@@ -117,7 +117,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     if let Some(album) = album {
         result.push_str(&format!(
             "on <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
-            album
+            glib::markup_escape_text(album)
         ));
     }
     result
