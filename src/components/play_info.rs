@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gtk::prelude::OrientableExt;
 use relm4::{
     gtk::{
         self,
@@ -62,13 +63,19 @@ impl relm4::SimpleComponent for PlayInfo {
         gtk::Box {
             add_css_class: "play-info",
             set_hexpand: true,
+            set_orientation: gtk::Orientation::Vertical,
 
             append = &model.covers.widget().clone() {
                 add_css_class: "play-info-cover",
+                set_hexpand: true,
+                set_halign: gtk::Align::Center,
             },
 
             gtk::Label {
                 add_css_class: "play-info-info",
+                set_hexpand: true,
+                set_halign: gtk::Align::Center,
+
                 #[watch]
                 set_markup: &style_label(&model.title, model.artist.as_deref(), model.album.as_deref()),
             },

@@ -132,11 +132,7 @@ impl relm4::component::AsyncComponent for App {
             if let Some(index) = settings.queue_current {
                 if let Some(song) = settings.queue_ids.get(index) {
                     if let Some(duration) = song.duration {
-                        seekbar = Some(SeekbarCurrent::new(
-                            duration as i64 * 1000,
-                            None,
-                            // Some(settings.queue_seek as i64),
-                        ));
+                        seekbar = Some(SeekbarCurrent::new(duration as i64 * 1000, None));
                     }
                 }
             };
@@ -259,6 +255,135 @@ impl relm4::component::AsyncComponent for App {
         }
 
         relm4::component::AsyncComponentParts { model, widgets }
+    }
+
+    view! {
+        #[root]
+        main_window = gtk::Window {
+            add_css_class: "main-window",
+            set_default_width: Settings::get().lock().unwrap().window_width,
+            set_default_height: Settings::get().lock().unwrap().window_height,
+            set_maximized: Settings::get().lock().unwrap().window_maximized,
+
+            #[wrap(Some)]
+            set_titlebar = &gtk::WindowHandle {
+                gtk::Box {
+                    add_css_class: "window-titlebar",
+
+                    gtk::WindowControls {
+                        set_side: gtk::PackType::Start,
+                    },
+
+                    //title
+                    gtk::Label {
+                        set_markup: "<span weight=\"bold\">Buoy</span>",
+                        set_hexpand: true,
+                    },
+
+                    append = &model.equalizer_btn.clone() -> gtk::MenuButton {
+                        set_icon_name: "media-eq-symbolic",
+                        set_focus_on_click: false,
+                        #[wrap(Some)]
+                        set_popover: equalizer_popover = &gtk::Popover {
+                            model.equalizer.widget(),
+                        },
+                    },
+
+                    append = &model.volume_btn.clone() -> gtk::VolumeButton {
+                        set_focus_on_click: false,
+                        connect_value_changed[sender] => move |_scale, value| {
+                            sender.input(AppIn::VolumeChange(value));
+                        }
+                    },
+
+                    append = &model.config_btn.clone() -> gtk::MenuButton {
+                        set_icon_name: "open-menu-symbolic",
+                        set_focus_on_click: false,
+
+                        #[wrap(Some)]
+                        set_popover: popover = &gtk::Popover {
+                            set_position: gtk::PositionType::Right,
+
+                            gtk::Box {
+                                add_css_class: "config-menu",
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 15,
+
+                                gtk::Button {
+                                    add_css_class: "destructive-action",
+                                    set_label: "Logout from Server",
+                                    connect_clicked => AppIn::ResetLogin,
+                                },
+                                gtk::Button {
+                                    add_css_class: "destructive-action",
+                                    set_label: "Delete cache",
+                                    connect_clicked => AppIn::DeleteCache,
+                                }
+                            },
+                        },
+                    },
+
+                    gtk::WindowControls {
+                        set_side: gtk::PackType::End,
+                    },
+                },
+            },
+
+            model.main_stack.clone() -> gtk::Stack {
+                add_css_class: "main-box",
+                set_transition_type: gtk::StackTransitionType::Crossfade,
+                set_transition_duration: 200,
+
+                add_child = &gtk::WindowHandle {
+                    set_hexpand: true,
+                    set_vexpand: true,
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+
+                    gtk::Box {
+                        set_hexpand: true,
+                        set_vexpand: true,
+                        model.login_form.widget() {}
+                    }
+                } -> {
+                    set_name: "login-form",
+                },
+                add_child = &gtk::Box {
+                    add_css_class: "main-box",
+                    set_orientation: gtk::Orientation::Vertical,
+
+
+                    #[name = "paned"]
+                    gtk::Paned {
+                        add_css_class: "main-paned",
+                        set_position: Settings::get().lock().unwrap().paned_position,
+                        set_shrink_start_child: false,
+
+                        #[wrap(Some)]
+                        set_start_child = &gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 12,
+
+                            append = &gtk::WindowHandle {
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_spacing: 12,
+
+                                    model.play_info.widget(),
+                                    model.play_controls.widget(),
+                                    model.seekbar.widget(),
+                                },
+                            },
+
+                            model.queue.widget(),
+                        },
+                        set_end_child: Some(model.browser.widget()),
+                    },
+                } -> {
+                    set_name: "logged-in",
+                },
+            },
+        }
     }
 
     async fn update(
@@ -390,131 +515,5 @@ impl relm4::component::AsyncComponent for App {
 
         //save subsonic cache
         self.subsonic.borrow().save();
-    }
-
-    view! {
-        #[root]
-        main_window = gtk::Window {
-            add_css_class: "main-window",
-            set_default_width: Settings::get().lock().unwrap().window_width,
-            set_default_height: Settings::get().lock().unwrap().window_height,
-            set_maximized: Settings::get().lock().unwrap().window_maximized,
-
-            #[wrap(Some)]
-            set_titlebar = &gtk::WindowHandle {
-                gtk::Box {
-                    add_css_class: "window-titlebar",
-
-                    gtk::WindowControls {
-                        set_side: gtk::PackType::Start,
-                    },
-
-                    //title
-                    gtk::Label {
-                        set_markup: "<span weight=\"bold\">Buoy</span>",
-                        set_hexpand: true,
-                    },
-
-                    append = &model.equalizer_btn.clone() -> gtk::MenuButton {
-                        set_icon_name: "media-eq-symbolic",
-                        set_focus_on_click: false,
-                        #[wrap(Some)]
-                        set_popover: equalizer_popover = &gtk::Popover {
-                            model.equalizer.widget(),
-                        },
-                    },
-
-                    append = &model.volume_btn.clone() -> gtk::VolumeButton {
-                        set_focus_on_click: false,
-                        connect_value_changed[sender] => move |_scale, value| {
-                            sender.input(AppIn::VolumeChange(value));
-                        }
-                    },
-
-                    append = &model.config_btn.clone() -> gtk::MenuButton {
-                        set_icon_name: "open-menu-symbolic",
-                        set_focus_on_click: false,
-
-                        #[wrap(Some)]
-                        set_popover: popover = &gtk::Popover {
-                            set_position: gtk::PositionType::Right,
-
-                            gtk::Box {
-                                add_css_class: "config-menu",
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 15,
-
-                                gtk::Button {
-                                    add_css_class: "destructive-action",
-                                    set_label: "Logout from Server",
-                                    connect_clicked => AppIn::ResetLogin,
-                                },
-                                gtk::Button {
-                                    add_css_class: "destructive-action",
-                                    set_label: "Delete cache",
-                                    connect_clicked => AppIn::DeleteCache,
-                                }
-                            },
-                        },
-                    },
-
-                    gtk::WindowControls {
-                        set_side: gtk::PackType::End,
-                    },
-                },
-            },
-
-            model.main_stack.clone() -> gtk::Stack {
-                add_css_class: "main-box",
-                set_transition_type: gtk::StackTransitionType::Crossfade,
-                set_transition_duration: 200,
-
-                add_child = &gtk::WindowHandle {
-                    set_hexpand: true,
-                    set_vexpand: true,
-                    set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Center,
-
-                    gtk::Box {
-                        set_hexpand: true,
-                        set_vexpand: true,
-                        model.login_form.widget() {}
-                    }
-                } -> {
-                    set_name: "login-form",
-                },
-                add_child = &gtk::Box {
-                    add_css_class: "main-box",
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::WindowHandle {
-                        gtk::Box {
-                            set_spacing: 5,
-
-                            model.play_info.widget(),
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 12,
-                                set_valign: gtk::Align::Center,
-
-                                append: model.play_controls.widget(),
-                                append: model.seekbar.widget(),
-                            }
-                        },
-                    },
-                    #[name = "paned"]
-                    gtk::Paned {
-                        add_css_class: "main-paned",
-                        set_position: Settings::get().lock().unwrap().paned_position,
-                        set_shrink_start_child: true,
-
-                        set_start_child: Some(model.queue.widget()),
-                        set_end_child: Some(model.browser.widget()),
-                    },
-                } -> {
-                    set_name: "logged-in",
-                },
-            },
-        }
     }
 }
