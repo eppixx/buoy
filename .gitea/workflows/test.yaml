@@ -1,0 +1,22 @@
+# based on: https://gitea.com/action-examples/Rust/src/branch/main/.gitea/workflows/test.yml
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo build
+
+  test:
+    name: run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo test
+
