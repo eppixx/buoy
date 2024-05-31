@@ -265,68 +265,17 @@ impl relm4::component::AsyncComponent for App {
             set_default_height: Settings::get().lock().unwrap().window_height,
             set_maximized: Settings::get().lock().unwrap().window_maximized,
 
+            //remove the titlebar and add WindowControl to the other widgets
             #[wrap(Some)]
-            set_titlebar = &gtk::WindowHandle {
-                gtk::Box {
-                    add_css_class: "window-titlebar",
+            set_titlebar = &gtk::HeaderBar {
+                add_css_class: granite::STYLE_CLASS_FLAT,
+                add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                set_show_title_buttons: false,
 
-                    gtk::WindowControls {
-                        set_side: gtk::PackType::Start,
-                    },
-
-                    //title
-                    gtk::Label {
-                        set_markup: "<span weight=\"bold\">Buoy</span>",
-                        set_hexpand: true,
-                    },
-
-                    append = &model.equalizer_btn.clone() -> gtk::MenuButton {
-                        set_icon_name: "media-eq-symbolic",
-                        set_focus_on_click: false,
-                        #[wrap(Some)]
-                        set_popover: equalizer_popover = &gtk::Popover {
-                            model.equalizer.widget(),
-                        },
-                    },
-
-                    append = &model.volume_btn.clone() -> gtk::VolumeButton {
-                        set_focus_on_click: false,
-                        connect_value_changed[sender] => move |_scale, value| {
-                            sender.input(AppIn::VolumeChange(value));
-                        }
-                    },
-
-                    append = &model.config_btn.clone() -> gtk::MenuButton {
-                        set_icon_name: "open-menu-symbolic",
-                        set_focus_on_click: false,
-
-                        #[wrap(Some)]
-                        set_popover: popover = &gtk::Popover {
-                            set_position: gtk::PositionType::Right,
-
-                            gtk::Box {
-                                add_css_class: "config-menu",
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 15,
-
-                                gtk::Button {
-                                    add_css_class: "destructive-action",
-                                    set_label: "Logout from Server",
-                                    connect_clicked => AppIn::ResetLogin,
-                                },
-                                gtk::Button {
-                                    add_css_class: "destructive-action",
-                                    set_label: "Delete cache",
-                                    connect_clicked => AppIn::DeleteCache,
-                                }
-                            },
-                        },
-                    },
-
-                    gtk::WindowControls {
-                        set_side: gtk::PackType::End,
-                    },
-                },
+                #[wrap(Some)]
+                set_title_widget = &gtk::Grid {
+                    set_visible: false,
+                }
             },
 
             model.main_stack.clone() -> gtk::Stack {
@@ -369,6 +318,8 @@ impl relm4::component::AsyncComponent for App {
                                     set_orientation: gtk::Orientation::Vertical,
                                     set_spacing: 12,
 
+                                    gtk::WindowControls {},
+
                                     model.play_info.widget(),
                                     model.play_controls.widget(),
                                     model.seekbar.widget(),
@@ -377,7 +328,67 @@ impl relm4::component::AsyncComponent for App {
 
                             model.queue.widget(),
                         },
-                        set_end_child: Some(model.browser.widget()),
+
+                        #[wrap(Some)]
+                        set_end_child = &gtk::WindowHandle {
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Horizontal,
+                                    set_halign: gtk::Align::End,
+
+                                    model.equalizer_btn.clone() {
+                                        set_icon_name: "media-eq-symbolic",
+                                        set_focus_on_click: false,
+                                        #[wrap(Some)]
+                                        set_popover = &gtk::Popover {
+                                            model.equalizer.widget(),
+                                        },
+                                    },
+
+                                    model.volume_btn.clone() {
+                                        set_focus_on_click: false,
+                                        connect_value_changed[sender] => move |_scale, value| {
+                                            sender.input(AppIn::VolumeChange(value));
+                                        }
+                                    },
+
+                                    model.config_btn.clone() {
+                                        set_icon_name: "open-menu-symbolic",
+                                        set_focus_on_click: false,
+
+                                        #[wrap(Some)]
+                                        set_popover = &gtk::Popover {
+                                            set_position: gtk::PositionType::Right,
+
+                                            gtk::Box {
+                                                add_css_class: "config-menu",
+                                                set_orientation: gtk::Orientation::Vertical,
+                                                set_spacing: 15,
+
+                                                gtk::Button {
+                                                    add_css_class: "destructive-action",
+                                                    set_label: "Logout from Server",
+                                                    connect_clicked => AppIn::ResetLogin,
+                                                },
+                                                gtk::Button {
+                                                    add_css_class: "destructive-action",
+                                                    set_label: "Delete cache",
+                                                    connect_clicked => AppIn::DeleteCache,
+                                                }
+                                            },
+                                        },
+                                    },
+
+                                    gtk::WindowControls {
+                                        set_side: gtk::PackType::End,
+                                    },
+                                },
+
+                                model.browser.widget(),
+                            }
+                        }
                     },
                 } -> {
                     set_name: "logged-in",

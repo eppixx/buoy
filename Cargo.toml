@@ -14,6 +14,7 @@ anyhow = "1.0.81"
 # core components
 relm4 = "0.8.1"
 relm4-components = "0.8.1"
+granite = { version = "1.1", package = "granite-rs", features = ["v7_2"] }
 glib = "0.19.3"
 #submarine = { git = "https://github.com/eppixx/submarine" }
 submarine = { path = "../submarine", features = ["navidrome"] }
