@@ -119,9 +119,9 @@ impl relm4::SimpleComponent for Browser {
         };
         let widgets = view_output!();
 
-        //TODO swtich default view
+        //TODO remove this hacky way to set back button to inactive
         sender.input(BrowserIn::DashboardClicked);
-        // sender.input(BrowserIn::AlbumsClicked);
+        sender.input(BrowserIn::BackClicked);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -135,14 +135,7 @@ impl relm4::SimpleComponent for Browser {
                 add_css_class: "browser-pathbar",
 
                 append = &model.back_btn.clone() {
-                    gtk::Box {
-                        gtk::Image {
-                            set_icon_name: Some("go-previous-symbolic"),
-                        },
-                        gtk::Label {
-                            set_label: "Back",
-                        },
-                    },
+                    set_icon_name: "go-previous-symbolic",
                     connect_clicked => Self::Input::BackClicked,
                 },
 
