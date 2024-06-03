@@ -9,27 +9,27 @@ edition = "2021"
 # common components
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"]}
-anyhow = "1.0.81"
+anyhow = "1.0.86"
 
 # core components
 relm4 = "0.8.1"
 relm4-components = "0.8.1"
-granite = { version = "1.1", package = "granite-rs", features = ["v7_2"] }
-glib = "0.19.3"
+granite = { version = "1.2", package = "granite-rs", features = ["v7_2"] }
+glib = "0.19.7"
 #submarine = { git = "https://github.com/eppixx/submarine" }
 submarine = { path = "../submarine", features = ["navidrome"] }
-gstreamer = "0.22.3"
-tokio = { version = "1.36.0", features = ["rt", "macros", "rt-multi-thread"]}
+gstreamer = "0.22.5"
+tokio = { version = "1.38.0", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.30"
-async-channel = "2.2.0"
+async-channel = "2.3.1"
 
 # converting strings on seekbar
-chrono = "0.4.35"
+chrono = "0.4.38"
 
 # used for loading and saving settings
-serde = { version = "1.0.197", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 postcard = { version = "1.0.8", features = ["alloc"] }
-toml = "0.8.12"
+toml = "0.8.14"
 xdg = "2.5.2"
 
 # for validating urls
