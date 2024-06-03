@@ -271,11 +271,7 @@ impl relm4::component::AsyncComponent for App {
                 add_css_class: granite::STYLE_CLASS_FLAT,
                 add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
                 set_show_title_buttons: false,
-
-                #[wrap(Some)]
-                set_title_widget = &gtk::Grid {
-                    set_visible: false,
-                }
+                set_visible: false,
             },
 
             model.main_stack.clone() -> gtk::Stack {
@@ -307,6 +303,8 @@ impl relm4::component::AsyncComponent for App {
                         add_css_class: "main-paned",
                         set_position: Settings::get().lock().unwrap().paned_position,
                         set_shrink_start_child: false,
+                        set_resize_start_child: false,
+                        set_shrink_end_child: false,
 
                         #[wrap(Some)]
                         set_start_child = &gtk::Box {
