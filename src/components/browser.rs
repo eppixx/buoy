@@ -54,11 +54,6 @@ pub struct Browser {
     history_widget: Vec<Views>,
     content: gtk::Viewport,
     back_btn: gtk::Button,
-    dashboard_btn: gtk::ToggleButton,
-    artists_btn: gtk::ToggleButton,
-    albums_btn: gtk::ToggleButton,
-    tracks_btn: gtk::ToggleButton,
-    playlists_btn: gtk::ToggleButton,
 
     dashboards: Vec<relm4::Controller<Dashboard>>,
     artistss: Vec<relm4::component::AsyncController<ArtistsView>>,
@@ -105,11 +100,6 @@ impl relm4::SimpleComponent for Browser {
             history_widget: vec![],
             content: gtk::Viewport::default(),
             back_btn: gtk::Button::default(),
-            dashboard_btn: gtk::ToggleButton::default(),
-            artists_btn: gtk::ToggleButton::default(),
-            albums_btn: gtk::ToggleButton::default(),
-            tracks_btn: gtk::ToggleButton::default(),
-            playlists_btn: gtk::ToggleButton::default(),
 
             dashboards: vec![],
             artistss: vec![],
@@ -136,48 +126,10 @@ impl relm4::SimpleComponent for Browser {
 
                 append = &model.back_btn.clone() {
                     set_icon_name: "go-previous-symbolic",
+                    set_halign: gtk::Align::Start,
+                    set_hexpand: true,
+
                     connect_clicked => Self::Input::BackClicked,
-                },
-
-                gtk::Label {
-                    add_css_class: "browser-pathbar-space",
-                },
-
-                gtk::Box {
-                    set_spacing: 7,
-                    set_hexpand: true,
-
-                    append = &model.dashboard_btn.clone() -> gtk::ToggleButton {
-                        set_icon_name: "go-home-symbolic",
-                        set_tooltip: "Go to dashboard",
-                        set_active: true,
-                        connect_clicked => Self::Input::DashboardClicked,
-                    },
-                    append = &model.artists_btn.clone() -> gtk::ToggleButton {
-                        set_icon_name: "avatar-default-symbolic",
-                        set_tooltip: "Show Artists",
-                        connect_clicked => Self::Input::ArtistsClicked,
-                    },
-                    append = &model.albums_btn.clone() -> gtk::ToggleButton {
-                        set_icon_name: "media-optical-cd-audio-symbolic",
-                        set_tooltip: "Show Albums",
-                        connect_clicked => Self::Input::AlbumsClicked,
-                    },
-                    append = &model.tracks_btn.clone() -> gtk::ToggleButton {
-                        set_icon_name: "audio-x-generic-symbolic",
-                        set_tooltip: "Show Tracks",
-                        connect_clicked => Self::Input::TracksClicked,
-                    },
-                    append = &model.playlists_btn.clone() -> gtk::ToggleButton {
-                        set_icon_name: "playlist-symbolic",
-                        set_tooltip: "Show playlists",
-                        connect_clicked => Self::Input::PlaylistsClicked,
-                    },
-                },
-
-                gtk::Label {
-                    set_hexpand: true,
-                    add_css_class: "browser-pathbar-space",
                 },
 
                 gtk::SearchEntry {
@@ -216,23 +168,6 @@ impl relm4::SimpleComponent for Browser {
                         },
                     }
 
-                    // untoggle all buttons
-                    self.dashboard_btn.set_active(false);
-                    self.artists_btn.set_active(false);
-                    self.albums_btn.set_active(false);
-                    self.tracks_btn.set_active(false);
-                    self.playlists_btn.set_active(false);
-
-                    //toggle the right button one if its active
-                    match self.history_widget.last() {
-                        Some(Views::Dashboard(_)) => self.dashboard_btn.set_active(true),
-                        Some(Views::Artists(_)) => self.artists_btn.set_active(true),
-                        Some(Views::Albums(_)) => self.albums_btn.set_active(true),
-                        Some(Views::Tracks(_)) => self.tracks_btn.set_active(true),
-                        Some(Views::Playlists(_)) => self.playlists_btn.set_active(true),
-                        _ => {}
-                    }
-
                     //change view
                     if let Some(view) = self.history_widget.last() {
                         self.content.set_child(Some(view.widget()));
@@ -245,8 +180,9 @@ impl relm4::SimpleComponent for Browser {
                 }
             }
             BrowserIn::DashboardClicked => {
-                self.deactivate_all_buttons();
-                self.dashboard_btn.set_active(true);
+                if let Some(&Views::Dashboard(_)) = self.history_widget.last() {
+                    return;
+                }
 
                 let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
                     .launch(())
@@ -259,8 +195,9 @@ impl relm4::SimpleComponent for Browser {
                 self.back_btn.set_sensitive(true);
             }
             BrowserIn::ArtistsClicked => {
-                self.deactivate_all_buttons();
-                self.artists_btn.set_active(true);
+                if let Some(&Views::Artists(_)) = self.history_widget.last() {
+                    return;
+                }
 
                 let artists: relm4::component::AsyncController<ArtistsView> =
                     ArtistsView::builder()
@@ -274,8 +211,9 @@ impl relm4::SimpleComponent for Browser {
                 self.back_btn.set_sensitive(true);
             }
             BrowserIn::AlbumsClicked => {
-                self.deactivate_all_buttons();
-                self.albums_btn.set_active(true);
+                if let Some(&Views::Albums(_)) = self.history_widget.last() {
+                    return;
+                }
 
                 let albums: relm4::component::Controller<AlbumsView> = AlbumsView::builder()
                     .launch(self.subsonic.clone())
@@ -298,7 +236,6 @@ impl relm4::SimpleComponent for Browser {
             }
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
-                    self.deactivate_all_buttons();
                     let init: AlbumViewInit = match id {
                         AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
                         AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
@@ -319,7 +256,6 @@ impl relm4::SimpleComponent for Browser {
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
-                    self.deactivate_all_buttons();
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
                         .launch((self.subsonic.clone(), id))
                         .forward(sender.input_sender(), |msg| {
@@ -344,7 +280,6 @@ impl relm4::SimpleComponent for Browser {
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
-                    self.deactivate_all_buttons();
                     let init: AlbumViewInit = match id {
                         AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
                         AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
@@ -364,15 +299,5 @@ impl relm4::SimpleComponent for Browser {
                 }
             },
         }
-    }
-}
-
-impl Browser {
-    fn deactivate_all_buttons(&self) {
-        self.artists_btn.set_active(false);
-        self.albums_btn.set_active(false);
-        self.tracks_btn.set_active(false);
-        self.playlists_btn.set_active(false);
-        self.dashboard_btn.set_active(false);
     }
 }

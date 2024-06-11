@@ -8,11 +8,11 @@ use relm4::{
         self,
         prelude::{ApplicationExt, PopoverExt, WidgetExt},
     },
-    Component, ComponentController, Controller,
+    Component, ComponentController, Controller, RelmWidgetExt,
 };
 
 use crate::components::{
-    browser::{Browser, BrowserOut},
+    browser::{Browser, BrowserIn, BrowserOut},
     equalizer::{Equalizer, EqualizerOut},
     login_form::{LoginForm, LoginFormOut},
     play_controls::{PlayControl, PlayControlIn, PlayControlOut},
@@ -212,6 +212,7 @@ impl relm4::component::AsyncComponent for App {
             config_btn: gtk::MenuButton::default(),
         };
 
+        let browser_sender = model.browser.sender().clone();
         let widgets = view_output!();
         tracing::info!("loaded main window");
 
@@ -334,54 +335,107 @@ impl relm4::component::AsyncComponent for App {
 
                                 gtk::Box {
                                     set_orientation: gtk::Orientation::Horizontal,
-                                    set_halign: gtk::Align::End,
+                                    set_halign: gtk::Align::Fill,
+                                    set_homogeneous: true,
 
-                                    model.equalizer_btn.clone() {
-                                        set_icon_name: "media-eq-symbolic",
-                                        set_focus_on_click: false,
-                                        #[wrap(Some)]
-                                        set_popover = &gtk::Popover {
-                                            model.equalizer.widget(),
+                                    gtk::Box {
+                                        set_hexpand: true,
+                                    },
+
+                                    gtk::Box {
+                                        set_hexpand: true,
+                                        set_halign: gtk::Align::Center,
+                                        set_spacing: 7,
+
+                                        gtk::Button {
+                                            set_icon_name: "go-home-symbolic",
+                                            set_tooltip: "Go to dashboard",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::DashboardClicked);
+                                            }
                                         },
+                                        gtk::Button {
+                                            set_icon_name: "avatar-default-symbolic",
+                                            set_tooltip: "Show Artists",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::ArtistsClicked);
+                                            }
+                                        },
+                                        gtk::Button {
+                                            set_icon_name: "media-optical-cd-audio-symbolic",
+                                            set_tooltip: "Show Albums",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::AlbumsClicked);
+                                            }
+                                        },
+                                        gtk::Button {
+                                            set_icon_name: "audio-x-generic-symbolic",
+                                            set_tooltip: "Show Tracks",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::TracksClicked);
+                                            }
+                                        },
+                                        gtk::Button {
+                                            set_icon_name: "playlist-symbolic",
+                                            set_tooltip: "Show playlists",
+                                            connect_clicked[browser_sender] => move|_| {
+                                                browser_sender.emit(BrowserIn::PlaylistsClicked);
+                                            }
+                                        },
+
                                     },
 
-                                    model.volume_btn.clone() {
-                                        set_focus_on_click: false,
-                                        connect_value_changed[sender] => move |_scale, value| {
-                                            sender.input(AppIn::VolumeChange(value));
-                                        }
-                                    },
+                                    gtk::Box {
+                                        set_hexpand: true,
+                                        set_halign: gtk::Align::End,
 
-                                    model.config_btn.clone() {
-                                        set_icon_name: "open-menu-symbolic",
-                                        set_focus_on_click: false,
-
-                                        #[wrap(Some)]
-                                        set_popover = &gtk::Popover {
-                                            set_position: gtk::PositionType::Right,
-
-                                            gtk::Box {
-                                                add_css_class: "config-menu",
-                                                set_orientation: gtk::Orientation::Vertical,
-                                                set_spacing: 15,
-
-                                                gtk::Button {
-                                                    add_css_class: "destructive-action",
-                                                    set_label: "Logout from Server",
-                                                    connect_clicked => AppIn::ResetLogin,
-                                                },
-                                                gtk::Button {
-                                                    add_css_class: "destructive-action",
-                                                    set_label: "Delete cache",
-                                                    connect_clicked => AppIn::DeleteCache,
-                                                }
+                                        model.equalizer_btn.clone() {
+                                            set_icon_name: "media-eq-symbolic",
+                                            set_focus_on_click: false,
+                                            #[wrap(Some)]
+                                            set_popover = &gtk::Popover {
+                                                model.equalizer.widget(),
                                             },
                                         },
-                                    },
 
-                                    gtk::WindowControls {
-                                        set_side: gtk::PackType::End,
-                                    },
+                                        model.volume_btn.clone() {
+                                            set_focus_on_click: false,
+                                            connect_value_changed[sender] => move |_scale, value| {
+                                                sender.input(AppIn::VolumeChange(value));
+                                            }
+                                        },
+
+                                        model.config_btn.clone() {
+                                            set_icon_name: "open-menu-symbolic",
+                                            set_focus_on_click: false,
+
+                                            #[wrap(Some)]
+                                            set_popover = &gtk::Popover {
+                                                set_position: gtk::PositionType::Right,
+
+                                                gtk::Box {
+                                                    add_css_class: "config-menu",
+                                                    set_orientation: gtk::Orientation::Vertical,
+                                                    set_spacing: 15,
+
+                                                    gtk::Button {
+                                                        add_css_class: "destructive-action",
+                                                        set_label: "Logout from Server",
+                                                        connect_clicked => AppIn::ResetLogin,
+                                                    },
+                                                    gtk::Button {
+                                                        add_css_class: "destructive-action",
+                                                        set_label: "Delete cache",
+                                                        connect_clicked => AppIn::DeleteCache,
+                                                    }
+                                                },
+                                            },
+                                        },
+
+                                        gtk::WindowControls {
+                                            set_side: gtk::PackType::End,
+                                        },
+                                    }
                                 },
 
                                 model.browser.widget(),
