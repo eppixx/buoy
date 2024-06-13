@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use gtk::prelude::OrientableExt;
 use relm4::{
     gtk::{
-        self,
+        self, pango,
         prelude::{BoxExt, WidgetExt},
     },
     Component, ComponentController,
@@ -76,6 +76,7 @@ impl relm4::SimpleComponent for PlayInfo {
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
                 set_justify: gtk::Justification::Center,
+                set_ellipsize: pango::EllipsizeMode::End,
 
                 #[watch]
                 set_markup: &style_label(&model.title, model.artist.as_deref(), model.album.as_deref()),
