@@ -112,7 +112,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     if artist.is_some() || album.is_some() {
         result.push('\n');
     }
-    if let Some(ref artist) = artist {
+    if let Some(artist) = artist {
         result.push_str(&format!(
             "by <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(artist)

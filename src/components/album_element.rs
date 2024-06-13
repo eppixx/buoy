@@ -13,7 +13,7 @@ use crate::{
     common::convert_for_label,
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverBuilder},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -54,7 +54,7 @@ impl relm4::SimpleComponent for AlbumElement {
             AlbumElementInit::AlbumId3(id3) => {
                 builder = builder.title(id3.name.clone());
                 if let Some(id) = &id3.cover_art {
-                    builder = builder.image(id);
+                    builder = builder.id(Id::album(id));
                 }
                 if let Some(artist) = &id3.artist {
                     builder = builder.subtitle(artist);
@@ -64,7 +64,7 @@ impl relm4::SimpleComponent for AlbumElement {
             AlbumElementInit::Child(child) => {
                 builder = builder.title(child.title.clone());
                 if let Some(id) = &child.cover_art {
-                    builder = builder.image(id);
+                    builder = builder.id(Id::song(id));
                 }
                 if let Some(artist) = &child.artist {
                     builder = builder.subtitle(artist);

@@ -4,9 +4,9 @@ use relm4::{
     component::{AsyncComponent, AsyncComponentController},
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToggleButtonExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, WidgetExt},
     },
-    Component, ComponentController, RelmWidgetExt,
+    Component, ComponentController,
 };
 
 use super::{

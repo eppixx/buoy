@@ -47,7 +47,7 @@ impl relm4::SimpleComponent for ArtistElement {
             .title(&init.name)
             .id(Id::artist(init.id.clone()));
         if let Some(id) = &init.cover_art {
-            builder = builder.image(id);
+            builder = builder.id(Id::artist(id));
         }
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
             .launch((subsonic, builder))

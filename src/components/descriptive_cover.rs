@@ -15,7 +15,6 @@ use super::cover::{Cover, CoverIn, CoverOut};
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverBuilder {
     id: Option<Id>,
-    image: Option<String>,
     title: Option<String>,
     subtitle: Option<String>,
 }
@@ -23,11 +22,6 @@ pub struct DescriptiveCoverBuilder {
 impl DescriptiveCoverBuilder {
     pub fn id(mut self, id: Id) -> Self {
         self.id = Some(id);
-        self
-    }
-
-    pub fn image(mut self, image: impl Into<String>) -> Self {
-        self.image = Some(image.into());
         self
     }
 
@@ -73,7 +67,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch((subsonic, None))
+                .launch((subsonic, init.id.map(|id| id.inner().into())))
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: gtk::Viewport::default(),
             subtitle: gtk::Viewport::default(),
@@ -83,8 +77,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
         sender.input(DescriptiveCoverIn::SetTitle(init.title));
         sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
-        model.cover.emit(CoverIn::LoadId(init.id));
-        model.cover.model().add_css_class_image("size150");
+        model.cover.model().add_css_class_image("size100");
 
         relm4::ComponentParts { model, widgets }
     }

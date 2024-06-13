@@ -76,7 +76,7 @@ impl SubsonicCovers {
                             }
                             Err(e) => {
                                 // could not convert to image
-                                tracing::error!("converting buffer to Pixbuf: {e}");
+                                tracing::warn!("converting buffer to Pixbuf: {e} for {id}");
                                 self.covers.insert(id.into(), None);
                                 Response::Empty
                             }
