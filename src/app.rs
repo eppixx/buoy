@@ -311,6 +311,7 @@ impl relm4::component::AsyncComponent for App {
 
                         #[wrap(Some)]
                         set_start_child = &gtk::Box {
+                            add_css_class: granite::STYLE_CLASS_SIDEBAR,
                             set_orientation: gtk::Orientation::Vertical,
                             set_spacing: 12,
 
