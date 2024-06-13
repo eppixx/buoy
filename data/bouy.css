@@ -32,6 +32,11 @@
   min-width: 350px;
 }
 
+.browser-navigation-button {
+    min-height: 24px;
+    min-width: 24px;
+}
+
 .equalizer {
    margin: 15px;
 }

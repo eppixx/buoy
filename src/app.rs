@@ -358,12 +358,12 @@ impl relm4::component::AsyncComponent for App {
 
                                 #[wrap(Some)]
                                 set_title_widget = &gtk::Box {
-                                    add_css_class: granite::STYLE_CLASS_LARGE_ICONS,
                                     set_hexpand: true,
                                     set_halign: gtk::Align::Center,
-                                    set_spacing: 9,
+                                    set_spacing: 7,
 
                                     gtk::Button {
+                                        add_css_class: "browser-navigation-button",
                                         set_icon_name: "go-home-symbolic",
                                         set_tooltip: "Go to dashboard",
                                         connect_clicked[browser_sender] => move |_| {
@@ -371,6 +371,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::Button {
+                                        add_css_class: "browser-navigation-button",
                                         set_icon_name: "avatar-default-symbolic",
                                         set_tooltip: "Show Artists",
                                         connect_clicked[browser_sender] => move |_| {
@@ -378,6 +379,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::Button {
+                                        add_css_class: "browser-navigation-button",
                                         set_icon_name: "media-optical-cd-audio-symbolic",
                                         set_tooltip: "Show Albums",
                                         connect_clicked[browser_sender] => move |_| {
@@ -385,6 +387,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::Button {
+                                        add_css_class: "browser-navigation-button",
                                         set_icon_name: "audio-x-generic-symbolic",
                                         set_tooltip: "Show Tracks",
                                         connect_clicked[browser_sender] => move |_| {
@@ -392,6 +395,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::Button {
+                                        add_css_class: "browser-navigation-button",
                                         set_icon_name: "playlist-symbolic",
                                         set_tooltip: "Show playlists",
                                         connect_clicked[browser_sender] => move|_| {
@@ -399,6 +403,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::MenuButton {
+                                        add_css_class: "browser-navigation-button",
                                         set_icon_name: "system-search-symbolic",
 
                                         #[wrap(Some)]
