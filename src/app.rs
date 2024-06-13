@@ -6,7 +6,7 @@ use relm4::{
     component::{AsyncComponentController, AsyncController},
     gtk::{
         self,
-        prelude::{ApplicationExt, PopoverExt, WidgetExt},
+        prelude::{ApplicationExt, PopoverExt, WidgetExt, EditableExt},
     },
     Component, ComponentController, Controller, RelmWidgetExt,
 };
@@ -42,6 +42,7 @@ pub struct App {
     equalizer: Controller<Equalizer>,
 
     main_stack: gtk::Stack,
+    back_btn: gtk::Button,
     equalizer_btn: gtk::MenuButton,
     volume_btn: gtk::VolumeButton,
     config_btn: gtk::MenuButton,
@@ -207,6 +208,7 @@ impl relm4::component::AsyncComponent for App {
             equalizer,
 
             main_stack: gtk::Stack::default(),
+            back_btn: gtk::Button::default(),
             volume_btn: gtk::VolumeButton::default(),
             equalizer_btn: gtk::MenuButton::default(),
             config_btn: gtk::MenuButton::default(),
@@ -242,6 +244,7 @@ impl relm4::component::AsyncComponent for App {
                 sender.input(AppIn::Playback(msg));
             }
         });
+        model.back_btn.set_sensitive(false);
 
         {
             let client = Client::get_mut().lock().unwrap();
@@ -340,6 +343,14 @@ impl relm4::component::AsyncComponent for App {
 
                                     gtk::Box {
                                         set_hexpand: true,
+
+                                        gtk::Button {
+                                            set_icon_name: "go-previous-symbolic",
+
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::BackClicked);
+                                            }
+                                        }
                                     },
 
                                     gtk::Box {
@@ -382,6 +393,20 @@ impl relm4::component::AsyncComponent for App {
                                                 browser_sender.emit(BrowserIn::PlaylistsClicked);
                                             }
                                         },
+                                        gtk::MenuButton {
+                                            set_icon_name: "system-search-symbolic",
+
+                                            #[wrap(Some)]
+                                            set_popover: popover = &gtk::Popover {
+                                                gtk::SearchEntry {
+                                                    set_placeholder_text: Some("Search..."),
+                                                    grab_focus: (),
+                                                    connect_search_changed => move |w| {
+                                                        browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
+                                                    }
+                                                }
+                                            }
+                                        }
 
                                     },
 
@@ -548,6 +573,7 @@ impl relm4::component::AsyncComponent for App {
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
                     self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop))
                 }
+                BrowserOut::BackButtonSensitivity(status) => self.back_btn.set_sensitive(status),
             },
             AppIn::PlayInfo(msg) => match msg {},
         }

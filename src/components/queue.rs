@@ -130,7 +130,6 @@ impl relm4::Component for Queue {
 
         let mut model = Queue {
             subsonic,
-            // songs: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), |output| match output {

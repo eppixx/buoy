@@ -4,7 +4,7 @@ use relm4::{
     component::{AsyncComponent, AsyncComponentController},
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, EditableExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController,
 };
@@ -53,7 +53,6 @@ pub struct Browser {
     subsonic: Rc<RefCell<Subsonic>>,
     history_widget: Vec<Views>,
     content: gtk::Viewport,
-    back_btn: gtk::Button,
 
     dashboards: Vec<relm4::Controller<Dashboard>>,
     artistss: Vec<relm4::component::AsyncController<ArtistsView>>,
@@ -82,6 +81,7 @@ pub enum BrowserIn {
 pub enum BrowserOut {
     AppendToQueue(Droppable),
     InsertAfterCurrentInQueue(Droppable),
+    BackButtonSensitivity(bool),
 }
 
 #[relm4::component(pub)]
@@ -99,7 +99,6 @@ impl relm4::SimpleComponent for Browser {
             subsonic: init,
             history_widget: vec![],
             content: gtk::Viewport::default(),
-            back_btn: gtk::Button::default(),
 
             dashboards: vec![],
             artistss: vec![],
@@ -109,9 +108,7 @@ impl relm4::SimpleComponent for Browser {
         };
         let widgets = view_output!();
 
-        //TODO remove this hacky way to set back button to inactive
         sender.input(BrowserIn::DashboardClicked);
-        sender.input(BrowserIn::BackClicked);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -120,26 +117,6 @@ impl relm4::SimpleComponent for Browser {
         gtk::Box {
             add_css_class: "browser",
             set_orientation: gtk::Orientation::Vertical,
-
-            gtk::Box {
-                add_css_class: "browser-pathbar",
-
-                append = &model.back_btn.clone() {
-                    set_icon_name: "go-previous-symbolic",
-                    set_halign: gtk::Align::Start,
-                    set_hexpand: true,
-
-                    connect_clicked => Self::Input::BackClicked,
-                },
-
-                gtk::SearchEntry {
-                    set_placeholder_text: Some("Search..."),
-                    grab_focus: (),
-                    connect_search_changed[sender] => move |w| {
-                        sender.input(BrowserIn::SearchChanged(w.text().to_string()));
-                    }
-                }
-            },
 
             append = &model.content.clone() -> gtk::Viewport {
                 add_css_class: "browser-content",
@@ -176,7 +153,9 @@ impl relm4::SimpleComponent for Browser {
 
                 //change back button sensitivity
                 if self.history_widget.len() == 1 {
-                    self.back_btn.set_sensitive(false);
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(false))
+                        .expect("main window.gone");
                 }
             }
             BrowserIn::DashboardClicked => {
@@ -192,7 +171,9 @@ impl relm4::SimpleComponent for Browser {
                 self.dashboards.push(dashboard);
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
-                self.back_btn.set_sensitive(true);
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .expect("main window.gone");
             }
             BrowserIn::ArtistsClicked => {
                 if let Some(&Views::Artists(_)) = self.history_widget.last() {
@@ -208,7 +189,9 @@ impl relm4::SimpleComponent for Browser {
                 self.artistss.push(artists);
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
-                self.back_btn.set_sensitive(true);
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .expect("main window.gone");
             }
             BrowserIn::AlbumsClicked => {
                 if let Some(&Views::Albums(_)) = self.history_widget.last() {
@@ -223,7 +206,9 @@ impl relm4::SimpleComponent for Browser {
                 self.albumss.push(albums);
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
-                self.back_btn.set_sensitive(true);
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .expect("main window.gone");
             }
             BrowserIn::TracksClicked => {
                 //TODO
@@ -251,7 +236,9 @@ impl relm4::SimpleComponent for Browser {
                     self.album_views.push(album);
                     self.content
                         .set_child(Some(self.history_widget.last().unwrap().widget()));
-                    self.back_btn.set_sensitive(true);
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(true))
+                        .expect("main window.gone");
                 }
             },
             BrowserIn::ArtistsView(msg) => match msg {
@@ -267,7 +254,9 @@ impl relm4::SimpleComponent for Browser {
                     self.artist_views.push(artist);
                     self.content
                         .set_child(Some(self.history_widget.last().unwrap().widget()));
-                    self.back_btn.set_sensitive(true);
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(true))
+                        .expect("main window.gone");
                 }
             },
             BrowserIn::AlbumView(msg) => match *msg {
@@ -295,7 +284,9 @@ impl relm4::SimpleComponent for Browser {
                     self.album_views.push(album);
                     self.content
                         .set_child(Some(self.history_widget.last().unwrap().widget()));
-                    self.back_btn.set_sensitive(true);
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(true))
+                        .expect("main window gone");
                 }
             },
         }
