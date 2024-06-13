@@ -358,6 +358,7 @@ impl relm4::component::AsyncComponent for App {
 
                                     #[wrap(Some)]
                                     set_title_widget = &gtk::Box {
+                                        add_css_class: granite::STYLE_CLASS_LARGE_ICONS,
                                         set_hexpand: true,
                                         set_halign: gtk::Align::Center,
                                         set_spacing: 9,
