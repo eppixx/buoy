@@ -6,7 +6,7 @@ use relm4::{
     component::{AsyncComponentController, AsyncController},
     gtk::{
         self,
-        prelude::{ApplicationExt, PopoverExt, WidgetExt, EditableExt},
+        prelude::{ApplicationExt, EditableExt, PopoverExt, WidgetExt},
     },
     Component, ComponentController, Controller, RelmWidgetExt,
 };
@@ -320,8 +320,14 @@ impl relm4::component::AsyncComponent for App {
                                     set_orientation: gtk::Orientation::Vertical,
                                     set_spacing: 12,
 
-                                    gtk::WindowControls {},
-
+                                    gtk::HeaderBar {
+                                        add_css_class: granite::STYLE_CLASS_FLAT,
+                                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                                        set_show_title_buttons: false,
+                                        pack_start = &gtk::WindowControls {
+                                            set_side: gtk::PackType::Start,
+                                        }
+                                    },
                                     model.play_info.widget(),
                                     model.play_controls.widget(),
                                     model.seekbar.widget(),
@@ -336,24 +342,22 @@ impl relm4::component::AsyncComponent for App {
                             gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
 
-                                gtk::Box {
-                                    set_orientation: gtk::Orientation::Horizontal,
+                                gtk::HeaderBar {
+                                    add_css_class: granite::STYLE_CLASS_FLAT,
+                                    add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                                    set_show_title_buttons: false,
                                     set_halign: gtk::Align::Fill,
-                                    set_homogeneous: true,
 
-                                    gtk::Box {
-                                        set_hexpand: true,
+                                    pack_start = &gtk::Button {
+                                        set_icon_name: "go-previous-symbolic",
 
-                                        gtk::Button {
-                                            set_icon_name: "go-previous-symbolic",
-
-                                            connect_clicked[browser_sender] => move |_| {
-                                                browser_sender.emit(BrowserIn::BackClicked);
-                                            }
+                                        connect_clicked[browser_sender] => move |_| {
+                                            browser_sender.emit(BrowserIn::BackClicked);
                                         }
                                     },
 
-                                    gtk::Box {
+                                    #[wrap(Some)]
+                                    set_title_widget = &gtk::Box {
                                         set_hexpand: true,
                                         set_halign: gtk::Align::Center,
                                         set_spacing: 7,
@@ -410,7 +414,7 @@ impl relm4::component::AsyncComponent for App {
 
                                     },
 
-                                    gtk::Box {
+                                    pack_end = &gtk::Box {
                                         set_hexpand: true,
                                         set_halign: gtk::Align::End,
 
@@ -459,7 +463,7 @@ impl relm4::component::AsyncComponent for App {
 
                                         gtk::WindowControls {
                                             set_side: gtk::PackType::End,
-                                        },
+                                        }
                                     }
                                 },
 
