@@ -110,23 +110,27 @@ impl relm4::Component for ArtistView {
                     model.cover.widget().clone() -> gtk::Box {},
                 },
 
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_spacing: 5,
+                gtk::WindowHandle {
+                    set_hexpand: true,
 
-                    gtk::Label {
-                        add_css_class: "h3",
-                        #[watch]
-                        set_label: &model.title,
-                        set_halign: gtk::Align::Start,
-                    },
-                    gtk::Label {
-                        #[watch]
-                        set_label: &model.bio,
-                        set_halign: gtk::Align::Start,
-                        set_single_line_mode: false,
-                        set_lines: -1,
-                        set_wrap: true,
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 5,
+
+                        gtk::Label {
+                            add_css_class: "h3",
+                            #[watch]
+                            set_label: &model.title,
+                            set_halign: gtk::Align::Start,
+                        },
+                        gtk::Label {
+                            #[watch]
+                            set_label: &model.bio,
+                            set_halign: gtk::Align::Start,
+                            set_single_line_mode: false,
+                            set_lines: -1,
+                            set_wrap: true,
+                        }
                     }
                 }
             },

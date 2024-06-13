@@ -88,10 +88,12 @@ impl relm4::component::AsyncComponent for ArtistsView {
             set_orientation: gtk::Orientation::Vertical,
             set_hexpand: true,
 
-            gtk::Label {
-                add_css_class: "h2",
-                set_label: "Artists",
-                set_halign: gtk::Align::Center,
+            gtk::WindowHandle {
+                gtk::Label {
+                    add_css_class: "h2",
+                    set_label: "Artists",
+                    set_halign: gtk::Align::Center,
+                },
             },
 
             gtk::ScrolledWindow {

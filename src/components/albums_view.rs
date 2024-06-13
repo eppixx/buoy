@@ -65,10 +65,12 @@ impl relm4::component::Component for AlbumsView {
             set_orientation: gtk::Orientation::Vertical,
             set_hexpand: true,
 
-            gtk::Label {
-                add_css_class: "h2",
-                set_label: "Albums",
-                set_halign: gtk::Align::Center,
+            gtk::WindowHandle {
+                gtk::Label {
+                    add_css_class: "h2",
+                    set_label: "Albums",
+                    set_halign: gtk::Align::Center,
+                },
             },
 
             gtk::ScrolledWindow {

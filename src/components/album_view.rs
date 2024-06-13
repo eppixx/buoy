@@ -109,74 +109,78 @@ impl relm4::Component for AlbumView {
 
                 model.cover.widget().clone() -> gtk::Box {},
 
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_spacing: 8,
+                gtk::WindowHandle {
+                    set_hexpand: true,
 
-                    gtk::Label {
-                        add_css_class: "h3",
-                        #[watch]
-                        set_label: &model.title,
-                        set_halign: gtk::Align::Start,
-                    },
-                    gtk::Label {
-                        #[watch]
-                        set_markup: &format!("by <span style=\"italic\">{}</span>",
-                                             model.artist.as_deref().unwrap_or("Unkown Artist")),
-                        set_halign: gtk::Align::Start,
-                    },
-                    gtk::Label {
-                        #[watch]
-                        set_label: &model.info,
-                        set_halign: gtk::Align::Start,
-                    },
                     gtk::Box {
-                        set_spacing: 15,
-                        gtk::Button {
-                            gtk::Box {
-                                gtk::Image {
-                                    set_icon_name: Some("list-add-symbolic"),
-                                },
-                                gtk::Label {
-                                    set_label: "Append",
-                                }
-                            },
-                            set_tooltip_text: Some("Append Album to end of queue"),
-                            connect_clicked[sender, init] => move |_btn| {
-                                match &init {
-                                    AlbumViewInit::Child(child) => {
-                                        sender.output(AlbumViewOut::AppendAlbum(Droppable::AlbumChild(child.clone()))).unwrap();
-                                    }
-                                    AlbumViewInit::AlbumId3(album) => {
-                                        sender.output(AlbumViewOut::AppendAlbum(Droppable::Album(album.clone()))).unwrap();
-                                    }
-                                }
-                            }
-                        },
-                        gtk::Button {
-                            gtk::Box {
-                                gtk::Image {
-                                    set_icon_name: Some("list-add-symbolic"),
-                                },
-                                gtk::Label {
-                                    set_label: "Play next"
-                                }
-                            },
-                            set_tooltip_text: Some("Insert Album after currently played or paused item"),
-                            connect_clicked[sender, init] => move |_btn| {
-                                match &init {
-                                    AlbumViewInit::Child(child) => {
-                                        sender.output(AlbumViewOut::InsertAfterCurrentPLayed(Droppable::AlbumChild(child.clone()))).unwrap();
-                                    }
-                                    AlbumViewInit::AlbumId3(album) => {
-                                        sender.output(AlbumViewOut::InsertAfterCurrentPLayed(Droppable::Album(album.clone()))).unwrap();
-                                    }
-                                }
-                            }
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 8,
 
+                        gtk::Label {
+                            add_css_class: "h3",
+                            #[watch]
+                            set_label: &model.title,
+                            set_halign: gtk::Align::Start,
+                        },
+                        gtk::Label {
+                            #[watch]
+                            set_markup: &format!("by <span style=\"italic\">{}</span>",
+                                                 model.artist.as_deref().unwrap_or("Unkown Artist")),
+                            set_halign: gtk::Align::Start,
+                        },
+                        gtk::Label {
+                            #[watch]
+                            set_label: &model.info,
+                            set_halign: gtk::Align::Start,
+                        },
+                        gtk::Box {
+                            set_spacing: 15,
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("list-add-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Append",
+                                    }
+                                },
+                                set_tooltip_text: Some("Append Album to end of queue"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    match &init {
+                                        AlbumViewInit::Child(child) => {
+                                            sender.output(AlbumViewOut::AppendAlbum(Droppable::AlbumChild(child.clone()))).unwrap();
+                                        }
+                                        AlbumViewInit::AlbumId3(album) => {
+                                            sender.output(AlbumViewOut::AppendAlbum(Droppable::Album(album.clone()))).unwrap();
+                                        }
+                                    }
+                                }
+                            },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("list-add-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Play next"
+                                    }
+                                },
+                                set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    match &init {
+                                        AlbumViewInit::Child(child) => {
+                                            sender.output(AlbumViewOut::InsertAfterCurrentPLayed(Droppable::AlbumChild(child.clone()))).unwrap();
+                                        }
+                                        AlbumViewInit::AlbumId3(album) => {
+                                            sender.output(AlbumViewOut::InsertAfterCurrentPLayed(Droppable::Album(album.clone()))).unwrap();
+                                        }
+                                    }
+                                }
+
+                            }
                         }
                     }
-                }
+                },
             },
 
             model.view.clone() {
