@@ -77,6 +77,7 @@ impl relm4::component::Component for AlbumsView {
 
                 #[wrap(Some)]
                 set_child = &model.albums.clone() -> gtk::FlowBox {
+                    set_valign: gtk::Align::Start,
                 }
             }
         }
