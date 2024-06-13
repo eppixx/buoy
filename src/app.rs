@@ -350,6 +350,7 @@ impl relm4::component::AsyncComponent for App {
 
                                     pack_start = &gtk::Button {
                                         set_icon_name: "go-previous-symbolic",
+                                        add_css_class: "destructive-button-spacer",
 
                                         connect_clicked[browser_sender] => move |_| {
                                             browser_sender.emit(BrowserIn::BackClicked);
@@ -360,7 +361,7 @@ impl relm4::component::AsyncComponent for App {
                                     set_title_widget = &gtk::Box {
                                         set_hexpand: true,
                                         set_halign: gtk::Align::Center,
-                                        set_spacing: 7,
+                                        set_spacing: 9,
 
                                         gtk::Button {
                                             set_icon_name: "go-home-symbolic",
@@ -417,6 +418,7 @@ impl relm4::component::AsyncComponent for App {
                                     pack_end = &gtk::Box {
                                         set_hexpand: true,
                                         set_halign: gtk::Align::End,
+                                        set_spacing: 5,
 
                                         model.equalizer_btn.clone() {
                                             set_icon_name: "media-eq-symbolic",
