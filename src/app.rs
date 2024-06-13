@@ -244,7 +244,6 @@ impl relm4::component::AsyncComponent for App {
                 sender.input(AppIn::Playback(msg));
             }
         });
-        model.back_btn.set_sensitive(false);
 
         {
             let client = Client::get_mut().lock().unwrap();
@@ -348,7 +347,7 @@ impl relm4::component::AsyncComponent for App {
                                     set_show_title_buttons: false,
                                     set_halign: gtk::Align::Fill,
 
-                                    pack_start = &gtk::Button {
+                                    pack_start = &model.back_btn.clone() {
                                         set_icon_name: "go-previous-symbolic",
                                         add_css_class: "destructive-button-spacer",
 

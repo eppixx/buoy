@@ -109,6 +109,7 @@ impl relm4::SimpleComponent for Browser {
         let widgets = view_output!();
 
         sender.input(BrowserIn::DashboardClicked);
+        sender.input(BrowserIn::BackClicked); //TODO fix back button sensitivity
 
         relm4::ComponentParts { model, widgets }
     }
