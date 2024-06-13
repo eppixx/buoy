@@ -1,10 +1,3 @@
-.debug {
-  border-top: 1px solid LightGray; /* TODO change for dark theme */
-  border-right: 1px solid LightGray; /* TODO change for dark theme */
-  border-bottom: 1px solid LightGray; /* TODO change for dark theme */
-  border-left: 1px solid LightGray; /* TODO change for dark theme */
-}
-
 .window-titlebar {
   min-height: 35px;
   margin: 0px 5px;
@@ -56,7 +49,6 @@
 }
 
 .queue {
-  /*border-top: 1px solid LightGray; /* TODO change for dark theme */
 }
 
 .queue-song {
@@ -84,7 +76,6 @@
 }
 
 .play-control-play-pause {
-  margin: 0px  20px;
   min-height: 32px;
   min-width: 32px;
 }
@@ -156,11 +147,9 @@
 }
 
 .play-info-info {
-  margin: 9px;
 }
 
 .play-info-cover {
-  margin: 0px 15px 15px 15px;
 }
 
 .browser {

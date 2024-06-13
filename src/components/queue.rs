@@ -166,7 +166,6 @@ impl relm4::Component for Queue {
         gtk::Box {
             add_css_class: "queue",
             set_orientation: gtk::Orientation::Vertical,
-            set_spacing: 5,
 
             gtk::ScrolledWindow {
                 set_vexpand: true,

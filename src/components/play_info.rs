@@ -64,6 +64,7 @@ impl relm4::SimpleComponent for PlayInfo {
             add_css_class: "play-info",
             set_hexpand: true,
             set_orientation: gtk::Orientation::Vertical,
+            set_spacing: 10,
 
             append = &model.covers.widget().clone() {
                 add_css_class: "play-info-cover",
