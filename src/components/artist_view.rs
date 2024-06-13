@@ -134,7 +134,9 @@ impl relm4::Component for ArtistView {
             gtk::ScrolledWindow {
                 set_vexpand: true,
 
-                model.albums.clone() {},
+                model.albums.clone() {
+                    set_valign: gtk::Align::Start,
+                },
             }
         }
     }
