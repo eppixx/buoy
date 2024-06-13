@@ -75,6 +75,7 @@ impl relm4::SimpleComponent for PlayInfo {
                 add_css_class: "play-info-info",
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
+                set_justify: gtk::Justification::Center,
 
                 #[watch]
                 set_markup: &style_label(&model.title, model.artist.as_deref(), model.album.as_deref()),
@@ -123,7 +124,7 @@ fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String
     }
     if let Some(album) = album {
         result.push_str(&format!(
-            "on <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            "\non <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(album)
         ));
     }
