@@ -4,7 +4,7 @@ use relm4::{
     component::{AsyncComponent, AsyncComponentController},
     gtk::{
         self,
-        prelude::{BoxExt, EditableExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController,
 };
