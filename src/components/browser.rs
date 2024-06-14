@@ -11,14 +11,17 @@ use relm4::{
 
 use super::{
     album_element::AlbumElementInit,
-    album_view::{AlbumViewInit, AlbumViewOut},
+    album_view::{AlbumViewIn, AlbumViewInit, AlbumViewOut},
     albums_view::{AlbumsView, AlbumsViewOut},
-    artist_view::ArtistViewOut,
-    artists_view::{ArtistsView, ArtistsViewOut},
-    dashboard::DashboardOutput,
+    artist_view::{ArtistViewIn, ArtistViewOut},
+    artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
+    dashboard::{DashboardIn, DashboardOut},
 };
 use crate::{
-    components::{album_view::AlbumView, artist_view::ArtistView, dashboard::Dashboard},
+    components::{
+        album_view::AlbumView, albums_view::AlbumsViewIn, artist_view::ArtistView,
+        dashboard::Dashboard,
+    },
     subsonic::Subsonic,
     types::Droppable,
 };
@@ -70,7 +73,7 @@ pub enum BrowserIn {
     AlbumsClicked,
     TracksClicked,
     PlaylistsClicked,
-    Dashboard(DashboardOutput),
+    Dashboard(DashboardOut),
     AlbumsView(AlbumsViewOut),
     AlbumView(Box<AlbumViewOut>),
     ArtistsView(ArtistsViewOut),
@@ -128,7 +131,23 @@ impl relm4::SimpleComponent for Browser {
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             BrowserIn::SearchChanged(search) => {
-                tracing::warn!("new search {search}");
+                for view in &self.dashboards {
+                    view.emit(DashboardIn::SearchChanged(search.clone()));
+                }
+                for view in &self.artistss {
+                    view.emit(ArtistsViewIn::SearchChanged(search.clone()));
+                }
+                for view in &self.albumss {
+                    view.emit(AlbumsViewIn::SearchChanged(search.clone()));
+                }
+                for view in &self.album_views {
+                    view.emit(AlbumViewIn::SearchChanged(search.clone()));
+                }
+                for view in &self.artist_views {
+                    view.emit(ArtistViewIn::SearchChanged(search.clone()));
+                }
+                //TODO search for playlists
+                //TODO search for tracks
             }
             BrowserIn::BackClicked => {
                 if self.history_widget.len() > 1 {

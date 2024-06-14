@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self,
@@ -26,6 +27,7 @@ pub enum ArtistsViewOut {
 #[derive(Debug)]
 pub enum ArtistsViewIn {
     ArtistElement(ArtistElementOut),
+    SearchChanged(String),
 }
 
 #[relm4::component(async, pub)]
@@ -120,6 +122,25 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap()
                 }
             },
+            ArtistsViewIn::SearchChanged(search) => {
+                self.artists.set_filter_func(move |element| {
+                    use glib::object::Cast;
+
+                    // get the Label of the FlowBoxChild
+                    let bo = element.first_child().unwrap();
+                    let button = bo.first_child().unwrap();
+                    let bo = button.first_child().unwrap();
+                    let cover = bo.first_child().unwrap();
+                    let title_view = cover.next_sibling().unwrap();
+                    let title = title_view.first_child().unwrap();
+                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+
+                    //actual matching
+                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                    let score = matcher.fuzzy_match(&title.text(), &search);
+                    score.is_some()
+                });
+            }
         }
     }
 }

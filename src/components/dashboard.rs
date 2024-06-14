@@ -7,14 +7,19 @@ use relm4::gtk::{
 pub struct Dashboard {}
 
 #[derive(Debug)]
-pub enum DashboardOutput {
+pub enum DashboardOut {
     Entered,
+}
+
+#[derive(Debug)]
+pub enum DashboardIn {
+    SearchChanged(String),
 }
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for Dashboard {
-    type Input = ();
-    type Output = DashboardOutput;
+    type Input = DashboardIn;
+    type Output = DashboardOut;
     type Init = ();
 
     fn init(
@@ -25,7 +30,7 @@ impl relm4::SimpleComponent for Dashboard {
         let model = Dashboard::default();
         let widgets = view_output!();
 
-        _ = sender.output(DashboardOutput::Entered);
+        _ = sender.output(DashboardOut::Entered);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -89,6 +94,14 @@ impl relm4::SimpleComponent for Dashboard {
                 gtk::FlowBox {
                     //TODO add cover here
                 }
+            }
+        }
+    }
+
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
+        match msg {
+            DashboardIn::SearchChanged(search) => {
+                // unimplemented!("search in dashboard"); //TODO implement
             }
         }
     }

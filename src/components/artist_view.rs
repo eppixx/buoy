@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self,
@@ -28,6 +29,7 @@ pub struct ArtistView {
 pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
     Cover(CoverOut),
+    SearchChanged(String),
 }
 
 #[derive(Debug)]
@@ -158,6 +160,24 @@ impl relm4::Component for ArtistView {
                 }
             },
             ArtistViewIn::Cover(msg) => match msg {},
+            ArtistViewIn::SearchChanged(search) => {
+                self.albums.set_filter_func(move |element| {
+                    use glib::object::Cast;
+
+                    // get the Label of the FlowBoxChild
+                    let button = element.first_child().unwrap();
+                    let bo = button.first_child().unwrap();
+                    let cover = bo.first_child().unwrap();
+                    let title_view = cover.next_sibling().unwrap();
+                    let title = title_view.first_child().unwrap();
+                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+
+                    //actual matching
+                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                    let score = matcher.fuzzy_match(&title.text(), &search);
+                    score.is_some()
+                });
+            }
         }
     }
 

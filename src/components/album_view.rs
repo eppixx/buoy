@@ -44,6 +44,7 @@ pub enum AlbumViewOut {
 pub enum AlbumViewIn {
     AlbumTracks,
     Cover(CoverOut),
+    SearchChanged(String),
 }
 
 #[derive(Debug)]
@@ -204,6 +205,9 @@ impl relm4::Component for AlbumView {
         match msg {
             AlbumViewIn::AlbumTracks => {} //do nothing
             AlbumViewIn::Cover(msg) => match msg {},
+            AlbumViewIn::SearchChanged(search) => {
+                // unimplemented!("search in AlbumView"); //TODO implemenmt
+            }
         }
     }
 

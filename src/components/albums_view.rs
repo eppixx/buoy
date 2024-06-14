@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self,
@@ -7,7 +8,6 @@ use relm4::{
     },
     ComponentController,
 };
-use fuzzy_matcher::FuzzyMatcher;
 
 use super::album_element::AlbumElementOut;
 use crate::{
