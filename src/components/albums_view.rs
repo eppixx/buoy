@@ -7,6 +7,7 @@ use relm4::{
     },
     ComponentController,
 };
+use fuzzy_matcher::FuzzyMatcher;
 
 use super::album_element::AlbumElementOut;
 use crate::{
@@ -28,6 +29,7 @@ pub enum AlbumsViewOut {
 #[derive(Debug)]
 pub enum AlbumsViewIn {
     AlbumElement(AlbumElementOut),
+    SearchChanged(String),
 }
 
 #[relm4::component(pub)]
@@ -97,6 +99,24 @@ impl relm4::component::Component for AlbumsView {
                     sender.output(AlbumsViewOut::Clicked(clicked)).unwrap()
                 }
             },
+            AlbumsViewIn::SearchChanged(search) => {
+                self.albums.set_filter_func(move |element| {
+                    use glib::object::Cast;
+
+                    // get the Label of the FlowBoxChild
+                    let button = element.first_child().unwrap();
+                    let bo = button.first_child().unwrap();
+                    let cover = bo.first_child().unwrap();
+                    let title_view = cover.next_sibling().unwrap();
+                    let title = title_view.first_child().unwrap();
+                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+
+                    //actual matching
+                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                    let score = matcher.fuzzy_match(&title.text(), &search);
+                    score.is_some()
+                });
+            }
         }
     }
 }
