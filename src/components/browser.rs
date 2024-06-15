@@ -238,7 +238,7 @@ impl relm4::SimpleComponent for Browser {
             }
             BrowserIn::Dashboard(output) => {
                 match output {
-                    _ => unimplemented!(),
+                    _ => {},
                 }
                 //TODO react to output
             }
