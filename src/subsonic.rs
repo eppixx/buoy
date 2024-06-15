@@ -63,7 +63,6 @@ impl Subsonic {
                 }
                 _ => HashMap::default(),
             };
-            tracing::error!("len of cache: {}", cache.len());
             result.cached_images = cache;
         }
         result.covers = result
@@ -82,7 +81,7 @@ impl Subsonic {
                 }
             })
             .collect::<HashMap<String, Option<gtk::Image>>>();
-        tracing::error!("len of pixbuf: {}", result.covers.len());
+        tracing::info!("loaded {} covers from local chache", result.covers.len());
 
         let ids: Vec<String> = result
             .album_list

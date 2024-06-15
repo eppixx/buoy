@@ -650,7 +650,7 @@ impl relm4::component::AsyncComponent for App {
     }
 
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        tracing::error!("shutdown called");
+        tracing::info!("shutdown called");
         self.playback.shutdown().unwrap();
 
         let mut settings = Settings::get().lock().unwrap();
