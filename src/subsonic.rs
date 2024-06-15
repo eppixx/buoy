@@ -1,14 +1,12 @@
 use futures::StreamExt;
-use relm4::gtk;
 use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, io::Read};
 
-use crate::{client::Client, subsonic_cover::SubsonicCovers};
+use crate::{client::Client, subsonic_cover, subsonic_cover::SubsonicCovers};
 
 const PREFIX: &str = "Buoy";
 const MUSIC_INFOS: &str = "Music-Infos";
-const COVER_CACHE: &str = "Covers";
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Subsonic {
@@ -16,11 +14,7 @@ pub struct Subsonic {
     album_list: Vec<submarine::data::Child>,
     // scan_status: submarine::data::ScanStatus,
     #[serde(skip)]
-    covers: HashMap<String, Option<gtk::Image>>,
-    #[serde(skip)]
-    cached_images: HashMap<String, Option<Vec<u8>>>,
-    #[serde(skip)]
-    pub coverss: SubsonicCovers,
+    coverss: SubsonicCovers,
 }
 
 impl Subsonic {
@@ -48,40 +42,6 @@ impl Subsonic {
         file.read_to_string(&mut content)?;
         tracing::info!("loaded subsonic cache");
         let mut result = toml::from_str::<Self>(&content)?;
-        {
-            let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
-            let cache_path = xdg_dirs
-                .place_cache_file(COVER_CACHE)
-                .expect("cannot create cache directory");
-
-            let cache = match std::fs::File::open(cache_path) {
-                Ok(mut file) => {
-                    // load file content
-                    let mut content = vec![];
-                    file.read_to_end(&mut content).unwrap();
-                    postcard::from_bytes::<HashMap<String, Option<Vec<u8>>>>(&content).unwrap()
-                }
-                _ => HashMap::default(),
-            };
-            result.cached_images = cache;
-        }
-        result.covers = result
-            .cached_images
-            .iter()
-            .map(|(id, b)| match b {
-                None => (id.into(), None),
-                Some(b) => {
-                    let bytes = gtk::glib::Bytes::from(b);
-                    let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
-                    match gtk::gdk_pixbuf::Pixbuf::from_stream(&stream, gtk::gio::Cancellable::NONE)
-                    {
-                        Ok(pixbuf) => (id.into(), Some(gtk::Image::from_pixbuf(Some(&pixbuf)))),
-                        _ => (id.into(), None),
-                    }
-                }
-            })
-            .collect::<HashMap<String, Option<gtk::Image>>>();
-        tracing::info!("loaded {} covers from local chache", result.covers.len());
 
         let ids: Vec<String> = result
             .album_list
@@ -135,12 +95,9 @@ impl Subsonic {
         let mut result = Self {
             artists,
             album_list,
-            cached_images: HashMap::default(),
-            covers: HashMap::default(),
             coverss: SubsonicCovers::default(),
         };
         result.coverss.work(vec![]).await;
-        result.cached_images = result.load_all_covers().await;
 
         tracing::info!("finished loading subsonic info");
         Ok(result)
@@ -156,12 +113,6 @@ impl Subsonic {
         std::fs::write(cache_path, cache).unwrap();
 
         tracing::info!("saving cover cache");
-        let cache = postcard::to_allocvec(&self.cached_images).unwrap();
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
-        let cache_path = xdg_dirs
-            .place_cache_file(COVER_CACHE)
-            .expect("cannot create cache directory");
-        std::fs::write(cache_path, cache).unwrap();
 
         Ok(())
     }
@@ -174,12 +125,14 @@ impl Subsonic {
         &self.album_list
     }
 
-    pub fn cover(&self, id: impl AsRef<str>) -> Option<&gtk::Image> {
-        match self.covers.get(id.as_ref()) {
-            None => None,
-            Some(None) => None,
-            Some(pix) => pix.as_ref(),
-        }
+    pub fn cover(&mut self, id: &str) -> subsonic_cover::Response {
+        self.coverss.cover(id)
+    }
+
+    pub fn delete_cache(&mut self) -> anyhow::Result<()> {
+        tracing::error!("implement"); //TODO
+
+        Ok(())
     }
 
     pub async fn load_all_covers(&mut self) -> HashMap<String, Option<Vec<u8>>> {

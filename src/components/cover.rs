@@ -111,9 +111,9 @@ impl relm4::Component for Cover {
                 }
             },
             CoverIn::LoadImage(None) => self.stack.set_visible_child_name("stock"),
-            CoverIn::LoadImage(Some(id)) => sender.input(CoverIn::ChangeImage(
-                self.subsonic.borrow_mut().coverss.cover(&id),
-            )),
+            CoverIn::LoadImage(Some(id)) => {
+                sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)))
+            }
             CoverIn::LoadId(None) => self.stack.set_visible_child_name("stock"),
             CoverIn::LoadId(Some(Id::Song(id))) => sender.oneshot_command(async move {
                 let client = Client::get().unwrap();
@@ -171,9 +171,9 @@ impl relm4::Component for Cover {
         match message {
             CoverCmd::ChangeImage(id) => match id {
                 None => self.stack.set_visible_child_name("stock"),
-                Some(id) => sender.input(CoverIn::ChangeImage(
-                    self.subsonic.borrow_mut().coverss.cover(&id),
-                )),
+                Some(id) => {
+                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)))
+                }
             },
             CoverCmd::ErrorOccured(title) => {
                 self.stack.set_visible_child_name("stock");

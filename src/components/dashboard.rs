@@ -8,7 +8,6 @@ pub struct Dashboard {}
 
 #[derive(Debug)]
 pub enum DashboardOut {
-    Entered,
 }
 
 #[derive(Debug)]
@@ -25,12 +24,10 @@ impl relm4::SimpleComponent for Dashboard {
     fn init(
         _init: Self::Init,
         root: Self::Root,
-        sender: relm4::ComponentSender<Self>,
+        _sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Dashboard::default();
         let widgets = view_output!();
-
-        _ = sender.output(DashboardOut::Entered);
 
         relm4::ComponentParts { model, widgets }
     }

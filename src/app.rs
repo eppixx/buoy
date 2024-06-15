@@ -240,7 +240,7 @@ impl relm4::component::AsyncComponent for App {
         let app = application.clone();
         let quit_action: relm4::actions::RelmAction<QuitAction> =
             relm4::actions::RelmAction::new_stateless(move |_| {
-                tracing::error!("quit called");
+                tracing::info!("quit called");
                 app.quit();
             });
 
@@ -586,6 +586,17 @@ impl relm4::component::AsyncComponent for App {
                 self.equalizer_btn.set_sensitive(false);
                 self.volume_btn.set_sensitive(false);
             }
+            AppIn::DeleteCache => {
+                if let Err(e) = self.subsonic.borrow_mut().delete_cache() {
+                    sender.input(AppIn::DisplayToast(format!(
+                        "error while deleting cache: {e:?}"
+                    )));
+                } else {
+                    sender.input(AppIn::DisplayToast(String::from(
+                        "Deleted cache\nPlease restart to reload the cache",
+                    )));
+                }
+            }
             AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
                     // update playcontrol
@@ -629,7 +640,6 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::QueueNotEmpty => self.play_controls.emit(PlayControlIn::Enable),
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },
-            AppIn::DeleteCache => todo!(),
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
