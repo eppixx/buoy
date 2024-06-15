@@ -239,7 +239,7 @@ impl relm4::SimpleComponent for Browser {
             }
             BrowserIn::Dashboard(output) => {
                 match output {
-                    _ => {},
+                    _ => {}
                 }
                 //TODO react to output
             }
@@ -293,7 +293,9 @@ impl relm4::SimpleComponent for Browser {
                 AlbumViewOut::InsertAfterCurrentPLayed(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
-                AlbumViewOut::DisplayToast(title) => sender.output(BrowserOut::DisplayToast(title)).expect("sending failed"),
+                AlbumViewOut::DisplayToast(title) => sender
+                    .output(BrowserOut::DisplayToast(title))
+                    .expect("sending failed"),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
