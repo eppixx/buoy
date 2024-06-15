@@ -35,6 +35,7 @@ pub enum ArtistViewIn {
 #[derive(Debug)]
 pub enum ArtistViewOut {
     AlbumClicked(AlbumElementInit),
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -158,8 +159,15 @@ impl relm4::Component for ArtistView {
                 AlbumElementOut::Clicked(id) => {
                     sender.output(ArtistViewOut::AlbumClicked(id)).unwrap()
                 }
+                AlbumElementOut::DisplayToast(title) => sender
+                    .output(ArtistViewOut::DisplayToast(title))
+                    .expect("sending failed"),
             },
-            ArtistViewIn::Cover(msg) => match msg {},
+            ArtistViewIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(title) => sender
+                    .output(ArtistViewOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
             ArtistViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
                     use glib::object::Cast;

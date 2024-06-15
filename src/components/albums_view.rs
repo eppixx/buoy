@@ -24,6 +24,7 @@ pub struct AlbumsView {
 #[derive(Debug)]
 pub enum AlbumsViewOut {
     Clicked(AlbumElementInit),
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -98,6 +99,9 @@ impl relm4::component::Component for AlbumsView {
                 AlbumElementOut::Clicked(clicked) => {
                     sender.output(AlbumsViewOut::Clicked(clicked)).unwrap()
                 }
+                AlbumElementOut::DisplayToast(title) => sender
+                    .output(AlbumsViewOut::DisplayToast(title))
+                    .expect("sending failed"),
             },
             AlbumsViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {

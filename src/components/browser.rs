@@ -85,6 +85,7 @@ pub enum BrowserOut {
     AppendToQueue(Droppable),
     InsertAfterCurrentInQueue(Droppable),
     BackButtonSensitivity(bool),
+    DisplayToast(String),
 }
 
 #[relm4::component(pub)]
@@ -263,6 +264,9 @@ impl relm4::SimpleComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
+                AlbumsViewOut::DisplayToast(title) => sender
+                    .output(BrowserOut::DisplayToast(title))
+                    .expect("sending failed"),
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
@@ -289,6 +293,7 @@ impl relm4::SimpleComponent for Browser {
                 AlbumViewOut::InsertAfterCurrentPLayed(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
+                AlbumViewOut::DisplayToast(title) => sender.output(BrowserOut::DisplayToast(title)).expect("sending failed"),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
@@ -309,8 +314,11 @@ impl relm4::SimpleComponent for Browser {
                         .set_child(Some(self.history_widget.last().unwrap().widget()));
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
-                        .expect("main window gone");
+                        .expect("sending failed");
                 }
+                ArtistViewOut::DisplayToast(title) => sender
+                    .output(BrowserOut::DisplayToast(title))
+                    .expect("sending failed"),
             },
         }
     }

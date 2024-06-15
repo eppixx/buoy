@@ -46,11 +46,14 @@ impl std::fmt::Debug for Image {
 }
 
 #[derive(Debug)]
-pub enum CoverOut {}
+pub enum CoverOut {
+    DisplayToast(String),
+}
 
 #[derive(Debug)]
 pub enum CoverCmd {
     ChangeImage(Option<String>),
+    ErrorOccured(String),
 }
 
 #[relm4::component(pub)]
@@ -115,11 +118,13 @@ impl relm4::Component for Cover {
             CoverIn::LoadId(Some(Id::Song(id))) => sender.oneshot_command(async move {
                 let client = Client::get().unwrap();
                 match client.get_song(id).await {
-                    Err(e) => CoverCmd::ChangeImage(None),
+                    Err(e) => CoverCmd::ErrorOccured(format!("could not get song: {e:?}")),
                     Ok(child) => match child.album_id {
                         None => CoverCmd::ChangeImage(child.cover_art),
                         Some(album_id) => match client.get_album(album_id).await {
-                            Err(e) => CoverCmd::ChangeImage(child.cover_art),
+                            Err(e) => {
+                                CoverCmd::ErrorOccured(format!("could not fetch album: {e:?}"))
+                            }
                             Ok(album) => CoverCmd::ChangeImage(album.base.cover_art),
                         },
                     },
@@ -129,7 +134,7 @@ impl relm4::Component for Cover {
                 sender.oneshot_command(async move {
                     let client = Client::get().unwrap();
                     match client.get_album(id).await {
-                        Err(e) => CoverCmd::ChangeImage(None),
+                        Err(e) => CoverCmd::ErrorOccured(format!("could not fetch album: {e:?}")),
                         Ok(album) => CoverCmd::ChangeImage(album.base.cover_art),
                     }
                 });
@@ -138,7 +143,7 @@ impl relm4::Component for Cover {
                 sender.oneshot_command(async move {
                     let client = Client::get().unwrap();
                     match client.get_artist(id).await {
-                        Err(e) => CoverCmd::ChangeImage(None),
+                        Err(e) => CoverCmd::ErrorOccured(format!("could not fetch artist: {e:?}")),
                         Ok(artist) => CoverCmd::ChangeImage(artist.base.cover_art),
                     }
                 });
@@ -147,7 +152,9 @@ impl relm4::Component for Cover {
                 sender.oneshot_command(async move {
                     let client = Client::get().unwrap();
                     match client.get_playlist(id).await {
-                        Err(e) => CoverCmd::ChangeImage(None),
+                        Err(e) => {
+                            CoverCmd::ErrorOccured(format!("could not fetch playlist: {e:?}"))
+                        }
                         Ok(playlist) => CoverCmd::ChangeImage(playlist.base.cover_art),
                     }
                 });
@@ -168,6 +175,12 @@ impl relm4::Component for Cover {
                     self.subsonic.borrow_mut().coverss.cover(&id),
                 )),
             },
+            CoverCmd::ErrorOccured(title) => {
+                self.stack.set_visible_child_name("stock");
+                sender
+                    .output(CoverOut::DisplayToast(title))
+                    .expect("sending failed");
+            }
         }
     }
 }

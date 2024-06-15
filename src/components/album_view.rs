@@ -38,6 +38,7 @@ pub enum AlbumViewInit {
 pub enum AlbumViewOut {
     AppendAlbum(Droppable),
     InsertAfterCurrentPLayed(Droppable),
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -199,12 +200,16 @@ impl relm4::Component for AlbumView {
     fn update(
         &mut self,
         msg: Self::Input,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
             AlbumViewIn::AlbumTracks => {} //do nothing
-            AlbumViewIn::Cover(msg) => match msg {},
+            AlbumViewIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(title) => sender
+                    .output(AlbumViewOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
             AlbumViewIn::SearchChanged(search) => {
                 // unimplemented!("search in AlbumView"); //TODO implemenmt
             }
@@ -218,9 +223,10 @@ impl relm4::Component for AlbumView {
         _root: &Self::Root,
     ) {
         match msg {
-            AlbumViewCmd::LoadedAlbum(Err(_e)) => {
-                //TODO error handling
-                tracing::error!("No child on server found");
+            AlbumViewCmd::LoadedAlbum(Err(e)) => {
+                sender
+                    .output(AlbumViewOut::DisplayToast(format!("could not load: {e:?}")))
+                    .expect("sending failed");
             }
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 // update dragSource

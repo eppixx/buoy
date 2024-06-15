@@ -83,6 +83,7 @@ pub enum QueueIn {
     },
     Append(Droppable),
     InsertAfterCurrentlyPlayed(Droppable),
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -91,6 +92,7 @@ pub enum QueueOut {
     Stop,
     QueueEmpty,
     QueueNotEmpty,
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -141,6 +143,7 @@ impl relm4::Component for Queue {
                     QueueSongOut::MoveBelow { src, dest } => QueueIn::MoveBelow { src, dest },
                     QueueSongOut::DropAbove { src, dest } => QueueIn::DropAbove { src, dest },
                     QueueSongOut::DropBelow { src, dest } => QueueIn::DropBelow { src, dest },
+                    QueueSongOut::DisplayToast(title) => QueueIn::DisplayToast(title),
                 }),
             loading_queue: false,
             playing_index: None,
@@ -599,6 +602,9 @@ impl relm4::Component for Queue {
                     }
                 }
             }
+            QueueIn::DisplayToast(title) => sender
+                .output(QueueOut::DisplayToast(title))
+                .expect("sending failed"),
         }
     }
 
@@ -609,7 +615,13 @@ impl relm4::Component for Queue {
         _root: &Self::Root,
     ) {
         match message {
-            QueueCmd::FetchedAppendItems(Err(e)) => {} //TODO error handling
+            QueueCmd::FetchedAppendItems(Err(e)) => {
+                sender
+                    .output(QueueOut::DisplayToast(format!(
+                        "Could not append items: {e:?}",
+                    )))
+                    .expect("sending failed");
+            }
             QueueCmd::FetchedAppendItems(Ok(children)) => {
                 for child in children {
                     self.songs.guard().push_back((self.subsonic.clone(), child));
@@ -620,7 +632,13 @@ impl relm4::Component for Queue {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
             }
-            QueueCmd::FetchedInsertItems(Err(e)) => {} //TODO error handling
+            QueueCmd::FetchedInsertItems(Err(e)) => {
+                sender
+                    .output(QueueOut::DisplayToast(format!(
+                        "Could not insert items: {e:?}",
+                    )))
+                    .expect("sending failed");
+            }
             QueueCmd::FetchedInsertItems(Ok(children)) => {
                 for (i, child) in children.iter().enumerate() {
                     let current = match &self.playing_index {

@@ -3,7 +3,7 @@ use relm4::gtk::{
     prelude::{ButtonExt, GridExt, OrientableExt, WidgetExt},
 };
 
-use crate::factory::album_song::AlbumSong;
+use crate::factory::album_song::{AlbumSong, AlbumSongOut};
 
 #[derive(Debug)]
 pub struct AlbumTracks {
@@ -14,6 +14,12 @@ pub struct AlbumTracks {
 #[derive(Debug)]
 pub enum AlbumTracksIn {
     Sort(Column),
+    DisplayToast(String),
+}
+
+#[derive(Debug)]
+pub enum AlbumTracksOut {
+    DisplayToast(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,7 +35,7 @@ pub enum Column {
 impl relm4::SimpleComponent for AlbumTracks {
     type Init = Vec<submarine::data::Child>;
     type Input = AlbumTracksIn;
-    type Output = ();
+    type Output = AlbumTracksOut;
 
     fn init(
         init: Self::Init,
@@ -39,7 +45,9 @@ impl relm4::SimpleComponent for AlbumTracks {
         let mut model = Self {
             songs: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
-                .detach(),
+                .forward(sender.input_sender(), |output| match output {
+                    AlbumSongOut::DisplayToast(title) => AlbumTracksIn::DisplayToast(title),
+                }),
             size_groups: [
                 gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
                 gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
@@ -121,10 +129,13 @@ impl relm4::SimpleComponent for AlbumTracks {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         tracing::error!("msg in tracks");
         match msg {
-            _ => {} //TODO sort
+            AlbumTracksIn::DisplayToast(title) => sender
+                .output(AlbumTracksOut::DisplayToast(title))
+                .expect("sending failed"),
+            AlbumTracksIn::Sort(_) => {} //TODO sort
         }
     }
 }

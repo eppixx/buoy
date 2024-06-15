@@ -29,6 +29,7 @@ pub enum AlbumElementIn {
 #[derive(Debug)]
 pub enum AlbumElementOut {
     Clicked(AlbumElementInit),
+    DisplayToast(String),
 }
 
 #[derive(Debug, Clone)]
@@ -139,9 +140,13 @@ impl relm4::SimpleComponent for AlbumElement {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            AlbumElementIn::DescriptiveCover(msg) => match msg {},
+            AlbumElementIn::DescriptiveCover(msg) => match msg {
+                DescriptiveCoverOut::DisplayToast(title) => sender
+                    .output(AlbumElementOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
         }
     }
 }

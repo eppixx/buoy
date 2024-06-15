@@ -15,7 +15,7 @@ pub struct Playback {
     equalizer: gstreamer::Element,
 }
 
-const TICK: u64 = 250;
+const TICK: u64 = 250; // update rate for Seekbar
 
 #[derive(Debug)]
 pub enum PlaybackOut {
@@ -24,10 +24,7 @@ pub enum PlaybackOut {
 }
 
 impl Playback {
-    pub fn new(
-        sender: &async_channel::Sender<PlaybackOut>,
-        // settings: &Arc<RwLock<settings::Settings>>,
-    ) -> anyhow::Result<Self> {
+    pub fn new(sender: &async_channel::Sender<PlaybackOut>) -> anyhow::Result<Self> {
         gst::init()?;
 
         // Create the empty pipeline
@@ -83,11 +80,11 @@ impl Playback {
             for msg in bus.iter_timed(gst::ClockTime::NONE) {
                 use gstreamer::MessageView;
                 match msg.view() {
-                    MessageView::Eos(..) => {
-                        send.try_send(PlaybackOut::TrackEnd);
-                    }
+                    MessageView::Eos(..) => send
+                        .try_send(PlaybackOut::TrackEnd)
+                        .expect("sending failed"),
                     MessageView::StreamStart(..) => {
-                        send.try_send(PlaybackOut::Seek(0));
+                        send.try_send(PlaybackOut::Seek(0)).expect("sending failed");
                     }
                     _ => {}
                 }
@@ -115,7 +112,8 @@ impl Playback {
                     Some(clock) => clock.seconds() as i64,
                     None => 0,
                 };
-                send.try_send(PlaybackOut::Seek(seconds * 1000));
+                send.try_send(PlaybackOut::Seek(seconds * 1000))
+                    .expect("sending failed");
                 stamp.replace(current);
             }
 

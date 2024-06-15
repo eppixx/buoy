@@ -27,7 +27,9 @@ pub enum PlayInfoIn {
 }
 
 #[derive(Debug)]
-pub enum PlayInfoOut {}
+pub enum PlayInfoOut {
+    DisplayToast(String),
+}
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for PlayInfo {
@@ -85,7 +87,7 @@ impl relm4::SimpleComponent for PlayInfo {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             PlayInfoIn::NewState(child) => match *child {
                 None => {
@@ -102,7 +104,11 @@ impl relm4::SimpleComponent for PlayInfo {
                         .emit(CoverIn::LoadId(Some(Id::song(child.id.clone()))));
                 }
             },
-            PlayInfoIn::Cover(msg) => match msg {},
+            PlayInfoIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(title) => sender
+                    .output(PlayInfoOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
         }
     }
 }

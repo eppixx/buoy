@@ -65,6 +65,7 @@ pub enum AppIn {
     Queue(Box<QueueOut>),
     Browser(BrowserOut),
     PlayInfo(PlayInfoOut),
+    DisplayToast(String),
 }
 
 relm4::new_action_group!(WindowActionGroup, "win");
@@ -167,7 +168,11 @@ impl relm4::component::AsyncComponent for App {
                 Ok(url) => {
                     playback.set_track(url);
                 }
-                Err(_) => {} //TODO error handling
+                Err(e) => {
+                    sender.input(AppIn::DisplayToast(format!(
+                        "could not fetch stream url: {e:?}"
+                    )));
+                }
             }
             playback.pause().unwrap();
         }
@@ -529,7 +534,7 @@ impl relm4::component::AsyncComponent for App {
     async fn update(
         &mut self,
         msg: Self::Input,
-        _sender: relm4::AsyncComponentSender<Self>,
+        sender: relm4::AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
@@ -607,7 +612,11 @@ impl relm4::component::AsyncComponent for App {
                             }
                             self.playback.play().unwrap();
                         }
-                        Err(_) => {} //TODO error handling
+                        Err(e) => {
+                            sender.input(AppIn::DisplayToast(format!(
+                                "could not find song streaming url: {e:?}"
+                            )));
+                        }
                     }
                 }
                 QueueOut::Stop => {
@@ -618,6 +627,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 QueueOut::QueueEmpty => self.play_controls.emit(PlayControlIn::Disable),
                 QueueOut::QueueNotEmpty => self.play_controls.emit(PlayControlIn::Enable),
+                QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },
             AppIn::DeleteCache => todo!(),
             AppIn::Browser(msg) => match msg {
@@ -626,8 +636,16 @@ impl relm4::component::AsyncComponent for App {
                     self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop))
                 }
                 BrowserOut::BackButtonSensitivity(status) => self.back_btn.set_sensitive(status),
+                BrowserOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },
-            AppIn::PlayInfo(msg) => match msg {},
+            AppIn::PlayInfo(msg) => match msg {
+                PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
+            },
+            AppIn::DisplayToast(title) => {
+                tracing::error!(title);
+                self.toasts.set_title(&title);
+                self.toasts.send_notification();
+            }
         }
     }
 
@@ -655,6 +673,8 @@ impl relm4::component::AsyncComponent for App {
         settings.save();
 
         //save subsonic cache
-        self.subsonic.borrow().save();
+        if let Err(e) = self.subsonic.borrow().save() {
+            tracing::error!("error while saving subsonic: {e:?}");
+        }
     }
 }

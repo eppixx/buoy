@@ -60,6 +60,7 @@ pub enum QueueSongOut {
         src: Vec<submarine::data::Child>,
         dest: DynamicIndex,
     },
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -271,10 +272,10 @@ impl FactoryComponent for QueueSong {
                         if !(state.contains(gdk::ModifierType::SHIFT_MASK)
                              || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
                             // normal click
-                            sender.output(QueueSongOut::Clicked(index.clone()));
+                            sender.output(QueueSongOut::Clicked(index.clone())).expect("sending failed");
                         } else if state.contains(gdk::ModifierType::SHIFT_MASK) {
                             // shift click
-                            sender.output(QueueSongOut::ShiftClicked(index.clone()));
+                            sender.output(QueueSongOut::ShiftClicked(index.clone())).expect("sending failed");
                         }
                     }
                     else if n == 2 {
@@ -287,9 +288,9 @@ impl FactoryComponent for QueueSong {
             add_controller = gtk::EventControllerKey {
                 connect_key_pressed[sender] => move |_widget, key, _code, _state| {
                     if key == gtk::gdk::Key::Delete {
-                        sender.output(QueueSongOut::Remove);
+                        sender.output(QueueSongOut::Remove).expect("sending failed");
                     }
-                                        gtk::glib::Propagation::Stop
+                    gtk::glib::Propagation::Stop
                 }
             },
         }
@@ -299,10 +300,12 @@ impl FactoryComponent for QueueSong {
         match message {
             QueueSongIn::Activated => {
                 self.new_play_state(&PlayState::Play);
-                sender.output(QueueSongOut::Activated(
-                    self.index.clone(),
-                    Box::new(self.info.clone()),
-                ));
+                sender
+                    .output(QueueSongOut::Activated(
+                        self.index.clone(),
+                        Box::new(self.info.clone()),
+                    ))
+                    .expect("sending failed");
             }
             QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
@@ -416,15 +419,19 @@ impl FactoryComponent for QueueSong {
                     }
                 };
                 if y < widget_height as f64 * 0.5f64 {
-                    sender.output(QueueSongOut::DropAbove {
-                        src: songs,
-                        dest: self.index.clone(),
-                    });
+                    sender
+                        .output(QueueSongOut::DropAbove {
+                            src: songs,
+                            dest: self.index.clone(),
+                        })
+                        .expect("sending failed");
                 } else {
-                    sender.output(QueueSongOut::DropBelow {
-                        src: songs,
-                        dest: self.index.clone(),
-                    });
+                    sender
+                        .output(QueueSongOut::DropBelow {
+                            src: songs,
+                            dest: self.index.clone(),
+                        })
+                        .expect("sending failed");
                 }
             }
             QueueSongIn::MoveSong { index, y } => {
@@ -432,38 +439,65 @@ impl FactoryComponent for QueueSong {
 
                 let widget_height = self.root_widget.height();
                 if y < widget_height as f64 * 0.5f64 {
-                    sender.output(QueueSongOut::MoveAbove {
-                        src: index.0.clone(),
-                        dest: self.index.clone(),
-                    });
+                    sender
+                        .output(QueueSongOut::MoveAbove {
+                            src: index.0.clone(),
+                            dest: self.index.clone(),
+                        })
+                        .expect("sending failed");
                 } else {
-                    sender.output(QueueSongOut::MoveBelow {
-                        src: index.0.clone(),
-                        dest: self.index.clone(),
-                    });
+                    sender
+                        .output(QueueSongOut::MoveBelow {
+                            src: index.0.clone(),
+                            dest: self.index.clone(),
+                        })
+                        .expect("sending failed");
                 }
             }
-            QueueSongIn::Cover(msg) => match msg {},
+            QueueSongIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(title) => sender
+                    .output(QueueSongOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
         }
     }
 
     fn update_cmd(&mut self, message: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
         match message {
-            QueueSongCmd::Favorited(Err(e)) => {} //TODO error handling
+            QueueSongCmd::Favorited(Err(e)) => sender
+                .output(QueueSongOut::DisplayToast(format!(
+                    "favoriting failed: {}",
+                    e
+                )))
+                .expect("sending failed"),
             QueueSongCmd::Favorited(Ok(state)) => self.favorited = state,
-            QueueSongCmd::InsertChildrenAbove(Err(e)) => {} //TODO error handling
+            QueueSongCmd::InsertChildrenAbove(Err(e)) => sender
+                .output(QueueSongOut::DisplayToast(format!(
+                    "moving song failed: {}",
+                    e
+                )))
+                .expect("sending failed"),
             QueueSongCmd::InsertChildrenAbove(Ok((index, songs))) => {
-                sender.output(QueueSongOut::DropAbove {
-                    src: songs,
-                    dest: index,
-                });
+                sender
+                    .output(QueueSongOut::DropAbove {
+                        src: songs,
+                        dest: index,
+                    })
+                    .expect("sending failed");
             }
-            QueueSongCmd::InsertChildrenBelow(Err(e)) => {} //TODO error handling
+            QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
+                .output(QueueSongOut::DisplayToast(format!(
+                    "moving song failed: {}",
+                    e
+                )))
+                .expect("sending failed"),
             QueueSongCmd::InsertChildrenBelow(Ok((index, songs))) => {
-                sender.output(QueueSongOut::DropBelow {
-                    src: songs,
-                    dest: index,
-                });
+                sender
+                    .output(QueueSongOut::DropBelow {
+                        src: songs,
+                        dest: index,
+                    })
+                    .expect("sending failed");
             }
         }
     }

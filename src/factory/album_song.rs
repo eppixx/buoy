@@ -25,7 +25,7 @@ pub enum AlbumSongIn {
 
 #[derive(Debug)]
 pub enum AlbumSongOut {
-    //
+    DisplayToast(String),
 }
 
 #[derive(Debug)]
@@ -39,7 +39,6 @@ impl relm4::factory::FactoryComponent for AlbumSong {
     type Input = AlbumSongIn;
     type Output = AlbumSongOut;
     type ParentWidget = gtk::ListBox;
-    // type ParentInput = AlbumTracksIn;
     type Widgets = AlbumSongWidgets;
     type CommandOutput = AlbumSongCmd;
 
@@ -140,9 +139,15 @@ impl relm4::factory::FactoryComponent for AlbumSong {
         }
     }
 
-    fn update_cmd(&mut self, msg: Self::CommandOutput, _sender: relm4::FactorySender<Self>) {
+    fn update_cmd(&mut self, msg: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
         match msg {
-            AlbumSongCmd::Favorited(Err(e)) => {} //TODO error handling
+            AlbumSongCmd::Favorited(Err(e)) => {
+                sender
+                    .output(AlbumSongOut::DisplayToast(format!(
+                        "Could not favorite: {e:?}",
+                    )))
+                    .expect("sending failed");
+            }
             AlbumSongCmd::Favorited(Ok(state)) => self.favorited = state,
         }
     }

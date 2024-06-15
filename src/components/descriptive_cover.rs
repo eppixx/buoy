@@ -51,7 +51,9 @@ pub struct DescriptiveCover {
 }
 
 #[derive(Debug)]
-pub enum DescriptiveCoverOut {}
+pub enum DescriptiveCoverOut {
+    DisplayToast(String),
+}
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for DescriptiveCover {
@@ -104,7 +106,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             DescriptiveCoverIn::SetTitle(title) => {
                 if let Some(title) = title {
@@ -130,7 +132,11 @@ impl relm4::SimpleComponent for DescriptiveCover {
                     self.subtitle.set_child(None::<gtk::Label>.as_ref());
                 }
             }
-            DescriptiveCoverIn::Cover(msg) => match msg {},
+            DescriptiveCoverIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(title) => sender
+                    .output(DescriptiveCoverOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
         }
     }
 }
