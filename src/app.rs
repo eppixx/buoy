@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use granite::prelude::ToastExt;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     actions::AccelsPlus,
@@ -48,6 +49,7 @@ pub struct App {
     equalizer_btn: gtk::MenuButton,
     volume_btn: gtk::VolumeButton,
     config_btn: gtk::MenuButton,
+    toasts: granite::Toast,
 }
 
 #[derive(Debug)]
@@ -216,6 +218,7 @@ impl relm4::component::AsyncComponent for App {
             volume_btn: gtk::VolumeButton::default(),
             equalizer_btn: gtk::MenuButton::default(),
             config_btn: gtk::MenuButton::default(),
+            toasts: granite::Toast::default(),
         };
 
         let browser_sender = model.browser.sender().clone();
@@ -509,7 +512,11 @@ impl relm4::component::AsyncComponent for App {
                                 },
                             },
 
-                            model.browser.widget(),
+                            gtk::Overlay {
+                                set_child: Some(model.browser.widget()),
+                                add_overlay: &model.toasts.clone(),
+                            }
+
                         }
                     },
                 } -> {
