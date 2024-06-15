@@ -237,6 +237,9 @@ impl relm4::SimpleComponent for Browser {
                 //TODO
             }
             BrowserIn::Dashboard(output) => {
+                match output {
+                    _ => unimplemented!(),
+                }
                 //TODO react to output
             }
             BrowserIn::AlbumsView(msg) => match msg {

@@ -98,9 +98,9 @@ impl relm4::SimpleComponent for Dashboard {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
-            DashboardIn::SearchChanged(search) => {
+            DashboardIn::SearchChanged(_search) => {
                 // unimplemented!("search in dashboard"); //TODO implement
             }
         }
