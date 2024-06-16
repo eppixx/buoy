@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use granite::prelude::ToastExt;
+use granite::prelude::{SettingsExt, ToastExt};
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     actions::AccelsPlus,
@@ -118,6 +118,19 @@ impl relm4::component::AsyncComponent for App {
     ) -> relm4::component::AsyncComponentParts<Self> {
         let (playback_sender, receiver) = async_channel::unbounded();
         let mut playback = Playback::new(&playback_sender).unwrap();
+
+        // decide if dark or white style; also watch if style changes
+        let gtk_settings = gtk::Settings::default().expect("Unable to get the GtkSettings object");
+        let granite_settings =
+            granite::Settings::default().expect("Unable to get the Granite settings object");
+        gtk_settings.set_gtk_application_prefer_dark_theme(
+            granite_settings.prefers_color_scheme() == granite::SettingsColorScheme::Dark,
+        );
+        granite_settings.connect_prefers_color_scheme_notify(move |granite_settings| {
+            gtk_settings.set_gtk_application_prefer_dark_theme(
+                granite_settings.prefers_color_scheme() == granite::SettingsColorScheme::Dark,
+            );
+        });
 
         // load from settings
         let (queue, queue_index, current_song, seekbar, controls) = {
