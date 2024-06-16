@@ -7,8 +7,7 @@ use relm4::gtk::{
 pub struct Dashboard {}
 
 #[derive(Debug)]
-pub enum DashboardOut {
-}
+pub enum DashboardOut {}
 
 #[derive(Debug)]
 pub enum DashboardIn {
