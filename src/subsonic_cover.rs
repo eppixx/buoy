@@ -6,7 +6,7 @@ use relm4::gtk;
 use crate::client::Client;
 
 const COVER_SIZE: Option<i32> = Some(200);
-const CONCURRENT_FETCH: usize = 300;
+const CONCURRENT_FETCH: usize = 100;
 
 #[derive(Default, Debug)]
 pub struct SubsonicCovers {
@@ -36,6 +36,7 @@ impl SubsonicCovers {
                 (id, cover)
             })
             .collect();
+        tracing::info!("start fetching {} covers", tasks.len());
 
         //buffer futures to not overwhelm server and client
         // based on: https://stackoverflow.com/questions/70871368/limiting-the-number-of-concurrent-futures-in-join-all
