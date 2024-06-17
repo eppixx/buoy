@@ -44,12 +44,19 @@ pub struct App {
 
     main_stack: gtk::Stack,
     back_btn: gtk::Button,
+    search_btn: gtk::ToggleButton,
     search_stack: gtk::Stack,
     search: gtk::SearchEntry,
     equalizer_btn: gtk::MenuButton,
     volume_btn: gtk::VolumeButton,
     config_btn: gtk::MenuButton,
     toasts: granite::Toast,
+}
+
+#[derive(Debug)]
+pub enum NavigationMode {
+    Normal,
+    Search,
 }
 
 #[derive(Debug)]
@@ -66,10 +73,12 @@ pub enum AppIn {
     Browser(BrowserOut),
     PlayInfo(PlayInfoOut),
     DisplayToast(String),
+    Navigation(NavigationMode),
 }
 
 relm4::new_action_group!(WindowActionGroup, "win");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
+relm4::new_stateless_action!(ActivateSearchAction, WindowActionGroup, "activate-search");
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for App {
@@ -231,6 +240,7 @@ impl relm4::component::AsyncComponent for App {
 
             main_stack: gtk::Stack::default(),
             back_btn: gtk::Button::default(),
+            search_btn: gtk::ToggleButton::default(),
             search_stack: gtk::Stack::default(),
             search: gtk::SearchEntry::default(),
             volume_btn: gtk::VolumeButton::default(),
@@ -240,9 +250,6 @@ impl relm4::component::AsyncComponent for App {
         };
 
         let browser_sender = model.browser.sender().clone();
-        let search_stack = model.search_stack.clone();
-        let search = model.search.clone();
-        let back_btn = model.back_btn.clone();
         let widgets = view_output!();
         tracing::info!("loaded main window");
 
@@ -256,9 +263,17 @@ impl relm4::component::AsyncComponent for App {
                 tracing::info!("quit called");
                 app.quit();
             });
+        application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
+        let search_btn = model.search_btn.clone();
+        let activate_search_action: relm4::actions::RelmAction<ActivateSearchAction> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                tracing::info!("activate search called");
+                search_btn.set_active(true);
+            });
 
         let mut group = relm4::actions::RelmActionGroup::<WindowActionGroup>::new();
         group.add_action(quit_action);
+        group.add_action(activate_search_action);
         group.register_for_widget(&widgets.main_window);
 
         //init widgets
@@ -393,23 +408,14 @@ impl relm4::component::AsyncComponent for App {
                                     set_halign: gtk::Align::Center,
                                     set_spacing: 15,
 
-                                    gtk::ToggleButton {
+                                    model.search_btn.clone() -> gtk::ToggleButton {
                                         add_css_class: "browser-navigation-button",
                                         set_icon_name: "system-search-symbolic",
 
-                                        connect_toggled[browser_sender] => move |button| {
+                                        connect_toggled[sender] => move |button| {
                                             match button.is_active() {
-                                                true => {
-                                                    browser_sender.emit(BrowserIn::SearchChanged(search.text().to_string()));
-                                                    search_stack.set_visible_child_name("search");
-                                                    search.grab_focus();
-                                                    back_btn.set_visible(false);
-                                                }
-                                                false => {
-                                                    search_stack.set_visible_child_name("navigation");
-                                                    browser_sender.emit(BrowserIn::SearchChanged(String::new()));
-                                                    back_btn.set_visible(true);
-                                                }
+                                                true => sender.input(AppIn::Navigation(NavigationMode::Search)),
+                                                false => sender.input(AppIn::Navigation(NavigationMode::Normal)),
                                             }
                                         }
                                     },
@@ -669,6 +675,18 @@ impl relm4::component::AsyncComponent for App {
                 tracing::error!(title);
                 self.toasts.set_title(&title);
                 self.toasts.send_notification();
+            }
+            AppIn::Navigation(NavigationMode::Normal) => {
+                self.browser.emit(BrowserIn::SearchChanged(String::new()));
+                self.search_stack.set_visible_child_name("navigation");
+                self.back_btn.set_visible(true);
+            }
+            AppIn::Navigation(NavigationMode::Search) => {
+                self.browser
+                    .emit(BrowserIn::SearchChanged(self.search.text().to_string()));
+                self.search_stack.set_visible_child_name("search");
+                self.search.grab_focus();
+                self.back_btn.set_visible(false);
             }
         }
     }
