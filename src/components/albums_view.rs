@@ -49,7 +49,7 @@ impl relm4::component::Component for AlbumsView {
         let widgets = view_output!();
 
         // add albums with cover and title
-        for album in init.borrow().albums().iter() {
+        for album in init.borrow().albums() {
             let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
                 .launch((
                     init.clone(),
@@ -97,7 +97,7 @@ impl relm4::component::Component for AlbumsView {
         match msg {
             AlbumsViewIn::AlbumElement(msg) => match msg {
                 AlbumElementOut::Clicked(clicked) => {
-                    sender.output(AlbumsViewOut::Clicked(clicked)).unwrap()
+                    sender.output(AlbumsViewOut::Clicked(clicked)).unwrap();
                 }
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(AlbumsViewOut::DisplayToast(title))

@@ -326,7 +326,7 @@ impl relm4::Component for Queue {
                         self.songs.widget().select_row(Some(&item));
                     }
                 } else {
-                    self.last_selected = Some(target)
+                    self.last_selected = Some(target);
                 }
             }
             QueueIn::Append(id) => {
@@ -391,7 +391,7 @@ impl relm4::Component for Queue {
                     Droppable::Id(_) => vec![], //TODO remove eventually
                 };
 
-                for song in songs.into_iter() {
+                for song in songs {
                     self.songs.guard().push_back((self.subsonic.clone(), song));
                 }
 
@@ -461,7 +461,7 @@ impl relm4::Component for Queue {
                     Droppable::Id(_) => vec![], //TODO remove eventually
                 };
 
-                for song in songs.into_iter() {
+                for song in songs {
                     self.songs.guard().push_back((self.subsonic.clone(), song));
                 }
 

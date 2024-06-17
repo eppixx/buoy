@@ -183,7 +183,7 @@ impl Playback {
 
     pub fn set_band(&self, band: usize, value: f64) {
         let value = value.clamp(-10.0, 10.0);
-        self.equalizer.set_property(&format!("band{}", band), value);
+        self.equalizer.set_property(&format!("band{band}"), value);
     }
 
     pub fn set_volume(&self, value: f64) {

@@ -157,7 +157,7 @@ impl relm4::Component for ArtistView {
         match msg {
             ArtistViewIn::AlbumElement(msg) => match msg {
                 AlbumElementOut::Clicked(id) => {
-                    sender.output(ArtistViewOut::AlbumClicked(id)).unwrap()
+                    sender.output(ArtistViewOut::AlbumClicked(id)).unwrap();
                 }
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(ArtistViewOut::DisplayToast(title))

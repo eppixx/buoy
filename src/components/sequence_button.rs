@@ -3,7 +3,7 @@ use relm4::gtk::{
     prelude::{BoxExt, ButtonExt, WidgetExt},
 };
 
-/// Intended to be use with a SequenceButton
+/// Intended to be use with a `SequenceButton`
 pub trait Sequence: std::fmt::Debug + 'static {
     /// returns icon name
     fn current(&self) -> &str;

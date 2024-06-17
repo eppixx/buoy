@@ -10,10 +10,10 @@ pub fn convert_for_label(time: i64) -> String {
 
     let mut result = String::new();
     if hours > 0 {
-        result.push_str(format!("{}:{:0>2}:{:0>2}", hours, minutes, seconds).as_str());
+        result.push_str(&format!("{hours}:{minutes:0>2}:{seconds:0>2}"));
         return result;
     }
-    result.push_str(format!("{}:{:0>2}", minutes, seconds).as_str());
+    result.push_str(&format!("{minutes}:{seconds:0>2}"));
     result
 }
 

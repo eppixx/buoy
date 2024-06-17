@@ -104,10 +104,7 @@ impl SimpleComponent for PlayControl {
             PlayControlIn::NewState(PlayState::Play) => {
                 self.play_btn.set_icon_name("media-playback-pause-symbolic");
             }
-            PlayControlIn::NewState(PlayState::Pause) => {
-                self.play_btn.set_icon_name("media-playback-start-symbolic");
-            }
-            PlayControlIn::NewState(PlayState::Stop) => {
+            PlayControlIn::NewState(PlayState::Pause | PlayState::Stop) => {
                 self.play_btn.set_icon_name("media-playback-start-symbolic");
             }
             PlayControlIn::Disable => {

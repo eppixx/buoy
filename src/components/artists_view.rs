@@ -119,7 +119,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
         match msg {
             ArtistsViewIn::ArtistElement(msg) => match msg {
                 ArtistElementOut::Clicked(id) => {
-                    sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap()
+                    sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap();
                 }
             },
             ArtistsViewIn::SearchChanged(search) => {

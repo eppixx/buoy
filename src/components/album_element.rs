@@ -89,7 +89,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 format!(
                     "{year}{} songs • Length: {}",
                     album.song_count,
-                    convert_for_label(album.duration as i64 * 1000)
+                    convert_for_label(i64::from(album.duration) * 1000)
                 )
             }
             AlbumElementInit::Child(child) => {
@@ -99,7 +99,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 };
                 let duration = match child.duration {
                     Some(duration) => {
-                        format!("Length: {}", convert_for_label(duration as i64 * 1000))
+                        format!("Length: {}", convert_for_label(i64::from(duration) * 1000))
                     }
                     None => String::new(),
                 };

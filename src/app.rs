@@ -151,7 +151,7 @@ impl relm4::component::AsyncComponent for App {
             if let Some(index) = settings.queue_current {
                 if let Some(song) = settings.queue_ids.get(index) {
                     if let Some(duration) = song.duration {
-                        seekbar = Some(SeekbarCurrent::new(duration as i64 * 1000, None));
+                        seekbar = Some(SeekbarCurrent::new(i64::from(duration) * 1000, None));
                     }
                 }
             };
@@ -630,7 +630,8 @@ impl relm4::component::AsyncComponent for App {
                         Ok(url) => {
                             self.playback.set_track(url);
                             if let Some(length) = child.duration {
-                                self.seekbar.emit(SeekbarIn::NewRange(length as i64 * 1000));
+                                self.seekbar
+                                    .emit(SeekbarIn::NewRange(i64::from(length) * 1000));
                             } else {
                                 self.seekbar.emit(SeekbarIn::NewRange(0));
                             }
@@ -656,7 +657,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
-                    self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop))
+                    self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop));
                 }
                 BrowserOut::BackButtonSensitivity(status) => self.back_btn.set_sensitive(status),
                 BrowserOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),

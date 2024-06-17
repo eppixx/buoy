@@ -210,7 +210,7 @@ impl FactoryComponent for QueueSong {
                 },
 
                 gtk::Label {
-                    set_label: &convert_for_label(self.info.duration.unwrap_or(0) as i64 * 1000),
+                    set_label: &convert_for_label(i64::from(self.info.duration.unwrap_or(0)) * 1000),
                 },
 
                 #[transition = "Crossfade"]
@@ -266,9 +266,9 @@ impl FactoryComponent for QueueSong {
             // double left click activates item
             add_controller = gtk::GestureClick {
                 set_button: 1,
-                connect_pressed[sender, index] => move |_widget, n, _x, _y|{
+                connect_pressed[sender, index] => move |widget, n, _x, _y|{
                     if n == 1 {
-                        let state = _widget.current_event_state();
+                        let state = widget.current_event_state();
                         if !(state.contains(gdk::ModifierType::SHIFT_MASK)
                              || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
                             // normal click
@@ -309,7 +309,7 @@ impl FactoryComponent for QueueSong {
             }
             QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
-                if y < widget_height as f64 * 0.5f64 {
+                if y < f64::from(widget_height) * 0.5f64 {
                     DragState::drop_shadow_top(&mut self.root_widget);
                 } else {
                     DragState::drop_shadow_bottom(&mut self.root_widget);
@@ -348,7 +348,7 @@ impl FactoryComponent for QueueSong {
                         sender.oneshot_command(async move {
                             match client.get_album(album.id).await {
                                 Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
-                                Ok(album) if y < widget_height as f64 * 0.5f64 => {
+                                Ok(album) if y < f64::from(widget_height) * 0.5f64 => {
                                     QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
                                 }
                                 Ok(album) => {
@@ -372,7 +372,7 @@ impl FactoryComponent for QueueSong {
                                             Ok(mut album) => songs.append(&mut album.song),
                                         }
                                     }
-                                    if y < widget_height as f64 * 0.5f64 {
+                                    if y < f64::from(widget_height) * 0.5f64 {
                                         QueueSongCmd::InsertChildrenAbove(Ok((index, songs)))
                                     } else {
                                         QueueSongCmd::InsertChildrenBelow(Ok((index, songs)))
@@ -391,7 +391,7 @@ impl FactoryComponent for QueueSong {
                                     Ok(mut album) => songs.append(&mut album.song),
                                 }
                             }
-                            if y < widget_height as f64 * 0.5f64 {
+                            if y < f64::from(widget_height) * 0.5f64 {
                                 QueueSongCmd::InsertChildrenAbove(Ok((index, songs)))
                             } else {
                                 QueueSongCmd::InsertChildrenBelow(Ok((index, songs)))
@@ -403,7 +403,7 @@ impl FactoryComponent for QueueSong {
                         sender.oneshot_command(async move {
                             match client.get_album(album.id).await {
                                 Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
-                                Ok(album) if y < widget_height as f64 * 0.5f64 => {
+                                Ok(album) if y < f64::from(widget_height) * 0.5f64 => {
                                     QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
                                 }
                                 Ok(album) => {
@@ -418,7 +418,7 @@ impl FactoryComponent for QueueSong {
                         vec![]
                     }
                 };
-                if y < widget_height as f64 * 0.5f64 {
+                if y < f64::from(widget_height) * 0.5f64 {
                     sender
                         .output(QueueSongOut::DropAbove {
                             src: songs,
@@ -438,7 +438,7 @@ impl FactoryComponent for QueueSong {
                 sender.input(QueueSongIn::DragLeave);
 
                 let widget_height = self.root_widget.height();
-                if y < widget_height as f64 * 0.5f64 {
+                if y < f64::from(widget_height) * 0.5f64 {
                     sender
                         .output(QueueSongOut::MoveAbove {
                             src: index.0.clone(),
@@ -466,15 +466,14 @@ impl FactoryComponent for QueueSong {
         match message {
             QueueSongCmd::Favorited(Err(e)) => sender
                 .output(QueueSongOut::DisplayToast(format!(
-                    "favoriting failed: {}",
-                    e
+                    "favoriting failed: {e}",
                 )))
                 .expect("sending failed"),
             QueueSongCmd::Favorited(Ok(state)) => self.favorited = state,
-            QueueSongCmd::InsertChildrenAbove(Err(e)) => sender
+            QueueSongCmd::InsertChildrenAbove(Err(e))
+            | QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
                 .output(QueueSongOut::DisplayToast(format!(
-                    "moving song failed: {}",
-                    e
+                    "moving song failed: {e}",
                 )))
                 .expect("sending failed"),
             QueueSongCmd::InsertChildrenAbove(Ok((index, songs))) => {
@@ -485,12 +484,11 @@ impl FactoryComponent for QueueSong {
                     })
                     .expect("sending failed");
             }
-            QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
-                .output(QueueSongOut::DisplayToast(format!(
-                    "moving song failed: {}",
-                    e
-                )))
-                .expect("sending failed"),
+            // QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
+            //     .output(QueueSongOut::DisplayToast(format!(
+            //         "moving song failed: {e}",
+            //     )))
+            //     .expect("sending failed"),
             QueueSongCmd::InsertChildrenBelow(Ok((index, songs))) => {
                 sender
                     .output(QueueSongOut::DropBelow {

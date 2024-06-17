@@ -33,7 +33,7 @@ impl relm4::component::AsyncComponent for LoginWindow {
 
     async fn init(
         _init: Self::Init,
-        _root: Self::Root,
+        root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
         let login_form: relm4::component::AsyncController<LoginForm> = LoginForm::builder()

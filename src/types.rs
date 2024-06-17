@@ -32,10 +32,7 @@ impl Id {
 
     pub fn inner(&self) -> &str {
         match self {
-            Self::Song(id) => id,
-            Self::Artist(id) => id,
-            Self::Album(id) => id,
-            Self::Playlist(id) => id,
+            Self::Song(id) | Self::Artist(id) | Self::Album(id) | Self::Playlist(id) => id,
         }
     }
 
@@ -95,11 +92,11 @@ impl TryFrom<&str> for Id {
             }
         };
 
-        match parts[0] {
-            "song" => Ok(Self::song(test(value, parts)?)),
-            "artist" => Ok(Self::artist(test(value, parts)?)),
-            "album" => Ok(Self::album(test(value, parts)?)),
-            "playlist" => Ok(Self::playlist(test(value, parts)?)),
+        match parts.first() {
+            Some(&"song") => Ok(Self::song(test(value, parts)?)),
+            Some(&"artist") => Ok(Self::artist(test(value, parts)?)),
+            Some(&"album") => Ok(Self::album(test(value, parts)?)),
+            Some(&"playlist") => Ok(Self::playlist(test(value, parts)?)),
             _ => Err(IdConversionError::UnrecognizedType),
         }
     }

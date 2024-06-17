@@ -31,8 +31,8 @@ pub enum SeekbarIn {
 
 #[derive(Debug)]
 pub struct SeekbarCurrent {
-    pub seek_in_ms: Option<i64>,
     pub total_in_ms: i64,
+    pub seek_in_ms: Option<i64>,
 }
 
 #[derive(Debug)]

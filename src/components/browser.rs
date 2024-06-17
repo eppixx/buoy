@@ -40,13 +40,13 @@ pub enum Views {
 impl Views {
     fn widget(&self) -> &impl gtk::prelude::IsA<gtk::Widget> {
         match self {
-            Self::Dashboard(w) => w,
-            Self::Artists(w) => w,
-            Self::Artist(w) => w,
-            Self::Albums(w) => w,
-            Self::Album(w) => w,
-            Self::Tracks(w) => w,
-            Self::Playlists(w) => w,
+            Self::Dashboard(w)
+            | Self::Artists(w)
+            | Self::Artist(w)
+            | Self::Albums(w)
+            | Self::Album(w)
+            | Self::Tracks(w)
+            | Self::Playlists(w) => w,
         }
     }
 }
@@ -286,7 +286,7 @@ impl relm4::SimpleComponent for Browser {
             },
             BrowserIn::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(drop) => {
-                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap();
                 }
                 AlbumViewOut::InsertAfterCurrentPLayed(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
