@@ -10,4 +10,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev && cargo build
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libgstreamer1.0-dev && cargo build
