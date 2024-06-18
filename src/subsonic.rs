@@ -10,9 +10,9 @@ const MUSIC_INFOS: &str = "Music-Infos";
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Subsonic {
+    scan_status: Option<i64>,
     artists: Vec<submarine::data::ArtistId3>,
     album_list: Vec<submarine::data::Child>,
-    // scan_status: submarine::data::ScanStatus,
     #[serde(skip)]
     covers: SubsonicCovers,
 }
@@ -20,16 +20,29 @@ pub struct Subsonic {
 impl Subsonic {
     // this is the main way to create a Subsonic object
     pub async fn load_or_create() -> anyhow::Result<Self> {
-        match Self::load().await {
-            Ok(subsonic) => Ok(subsonic),
+        let current_scan_status = {
+            let client = Client::get().unwrap();
+            client.get_scan_status().await?
+        };
+
+        let mut subsonic = match Self::load().await {
+            Ok(subsonic) => {
+                if subsonic.scan_status == current_scan_status.count {
+                    tracing::info!("scan status is current; load cached info");
+                    subsonic
+                } else {
+                    tracing::info!("scan_status changed; reload info");
+                    Self::new().await?
+                }
+            }
             Err(_e) => {
                 tracing::warn!("no cache found");
                 //load new from server
-                let subsonic = Self::new().await?;
-                // subsonic.save()?;
-                Ok(subsonic)
+                Self::new().await?
             }
-        }
+        };
+        subsonic.work().await?;
+        Ok(subsonic)
     }
 
     pub async fn load() -> anyhow::Result<Self> {
@@ -41,26 +54,17 @@ impl Subsonic {
         let mut file = std::fs::File::open(cache_path)?;
         file.read_to_string(&mut content)?;
         tracing::info!("loaded subsonic cache");
-        let mut result = toml::from_str::<Self>(&content)?;
+        let result = toml::from_str::<Self>(&content)?;
 
-        let ids: Vec<String> = result
-            .album_list
-            .iter()
-            .filter_map(|album| album.cover_art.clone())
-            .chain(
-                result
-                    .artists
-                    .iter()
-                    .filter_map(|artist| artist.cover_art.clone()),
-            )
-            .collect();
-        result.covers.work(ids).await;
         Ok(result)
     }
 
     pub async fn new() -> anyhow::Result<Self> {
         tracing::info!("create subsonic cache");
         let client = Client::get().unwrap();
+
+        //fetch scan status
+        let scan_status = client.get_scan_status().await?;
 
         //fetch artists
         tracing::info!("fetching artists");
@@ -92,15 +96,31 @@ impl Subsonic {
             albums
         };
 
-        let mut result = Self {
+        let result = Self {
+            scan_status: scan_status.count,
             artists,
             album_list,
             covers: SubsonicCovers::default(),
         };
-        result.covers.work(vec![]).await;
 
         tracing::info!("finished loading subsonic info");
         Ok(result)
+    }
+
+    async fn work(&mut self) -> anyhow::Result<()> {
+        let ids: Vec<String> = self
+            .album_list
+            .iter()
+            .filter_map(|album| album.cover_art.clone())
+            .chain(
+                self.artists
+                    .iter()
+                    .filter_map(|artist| artist.cover_art.clone()),
+            )
+            .collect();
+        self.covers.work(ids).await;
+
+        Ok(())
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
