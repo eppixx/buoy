@@ -1,32 +1,41 @@
-use std::collections::HashMap;
-
 use futures::StreamExt;
 use relm4::gtk;
+use serde::{Deserialize, Serialize};
+
+use std::collections::HashMap;
 
 use crate::client::Client;
 
 const COVER_SIZE: Option<i32> = Some(200);
 const CONCURRENT_FETCH: usize = 100;
+const PREFIX: &str = "Buoy";
+const COVER_CACHE: &str = "cover-cache";
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct SubsonicCovers {
-    // the raw buffers that are send from server
+    /// the raw buffers that are send from server
     buffers: HashMap<String, Option<Vec<u8>>>,
-    // coverted from buffers, can be copied
+    /// converted from buffers, can be copied
+    #[serde(skip)]
     covers: HashMap<String, Option<gtk::gdk_pixbuf::Pixbuf>>,
 }
 
 #[derive(Default, Debug)]
 pub enum Response {
-    // there is no image on server
+    /// there is no image on server
     #[default]
     Empty,
-    // downloaded image from server
+    /// downloaded image from server
     Loaded(gtk::gdk_pixbuf::Pixbuf),
 }
 
 impl SubsonicCovers {
     pub async fn work(&mut self, start_requests: Vec<String>) {
+        // try to load covers from cache
+        if self.load().is_ok() {
+            return;
+        }
+
         //build futures
         let tasks: Vec<_> = start_requests
             .iter()
@@ -91,5 +100,28 @@ impl SubsonicCovers {
                 }
             }
         }
+    }
+
+    pub fn save(&self, prefix: &xdg::BaseDirectories) -> anyhow::Result<()> {
+        let cache: Vec<u8> = postcard::to_allocvec(self).unwrap();
+        let cache_path = prefix
+            .place_cache_file(COVER_CACHE)
+            .expect("cannot create cache directory");
+        std::fs::write(cache_path, cache).unwrap();
+
+        Ok(())
+    }
+
+    fn load(&mut self) -> anyhow::Result<()> {
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
+        let cache_path = xdg_dirs
+            .place_cache_file(COVER_CACHE)
+            .expect("cannot create cache directory");
+        let content = std::fs::read(cache_path)?;
+        tracing::info!("loaded subsonic cover cache");
+        let result = postcard::from_bytes::<Self>(&content)?;
+
+        self.buffers = result.buffers;
+        Ok(())
     }
 }

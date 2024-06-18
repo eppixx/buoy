@@ -36,7 +36,7 @@ impl Subsonic {
                 }
             }
             Err(_e) => {
-                tracing::warn!("no cache found");
+                tracing::warn!("no cache found or cache is malformed");
                 //load new from server
                 Self::new().await?
             }
@@ -131,6 +131,9 @@ impl Subsonic {
             .place_cache_file(MUSIC_INFOS)
             .expect("cannot create cache directory");
         std::fs::write(cache_path, cache).unwrap();
+
+        //save covers
+        self.covers.save(&xdg_dirs)?;
 
         tracing::info!("saving cover cache");
 
