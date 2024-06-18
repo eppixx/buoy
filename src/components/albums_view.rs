@@ -115,9 +115,14 @@ impl relm4::component::Component for AlbumsView {
                     let title = title_view.first_child().unwrap();
                     let title = title.downcast::<gtk::Label>().expect("unepected element");
 
+                    let artist_view = title_view.next_sibling().unwrap();
+                    let artist = artist_view.first_child().unwrap();
+                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+                    let title_artist = format!("{} {}", title.text(), artist.text());
+
                     //actual matching
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let score = matcher.fuzzy_match(&title.text(), &search);
+                    let score = matcher.fuzzy_match(&title_artist, &search);
                     score.is_some()
                 });
             }
