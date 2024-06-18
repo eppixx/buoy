@@ -16,8 +16,7 @@ relm4 = "0.8.1"
 relm4-components = "0.8.1"
 granite = { version = "1.2", package = "granite-rs", features = ["v7_2"] }
 glib = "0.19.7"
-#submarine = { git = "https://github.com/eppixx/submarine" }
-submarine = { path = "../submarine", features = ["navidrome"] }
+submarine = { git = "https://github.com/eppixx/submarine", features = ["navidrome"] }
 gstreamer = "0.22.5"
 tokio = { version = "1.38.0", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.30"
