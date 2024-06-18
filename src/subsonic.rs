@@ -14,7 +14,7 @@ pub struct Subsonic {
     album_list: Vec<submarine::data::Child>,
     // scan_status: submarine::data::ScanStatus,
     #[serde(skip)]
-    coverss: SubsonicCovers,
+    covers: SubsonicCovers,
 }
 
 impl Subsonic {
@@ -54,7 +54,7 @@ impl Subsonic {
                     .filter_map(|artist| artist.cover_art.clone()),
             )
             .collect();
-        result.coverss.work(ids).await;
+        result.covers.work(ids).await;
         Ok(result)
     }
 
@@ -95,9 +95,9 @@ impl Subsonic {
         let mut result = Self {
             artists,
             album_list,
-            coverss: SubsonicCovers::default(),
+            covers: SubsonicCovers::default(),
         };
-        result.coverss.work(vec![]).await;
+        result.covers.work(vec![]).await;
 
         tracing::info!("finished loading subsonic info");
         Ok(result)
@@ -126,7 +126,7 @@ impl Subsonic {
     }
 
     pub fn cover(&mut self, id: &str) -> subsonic_cover::Response {
-        self.coverss.cover(id)
+        self.covers.cover(id)
     }
 
     pub fn delete_cache(&mut self) -> anyhow::Result<()> {
