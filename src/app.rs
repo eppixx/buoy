@@ -20,7 +20,7 @@ use crate::components::{
     play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
     queue::{Queue, QueueIn, QueueOut},
     seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-}, window_state::WindowState};
+}, window_state::{NavigationMode, WindowState}};
 use crate::subsonic::Subsonic;
 use crate::{
     client::Client,
@@ -51,12 +51,6 @@ pub struct App {
     volume_btn: gtk::VolumeButton,
     config_btn: gtk::MenuButton,
     toasts: granite::Toast,
-}
-
-#[derive(Debug)]
-pub enum NavigationMode {
-    Normal,
-    Search,
 }
 
 #[derive(Debug)]
@@ -469,7 +463,7 @@ impl relm4::component::AsyncComponent for App {
                                     },
 
                                     model.search_stack.clone() -> gtk::Stack {
-                                        add_named[Some("navigation")] = &gtk::Box {
+                                        add_named[Some(NavigationMode::Normal.to_str())] = &gtk::Box {
                                             gtk::Button {
                                                 add_css_class: "browser-navigation-button",
                                                 set_icon_name: "go-home-symbolic",
@@ -511,7 +505,7 @@ impl relm4::component::AsyncComponent for App {
                                                 }
                                             },
                                         },
-                                        add_named[Some("search")] = &model.search.clone() -> gtk::SearchEntry {
+                                        add_named[Some(NavigationMode::Search.to_str())] = &model.search.clone() -> gtk::SearchEntry {
                                             set_placeholder_text: Some("Search..."),
                                             connect_search_changed[browser_sender] => move |w| {
                                                 browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
@@ -715,13 +709,13 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::Navigation(NavigationMode::Normal) => {
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
-                self.search_stack.set_visible_child_name("navigation");
+                self.search_stack.set_visible_child_name(NavigationMode::Normal.to_str());
                 self.back_btn.set_visible(true);
             }
             AppIn::Navigation(NavigationMode::Search) => {
                 self.browser
                     .emit(BrowserIn::SearchChanged(self.search.text().to_string()));
-                self.search_stack.set_visible_child_name("search");
+                self.search_stack.set_visible_child_name(NavigationMode::Search.to_str());
                 self.search.grab_focus();
                 self.back_btn.set_visible(false);
             }
