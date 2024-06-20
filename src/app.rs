@@ -71,7 +71,6 @@ pub enum AppIn {
     PlayInfo(PlayInfoOut),
     DisplayToast(String),
     Navigation(NavigationMode),
-    // CacheLoading,
 }
 
 #[relm4::widget_template(pub)]
@@ -92,10 +91,12 @@ impl relm4::WidgetTemplate for LoadingState {
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 10,
 
+                #[name = "label"]
                 gtk::Label {
                     add_css_class: granite::STYLE_CLASS_H3_LABEL,
                     set_text: "loading subsonic information from server",
                 },
+                #[name = "spinner"]
                 gtk::Spinner {
                     start: (),
                     set_halign: gtk::Align::Center,
@@ -104,9 +105,6 @@ impl relm4::WidgetTemplate for LoadingState {
         }
     }
 }
-
-#[derive(Debug)]
-pub enum AppCmd {}
 
 relm4::new_action_group!(WindowActionGroup, "win");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
@@ -117,7 +115,7 @@ impl relm4::component::AsyncComponent for App {
     type Init = ();
     type Input = AppIn;
     type Output = ();
-    type CommandOutput = AppCmd;
+    type CommandOutput = ();
 
     fn init_loading_widgets(root: Self::Root) -> Option<relm4::loading_widgets::LoadingWidgets> {
         relm4::view! {
@@ -572,7 +570,16 @@ impl relm4::component::AsyncComponent for App {
                 },
                 add_named[Some(WindowState::Loading.to_str())] = &gtk::WindowHandle {
                     #[template]
-                    LoadingState {}
+                    LoadingState {
+                        #[template_child]
+                        label {
+                            set_text: "please restart application",
+                        },
+                        #[template_child]
+                        spinner {
+                            set_visible: false,
+                        }
+                    }
                 },
             }
         }
@@ -629,12 +636,6 @@ impl relm4::component::AsyncComponent for App {
                 self.main_stack
                     .set_visible_child_name(WindowState::LoginForm.to_str());
                 sender.input(AppIn::DeleteCache);
-
-                // reload cache
-                // sender.oneshot_command(async move {
-                //     let subsonic = Subsonic::new().await.unwrap(); //TODO better error handling
-                //     AppCmd::CacheReloaded(subsonic)
-                // });
             }
             AppIn::DeleteCache => {
                 if let Err(e) = self.subsonic.borrow_mut().delete_cache() {
@@ -646,6 +647,8 @@ impl relm4::component::AsyncComponent for App {
                         "Deleted cache\nPlease restart to reload the cache",
                     )));
                 }
+                self.main_stack
+                    .set_visible_child_name(WindowState::Loading.to_str());
             }
             AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
@@ -746,19 +749,5 @@ impl relm4::component::AsyncComponent for App {
         settings.window_maximized = widgets.main_window.is_maximized();
         settings.paned_position = widgets.paned.position();
         settings.save();
-    }
-
-    async fn update_cmd(
-        &mut self,
-        message: Self::CommandOutput,
-        _sender: relm4::AsyncComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        // match message {
-        //     AppCmd::CacheReloaded(subsonic) => {
-        //         self.subsonic.replace(subsonic);
-        //         self.main_stack.set_visible_child_name(WindowState::Main.to_str());
-        //     }
-        // }
     }
 }
