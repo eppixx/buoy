@@ -326,15 +326,20 @@ impl relm4::component::AsyncComponent for App {
                 set_transition_duration: 200,
 
                 add_child = &gtk::WindowHandle {
-                    set_hexpand: true,
-                    set_vexpand: true,
-                    set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Center,
-
                     gtk::Box {
-                        set_hexpand: true,
-                        set_vexpand: true,
-                        model.login_form.widget() {}
+                        set_orientation: gtk::Orientation::Vertical,
+
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+
+                        model.login_form.widget() {
+                            set_hexpand: true,
+                            set_vexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                        }
                     }
                 } -> {
                     set_name: "login-form",
@@ -342,7 +347,6 @@ impl relm4::component::AsyncComponent for App {
                 add_child = &gtk::Box {
                     add_css_class: "main-box",
                     set_orientation: gtk::Orientation::Vertical,
-
 
                     #[name = "paned"]
                     gtk::Paned {
