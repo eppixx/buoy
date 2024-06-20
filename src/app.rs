@@ -91,31 +91,50 @@ impl relm4::component::AsyncComponent for App {
         relm4::view! {
             #[local]
             root {
-                set_title: Some("Buoy"),
-                set_default_size: (300, 300),
+                add_css_class: "main-window",
+                set_default_width: Settings::get().lock().unwrap().window_width,
+                set_default_height: Settings::get().lock().unwrap().window_height,
+                set_maximized: Settings::get().lock().unwrap().window_maximized,
 
+                #[wrap(Some)]
+                set_titlebar = &gtk::HeaderBar {
+                    add_css_class: granite::STYLE_CLASS_FLAT,
+                    add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                    set_show_title_buttons: false,
+                    set_visible: false,
+                },
+
+                #[name(loading)]
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
-                    set_hexpand: true,
-                    set_vexpand: true,
-                    set_valign: gtk::Align::Center,
-                    set_halign: gtk::Align::Center,
 
-                    gtk::Label {
-                        set_text: "loading subsonic information from server",
+                    gtk::HeaderBar {
+                        add_css_class: granite::STYLE_CLASS_FLAT,
+                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
                     },
-
-                    #[name(spinner)]
-                    gtk::Spinner {
-                        start: (),
+                    gtk::Box {
+                        set_hexpand: true,
+                        set_vexpand: true,
                         set_halign: gtk::Align::Center,
+                        set_valign: gtk::Align::Center,
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 10,
+
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                            set_text: "loading subsonic information from server",
+                        },
+                        gtk::Spinner {
+                            start: (),
+                            set_halign: gtk::Align::Center,
+                        }
                     }
                 }
             }
         }
         Some(relm4::loading_widgets::LoadingWidgets::new(
             root.clone(),
-            root,
+            loading,
         ))
     }
 
