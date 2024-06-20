@@ -53,35 +53,16 @@ impl Queue {
 
 #[derive(Debug)]
 pub enum QueueIn {
-    Activated(DynamicIndex, Box<submarine::data::Child>),
     SetCurrent(Option<usize>),
-    Clicked(DynamicIndex),
-    ShiftClicked(DynamicIndex),
     Clear,
     Remove,
-    MoveAbove {
-        src: DynamicIndex,
-        dest: DynamicIndex,
-    },
-    MoveBelow {
-        src: DynamicIndex,
-        dest: DynamicIndex,
-    },
     NewState(PlayState),
     SomeIsSelected(bool),
     ToggleShuffle,
-    RepeatPressed,
     PlayNext,
     PlayPrevious,
-    DropAbove {
-        src: Vec<submarine::data::Child>,
-        dest: DynamicIndex,
-    },
-    DropBelow {
-        src: Vec<submarine::data::Child>,
-        dest: DynamicIndex,
-    },
     Append(Droppable),
+    QueueSong(QueueSongOut),
     InsertAfterCurrentlyPlayed(Droppable),
     DisplayToast(String),
 }
@@ -126,25 +107,13 @@ impl relm4::Component for Queue {
                 });
         let repeat: relm4::Controller<SequenceButton<Repeat>> = SequenceButton::<Repeat>::builder()
             .launch(Repeat::Normal)
-            .forward(sender.input_sender(), |msg| match msg {
-                SequenceButtonOut::Clicked => QueueIn::RepeatPressed,
-            });
+            .detach();
 
         let mut model = Queue {
             subsonic,
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
-                .forward(sender.input_sender(), |output| match output {
-                    QueueSongOut::Activated(index, info) => QueueIn::Activated(index, info),
-                    QueueSongOut::Clicked(index) => QueueIn::Clicked(index),
-                    QueueSongOut::ShiftClicked(index) => QueueIn::ShiftClicked(index),
-                    QueueSongOut::Remove => QueueIn::Remove,
-                    QueueSongOut::MoveAbove { src, dest } => QueueIn::MoveAbove { src, dest },
-                    QueueSongOut::MoveBelow { src, dest } => QueueIn::MoveBelow { src, dest },
-                    QueueSongOut::DropAbove { src, dest } => QueueIn::DropAbove { src, dest },
-                    QueueSongOut::DropBelow { src, dest } => QueueIn::DropBelow { src, dest },
-                    QueueSongOut::DisplayToast(title) => QueueIn::DisplayToast(title),
-                }),
+                .forward(sender.input_sender(), |output| QueueIn::QueueSong(output)),
             loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),
@@ -267,21 +236,6 @@ impl relm4::Component for Queue {
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            QueueIn::Activated(index, info) => {
-                // remove play icon and selection from other indexes
-                for (_i, song) in self
-                    .songs
-                    .iter()
-                    .enumerate()
-                    .filter(|(i, _)| i != &index.current_index())
-                {
-                    self.songs.widget().unselect_row(song.root_widget());
-                    song.new_play_state(&PlayState::Stop);
-                }
-
-                self.playing_index = Some(index);
-                sender.output(QueueOut::Play(Box::new(*info))).unwrap();
-            }
             QueueIn::SetCurrent(None) => {
                 self.playing_index = None;
                 sender.input(QueueIn::NewState(PlayState::Stop));
@@ -290,43 +244,6 @@ impl relm4::Component for Queue {
                 if let Some(song) = self.songs.get(index) {
                     self.playing_index = Some(song.index().clone());
                     sender.input(QueueIn::NewState(PlayState::Pause));
-                }
-            }
-            QueueIn::Clicked(index) => {
-                for (_i, song) in self
-                    .songs
-                    .iter()
-                    .enumerate()
-                    .filter(|(i, _)| i != &index.current_index())
-                {
-                    self.songs.widget().unselect_row(song.root_widget());
-                }
-                self.last_selected = Some(index.clone());
-            }
-            QueueIn::ShiftClicked(target) => {
-                if let Some(index) = &self.last_selected {
-                    let (lower, bigger) = if index.current_index() < target.current_index() {
-                        (index.clone(), target)
-                    } else {
-                        (target, index.clone())
-                    };
-
-                    let items: Vec<gtk::ListBoxRow> = self
-                        .songs
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(i, s)| {
-                            if i >= lower.current_index() && i <= bigger.current_index() {
-                                return Some(s.root_widget().clone());
-                            }
-                            None
-                        })
-                        .collect();
-                    for item in items {
-                        self.songs.widget().select_row(Some(&item));
-                    }
-                } else {
-                    self.last_selected = Some(target);
                 }
             }
             QueueIn::Append(id) => {
@@ -499,40 +416,6 @@ impl relm4::Component for Queue {
 
                 self.update_clear_btn_sensitivity();
             }
-            QueueIn::MoveAbove { src, dest } => {
-                let mut guard = self.songs.guard();
-                let src = src.current_index();
-                let dest = dest.current_index();
-                guard.move_to(src, dest);
-            }
-            QueueIn::MoveBelow { src, dest } => {
-                let mut guard = self.songs.guard();
-                let src = src.current_index();
-                let dest = dest.current_index();
-                if src <= dest {
-                    guard.move_to(src, dest);
-                } else {
-                    guard.move_to(src, dest + 1);
-                }
-            }
-            QueueIn::DropAbove { src, dest } => {
-                let mut guard = self.songs.guard();
-                for (i, child) in src.iter().enumerate() {
-                    guard.insert(
-                        dest.current_index() + i,
-                        (self.subsonic.clone(), child.clone()),
-                    );
-                }
-            }
-            QueueIn::DropBelow { src, dest } => {
-                let mut guard = self.songs.guard();
-                for (i, child) in src.iter().enumerate() {
-                    guard.insert(
-                        dest.current_index() + i + 1,
-                        (self.subsonic.clone(), child.clone()),
-                    );
-                }
-            }
             QueueIn::NewState(state) => {
                 if self.songs.is_empty() {
                     return;
@@ -546,9 +429,6 @@ impl relm4::Component for Queue {
             }
             QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
             QueueIn::ToggleShuffle => {
-                //TODO sth useful
-            }
-            QueueIn::RepeatPressed => {
                 //TODO sth useful
             }
             QueueIn::PlayNext => {
@@ -599,6 +479,96 @@ impl relm4::Component for Queue {
                         // at start of queue
                         0 => self.songs.get(0).unwrap().activate(),
                         i => self.songs.get(i - 1).unwrap().activate(),
+                    }
+                }
+            }
+            QueueIn::QueueSong(msg) => match msg {
+                QueueSongOut::Activated(index, info) => {
+                    // remove play icon and selection from other indexes
+                    for (_i, song) in self
+                        .songs
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| i != &index.current_index())
+                    {
+                        self.songs.widget().unselect_row(song.root_widget());
+                        song.new_play_state(&PlayState::Stop);
+                    }
+
+                    self.playing_index = Some(index);
+                    sender.output(QueueOut::Play(Box::new(*info))).unwrap();
+                }
+                QueueSongOut::Clicked(index) => {
+                    for (_i, song) in self
+                        .songs
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| i != &index.current_index())
+                    {
+                        self.songs.widget().unselect_row(song.root_widget());
+                    }
+                    self.last_selected = Some(index.clone());
+                }
+                QueueSongOut::DisplayToast(msg) => sender.output(QueueOut::DisplayToast(msg)).expect("sending failded"),
+                QueueSongOut::DropAbove { src, dest } => {
+                    let mut guard = self.songs.guard();
+                    for (i, child) in src.iter().enumerate() {
+                        guard.insert(
+                            dest.current_index() + i,
+                            (self.subsonic.clone(), child.clone()),
+                        );
+                    }
+                }
+                QueueSongOut::DropBelow { src, dest } => {
+                    let mut guard = self.songs.guard();
+                    for (i, child) in src.iter().enumerate() {
+                        guard.insert(
+                            dest.current_index() + i + 1,
+                            (self.subsonic.clone(), child.clone()),
+                        );
+                    }
+                }
+                QueueSongOut::MoveAbove { src, dest } => {
+                    let mut guard = self.songs.guard();
+                    let src = src.current_index();
+                    let dest = dest.current_index();
+                    guard.move_to(src, dest);
+                }
+                QueueSongOut::MoveBelow { src, dest } => {
+                    let mut guard = self.songs.guard();
+                    let src = src.current_index();
+                    let dest = dest.current_index();
+                    if src <= dest {
+                        guard.move_to(src, dest);
+                    } else {
+                        guard.move_to(src, dest + 1);
+                    }
+                }
+                QueueSongOut::Remove => sender.input(QueueIn::Remove),
+                QueueSongOut::ShiftClicked(target) => {
+                    if let Some(index) = &self.last_selected {
+                        let (lower, bigger) = if index.current_index() < target.current_index() {
+                            (index.clone(), target)
+                        } else {
+                            (target, index.clone())
+                        };
+
+                        let items: Vec<gtk::ListBoxRow> = self
+                            .songs
+                            .iter()
+                            .enumerate()
+                            .filter_map(|(i, s)| {
+                                if i >= lower.current_index() && i <= bigger.current_index() {
+                                    return Some(s.root_widget().clone());
+                                }
+                                None
+                            })
+                            .collect();
+                        for item in items {
+                            self.songs.widget().select_row(Some(&item));
+                        }
+                    } else {
+                        self.last_selected = Some(target);
                     }
                 }
             }
