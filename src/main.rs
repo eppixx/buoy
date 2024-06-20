@@ -14,6 +14,7 @@ pub mod settings;
 pub mod subsonic;
 pub mod subsonic_cover;
 pub mod types;
+pub mod window_state;
 
 fn main() -> anyhow::Result<()> {
     //enable logging

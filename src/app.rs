@@ -20,7 +20,7 @@ use crate::components::{
     play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
     queue::{Queue, QueueIn, QueueOut},
     seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-};
+}, window_state::WindowState};
 use crate::subsonic::Subsonic;
 use crate::{
     client::Client,
@@ -295,8 +295,8 @@ impl relm4::component::AsyncComponent for App {
             model.volume_btn.set_sensitive(client.inner.is_some());
 
             match &client.inner {
-                Some(_client) => model.main_stack.set_visible_child_name("logged-in"),
-                None => model.main_stack.set_visible_child_name("login-form"),
+                Some(_client) => model.main_stack.set_visible_child_name(WindowState::Main.to_str()),
+                None => model.main_stack.set_visible_child_name(WindowState::LoginForm.to_str()),
             }
         }
 
@@ -325,7 +325,7 @@ impl relm4::component::AsyncComponent for App {
                 set_transition_type: gtk::StackTransitionType::Crossfade,
                 set_transition_duration: 200,
 
-                add_child = &gtk::WindowHandle {
+                add_named[Some(WindowState::LoginForm.to_str())] = &gtk::WindowHandle {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
 
@@ -341,10 +341,35 @@ impl relm4::component::AsyncComponent for App {
                             set_valign: gtk::Align::Center,
                         }
                     }
-                } -> {
-                    set_name: "login-form",
                 },
-                add_child = &gtk::Box {
+                add_named[Some(WindowState::Loading.to_str())] = &gtk::WindowHandle {
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+                        gtk::Box {
+                            set_hexpand: true,
+                            set_vexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 10,
+
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                set_text: "loading subsonic information from server",
+                            },
+                            gtk::Spinner {
+                                start: (),
+                                set_halign: gtk::Align::Center,
+                            }
+                        }
+                    }
+                },
+                add_named[Some(WindowState::Main.to_str())] = &gtk::Box {
                     add_css_class: "main-box",
                     set_orientation: gtk::Orientation::Vertical,
 
@@ -425,8 +450,7 @@ impl relm4::component::AsyncComponent for App {
                                     },
 
                                     model.search_stack.clone() -> gtk::Stack {
-                                        add_child = &gtk::Box {
-
+                                        add_named[Some("navigation")] = &gtk::Box {
                                             gtk::Button {
                                                 add_css_class: "browser-navigation-button",
                                                 set_icon_name: "go-home-symbolic",
@@ -467,23 +491,14 @@ impl relm4::component::AsyncComponent for App {
                                                     browser_sender.emit(BrowserIn::PlaylistsClicked);
                                                 }
                                             },
-                                        } -> {
-                                            set_name: "navigation",
                                         },
-                                        add_child = &model.search.clone() -> gtk::SearchEntry {
+                                        add_named[Some("search")] = &model.search.clone() -> gtk::SearchEntry {
                                             set_placeholder_text: Some("Search..."),
                                             connect_search_changed[browser_sender] => move |w| {
                                                 browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
                                             }
-                                        // add_child = &gtk::Entry {
-                                        //     set_secondary_icon_name: Some("edit-clear-symbolic"),
-                                        //     connect_changed[browser_sender] => move |w| {
-                                        //         browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
-                                        //     }
-                                        } -> {
-                                            set_name: "search",
                                         },
-                                    },
+                                    }
                                 },
 
                                 pack_end = &gtk::Box {
@@ -546,11 +561,9 @@ impl relm4::component::AsyncComponent for App {
                             }
 
                         }
-                    },
-                } -> {
-                    set_name: "logged-in",
-                },
-            },
+                    }
+                }
+            }
         }
     }
 
@@ -592,10 +605,7 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
-                    self.main_stack.set_visible_child_name("logged-in");
-                    self.config_btn.set_sensitive(true);
-                    self.equalizer_btn.set_sensitive(true);
-                    self.volume_btn.set_sensitive(true);
+                    self.main_stack.set_visible_child_name(WindowState::Loading.to_str());
                 }
             },
             AppIn::Equalizer(_changed) => {
@@ -604,10 +614,14 @@ impl relm4::component::AsyncComponent for App {
             AppIn::ResetLogin => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
-                self.main_stack.set_visible_child_name("login-form");
-                self.config_btn.set_sensitive(false);
-                self.equalizer_btn.set_sensitive(false);
-                self.volume_btn.set_sensitive(false);
+                self.main_stack.set_visible_child_name(WindowState::LoginForm.to_str());
+                sender.input(AppIn::DeleteCache);
+
+                // reload cache
+                // sender.oneshot_command(async move {
+                //     let subsonic = Subsonic::new().await.unwrap(); //TODO better error handling
+                //     AppCmd::CacheReloaded(subsonic)
+                // });
             }
             AppIn::DeleteCache => {
                 if let Err(e) = self.subsonic.borrow_mut().delete_cache() {
