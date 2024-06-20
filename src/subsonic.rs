@@ -103,6 +103,8 @@ impl Subsonic {
             covers: SubsonicCovers::default(),
         };
 
+        result.save()?;
+
         tracing::info!("finished loading subsonic info");
         Ok(result)
     }
@@ -120,10 +122,11 @@ impl Subsonic {
             .collect();
         self.covers.work(ids).await;
 
+        self.covers.save()?;
         Ok(())
     }
 
-    pub fn save(&self) -> anyhow::Result<()> {
+    fn save(&self) -> anyhow::Result<()> {
         tracing::info!("saving subsonic music info");
         let cache = toml::to_string(self).unwrap();
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
@@ -131,9 +134,6 @@ impl Subsonic {
             .place_cache_file(MUSIC_INFOS)
             .expect("cannot create cache directory");
         std::fs::write(cache_path, cache).unwrap();
-
-        //save covers
-        self.covers.save(&xdg_dirs)?;
 
         tracing::info!("saving cover cache");
 
@@ -153,7 +153,15 @@ impl Subsonic {
     }
 
     pub fn delete_cache(&mut self) -> anyhow::Result<()> {
-        tracing::error!("implement"); //TODO
+        // delete stored covers
+        self.covers.delete_cache()?;
+
+        // delete music info
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
+        let cache_path = xdg_dirs
+            .place_cache_file(MUSIC_INFOS)
+            .expect("cannot create cache directory");
+        std::fs::remove_file(cache_path)?;
 
         Ok(())
     }

@@ -102,9 +102,10 @@ impl SubsonicCovers {
         }
     }
 
-    pub fn save(&self, prefix: &xdg::BaseDirectories) -> anyhow::Result<()> {
+    pub fn save(&self) -> anyhow::Result<()> {
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
         let cache: Vec<u8> = postcard::to_allocvec(self).unwrap();
-        let cache_path = prefix
+        let cache_path = xdg_dirs
             .place_cache_file(COVER_CACHE)
             .expect("cannot create cache directory");
         std::fs::write(cache_path, cache).unwrap();
@@ -122,6 +123,15 @@ impl SubsonicCovers {
         let result = postcard::from_bytes::<Self>(&content)?;
 
         self.buffers = result.buffers;
+        Ok(())
+    }
+
+    pub fn delete_cache(&self) -> anyhow::Result<()> {
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
+        let cache_path = xdg_dirs
+            .place_cache_file(COVER_CACHE)
+            .expect("cannot create cache directory");
+        std::fs::remove_file(cache_path)?;
         Ok(())
     }
 }

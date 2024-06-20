@@ -713,10 +713,5 @@ impl relm4::component::AsyncComponent for App {
         settings.window_maximized = widgets.main_window.is_maximized();
         settings.paned_position = widgets.paned.position();
         settings.save();
-
-        //save subsonic cache
-        if let Err(e) = self.subsonic.borrow().save() {
-            tracing::error!("error while saving subsonic: {e:?}");
-        }
     }
 }
