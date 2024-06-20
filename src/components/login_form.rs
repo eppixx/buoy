@@ -2,6 +2,7 @@ use relm4::gtk::prelude::{
     BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
 };
 use relm4::{component, gtk, RelmWidgetExt};
+use granite::prelude::ToastExt;
 
 use crate::settings::Settings;
 
@@ -10,8 +11,8 @@ pub struct LoginForm {
     uri: gtk::Entry,
     user: gtk::Entry,
     password: gtk::PasswordEntry,
-    error_icon: gtk::Image,
     login_btn: gtk::Button,
+    toasts: granite::Toast,
 }
 
 #[derive(Debug)]
@@ -62,10 +63,14 @@ impl relm4::component::AsyncComponent for LoginForm {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 30,
 
-            gtk::Label {
-                add_css_class: "h3",
-                set_label: "Login to a Subsonic server",
-                set_halign: gtk::Align::Center,
+            gtk::Overlay {
+                #[wrap(Some)]
+                set_child = &gtk::Label {
+                    add_css_class: "h3",
+                    set_label: "Login to a Subsonic server",
+                    set_halign: gtk::Align::Center,
+                },
+                add_overlay: &model.toasts.clone(),
             },
 
             gtk::Grid {
@@ -77,7 +82,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 0, 1, 1] = &model.uri.clone() {
-                                        set_hexpand: true,
+                    set_hexpand: true,
                     set_placeholder_text: Some("http(s)://..."),
                     connect_changed => LoginFormIn::UriChanged,
                     connect_changed => LoginFormIn::FormChanged,
@@ -110,11 +115,6 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_orientation: gtk::Orientation::Horizontal,
                     set_spacing: 5,
 
-                    model.error_icon.clone() -> gtk::Image {
-                        set_icon_name: Some("dialog-error"),
-                        set_visible: false,
-                        // set_visible: true,
-                    },
                     model.login_btn.clone() -> gtk::Button {
                         set_label: "Login",
                         set_sensitive: false,
@@ -163,9 +163,8 @@ impl relm4::component::AsyncComponent for LoginForm {
                             SubsonicError::Server(_) => "Username or password is wrong",
                             _ => "Login error",
                         };
-                        println!("error: {error_str}");
-                        self.error_icon.set_visible(true);
-                        self.error_icon.set_tooltip(error_str);
+                        self.toasts.set_title(error_str);
+                        self.toasts.send_notification();
                     }
                 }
             }
@@ -200,7 +199,6 @@ impl relm4::component::AsyncComponent for LoginForm {
                 }
             },
             LoginFormIn::FormChanged => {
-                self.error_icon.set_visible(false);
                 //check form if input text is ok
                 let sensitive = !self.user.text().is_empty()
                     && !self.password.text().is_empty()

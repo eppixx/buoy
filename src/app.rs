@@ -547,7 +547,6 @@ impl relm4::component::AsyncComponent for App {
                                 set_child: Some(model.browser.widget()),
                                 add_overlay: &model.toasts.clone(),
                             }
-
                         }
                     }
                 },
