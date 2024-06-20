@@ -130,6 +130,7 @@ dependencies = [
  "relm4-components",
  "serde",
  "submarine",
+ "thiserror",
  "tokio",
  "toml",
  "tracing",

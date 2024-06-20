@@ -200,7 +200,7 @@ impl relm4::component::AsyncComponent for App {
         }
 
         tracing::info!("start loading subsonic information");
-        let subsonic = Subsonic::load_or_create().await.unwrap();
+        let subsonic = Subsonic::load_or_create().await.unwrap_or_default();
         let subsonic = std::rc::Rc::new(std::cell::RefCell::new(subsonic));
         tracing::info!("finished loaded subsonic information");
 
