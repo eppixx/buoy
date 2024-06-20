@@ -12,21 +12,24 @@ use relm4::{
     Component, ComponentController, Controller, RelmWidgetExt,
 };
 
-use crate::components::{
-    browser::{Browser, BrowserIn, BrowserOut},
-    equalizer::{Equalizer, EqualizerOut},
-    login_form::{LoginForm, LoginFormOut},
-    play_controls::{PlayControl, PlayControlIn, PlayControlOut},
-    play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
-    queue::{Queue, QueueIn, QueueOut},
-    seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-}, window_state::{NavigationMode, WindowState}};
 use crate::subsonic::Subsonic;
 use crate::{
     client::Client,
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
     settings::Settings,
+};
+use crate::{
+    components::{
+        browser::{Browser, BrowserIn, BrowserOut},
+        equalizer::{Equalizer, EqualizerOut},
+        login_form::{LoginForm, LoginFormOut},
+        play_controls::{PlayControl, PlayControlIn, PlayControlOut},
+        play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
+        queue::{Queue, QueueIn, QueueOut},
+        seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
+    },
+    window_state::{NavigationMode, WindowState},
 };
 
 #[derive(Debug)]
@@ -68,7 +71,11 @@ pub enum AppIn {
     PlayInfo(PlayInfoOut),
     DisplayToast(String),
     Navigation(NavigationMode),
+    // CacheLoading,
 }
+
+#[derive(Debug)]
+pub enum AppCmd {}
 
 relm4::new_action_group!(WindowActionGroup, "win");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
@@ -79,7 +86,7 @@ impl relm4::component::AsyncComponent for App {
     type Init = ();
     type Input = AppIn;
     type Output = ();
-    type CommandOutput = ();
+    type CommandOutput = AppCmd;
 
     fn init_loading_widgets(root: Self::Root) -> Option<relm4::loading_widgets::LoadingWidgets> {
         relm4::view! {
@@ -308,8 +315,12 @@ impl relm4::component::AsyncComponent for App {
             model.volume_btn.set_sensitive(client.inner.is_some());
 
             match &client.inner {
-                Some(_client) => model.main_stack.set_visible_child_name(WindowState::Main.to_str()),
-                None => model.main_stack.set_visible_child_name(WindowState::LoginForm.to_str()),
+                Some(_client) => model
+                    .main_stack
+                    .set_visible_child_name(WindowState::Main.to_str()),
+                None => model
+                    .main_stack
+                    .set_visible_child_name(WindowState::LoginForm.to_str()),
             }
         }
 
@@ -618,7 +629,8 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
-                    self.main_stack.set_visible_child_name(WindowState::Loading.to_str());
+                    self.main_stack
+                        .set_visible_child_name(WindowState::Loading.to_str());
                 }
             },
             AppIn::Equalizer(_changed) => {
@@ -627,7 +639,8 @@ impl relm4::component::AsyncComponent for App {
             AppIn::ResetLogin => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
-                self.main_stack.set_visible_child_name(WindowState::LoginForm.to_str());
+                self.main_stack
+                    .set_visible_child_name(WindowState::LoginForm.to_str());
                 sender.input(AppIn::DeleteCache);
 
                 // reload cache
@@ -709,13 +722,15 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::Navigation(NavigationMode::Normal) => {
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
-                self.search_stack.set_visible_child_name(NavigationMode::Normal.to_str());
+                self.search_stack
+                    .set_visible_child_name(NavigationMode::Normal.to_str());
                 self.back_btn.set_visible(true);
             }
             AppIn::Navigation(NavigationMode::Search) => {
                 self.browser
                     .emit(BrowserIn::SearchChanged(self.search.text().to_string()));
-                self.search_stack.set_visible_child_name(NavigationMode::Search.to_str());
+                self.search_stack
+                    .set_visible_child_name(NavigationMode::Search.to_str());
                 self.search.grab_focus();
                 self.back_btn.set_visible(false);
             }
@@ -744,5 +759,19 @@ impl relm4::component::AsyncComponent for App {
         settings.window_maximized = widgets.main_window.is_maximized();
         settings.paned_position = widgets.paned.position();
         settings.save();
+    }
+
+    async fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        _sender: relm4::AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        // match message {
+        //     AppCmd::CacheReloaded(subsonic) => {
+        //         self.subsonic.replace(subsonic);
+        //         self.main_stack.set_visible_child_name(WindowState::Main.to_str());
+        //     }
+        // }
     }
 }

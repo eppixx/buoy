@@ -509,7 +509,9 @@ impl relm4::Component for Queue {
                     }
                     self.last_selected = Some(index.clone());
                 }
-                QueueSongOut::DisplayToast(msg) => sender.output(QueueOut::DisplayToast(msg)).expect("sending failded"),
+                QueueSongOut::DisplayToast(msg) => sender
+                    .output(QueueOut::DisplayToast(msg))
+                    .expect("sending failded"),
                 QueueSongOut::DropAbove { src, dest } => {
                     let mut guard = self.songs.guard();
                     for (i, child) in src.iter().enumerate() {
@@ -571,7 +573,7 @@ impl relm4::Component for Queue {
                         self.last_selected = Some(target);
                     }
                 }
-            }
+            },
             QueueIn::DisplayToast(title) => sender
                 .output(QueueOut::DisplayToast(title))
                 .expect("sending failed"),
