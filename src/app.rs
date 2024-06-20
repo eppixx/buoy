@@ -74,6 +74,37 @@ pub enum AppIn {
     // CacheLoading,
 }
 
+#[relm4::widget_template(pub)]
+impl relm4::WidgetTemplate for LoadingState {
+    view! {
+        gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
+
+            gtk::HeaderBar {
+                add_css_class: granite::STYLE_CLASS_FLAT,
+                add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+            },
+            gtk::Box {
+                set_hexpand: true,
+                set_vexpand: true,
+                set_halign: gtk::Align::Center,
+                set_valign: gtk::Align::Center,
+                set_orientation: gtk::Orientation::Vertical,
+                set_spacing: 10,
+
+                gtk::Label {
+                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                    set_text: "loading subsonic information from server",
+                },
+                gtk::Spinner {
+                    start: (),
+                    set_halign: gtk::Align::Center,
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum AppCmd {}
 
@@ -107,29 +138,8 @@ impl relm4::component::AsyncComponent for App {
 
                 #[name(loading)]
                 gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::HeaderBar {
-                        add_css_class: granite::STYLE_CLASS_FLAT,
-                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    },
-                    gtk::Box {
-                        set_hexpand: true,
-                        set_vexpand: true,
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_spacing: 10,
-
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                            set_text: "loading subsonic information from server",
-                        },
-                        gtk::Spinner {
-                            start: (),
-                            set_halign: gtk::Align::Center,
-                        }
-                    }
+                    #[template]
+                    LoadingState {}
                 }
             }
         }
@@ -561,31 +571,8 @@ impl relm4::component::AsyncComponent for App {
                     }
                 },
                 add_named[Some(WindowState::Loading.to_str())] = &gtk::WindowHandle {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-
-                        gtk::HeaderBar {
-                            add_css_class: granite::STYLE_CLASS_FLAT,
-                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                        },
-                        gtk::Box {
-                            set_hexpand: true,
-                            set_vexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 10,
-
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_text: "loading subsonic information from server",
-                            },
-                            gtk::Spinner {
-                                start: (),
-                                set_halign: gtk::Align::Center,
-                            }
-                        }
-                    }
+                    #[template]
+                    LoadingState {}
                 },
             }
         }
