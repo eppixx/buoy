@@ -9,5 +9,5 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libgstreamer1.0-dev libgranite-7-dev && cargo build
