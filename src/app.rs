@@ -349,50 +349,6 @@ impl relm4::component::AsyncComponent for App {
                 set_transition_type: gtk::StackTransitionType::Crossfade,
                 set_transition_duration: 200,
 
-                add_named[Some(WindowState::LoginForm.to_str())] = &gtk::WindowHandle {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-
-                        gtk::HeaderBar {
-                            add_css_class: granite::STYLE_CLASS_FLAT,
-                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                        },
-
-                        model.login_form.widget() {
-                            set_hexpand: true,
-                            set_vexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                        }
-                    }
-                },
-                add_named[Some(WindowState::Loading.to_str())] = &gtk::WindowHandle {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-
-                        gtk::HeaderBar {
-                            add_css_class: granite::STYLE_CLASS_FLAT,
-                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                        },
-                        gtk::Box {
-                            set_hexpand: true,
-                            set_vexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 10,
-
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_text: "loading subsonic information from server",
-                            },
-                            gtk::Spinner {
-                                start: (),
-                                set_halign: gtk::Align::Center,
-                            }
-                        }
-                    }
-                },
                 add_named[Some(WindowState::Main.to_str())] = &gtk::Box {
                     add_css_class: "main-box",
                     set_orientation: gtk::Orientation::Vertical,
@@ -586,7 +542,51 @@ impl relm4::component::AsyncComponent for App {
 
                         }
                     }
-                }
+                },
+                add_named[Some(WindowState::LoginForm.to_str())] = &gtk::WindowHandle {
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+
+                        model.login_form.widget() {
+                            set_hexpand: true,
+                            set_vexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                        }
+                    }
+                },
+                add_named[Some(WindowState::Loading.to_str())] = &gtk::WindowHandle {
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+                        gtk::Box {
+                            set_hexpand: true,
+                            set_vexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 10,
+
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                set_text: "loading subsonic information from server",
+                            },
+                            gtk::Spinner {
+                                start: (),
+                                set_halign: gtk::Align::Center,
+                            }
+                        }
+                    }
+                },
             }
         }
     }
