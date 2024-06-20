@@ -11,7 +11,6 @@ pub mod dashboard;
 pub mod descriptive_cover;
 pub mod equalizer;
 pub mod login_form;
-pub mod login_window;
 pub mod play_controls;
 pub mod play_info;
 pub mod queue;

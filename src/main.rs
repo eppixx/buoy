@@ -1,5 +1,4 @@
 use app::App;
-use components::login_window::LoginWindow;
 use relm4::RelmApp;
 
 mod app;
@@ -32,10 +31,8 @@ fn main() -> anyhow::Result<()> {
 
     //load css file
     let data = std::fs::read_to_string("data/bouy.css")?;
-
     let app = RelmApp::new("com.github.eppixx.bouy");
     app.set_global_css(&data);
-    // app.run_async::<LoginWindow>(());
     app.run_async::<App>(());
 
     Ok(())
