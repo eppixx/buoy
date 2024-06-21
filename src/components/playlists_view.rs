@@ -50,8 +50,6 @@ impl relm4::SimpleComponent for PlaylistsView {
             let row = PlaylistElement::builder()
                 .launch((init.clone(), playlist.clone()))
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement);
-            // let item = gtk::ListBoxRow::new();
-            // item.set_child(Some(&gtk::Label::builder().label(&playlist.base.name).build()));
             model.playlists.insert(row.widget(), i as i32);
         }
 
@@ -72,7 +70,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             },
 
             gtk::Paned {
-                set_position: 250,
+                set_position: 300,
                 set_shrink_start_child: false,
                 set_resize_start_child: false,
                 set_shrink_end_child: false,
@@ -137,8 +135,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                     .expect("sending failed");
             }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
-                _ => {}
-            },
+                _ => sender.output(PlaylistsViewOut::DisplayToast(format!("Some message from PlaylistElement"))).expect("sending failed"),
+            }
         }
     }
 }

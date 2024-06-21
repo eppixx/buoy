@@ -13,13 +13,14 @@ use crate::{
     common::convert_for_label,
     components::cover::Cover,
     subsonic::Subsonic,
-    types::{Droppable, Id},
+    types::{Droppable},
 };
 
 #[derive(Debug)]
 pub struct PlaylistElement {
     playlist: submarine::data::PlaylistWithSongs,
     cover: relm4::Controller<Cover>,
+    // index: relm4::factory::DynamicIndex,
 }
 
 #[derive(Debug)]
@@ -29,15 +30,10 @@ pub enum PlaylistElementIn {
 
 #[derive(Debug)]
 pub enum PlaylistElementOut {
-    // Clicked(AlbumElementInit),
+    Clicked(submarine::data::PlaylistWithSongs),
+    // Clicked(relm4::factory::DynamicIndex, submarine::data::PlaylistWithSongs),
     DisplayToast(String),
 }
-
-// #[derive(Debug, Clone)]
-// pub enum AlbumElementInit {
-//     Child(Box<submarine::data::Child>),
-//     AlbumId3(Box<submarine::data::AlbumId3>),
-// }
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for PlaylistElement {
@@ -50,55 +46,21 @@ impl relm4::SimpleComponent for PlaylistElement {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        // init cover
-        // let mut builder = DescriptiveCoverBuilder::default();
-        // let drop = match &init {
-        //     AlbumElementInit::Child(child) => {
-        //         builder = builder.title(child.title.clone());
-        //         if let Some(id) = &child.cover_art {
-        //             builder = builder.id(Id::song(id));
-        //         }
-        //         if let Some(artist) = &child.artist {
-        //             builder = builder.subtitle(artist);
-        //         }
-        //         Droppable::AlbumChild(child.clone())
-        //     }
-        // };
-
+        //init cover
         let cover: relm4::Controller<Cover> = Cover::builder()
-            .launch((subsonic, init.base.cover_art.clone()))
+            .launch((subsonic, Some(init.base.id.clone())))
             .forward(sender.input_sender(), PlaylistElementIn::Cover);
         cover.model().add_css_class_image("size50");
         let model = Self {
-            playlist: init,
+            playlist: init.clone(),
             cover,
         };
 
-        // tooltip string
-        // let tooltip = match &init {
-        //     AlbumElementInit::Child(child) => {
-        //         let year = match child.year {
-        //             Some(year) => format!("Year: {year} • "),
-        //             None => String::new(),
-        //         };
-        //         let duration = match child.duration {
-        //             Some(duration) => {
-        //                 format!("Length: {}", convert_for_label(i64::from(duration) * 1000))
-        //             }
-        //             None => String::new(),
-        //         };
-        //         format!("{year}{duration}")
-        //     }
-        // };
+        //setup content for DropSource
+        let drop = Droppable::Playlist(Box::new(init.clone()));
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
 
         let widgets = view_output!();
-
-        //setup DropSource
-        // let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-        // let drag_src = gtk::DragSource::new();
-        // drag_src.set_actions(gtk::gdk::DragAction::MOVE);
-        // drag_src.set_content(Some(&content));
-        // model.cover.widget().add_controller(drag_src);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -111,16 +73,20 @@ impl relm4::SimpleComponent for PlaylistElement {
                 add_css_class: "flat",
                 set_halign: gtk::Align::Fill,
 
-                // connect_clicked[sender, init] => move |_btn| {
-                //     sender.output(PlaylistElementOut::Clicked(init.clone())).unwrap();
-                // },
+                add_controller = gtk::DragSource {
+                    set_actions: gtk::gdk::DragAction::MOVE,
+                    set_content: Some(&content),
+                },
+
+                connect_clicked[sender] => move |_btn| {
+                    sender.output(PlaylistElementOut::Clicked(init.clone())).unwrap();
+                },
 
                 gtk::Box {
                     set_spacing: 5,
 
-                    model.cover.widget().clone() {
-                        // set_tooltip_text: Some(&tooltip),
-                    },
+                    model.cover.widget().clone(),
+
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
                         set_hexpand: true,
@@ -133,7 +99,7 @@ impl relm4::SimpleComponent for PlaylistElement {
                         gtk::Label {
                             set_halign: gtk::Align::Start,
                             set_text: &format!("{} songs • {}"
-                                               , model.playlist.entry.len()
+                                               , model.playlist.base.song_count
                                                , convert_for_label(i64::from(model.playlist.base.duration) * 1000)),
                         }
                     },
@@ -144,9 +110,11 @@ impl relm4::SimpleComponent for PlaylistElement {
 
                         gtk::Button {
                             set_icon_name: "edit-symbolic",
+                            set_tooltip_text: Some("Rename Playlist"),
                         },
                         gtk::Button {
                             set_icon_name: "edit-delete-symbolic",
+                            set_tooltip_text: Some("Delete Playlist"),
                         }
                     }
                 }
