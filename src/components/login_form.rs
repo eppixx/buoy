@@ -1,8 +1,8 @@
+use granite::prelude::ToastExt;
 use relm4::gtk::prelude::{
     BoxExt, ButtonExt, EditableExt, EntryExt, GridExt, OrientableExt, WidgetExt,
 };
-use relm4::{component, gtk, RelmWidgetExt};
-use granite::prelude::ToastExt;
+use relm4::{component, gtk};
 
 use crate::settings::Settings;
 

@@ -113,7 +113,7 @@ impl relm4::Component for Queue {
             subsonic,
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
-                .forward(sender.input_sender(), |output| QueueIn::QueueSong(output)),
+                .forward(sender.input_sender(), QueueIn::QueueSong),
             loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),
