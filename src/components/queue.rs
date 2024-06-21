@@ -410,6 +410,14 @@ impl relm4::Component for Queue {
                     guard.remove(*index);
                 }
 
+                //set new state when deleting played index
+                if let Some(current) = &self.playing_index {
+                    if selected_indices.contains(&current.current_index()) {
+                        sender.output(QueueOut::Stop).expect("sending failed");
+                        sender.input(QueueIn::SetCurrent(None));
+                    }
+                }
+
                 if self.songs.is_empty() {
                     sender.output(QueueOut::QueueEmpty).unwrap();
                 }

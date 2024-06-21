@@ -4,6 +4,8 @@ use relm4::gtk;
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use crate::settings::Settings;
 
@@ -13,6 +15,7 @@ pub struct Playback {
     source: gstreamer::Element,
     volume: gstreamer::Element,
     equalizer: gstreamer::Element,
+    track_set: Arc<AtomicBool>,
 }
 
 const TICK: u64 = 250; // update rate for Seekbar
@@ -36,6 +39,7 @@ impl Playback {
         let equalizer =
             gst::ElementFactory::make_with_name("equalizer-10bands", Some("equalizer"))?;
         let sink = gst::ElementFactory::make_with_name("autoaudiosink", Some("sink"))?;
+        let track_set = Arc::new(AtomicBool::new(false));
 
         // build the pipeline
         pipeline.add_many([&source, &convert, &volume, &equalizer, &sink])?;
@@ -76,13 +80,16 @@ impl Playback {
         //check for pipline messages
         let send = sender.clone();
         let bus = pipeline.bus().unwrap();
+        let track = track_set.clone();
         std::thread::spawn(move || {
             for msg in bus.iter_timed(gst::ClockTime::NONE) {
                 use gstreamer::MessageView;
                 match msg.view() {
-                    MessageView::Eos(..) => send
-                        .try_send(PlaybackOut::TrackEnd)
-                        .expect("sending failed"),
+                    MessageView::Eos(..) => {
+                        track.store(false, Ordering::Relaxed);
+                        send.try_send(PlaybackOut::TrackEnd)
+                            .expect("sending failed");
+                    }
                     MessageView::StreamStart(..) => {
                         send.try_send(PlaybackOut::Seek(0)).expect("sending failed");
                     }
@@ -125,6 +132,7 @@ impl Playback {
             source,
             volume,
             equalizer,
+            track_set,
         };
 
         play.sync_equalizer();
@@ -133,8 +141,13 @@ impl Playback {
     }
 
     pub fn set_track(&mut self, uri: impl AsRef<str>) {
+        self.track_set.store(true, Ordering::Relaxed);
         self.stop().unwrap(); //TODO error handling
         self.source.set_property("uri", uri.as_ref());
+    }
+
+    pub fn is_track_set(&self) -> bool {
+        self.track_set.load(Ordering::Relaxed)
     }
 
     pub fn play(&mut self) -> anyhow::Result<()> {
@@ -147,6 +160,7 @@ impl Playback {
     }
 
     pub fn stop(&mut self) -> anyhow::Result<()> {
+        self.track_set.store(false, Ordering::Relaxed);
         self.pipeline.set_state(gstreamer::State::Ready)?;
         Ok(())
     }

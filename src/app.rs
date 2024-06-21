@@ -597,7 +597,13 @@ impl relm4::component::AsyncComponent for App {
                 PlayControlOut::Status(status) => {
                     match status {
                         PlayState::Pause => self.playback.pause().unwrap(),
-                        PlayState::Play => self.playback.play().unwrap(),
+                        PlayState::Play => {
+                            if !self.playback.is_track_set() {
+                                self.queue.emit(QueueIn::PlayNext);
+                            } else {
+                                self.playback.play().unwrap();
+                            }
+                        }
                         PlayState::Stop => self.playback.stop().unwrap(),
                     }
                     self.queue.emit(QueueIn::NewState(status));
@@ -685,6 +691,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 QueueOut::Stop => {
                     self.playback.stop().unwrap(); //TODO error handling
+                    self.play_info.emit(PlayInfoIn::NewState(Box::new(None)));
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.seekbar.emit(SeekbarIn::Disable);
