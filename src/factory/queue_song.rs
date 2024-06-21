@@ -164,29 +164,29 @@ impl FactoryComponent for QueueSong {
             gtk::Box {
                 set_spacing: 10,
 
-                                gtk::Box {
-                                        set_orientation: gtk::Orientation::Vertical,
-                                        set_valign: gtk::Align::Center,
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_valign: gtk::Align::Center,
 
-                                        #[transition = "Crossfade"]
-                                        append = match self.playing {
-                                                PlayState::Play => {
-                                                        gtk::Image {
-                                                                add_css_class: "queue-song-state",
-                                                                set_icon_name: Some("audio-volume-high-symbolic"),
-                                                        }
-                                                }
-                                                PlayState::Pause => {
-                                                        gtk::Image {
-                                                                add_css_class: "queue-song-state",
-                                                                set_icon_name: Some("media-playback-pause-symbolic"),
-                                                        }
-                                                }
-                                                PlayState::Stop => {
-                                                        &self.cover.widget().clone() {}
-                                                }
-                                        },
-                                },
+                    #[transition = "Crossfade"]
+                    append = match self.playing {
+                        PlayState::Play => {
+                            gtk::Image {
+                                add_css_class: "queue-song-state",
+                                set_icon_name: Some("audio-volume-high-symbolic"),
+                            }
+                        }
+                        PlayState::Pause => {
+                            gtk::Image {
+                                add_css_class: "queue-song-state",
+                                set_icon_name: Some("media-playback-pause-symbolic"),
+                            }
+                        }
+                        PlayState::Stop => {
+                            &self.cover.widget().clone() {}
+                        }
+                    },
+                },
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
