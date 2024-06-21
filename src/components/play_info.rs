@@ -16,8 +16,8 @@ use crate::{subsonic::Subsonic, types::Id};
 pub struct PlayInfo {
     covers: relm4::Controller<Cover>,
     title: String,
-    artist: Option<String>,
-    album: Option<String>,
+    artist: String,
+    album: String,
 }
 
 #[derive(Debug)]
@@ -47,8 +47,8 @@ impl relm4::SimpleComponent for PlayInfo {
                 .launch((subsonic, child.clone().and_then(|child| child.cover_art)))
                 .forward(sender.input_sender(), PlayInfoIn::Cover),
             title: String::from("Nothing is played currently"),
-            artist: None,
-            album: None,
+            artist: String::new(),
+            album: String::new(),
         };
 
         let widgets = view_output!();
@@ -82,7 +82,7 @@ impl relm4::SimpleComponent for PlayInfo {
                 set_ellipsize: pango::EllipsizeMode::End,
 
                 #[watch]
-                set_markup: &style_label(&model.title, model.artist.as_deref(), model.album.as_deref()),
+                set_markup: &style_label(&model.title, &model.artist, &model.album),
             },
         }
     }
@@ -93,13 +93,13 @@ impl relm4::SimpleComponent for PlayInfo {
                 None => {
                     self.covers.emit(CoverIn::LoadImage(None));
                     self.title = String::from("Nothing is played currently");
-                    self.artist = None;
-                    self.album = None;
+                    self.artist = String::new();
+                    self.album = String::new();
                 }
                 Some(child) => {
                     self.title = child.title;
-                    self.artist = child.artist;
-                    self.album = child.album;
+                    self.artist = child.artist.unwrap_or_default();
+                    self.album = child.album.unwrap_or_default();
                     self.covers
                         .emit(CoverIn::LoadId(Some(Id::song(child.id.clone()))));
                 }
@@ -113,28 +113,26 @@ impl relm4::SimpleComponent for PlayInfo {
     }
 }
 
-fn style_label(title: &str, artist: Option<&str>, album: Option<&str>) -> String {
+fn style_label(title: &str, artist: &str, album: &str) -> String {
     let mut result = format!(
         "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
         glib::markup_escape_text(title)
     );
-    if artist.is_some() || album.is_some() {
-        result.push('\n');
-    }
-    if let Some(artist) = artist {
+    if !artist.is_empty() {
         result.push_str(&format!(
-            "by <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            "\nby <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(artist)
         ));
+    } else {
+        result.push_str("\n")
     }
-    if artist.is_some() || album.is_some() {
-        result.push(' ');
-    }
-    if let Some(album) = album {
+    if !album.is_empty() {
         result.push_str(&format!(
             "\non <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(album)
         ));
+    } else {
+        result.push_str("\n")
     }
     result
 }
