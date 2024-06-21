@@ -2,19 +2,20 @@ use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController,
 };
 
 use std::{cell::RefCell, rc::Rc};
 
-use super::playlist_element::PlaylistElementOut;
+use super::{playlist_element::PlaylistElementOut, playlist_tracks::{PlaylistTracks, PlaylistTracksIn, PlaylistTracksOut}};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
     index_shown: Option<relm4::factory::DynamicIndex>,
+    tracks: relm4::Controller<PlaylistTracks>,
 }
 
 #[derive(Debug)]
@@ -29,6 +30,7 @@ pub enum PlaylistsViewIn {
     SearchChanged(String),
     NewPlaylist(Vec<submarine::data::Child>),
     PlaylistElement(PlaylistElementOut),
+    PlaylistTracks(PlaylistTracksOut),
 }
 
 #[relm4::component(pub)]
@@ -47,6 +49,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
             index_shown: None,
+            tracks: PlaylistTracks::builder().launch(init.clone()).forward(sender.input_sender(), PlaylistsViewIn::PlaylistTracks),
         };
 
         let widgets = view_output!();
@@ -61,17 +64,6 @@ impl relm4::SimpleComponent for PlaylistsView {
 
     view! {
         gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-            set_spacing: 5,
-
-            gtk::WindowHandle {
-                gtk::Label {
-                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                    set_halign: gtk::Align::Center,
-                    set_text: "Playlists",
-                },
-            },
-
             gtk::Paned {
                 set_position: 300,
                 set_shrink_start_child: false,
@@ -79,49 +71,45 @@ impl relm4::SimpleComponent for PlaylistsView {
                 set_shrink_end_child: false,
 
                 #[wrap(Some)]
-                set_start_child = &model.playlists.widget().clone() -> gtk::ListBox {
-                    add_css_class: "playlist-view-playlist-list",
-                    set_vexpand: true,
+                set_start_child = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 7,
 
-                    gtk::ListBoxRow {
-                        add_css_class: "playlist-view-add-playlist",
+                    gtk::WindowHandle {
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            set_halign: gtk::Align::Center,
+                            set_text: "Playlists",
+                        },
+                    },
 
-                        gtk::Button {
-                            gtk::Box {
-                                set_halign: gtk::Align::Center,
+                    model.playlists.widget().clone() -> gtk::ListBox {
+                        add_css_class: "playlist-view-playlist-list",
+                        set_vexpand: true,
 
-                                gtk::Image {
-                                    set_icon_name: Some("list-add-symbolic"),
+                        gtk::ListBoxRow {
+                            add_css_class: "playlist-view-add-playlist",
+
+                            gtk::Button {
+                                gtk::Box {
+                                    set_halign: gtk::Align::Center,
+
+                                    gtk::Image {
+                                        set_icon_name: Some("list-add-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_text: "New Playlist",
+                                    }
                                 },
-                                gtk::Label {
-                                    set_text: "New Playlist",
-                                }
-                            },
 
-                            connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
+                                connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
+                            }
                         }
                     }
                 },
 
-                #[wrap(Some)]
-                set_end_child = &gtk::ListBox {
-                    set_hexpand: true,
-                    set_vexpand: true,
-
-                    gtk::ListBoxRow {
-                        gtk::Box {
-                            set_vexpand: true,
-
-                            gtk::Label {
-                                set_halign: gtk::Align::Center,
-                                set_valign: gtk::Align::Center,
-
-                                set_text: "Select a playlist to list its contents",
-                            },
-                        }
-                    }
-                }
-            },
+                set_end_child = Some(model.tracks.widget()),
+            }
         }
     }
 
@@ -138,8 +126,13 @@ impl relm4::SimpleComponent for PlaylistsView {
                     .expect("sending failed");
             }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
+                PlaylistElementOut::Clicked(index, list) => {
+                    self.index_shown = Some(index);
+                    self.tracks.emit(PlaylistTracksIn::SetTracks(list));
+                }
                 _ => sender.output(PlaylistsViewOut::DisplayToast(format!("Some message from PlaylistElement"))).expect("sending failed"),
             }
+            PlaylistsViewIn::PlaylistTracks(msg) => {}
         }
     }
 }

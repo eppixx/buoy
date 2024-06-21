@@ -243,7 +243,7 @@ impl relm4::SimpleComponent for Browser {
                         .launch(self.subsonic.clone())
                         .forward(sender.input_sender(), BrowserIn::PlaylistsView);
                 self.history_widget
-                    .push(Views::Albums(playlists.widget().clone()));
+                    .push(Views::Playlists(playlists.widget().clone()));
                 self.playlists_views.push(playlists);
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
