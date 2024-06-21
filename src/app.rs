@@ -50,9 +50,7 @@ pub struct App {
     search_btn: gtk::ToggleButton,
     search_stack: gtk::Stack,
     search: gtk::SearchEntry,
-    equalizer_btn: gtk::MenuButton,
     volume_btn: gtk::VolumeButton,
-    config_btn: gtk::MenuButton,
     toasts: granite::Toast,
 }
 
@@ -272,8 +270,6 @@ impl relm4::component::AsyncComponent for App {
             search_stack: gtk::Stack::default(),
             search: gtk::SearchEntry::default(),
             volume_btn: gtk::VolumeButton::default(),
-            equalizer_btn: gtk::MenuButton::default(),
-            config_btn: gtk::MenuButton::default(),
             toasts: granite::Toast::default(),
         };
 
@@ -323,9 +319,6 @@ impl relm4::component::AsyncComponent for App {
 
         {
             let client = Client::get_mut().lock().unwrap();
-            model.config_btn.set_sensitive(client.inner.is_some());
-            model.equalizer_btn.set_sensitive(client.inner.is_some());
-            model.volume_btn.set_sensitive(client.inner.is_some());
 
             match &client.inner {
                 Some(_client) => model
@@ -499,7 +492,7 @@ impl relm4::component::AsyncComponent for App {
                                     set_halign: gtk::Align::End,
                                     set_spacing: 5,
 
-                                    model.equalizer_btn.clone() {
+                                    gtk::MenuButton {
                                         set_icon_name: "media-eq-symbolic",
                                         set_focus_on_click: false,
                                         #[wrap(Some)]
@@ -515,7 +508,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
 
-                                    model.config_btn.clone() {
+                                    gtk::MenuButton {
                                         set_icon_name: "open-menu-symbolic",
                                         set_focus_on_click: false,
 
