@@ -127,6 +127,9 @@ impl relm4::SimpleComponent for PlaylistsView {
             }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
                 PlaylistElementOut::Clicked(index, list) => {
+                    if self.index_shown == Some(index.clone()) {
+                        return;
+                    }
                     self.index_shown = Some(index);
                     self.tracks.emit(PlaylistTracksIn::SetTracks(list));
                 }
