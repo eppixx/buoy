@@ -11,10 +11,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use super::playlist_element::PlaylistElementOut;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct PlaylistsView {
-    playlists: gtk::ListBox,
-    playlist_items: Vec<gtk::ListBoxRow>,
+    playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
+    index_shown: Option<relm4::factory::DynamicIndex>,
 }
 
 #[derive(Debug)]
@@ -42,15 +42,18 @@ impl relm4::SimpleComponent for PlaylistsView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = PlaylistsView::default();
+        let mut model = PlaylistsView {
+            playlists: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::ListBox::default())
+                .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
+            index_shown: None,
+        };
+
         let widgets = view_output!();
 
         // add playlists to list
-        for (i, playlist) in init.borrow().playlists().iter().enumerate() {
-            let row = PlaylistElement::builder()
-                .launch((init.clone(), playlist.clone()))
-                .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement);
-            model.playlists.insert(row.widget(), i as i32);
+        for playlist in init.borrow().playlists() {
+            model.playlists.guard().push_back((init.clone(), playlist.clone()));
         }
 
         relm4::ComponentParts { model, widgets }
@@ -76,7 +79,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 set_shrink_end_child: false,
 
                 #[wrap(Some)]
-                set_start_child = &model.playlists.clone() -> gtk::ListBox {
+                set_start_child = &model.playlists.widget().clone() -> gtk::ListBox {
                     add_css_class: "playlist-view-playlist-list",
                     set_vexpand: true,
 
