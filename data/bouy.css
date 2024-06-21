@@ -198,3 +198,11 @@
 
 .artist-element {
 }
+
+.playlist-view-playlist-list {
+  min-width: 250px;
+}
+
+.playlist-view-add-playlist {
+  padding: 7px;
+}

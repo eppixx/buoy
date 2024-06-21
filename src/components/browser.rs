@@ -11,20 +11,14 @@ use relm4::{
 
 use super::{
     album_element::AlbumElementInit,
-    album_view::{AlbumViewIn, AlbumViewInit, AlbumViewOut},
-    albums_view::{AlbumsView, AlbumsViewOut},
-    artist_view::{ArtistViewIn, ArtistViewOut},
+    album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
+    albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
+    artist_view::{ArtistView, ArtistViewIn, ArtistViewOut},
     artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
-    dashboard::{DashboardIn, DashboardOut},
+    dashboard::{Dashboard, DashboardIn, DashboardOut},
+    playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
 };
-use crate::{
-    components::{
-        album_view::AlbumView, albums_view::AlbumsViewIn, artist_view::ArtistView,
-        dashboard::Dashboard,
-    },
-    subsonic::Subsonic,
-    types::Droppable,
-};
+use crate::{subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Views {
@@ -62,6 +56,7 @@ pub struct Browser {
     albumss: Vec<relm4::component::Controller<AlbumsView>>,
     album_views: Vec<relm4::Controller<AlbumView>>,
     artist_views: Vec<relm4::Controller<ArtistView>>,
+    playlists_views: Vec<relm4::Controller<PlaylistsView>>,
 }
 
 #[derive(Debug)]
@@ -78,6 +73,7 @@ pub enum BrowserIn {
     AlbumView(Box<AlbumViewOut>),
     ArtistsView(ArtistsViewOut),
     ArtistView(Box<ArtistViewOut>),
+    PlaylistsView(PlaylistsViewOut),
 }
 
 #[derive(Debug)]
@@ -109,6 +105,7 @@ impl relm4::SimpleComponent for Browser {
             albumss: vec![],
             album_views: vec![],
             artist_views: vec![],
+            playlists_views: vec![],
         };
         let widgets = view_output!();
 
@@ -147,7 +144,9 @@ impl relm4::SimpleComponent for Browser {
                 for view in &self.artist_views {
                     view.emit(ArtistViewIn::SearchChanged(search.clone()));
                 }
-                //TODO search for playlists
+                for view in &self.playlists_views {
+                    view.emit(PlaylistsViewIn::SearchChanged(search.clone()));
+                }
                 //TODO search for tracks
             }
             BrowserIn::BackClicked => {
@@ -162,7 +161,7 @@ impl relm4::SimpleComponent for Browser {
                             Views::Albums(_) => _ = self.albumss.pop(),
                             Views::Album(_) => _ = self.album_views.pop(),
                             Views::Tracks(_) => todo!(),
-                            Views::Playlists(_) => todo!(),
+                            Views::Playlists(_) => _ = self.playlists_views.pop(),
                         },
                     }
 
@@ -212,7 +211,7 @@ impl relm4::SimpleComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window.gone");
+                    .expect("main window gone");
             }
             BrowserIn::AlbumsClicked => {
                 if let Some(&Views::Albums(_)) = self.history_widget.last() {
@@ -229,13 +228,28 @@ impl relm4::SimpleComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window.gone");
+                    .expect("main window gone");
             }
             BrowserIn::TracksClicked => {
                 //TODO
             }
             BrowserIn::PlaylistsClicked => {
-                //TODO
+                if let Some(&Views::Playlists(_)) = self.history_widget.last() {
+                    return;
+                }
+
+                let playlists: relm4::component::Controller<PlaylistsView> =
+                    PlaylistsView::builder()
+                        .launch(self.subsonic.clone())
+                        .forward(sender.input_sender(), BrowserIn::PlaylistsView);
+                self.history_widget
+                    .push(Views::Albums(playlists.widget().clone()));
+                self.playlists_views.push(playlists);
+                self.content
+                    .set_child(Some(self.history_widget.last().unwrap().widget()));
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .expect("main window gone");
             }
             BrowserIn::Dashboard(output) => {
                 match output {}
@@ -319,6 +333,12 @@ impl relm4::SimpleComponent for Browser {
                 ArtistViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
+            },
+            BrowserIn::PlaylistsView(msg) => match msg {
+                PlaylistsViewOut::DisplayToast(title) => sender
+                    .output(BrowserOut::DisplayToast(title))
+                    .expect("sending failed"),
+                _ => {}
             },
         }
     }

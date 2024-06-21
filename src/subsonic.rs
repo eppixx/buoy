@@ -20,6 +20,7 @@ pub struct Subsonic {
     scan_status: Option<i64>,
     artists: Vec<submarine::data::ArtistId3>,
     album_list: Vec<submarine::data::Child>,
+    playlists: Vec<submarine::data::PlaylistWithSongs>,
     #[serde(skip)]
     covers: SubsonicCovers,
 }
@@ -103,10 +104,23 @@ impl Subsonic {
             albums
         };
 
+        //fetch playlists
+        tracing::info!("fetching playlists");
+        let playlists = {
+            let mut playlist_list = vec![];
+            let playlists = client.get_playlists(None::<&str>).await?;
+            for playlist in playlists {
+                let list = client.get_playlist(playlist.id).await?;
+                playlist_list.push(list);
+            }
+            playlist_list
+        };
+
         let result = Self {
             scan_status: scan_status.count,
             artists,
             album_list,
+            playlists,
             covers: SubsonicCovers::default(),
         };
 
@@ -153,6 +167,10 @@ impl Subsonic {
 
     pub fn albums(&self) -> &Vec<submarine::data::Child> {
         &self.album_list
+    }
+
+    pub fn playlists(&self) -> &Vec<submarine::data::PlaylistWithSongs> {
+        &self.playlists
     }
 
     pub fn cover(&mut self, id: &str) -> subsonic_cover::Response {

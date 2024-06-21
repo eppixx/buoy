@@ -13,6 +13,8 @@ pub mod equalizer;
 pub mod login_form;
 pub mod play_controls;
 pub mod play_info;
+pub mod playlist_element;
+pub mod playlists_view;
 pub mod queue;
 pub mod seekbar;
 pub mod sequence_button;
