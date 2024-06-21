@@ -308,6 +308,11 @@ impl relm4::component::AsyncComponent for App {
         {
             let settings = Settings::get().lock().unwrap();
             model.volume_btn.set_value(settings.volume);
+
+            // playcontrol
+            if model.queue.model().songs().is_empty() {
+                model.play_controls.emit(PlayControlIn::Disable);
+            }
         }
 
         gtk::glib::spawn_future_local(async move {
