@@ -1,10 +1,7 @@
 use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
-use relm4::{
-    gtk::{
-        self,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
-    },
-    Component, ComponentController,
+use relm4::gtk::{
+    self,
+    prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -163,8 +160,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                     self.index_shown = Some(index);
                 }
                 _ => sender
-                    .output(PlaylistsViewOut::DisplayToast(format!(
-                        "Some message from PlaylistElement"
+                    .output(PlaylistsViewOut::DisplayToast(String::from(
+                        "Some message from PlaylistElement",
                     )))
                     .expect("sending failed"),
             },

@@ -124,7 +124,7 @@ fn style_label(title: &str, artist: &str, album: &str) -> String {
             glib::markup_escape_text(artist)
         ));
     } else {
-        result.push_str("\n")
+        result.push('\n')
     }
     if !album.is_empty() {
         result.push_str(&format!(
@@ -132,7 +132,7 @@ fn style_label(title: &str, artist: &str, album: &str) -> String {
             glib::markup_escape_text(album)
         ));
     } else {
-        result.push_str("\n")
+        result.push('\n')
     }
     result
 }

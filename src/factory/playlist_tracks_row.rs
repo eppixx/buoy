@@ -60,7 +60,7 @@ impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, label: &mut Self::Root) {
-        label.set_label(&item.item.artist.as_deref().unwrap_or("Unknown Artist"));
+        label.set_label(item.item.artist.as_deref().unwrap_or("Unknown Artist"));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -88,7 +88,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, label: &mut Self::Root) {
-        label.set_label(&item.item.album.as_deref().unwrap_or("Unknown Album"));
+        label.set_label(item.item.album.as_deref().unwrap_or("Unknown Album"));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -135,7 +135,7 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, image: &mut Self::Root) {
-        if let Some(_) = item.item.starred {
+        if item.item.starred.is_some() {
             image.set_from_icon_name(Some("starred"));
         }
     }
