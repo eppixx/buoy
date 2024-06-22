@@ -141,7 +141,9 @@ impl Subsonic {
                     .filter_map(|artist| artist.cover_art.clone()),
             )
             .chain(
-                self.playlists.iter().filter_map(|list| list.base.cover_art.clone())
+                self.playlists
+                    .iter()
+                    .filter_map(|list| list.base.cover_art.clone()),
             )
             .collect();
         self.covers.work(ids).await;

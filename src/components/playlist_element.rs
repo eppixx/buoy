@@ -10,10 +10,7 @@ use relm4::{
 
 use super::cover::CoverOut;
 use crate::{
-    common::convert_for_label,
-    components::cover::Cover,
-    subsonic::Subsonic,
-    types::{Droppable},
+    common::convert_for_label, components::cover::Cover, subsonic::Subsonic, types::Droppable,
 };
 
 #[derive(Debug)]
@@ -32,7 +29,10 @@ pub enum PlaylistElementIn {
 
 #[derive(Debug)]
 pub enum PlaylistElementOut {
-    Clicked(relm4::factory::DynamicIndex, submarine::data::PlaylistWithSongs),
+    Clicked(
+        relm4::factory::DynamicIndex,
+        submarine::data::PlaylistWithSongs,
+    ),
     DisplayToast(String),
 }
 
@@ -131,7 +131,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     .expect("sending failed"),
             },
             PlaylistElementIn::Clicked => {
-                sender.output(PlaylistElementOut::Clicked(self.index.clone(), self.playlist.clone())).expect("sending failed");
+                sender
+                    .output(PlaylistElementOut::Clicked(
+                        self.index.clone(),
+                        self.playlist.clone(),
+                    ))
+                    .expect("sending failed");
             }
         }
     }

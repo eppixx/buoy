@@ -9,13 +9,16 @@ use relm4::{
 
 use std::{cell::RefCell, rc::Rc};
 
-use super::{playlist_element::PlaylistElementOut, playlist_tracks::{PlaylistTracks, PlaylistTracksIn, PlaylistTracksOut}};
+use super::playlist_element::PlaylistElementOut;
+use crate::factory::playlist_tracks_row::{
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
+};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
     index_shown: Option<relm4::factory::DynamicIndex>,
-    tracks: relm4::Controller<PlaylistTracks>,
+    tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
 }
 
 #[derive(Debug)]
@@ -30,7 +33,6 @@ pub enum PlaylistsViewIn {
     SearchChanged(String),
     NewPlaylist(Vec<submarine::data::Child>),
     PlaylistElement(PlaylistElementOut),
-    PlaylistTracks(PlaylistTracksOut),
 }
 
 #[relm4::component(pub)]
@@ -44,19 +46,33 @@ impl relm4::SimpleComponent for PlaylistsView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let mut tracks = relm4::typed_view::column::TypedColumnView::<
+            PlaylistTracksRow,
+            gtk::SingleSelection,
+        >::new();
+        tracks.append_column::<TitleColumn>();
+        tracks.append_column::<ArtistColumn>();
+        tracks.append_column::<AlbumColumn>();
+        tracks.append_column::<LengthColumn>();
+        tracks.append_column::<FavColumn>();
+
         let mut model = PlaylistsView {
             playlists: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
             index_shown: None,
-            tracks: PlaylistTracks::builder().launch(init.clone()).forward(sender.input_sender(), PlaylistsViewIn::PlaylistTracks),
+            tracks,
         };
 
+        let column = &model.tracks.view;
         let widgets = view_output!();
 
         // add playlists to list
         for playlist in init.borrow().playlists() {
-            model.playlists.guard().push_back((init.clone(), playlist.clone()));
+            model
+                .playlists
+                .guard()
+                .push_back((init.clone(), playlist.clone()));
         }
 
         relm4::ComponentParts { model, widgets }
@@ -108,7 +124,16 @@ impl relm4::SimpleComponent for PlaylistsView {
                     }
                 },
 
-                set_end_child = Some(model.tracks.widget()),
+                // set_end_child = Some(model.tracks.widget()),
+                #[wrap(Some)]
+                set_end_child = &gtk::Box {
+                    gtk::ScrolledWindow {
+                        set_hexpand: true,
+
+                        #[local_ref]
+                        column -> gtk::ColumnView,
+                    }
+                }
             }
         }
     }
@@ -130,12 +155,19 @@ impl relm4::SimpleComponent for PlaylistsView {
                     if self.index_shown == Some(index.clone()) {
                         return;
                     }
+
+                    self.tracks.clear();
+                    for track in list.entry {
+                        self.tracks.append(PlaylistTracksRow::new(track));
+                    }
                     self.index_shown = Some(index);
-                    self.tracks.emit(PlaylistTracksIn::SetTracks(list));
                 }
-                _ => sender.output(PlaylistsViewOut::DisplayToast(format!("Some message from PlaylistElement"))).expect("sending failed"),
-            }
-            PlaylistsViewIn::PlaylistTracks(msg) => {}
+                _ => sender
+                    .output(PlaylistsViewOut::DisplayToast(format!(
+                        "Some message from PlaylistElement"
+                    )))
+                    .expect("sending failed"),
+            },
         }
     }
 }
