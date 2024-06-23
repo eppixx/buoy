@@ -29,25 +29,26 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Box;
     type Item = PlaylistTracksRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Box::default(), ())
-    }
-
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, b: &mut Self::Root) {
+        let b = gtk::Box::default();
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        label.set_label(&item.item.title);
-        b.add_controller(item.get_drag_src());
         b.set_hexpand(true);
         b.append(&label);
+        (b, (label))
+    }
+
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+        label.set_label(&item.item.title);
+        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -60,25 +61,26 @@ pub struct ArtistColumn;
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     type Root = gtk::Box;
     type Item = PlaylistTracksRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Artist";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Box::default(), ())
-    }
-
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, b: &mut Self::Root) {
+        let b = gtk::Box::default();
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        label.set_label(item.item.artist.as_deref().unwrap_or("Unknown Artist"));
-        b.add_controller(item.get_drag_src());
         b.set_hexpand(true);
         b.append(&label);
+        (b, (label))
+    }
+
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+        label.set_label(item.item.artist.as_deref().unwrap_or("Unknown Artist"));
+        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -91,25 +93,26 @@ pub struct AlbumColumn;
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     type Root = gtk::Box;
     type Item = PlaylistTracksRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Album";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Box::default(), ())
-    }
-
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, b: &mut Self::Root) {
+        let b = gtk::Box::default();
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        label.set_label(item.item.album.as_deref().unwrap_or("Unknown Album"));
-        b.add_controller(item.get_drag_src());
         b.set_hexpand(true);
         b.append(&label);
+        (b, (label))
+    }
+
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+        label.set_label(item.item.album.as_deref().unwrap_or("Unknown Album"));
+        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -122,22 +125,23 @@ pub struct LengthColumn;
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
     type Root = gtk::Box;
     type Item = PlaylistTracksRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Length";
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Box::default(), ())
+        let b = gtk::Box::default();
+        let label = gtk::Label::default();
+        b.set_hexpand(true);
+        b.append(&label);
+        (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, b: &mut Self::Root) {
-        let label = gtk::Label::default();
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
         let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
         label.set_label(&length);
         b.add_controller(item.get_drag_src());
-        b.set_hexpand(true);
-        b.append(&label);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
