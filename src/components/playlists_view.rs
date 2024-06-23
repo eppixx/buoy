@@ -1,4 +1,5 @@
 use fuzzy_matcher::FuzzyMatcher;
+use relm4::gtk::glib::prelude::ToValue;
 use relm4::gtk::{
     self,
     prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
@@ -13,6 +14,7 @@ use crate::common::convert_for_label;
 use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
+use crate::types::Droppable;
 use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
 
 #[derive(Debug)]
@@ -23,6 +25,7 @@ pub struct PlaylistsView {
     track_stack: gtk::Stack,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
     info_cover: relm4::Controller<Cover>,
+    info_cover_controller: gtk::DragSource,
     info_title: gtk::Label,
     info_details: gtk::Label,
 }
@@ -74,6 +77,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             info_cover: Cover::builder()
                 .launch((init.clone(), None))
                 .forward(sender.input_sender(), PlaylistsViewIn::Cover),
+            info_cover_controller: gtk::DragSource::default(),
             info_title: gtk::Label::default(),
             info_details: gtk::Label::default(),
         };
@@ -85,6 +89,11 @@ impl relm4::SimpleComponent for PlaylistsView {
         let info_details = model.info_details.clone();
         let widgets = view_output!();
         model.info_cover.model().add_css_class_image("size100");
+
+        model
+            .info_cover
+            .widget()
+            .add_controller(model.info_cover_controller.clone());
 
         // add playlists to list
         for playlist in init.borrow().playlists() {
@@ -276,6 +285,13 @@ impl relm4::SimpleComponent for PlaylistsView {
                     self.info_title.set_text(&list.base.name);
                     self.info_details.set_text(&build_info_string(&list));
 
+                    //set drag controller
+                    let drop = Droppable::Playlist(Box::new(list.clone()));
+                    let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+                    self.info_cover_controller.set_content(Some(&content));
+                    self.info_cover_controller
+                        .set_actions(gtk::gdk::DragAction::MOVE);
+
                     //set tracks
                     self.tracks.clear();
                     for track in list.entry {
@@ -297,7 +313,11 @@ impl relm4::SimpleComponent for PlaylistsView {
 }
 
 fn build_info_string(list: &submarine::data::PlaylistWithSongs) -> String {
-    let created = list.base.created.format("Created at: %d.%m.%Y, %H:%M").to_string();
+    let created = list
+        .base
+        .created
+        .format("Created at: %d.%m.%Y, %H:%M")
+        .to_string();
     format!(
         "Songs: {} • Length: {} • {}",
         list.base.song_count,

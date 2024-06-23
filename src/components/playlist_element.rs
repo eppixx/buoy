@@ -9,9 +9,7 @@ use relm4::{
 };
 
 use super::cover::CoverOut;
-use crate::{
-    common::convert_for_label, components::cover::Cover, subsonic::Subsonic, types::Droppable,
-};
+use crate::{components::cover::Cover, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug)]
 pub struct PlaylistElement {
