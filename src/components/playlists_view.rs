@@ -101,10 +101,7 @@ impl relm4::SimpleComponent for PlaylistsView {
 
         // add playlists to list
         for playlist in init.borrow().playlists() {
-            model
-                .playlists
-                .guard()
-                .push_back((init.clone(), playlist.clone()));
+            model.playlists.guard().push_back(playlist.clone());
         }
 
         relm4::ComponentParts { model, widgets }

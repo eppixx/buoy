@@ -1,20 +1,13 @@
-use std::{cell::RefCell, rc::Rc};
-
-use relm4::{
-    gtk::{
-        self,
-        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
-    },
-    Component, ComponentController,
+use relm4::gtk::{
+    self,
+    prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
 };
 
-use super::cover::CoverOut;
-use crate::{components::cover::Cover, subsonic::Subsonic, types::Droppable};
+use crate::types::Droppable;
 
 #[derive(Debug)]
 pub struct PlaylistElement {
     playlist: submarine::data::PlaylistWithSongs,
-    cover: relm4::Controller<Cover>,
     index: relm4::factory::DynamicIndex,
     drag_src: gtk::DragSource,
 }
@@ -22,7 +15,6 @@ pub struct PlaylistElement {
 #[derive(Debug)]
 pub enum PlaylistElementIn {
     Clicked,
-    Cover(CoverOut),
 }
 
 #[derive(Debug)]
@@ -36,26 +28,19 @@ pub enum PlaylistElementOut {
 
 #[relm4::factory(pub)]
 impl relm4::factory::FactoryComponent for PlaylistElement {
-    type Init = (Rc<RefCell<Subsonic>>, submarine::data::PlaylistWithSongs);
+    type Init = submarine::data::PlaylistWithSongs;
     type Input = PlaylistElementIn;
     type Output = PlaylistElementOut;
     type ParentWidget = gtk::ListBox;
     type CommandOutput = ();
 
     fn init_model(
-        (subsonic, init): Self::Init,
+        init: Self::Init,
         index: &relm4::factory::DynamicIndex,
-        sender: relm4::FactorySender<Self>,
+        _sender: relm4::FactorySender<Self>,
     ) -> Self {
-        //init cover
-        let cover: relm4::Controller<Cover> = Cover::builder()
-            .launch((subsonic, Some(init.base.id.clone())))
-            .forward(sender.input_sender(), PlaylistElementIn::Cover);
-        cover.model().add_css_class_image("size50");
-
         let model = Self {
             playlist: init.clone(),
-            cover,
             index: index.clone(),
             drag_src: gtk::DragSource::default(),
         };
@@ -83,8 +68,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                 gtk::Box {
                     set_spacing: 5,
-
-                    self.cover.widget().clone(),
 
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
@@ -121,11 +104,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::FactorySender<Self>) {
         match msg {
-            PlaylistElementIn::Cover(msg) => match msg {
-                CoverOut::DisplayToast(title) => sender
-                    .output(PlaylistElementOut::DisplayToast(title))
-                    .expect("sending failed"),
-            },
             PlaylistElementIn::Clicked => {
                 sender
                     .output(PlaylistElementOut::Clicked(
