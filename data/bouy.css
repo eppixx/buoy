@@ -206,3 +206,9 @@
 .playlist-view-add-playlist {
   padding: 7px;
 }
+
+.playlist-view-tracks-row > listview > row {
+  border-radius: 8px;
+  margin: 1px 0px;
+  padding: 5px 7px;
+}

@@ -128,7 +128,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                         set_hexpand: true,
 
                         #[local_ref]
-                        column -> gtk::ColumnView,
+                        column -> gtk::ColumnView {
+                            add_css_class: "playlist-view-tracks-row",
+                        }
                     }
                 }
             }
