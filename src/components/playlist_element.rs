@@ -99,9 +99,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         },
                         gtk::Label {
                             set_halign: gtk::Align::Start,
-                            set_text: &format!("{} songs • {}"
-                                               , self.playlist.base.song_count
-                                               , convert_for_label(i64::from(self.playlist.base.duration) * 1000)),
+                            set_text: &format!("{} songs", self.playlist.base.song_count),
                         }
                     },
 

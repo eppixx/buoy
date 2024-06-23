@@ -297,12 +297,11 @@ impl relm4::SimpleComponent for PlaylistsView {
 }
 
 fn build_info_string(list: &submarine::data::PlaylistWithSongs) -> String {
-    let songs = format!(
-        "Songs: {} • Length: {}",
+    let created = list.base.created.format("Created at: %d.%m.%Y, %H:%M").to_string();
+    format!(
+        "Songs: {} • Length: {} • {}",
         list.base.song_count,
-        convert_for_label(i64::from(list.base.duration) * 1000)
-    );
-    let time = list.base.created;
-    let created = time.format(" • Created at: %d.%m.%Y, %H:%M").to_string();
-    format!("{songs}{created}")
+        convert_for_label(i64::from(list.base.duration) * 1000),
+        created
+    )
 }
