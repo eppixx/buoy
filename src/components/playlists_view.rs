@@ -128,6 +128,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 #[wrap(Some)]
                 set_start_child = &model.playlists.widget().clone() -> gtk::ListBox {
                     add_css_class: "playlist-view-playlist-list",
+                    add_css_class: granite::STYLE_CLASS_BACKGROUND,
                     set_vexpand: true,
 
                     gtk::ListBoxRow {
@@ -183,7 +184,7 @@ impl relm4::SimpleComponent for PlaylistsView {
 
                                         #[local_ref]
                                         info_title -> gtk::Label {
-                                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                             set_label: "title",
                                             set_halign: gtk::Align::Start,
                                         },

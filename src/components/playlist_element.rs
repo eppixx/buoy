@@ -93,6 +93,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         set_homogeneous: true,
 
                         gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_halign: gtk::Align::Start,
                             set_text: &self.playlist.base.name,
                         },
@@ -103,9 +104,9 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     },
 
                     gtk::Box {
-                        // set_orientation: gtk::Orientation::Vertical,
-                        // set_homogeneous: true,
                         self.edit_area.clone() -> gtk::Stack {
+                            set_transition_duration: 250,
+                            set_transition_type: gtk::StackTransitionType::Crossfade,
 
                             add_named[Some("clean")] = &gtk::Box {},
                             add_named[Some("edit")] = &gtk::Box {
