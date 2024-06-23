@@ -15,7 +15,7 @@ use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
 use crate::types::Droppable;
-use crate::{components::playlist_element::{PlaylistElement, PlaylistElementIn}, subsonic::Subsonic};
+use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
@@ -279,10 +279,17 @@ impl relm4::SimpleComponent for PlaylistsView {
                     }
 
                     if let Some(i) = &self.index_shown {
-                        self.playlists.guard().get(i.current_index()).unwrap().set_edit_area(false);
+                        self.playlists
+                            .guard()
+                            .get(i.current_index())
+                            .unwrap()
+                            .set_edit_area(false);
                     }
-                    self.playlists.guard().get(index.current_index()).unwrap().set_edit_area(true);
-
+                    self.playlists
+                        .guard()
+                        .get(index.current_index())
+                        .unwrap()
+                        .set_edit_area(true);
 
                     // set info
                     self.info_cover
