@@ -7,6 +7,7 @@ use relm4::gtk::{
 use std::{cell::RefCell, rc::Rc};
 
 use super::playlist_element::PlaylistElementOut;
+use crate::common::convert_for_label;
 use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
@@ -16,6 +17,8 @@ pub struct PlaylistsView {
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
     index_shown: Option<relm4::factory::DynamicIndex>,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
+    info_title: gtk::Label,
+    info_details: gtk::Label,
 }
 
 #[derive(Debug)]
@@ -59,9 +62,13 @@ impl relm4::SimpleComponent for PlaylistsView {
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
             index_shown: None,
             tracks,
+            info_title: gtk::Label::default(),
+            info_details: gtk::Label::default(),
         };
 
         let column = &model.tracks.view;
+        let info_title = model.info_title.clone();
+        let info_details = model.info_details.clone();
         let widgets = view_output!();
 
         // add playlists to list
@@ -124,8 +131,74 @@ impl relm4::SimpleComponent for PlaylistsView {
                 // set_end_child = Some(model.tracks.widget()),
                 #[wrap(Some)]
                 set_end_child = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 8,
+
+                    gtk::Box {
+                        set_spacing: 15,
+
+                        //TODO add cover
+                        gtk::Image {
+                            set_icon_name: Some("starred"),
+                        },
+
+                        // playlist info
+                        gtk::WindowHandle {
+                            set_hexpand: true,
+
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 8,
+
+                                #[local_ref]
+                                info_title -> gtk::Label {
+                                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                    set_label: "title",
+                                    set_halign: gtk::Align::Start,
+                                },
+
+                                #[local_ref]
+                                info_details -> gtk::Label {
+                                    set_label: "more info",
+                                    set_halign: gtk::Align::Start,
+                                },
+
+                                gtk::Box {
+                                    set_spacing: 15,
+                                    gtk::Button {
+                                        gtk::Box {
+                                            gtk::Image {
+                                                set_icon_name: Some("list-add-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_label: "Append",
+                                            }
+                                        },
+                                        set_tooltip_text: Some("Append Album to end of queue"),
+                                        connect_clicked[sender, init] => move |_btn| {
+                                        }
+                                    },
+                                    gtk::Button {
+                                        gtk::Box {
+                                            gtk::Image {
+                                                set_icon_name: Some("list-add-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_label: "Play next"
+                                            }
+                                        },
+                                        set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                        connect_clicked[sender, init] => move |_btn| {
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+
                     gtk::ScrolledWindow {
                         set_hexpand: true,
+                        set_vexpand: true,
 
                         #[local_ref]
                         column -> gtk::ColumnView {
@@ -155,18 +228,32 @@ impl relm4::SimpleComponent for PlaylistsView {
                         return;
                     }
 
+                    // set info
+                    self.info_title.set_text(&list.base.name);
+                    self.info_details.set_text(&build_info_string(&list));
+
+                    //set tracks
                     self.tracks.clear();
                     for track in list.entry {
                         self.tracks.append(PlaylistTracksRow::new(track));
                     }
                     self.index_shown = Some(index);
                 }
-                _ => sender
-                    .output(PlaylistsViewOut::DisplayToast(String::from(
-                        "Some message from PlaylistElement",
-                    )))
+                PlaylistElementOut::DisplayToast(msg) => sender
+                    .output(PlaylistsViewOut::DisplayToast(msg))
                     .expect("sending failed"),
             },
         }
     }
+}
+
+fn build_info_string(list: &submarine::data::PlaylistWithSongs) -> String {
+    let songs = format!(
+        "Songs: {} • Length: {}",
+        list.base.song_count,
+        convert_for_label(i64::from(list.base.duration) * 1000)
+    );
+    let time = list.base.created;
+    let created = time.format(" • Created at: %d.%m.%Y, %H:%M").to_string();
+    format!("{songs}{created}")
 }
