@@ -1,17 +1,19 @@
-use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
+use fuzzy_matcher::FuzzyMatcher;
 use relm4::gtk::{
     self,
     prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
 };
-use fuzzy_matcher::FuzzyMatcher;
+use relm4::{Component, ComponentController};
 
 use std::{cell::RefCell, rc::Rc};
 
+use super::cover::{Cover, CoverIn, CoverOut};
 use super::playlist_element::PlaylistElementOut;
 use crate::common::convert_for_label;
 use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
+use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
@@ -20,6 +22,7 @@ pub struct PlaylistsView {
 
     track_stack: gtk::Stack,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
+    info_cover: relm4::Controller<Cover>,
     info_title: gtk::Label,
     info_details: gtk::Label,
 }
@@ -36,6 +39,7 @@ pub enum PlaylistsViewIn {
     SearchChanged(String),
     NewPlaylist(Vec<submarine::data::Child>),
     PlaylistElement(PlaylistElementOut),
+    Cover(CoverOut),
 }
 
 #[relm4::component(pub)]
@@ -67,15 +71,20 @@ impl relm4::SimpleComponent for PlaylistsView {
 
             track_stack: gtk::Stack::default(),
             tracks,
+            info_cover: Cover::builder()
+                .launch((init.clone(), None))
+                .forward(sender.input_sender(), PlaylistsViewIn::Cover),
             info_title: gtk::Label::default(),
             info_details: gtk::Label::default(),
         };
 
         let track_stack = &model.track_stack.clone();
         let column = &model.tracks.view;
+        let info_cover = model.info_cover.widget().clone();
         let info_title = model.info_title.clone();
         let info_details = model.info_details.clone();
         let widgets = view_output!();
+        model.info_cover.model().add_css_class_image("size100");
 
         // add playlists to list
         for playlist in init.borrow().playlists() {
@@ -151,12 +160,11 @@ impl relm4::SimpleComponent for PlaylistsView {
                             set_spacing: 8,
 
                             gtk::Box {
+                                add_css_class: "playlist-view-info",
                                 set_spacing: 15,
 
-                                //TODO add cover
-                                gtk::Image {
-                                    set_icon_name: Some("starred"),
-                                },
+                                #[local_ref]
+                                info_cover -> gtk::Box {},
 
                                 // playlist info
                                 gtk::WindowHandle {
@@ -177,6 +185,10 @@ impl relm4::SimpleComponent for PlaylistsView {
                                         info_details -> gtk::Label {
                                             set_label: "more info",
                                             set_halign: gtk::Align::Start,
+                                        },
+
+                                        gtk::Label {
+                                            set_label: " ",
                                         },
 
                                         gtk::Box {
@@ -234,9 +246,11 @@ impl relm4::SimpleComponent for PlaylistsView {
                 self.tracks.clear_filters();
                 self.tracks.add_filter(move |row| {
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let test = format!("{} {} {}", row.item.title,
-                                       row.item.artist.as_deref().unwrap_or_default()
-                                       , row.item.album.as_deref().unwrap_or_default()
+                    let test = format!(
+                        "{} {} {}",
+                        row.item.title,
+                        row.item.artist.as_deref().unwrap_or_default(),
+                        row.item.album.as_deref().unwrap_or_default()
                     );
                     let score = matcher.fuzzy_match(&test, &search);
                     score.is_some()
@@ -257,6 +271,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                     }
 
                     // set info
+                    self.info_cover
+                        .emit(CoverIn::LoadImage(list.base.cover_art.clone()));
                     self.info_title.set_text(&list.base.name);
                     self.info_details.set_text(&build_info_string(&list));
 
@@ -269,6 +285,11 @@ impl relm4::SimpleComponent for PlaylistsView {
                 }
                 PlaylistElementOut::DisplayToast(msg) => sender
                     .output(PlaylistsViewOut::DisplayToast(msg))
+                    .expect("sending failed"),
+            },
+            PlaylistsViewIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(title) => sender
+                    .output(PlaylistsViewOut::DisplayToast(title))
                     .expect("sending failed"),
             },
         }
