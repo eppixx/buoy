@@ -112,6 +112,16 @@ impl relm4::SimpleComponent for PlaylistsView {
 
     view! {
         gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
+
+            gtk::WindowHandle {
+                gtk::Label {
+                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                    set_halign: gtk::Align::Center,
+                    set_text: "Playlists",
+                },
+            },
+
             gtk::Paned {
                 set_position: 300,
                 set_shrink_start_child: false,
@@ -119,39 +129,26 @@ impl relm4::SimpleComponent for PlaylistsView {
                 set_shrink_end_child: false,
 
                 #[wrap(Some)]
-                set_start_child = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_spacing: 7,
+                set_start_child = &model.playlists.widget().clone() -> gtk::ListBox {
+                    add_css_class: "playlist-view-playlist-list",
+                    set_vexpand: true,
 
-                    gtk::WindowHandle {
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_halign: gtk::Align::Center,
-                            set_text: "Playlists",
-                        },
-                    },
+                    gtk::ListBoxRow {
+                        add_css_class: "playlist-view-add-playlist",
 
-                    model.playlists.widget().clone() -> gtk::ListBox {
-                        add_css_class: "playlist-view-playlist-list",
-                        set_vexpand: true,
+                        gtk::Button {
+                            gtk::Box {
+                                set_halign: gtk::Align::Center,
 
-                        gtk::ListBoxRow {
-                            add_css_class: "playlist-view-add-playlist",
-
-                            gtk::Button {
-                                gtk::Box {
-                                    set_halign: gtk::Align::Center,
-
-                                    gtk::Image {
-                                        set_icon_name: Some("list-add-symbolic"),
-                                    },
-                                    gtk::Label {
-                                        set_text: "New Playlist",
-                                    }
+                                gtk::Image {
+                                    set_icon_name: Some("list-add-symbolic"),
                                 },
+                                gtk::Label {
+                                    set_text: "New Playlist",
+                                }
+                            },
 
-                                connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
-                            }
+                            connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
                         }
                     }
                 },
