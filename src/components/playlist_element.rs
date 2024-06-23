@@ -10,6 +10,20 @@ pub struct PlaylistElement {
     playlist: submarine::data::PlaylistWithSongs,
     index: relm4::factory::DynamicIndex,
     drag_src: gtk::DragSource,
+
+    edit_area: gtk::Stack,
+    edit: gtk::Button,
+    delete: gtk::Button,
+}
+
+impl PlaylistElement {
+    pub fn set_edit_area(&self, status: bool) {
+        if status {
+            self.edit_area.set_visible_child_name("edit");
+        } else {
+            self.edit_area.set_visible_child_name("clean");
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -43,6 +57,10 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             playlist: init.clone(),
             index: index.clone(),
             drag_src: gtk::DragSource::default(),
+
+            edit_area: gtk::Stack::default(),
+            edit: gtk::Button::default(),
+            delete: gtk::Button::default(),
         };
 
         //setup content for DropSource
@@ -85,16 +103,24 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     },
 
                     gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_homogeneous: true,
+                        // set_orientation: gtk::Orientation::Vertical,
+                        // set_homogeneous: true,
+                        self.edit_area.clone() -> gtk::Stack {
 
-                        gtk::Button {
-                            set_icon_name: "edit-symbolic",
-                            set_tooltip_text: Some("Rename Playlist"),
-                        },
-                        gtk::Button {
-                            set_icon_name: "edit-delete-symbolic",
-                            set_tooltip_text: Some("Delete Playlist"),
+                            add_named[Some("clean")] = &gtk::Box {},
+                            add_named[Some("edit")] = &gtk::Box {
+                                set_spacing: 10,
+
+                                self.edit.clone() -> gtk::Button {
+                                    set_icon_name: "edit-symbolic",
+                                    set_tooltip_text: Some("Rename Playlist"),
+                                },
+                                self.delete.clone() -> gtk::Button {
+                                    add_css_class: granite::STYLE_CLASS_DESTRUCTIVE_ACTION,
+                                    set_icon_name: "edit-delete-symbolic",
+                                    set_tooltip_text: Some("Delete Playlist"),
+                                }
+                            }
                         }
                     }
                 }

@@ -15,7 +15,7 @@ use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
 use crate::types::Droppable;
-use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
+use crate::{components::playlist_element::{PlaylistElement, PlaylistElementIn}, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
@@ -154,7 +154,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 set_end_child = &gtk::Box {
                     #[local_ref]
                     track_stack -> gtk::Stack {
-                        add_named[Some("tracks-stock")] = & gtk::Box {
+                        add_named[Some("tracks-stock")] = &gtk::Box {
                             gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                 set_hexpand: true,
@@ -276,6 +276,12 @@ impl relm4::SimpleComponent for PlaylistsView {
                     if self.index_shown == Some(index.clone()) {
                         return;
                     }
+
+                    if let Some(i) = &self.index_shown {
+                        self.playlists.guard().get(i.current_index()).unwrap().set_edit_area(false);
+                    }
+                    self.playlists.guard().get(index.current_index()).unwrap().set_edit_area(true);
+
 
                     // set info
                     self.info_cover
