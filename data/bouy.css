@@ -204,7 +204,9 @@
 }
 
 .playlist-element {
+  border-radius: 8px;
   margin: 5px;
+  padding: 5px 7px;
 }
 
 .playlist-view-add-playlist {
