@@ -4,7 +4,7 @@ use crate::common::convert_for_label;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PlaylistTracksRow {
-    item: submarine::data::Child,
+    pub item: submarine::data::Child,
 }
 impl PlaylistTracksRow {
     pub fn new(item: submarine::data::Child) -> Self {

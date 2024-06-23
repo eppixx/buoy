@@ -3,6 +3,7 @@ use relm4::gtk::{
     self,
     prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
 };
+use fuzzy_matcher::FuzzyMatcher;
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -229,8 +230,17 @@ impl relm4::SimpleComponent for PlaylistsView {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            PlaylistsViewIn::SearchChanged(_search) => {
-                // unimplemented!("search in dashboard"); //TODO implement
+            PlaylistsViewIn::SearchChanged(search) => {
+                self.tracks.clear_filters();
+                self.tracks.add_filter(move |row| {
+                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                    let test = format!("{} {} {}", row.item.title,
+                                       row.item.artist.as_deref().unwrap_or_default()
+                                       , row.item.album.as_deref().unwrap_or_default()
+                    );
+                    let score = matcher.fuzzy_match(&test, &search);
+                    score.is_some()
+                });
             }
             PlaylistsViewIn::NewPlaylist(list) => {
                 sender
