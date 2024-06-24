@@ -63,31 +63,13 @@ fn default_volume() -> f64 {
     0.75
 }
 
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            window_width: 1200,
-            window_height: 900,
-            window_maximized: false,
-            paned_position: 400,
-            queue_ids: vec![],
-            queue_current: None,
-            queue_seek: 0.0f64,
-            login_uri: Option::default(),
-            login_username: Option::default(),
-            login_hash: Option::default(),
-            login_salt: Option::default(),
-            volume: 0.75,
-            equalizer_enabled: false,
-            equalizer_bands: [0.0f64; 10],
-        }
-    }
-}
-
 // used singleton from https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
 impl Settings {
     pub fn get() -> &'static Mutex<Settings> {
         static SETTING: OnceLock<Mutex<Settings>> = OnceLock::new();
+        if let Some(setting) = SETTING.get() {
+            return setting;
+        }
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
         let config_path = xdg_dirs
             .place_config_file(FILE_NAME)
@@ -98,7 +80,9 @@ impl Settings {
         };
         let mut content = String::new();
         config_file.read_to_string(&mut content).unwrap_or_default();
-        let setting = toml::from_str::<Settings>(&content).unwrap_or_default();
+        tracing::info!("loaded settings from file or created default settings");
+        let setting = toml::from_str::<Settings>(&content)
+            .expect("not all members of Settings are defaulted");
         SETTING.get_or_init(|| Mutex::new(setting))
     }
 
