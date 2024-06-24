@@ -31,7 +31,7 @@ impl Cover {
 pub enum CoverIn {
     LoadImage(Option<String>),
     LoadId(Option<Id>),
-    LoadSong(submarine::data::Child),
+    LoadSong(Box<submarine::data::Child>),
     ChangeImage(subsonic_cover::Response),
 }
 
@@ -125,7 +125,7 @@ impl relm4::Component for Cover {
                         None => self.stack.set_visible_child_name("stock"),
                         Some(album) => match &album.cover_art {
                             Some(id) => sender
-                                .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id))),
+                                .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
                             None => self.stack.set_visible_child_name("stock"),
                         },
                     }

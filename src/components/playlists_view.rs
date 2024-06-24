@@ -335,8 +335,6 @@ impl relm4::SimpleComponent for PlaylistsView {
                     sender
                         .output(PlaylistsViewOut::ReplaceQueue(list))
                         .expect("sending failed");
-                } else {
-                    return;
                 }
             }
             PlaylistsViewIn::AddToQueue => {
@@ -347,8 +345,6 @@ impl relm4::SimpleComponent for PlaylistsView {
                     sender
                         .output(PlaylistsViewOut::AddToQueue(list))
                         .expect("sending failed");
-                } else {
-                    return;
                 }
             }
             PlaylistsViewIn::AppendToQueue => {
@@ -359,8 +355,6 @@ impl relm4::SimpleComponent for PlaylistsView {
                     sender
                         .output(PlaylistsViewOut::AppendToQueue(list))
                         .expect("sending failed");
-                } else {
-                    return;
                 }
             }
         }

@@ -134,7 +134,7 @@ impl FactoryComponent for QueueSong {
             .launch((subsonic, init.cover_art.clone()))
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.model().add_css_class_image("size32");
-        cover.emit(CoverIn::LoadSong(init.clone()));
+        cover.emit(CoverIn::LoadSong(Box::new(init.clone())));
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
             info: init.clone(),
