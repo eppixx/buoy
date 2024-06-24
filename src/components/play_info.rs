@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use gtk::prelude::OrientableExt;
 use relm4::{
     gtk::{
-        self, pango,
+        self, glib, pango,
         prelude::{BoxExt, WidgetExt},
     },
     Component, ComponentController,

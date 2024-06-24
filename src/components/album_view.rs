@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use relm4::{
     gtk::{
-        self,
+        self, glib,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
     ComponentController,

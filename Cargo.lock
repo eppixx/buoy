@@ -122,7 +122,6 @@ dependencies = [
  "chrono",
  "futures",
  "fuzzy-matcher",
- "glib",
  "granite-rs",
  "gstreamer",
  "postcard",

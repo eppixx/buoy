@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
-        self,
+        self, glib,
         prelude::{BoxExt, OrientableExt, ToValue, WidgetExt},
     },
     ComponentController,
