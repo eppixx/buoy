@@ -33,6 +33,7 @@ pub struct PlaylistsView {
 #[derive(Debug)]
 pub enum PlaylistsViewOut {
     ReplaceQueue(Vec<submarine::data::Child>),
+    AddToQueue(Vec<submarine::data::Child>),
     AppendToQueue(Vec<submarine::data::Child>),
     DisplayToast(String),
 }
@@ -40,6 +41,9 @@ pub enum PlaylistsViewOut {
 #[derive(Debug)]
 pub enum PlaylistsViewIn {
     SearchChanged(String),
+    ReplaceQueue,
+    AddToQueue,
+    AppendToQueue,
     NewPlaylist(Vec<submarine::data::Child>),
     PlaylistElement(PlaylistElementOut),
     Cover(CoverOut),
@@ -203,10 +207,6 @@ impl relm4::SimpleComponent for PlaylistsView {
                                             set_halign: gtk::Align::Start,
                                         },
 
-                                        gtk::Label {
-                                            set_label: " ",
-                                        },
-
                                         gtk::Box {
                                             set_spacing: 15,
                                             gtk::Button {
@@ -219,8 +219,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                                                     }
                                                 },
                                                 set_tooltip_text: Some("Append Album to end of queue"),
-                                                connect_clicked[sender, init] => move |_btn| {
-                                                }
+                                                connect_clicked => PlaylistsViewIn::AppendToQueue,
                                             },
                                             gtk::Button {
                                                 gtk::Box {
@@ -232,8 +231,19 @@ impl relm4::SimpleComponent for PlaylistsView {
                                                     }
                                                 },
                                                 set_tooltip_text: Some("Insert Album after currently played or paused item"),
-                                                connect_clicked[sender, init] => move |_btn| {
-                                                }
+                                                connect_clicked => PlaylistsViewIn::AddToQueue,
+                                            },
+                                            gtk::Button {
+                                                gtk::Box {
+                                                    gtk::Image {
+                                                        set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                    },
+                                                    gtk::Label {
+                                                        set_label: "Replace queue",
+                                                    }
+                                                },
+                                                set_tooltip_text: Some("Replaces current queue with this playlist"),
+                                                connect_clicked => PlaylistsViewIn::ReplaceQueue,
                                             }
                                         }
                                     }
@@ -273,6 +283,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                 });
             }
             PlaylistsViewIn::NewPlaylist(list) => {
+                //TODO show new playlist
+                //TODO add playlist to server
                 sender
                     .output(PlaylistsViewOut::DisplayToast(String::from(
                         "new playlist clicked",
@@ -328,6 +340,30 @@ impl relm4::SimpleComponent for PlaylistsView {
                     .output(PlaylistsViewOut::DisplayToast(title))
                     .expect("sending failed"),
             },
+            PlaylistsViewIn::ReplaceQueue => {
+                if let Some(index) = &self.index_shown {
+                    let list = self.playlists.guard()[index.current_index()].get_list().clone();
+                    sender.output(PlaylistsViewOut::ReplaceQueue(list.entry)).expect("sending failed");
+                } else {
+                    return;
+                }
+            }
+            PlaylistsViewIn::AddToQueue =>  {
+                if let Some(index) = &self.index_shown {
+                    let list = self.playlists.guard()[index.current_index()].get_list().clone();
+                    sender.output(PlaylistsViewOut::AddToQueue(list.entry)).expect("sending failed");
+                } else {
+                    return;
+                }
+            }
+            PlaylistsViewIn::AppendToQueue => {
+                if let Some(index) = &self.index_shown {
+                    let list = self.playlists.guard()[index.current_index()].get_list().clone();
+                    sender.output(PlaylistsViewOut::AppendToQueue(list.entry)).expect("sending failed");
+                } else {
+                    return;
+                }
+            }
         }
     }
 }

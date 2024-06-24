@@ -17,6 +17,10 @@ pub struct PlaylistElement {
 }
 
 impl PlaylistElement {
+    pub fn get_list(&self) -> &submarine::data::PlaylistWithSongs {
+        &self.playlist
+    }
+
     pub fn set_edit_area(&self, status: bool) {
         if status {
             self.edit_area.set_visible_child_name("edit");
