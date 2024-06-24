@@ -383,8 +383,14 @@ impl relm4::Component for Queue {
                     Droppable::Id(_) => vec![], //TODO remove eventually
                 };
 
-                for song in songs {
-                    self.songs.guard().push_back((self.subsonic.clone(), song));
+                if let Some(index) = &self.playing_index {
+                    for song in songs.into_iter().rev() {
+                        self.songs.guard().insert(index.current_index() + 1, (self.subsonic.clone(), song));
+                    }
+                } else {
+                    for song in songs.into_iter().rev() {
+                        self.songs.guard().push_back((self.subsonic.clone(), song));
+                    }
                 }
 
                 if !self.songs.is_empty() {
