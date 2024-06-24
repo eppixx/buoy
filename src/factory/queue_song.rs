@@ -201,7 +201,7 @@ impl FactoryComponent for QueueSong {
                     },
                     gtk:: Label {
                         set_markup: &format!("<span style=\"italic\">{}</span>"
-                                             , self.info.artist.as_deref().unwrap_or("Unknown Artist")),
+                                             , glib::markup_escape_text(self.info.artist.as_deref().unwrap_or("Unknown Artist"))),
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,

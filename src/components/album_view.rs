@@ -127,7 +127,7 @@ impl relm4::Component for AlbumView {
                         gtk::Label {
                             #[watch]
                             set_markup: &format!("by <span style=\"italic\">{}</span>",
-                                                 model.artist.as_deref().unwrap_or("Unkown Artist")),
+                                                 glib::markup_escape_text(model.artist.as_deref().unwrap_or("Unkown Artist"))),
                             set_halign: gtk::Align::Start,
                         },
                         gtk::Label {
