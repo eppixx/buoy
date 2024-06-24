@@ -385,7 +385,9 @@ impl relm4::Component for Queue {
 
                 if let Some(index) = &self.playing_index {
                     for song in songs.into_iter().rev() {
-                        self.songs.guard().insert(index.current_index() + 1, (self.subsonic.clone(), song));
+                        self.songs
+                            .guard()
+                            .insert(index.current_index() + 1, (self.subsonic.clone(), song));
                     }
                 } else {
                     for song in songs.into_iter().rev() {

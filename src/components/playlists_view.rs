@@ -113,144 +113,138 @@ impl relm4::SimpleComponent for PlaylistsView {
 
     view! {
         gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-
             gtk::Box {
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    add_css_class: "playlist-view-info",
-                    set_spacing: 7,
+                set_orientation: gtk::Orientation::Vertical,
+                add_css_class: "playlist-view-info",
+                set_spacing: 7,
 
-                    gtk::WindowHandle {
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_label: "Playlists",
-                        }
-                    },
-
-                    model.playlists.widget().clone() -> gtk::ListBox {
-                        add_css_class: "playlist-view-playlist-list",
-                        add_css_class: granite::STYLE_CLASS_FRAME,
-                        add_css_class: granite::STYLE_CLASS_RICH_LIST,
-                        set_vexpand: true,
-
-                        gtk::ListBoxRow {
-                            add_css_class: "playlist-view-add-playlist",
-
-                            gtk::Button {
-                                gtk::Box {
-                                    set_halign: gtk::Align::Center,
-
-                                    gtk::Image {
-                                        set_icon_name: Some("list-add-symbolic"),
-                                    },
-                                    gtk::Label {
-                                        set_text: "New Playlist",
-                                    }
-                                },
-
-                                connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
-                            }
-                        }
+                gtk::WindowHandle {
+                    gtk::Label {
+                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                        set_label: "Playlists",
                     }
                 },
 
-                // #[wrap(Some)]
-                // set_end_child = &gtk::Box {
-                gtk::Box {
-                    #[local_ref]
-                    track_stack -> gtk::Stack {
-                        add_named[Some("tracks-stock")] = &gtk::Box {
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_hexpand: true,
+                model.playlists.widget().clone() -> gtk::ListBox {
+                    add_css_class: "playlist-view-playlist-list",
+                    add_css_class: granite::STYLE_CLASS_FRAME,
+                    add_css_class: granite::STYLE_CLASS_RICH_LIST,
+                    set_vexpand: true,
 
-                                set_label: "Select a playlist to show its songs",
-                            }
-                        },
-                        add_named[Some("tracks")] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 8,
+                    gtk::ListBoxRow {
+                        add_css_class: "playlist-view-add-playlist",
 
+                        gtk::Button {
                             gtk::Box {
-                                add_css_class: "playlist-view-info",
-                                set_spacing: 15,
+                                set_halign: gtk::Align::Center,
 
-                                #[local_ref]
-                                info_cover -> gtk::Box {},
-
-                                // playlist info
-                                gtk::WindowHandle {
-                                    set_hexpand: true,
-
-                                    gtk::Box {
-                                        set_orientation: gtk::Orientation::Vertical,
-                                        set_spacing: 8,
-
-                                        #[local_ref]
-                                        info_title -> gtk::Label {
-                                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                            set_label: "title",
-                                            set_halign: gtk::Align::Start,
-                                        },
-
-                                        #[local_ref]
-                                        info_details -> gtk::Label {
-                                            set_label: "more info",
-                                            set_halign: gtk::Align::Start,
-                                        },
-
-                                        gtk::Box {
-                                            set_spacing: 15,
-                                            gtk::Button {
-                                                gtk::Box {
-                                                    gtk::Image {
-                                                        set_icon_name: Some("list-add-symbolic"),
-                                                    },
-                                                    gtk::Label {
-                                                        set_label: "Append",
-                                                    }
-                                                },
-                                                set_tooltip_text: Some("Append Album to end of queue"),
-                                                connect_clicked => PlaylistsViewIn::AppendToQueue,
-                                            },
-                                            gtk::Button {
-                                                gtk::Box {
-                                                    gtk::Image {
-                                                        set_icon_name: Some("list-add-symbolic"),
-                                                    },
-                                                    gtk::Label {
-                                                        set_label: "Play next"
-                                                    }
-                                                },
-                                                set_tooltip_text: Some("Insert Album after currently played or paused item"),
-                                                connect_clicked => PlaylistsViewIn::AddToQueue,
-                                            },
-                                            gtk::Button {
-                                                gtk::Box {
-                                                    gtk::Image {
-                                                        set_icon_name: Some("emblem-symbolic-link-symbolic"),
-                                                    },
-                                                    gtk::Label {
-                                                        set_label: "Replace queue",
-                                                    }
-                                                },
-                                                set_tooltip_text: Some("Replaces current queue with this playlist"),
-                                                connect_clicked => PlaylistsViewIn::ReplaceQueue,
-                                            }
-                                        }
-                                    }
+                                gtk::Image {
+                                    set_icon_name: Some("list-add-symbolic"),
+                                },
+                                gtk::Label {
+                                    set_text: "New Playlist",
                                 }
                             },
 
-                            gtk::ScrolledWindow {
-                                set_hexpand: true,
-                                set_vexpand: true,
+                            connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
+                        }
+                    }
+                }
+            },
 
-                                #[local_ref]
-                                column -> gtk::ColumnView {
-                                    add_css_class: "playlist-view-tracks-row",
+            gtk::Box {
+                #[local_ref]
+                track_stack -> gtk::Stack {
+                    add_named[Some("tracks-stock")] = &gtk::Box {
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            set_hexpand: true,
+
+                            set_label: "Select a playlist to show its songs",
+                        }
+                    },
+                    add_named[Some("tracks")] = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 8,
+
+                        gtk::Box {
+                            add_css_class: "playlist-view-info",
+                            set_spacing: 15,
+
+                            #[local_ref]
+                            info_cover -> gtk::Box {},
+
+                            // playlist info
+                            gtk::WindowHandle {
+                                set_hexpand: true,
+
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_spacing: 8,
+
+                                    #[local_ref]
+                                    info_title -> gtk::Label {
+                                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                        set_label: "title",
+                                        set_halign: gtk::Align::Start,
+                                    },
+
+                                    #[local_ref]
+                                    info_details -> gtk::Label {
+                                        set_label: "more info",
+                                        set_halign: gtk::Align::Start,
+                                    },
+
+                                    gtk::Box {
+                                        set_spacing: 15,
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: "Append",
+                                                }
+                                            },
+                                            set_tooltip_text: Some("Append Album to end of queue"),
+                                            connect_clicked => PlaylistsViewIn::AppendToQueue,
+                                        },
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: "Play next"
+                                                }
+                                            },
+                                            set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                            connect_clicked => PlaylistsViewIn::AddToQueue,
+                                        },
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: "Replace queue",
+                                                }
+                                            },
+                                            set_tooltip_text: Some("Replaces current queue with this playlist"),
+                                            connect_clicked => PlaylistsViewIn::ReplaceQueue,
+                                        }
+                                    }
                                 }
+                            }
+                        },
+
+                        gtk::ScrolledWindow {
+                            set_hexpand: true,
+                            set_vexpand: true,
+
+                            #[local_ref]
+                            column -> gtk::ColumnView {
+                                add_css_class: "playlist-view-tracks-row",
                             }
                         }
                     }
