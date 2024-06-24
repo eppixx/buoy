@@ -186,7 +186,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                             #[watch]
                             set_text: &self.playlist.base.name,
-                            set_tooltip_text: Some("Renamed title of playlist"),
+                            set_tooltip_text: Some("Renamed title of the playlist"),
                         }
                     },
 
@@ -200,12 +200,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             gtk::Button {
                                 set_icon_name: "process-completed-symbolic",
                                 connect_clicked => PlaylistElementIn::ConfirmRename,
-                                set_tooltip_text: Some("Confirm renaming of playlist"),
+                                set_tooltip_text: Some("Confirm renaming the playlist"),
                             },
                             gtk::Button {
                                 set_icon_name: "process-stop",
                                 connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
-                                set_tooltip_text: Some("Don't change playlist name"),
+                                set_tooltip_text: Some("Don't change the playlist name"),
                             }
                         }
                     }
@@ -229,12 +229,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             gtk::Button {
                                 set_icon_name: "process-completed-symbolic",
                                 connect_clicked => PlaylistElementIn::DeletePressed,
-                                set_tooltip_text: Some("Confirm deletion of playlist"),
+                                set_tooltip_text: Some("Confirm deletion of the playlist"),
                             },
                             gtk::Button {
                                 set_icon_name: "process-stop",
                                 connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
-                                set_tooltip_text: Some("Don't delete playlist"),
+                                set_tooltip_text: Some("Don't delete the playlist"),
                             }
                         }
                     }
