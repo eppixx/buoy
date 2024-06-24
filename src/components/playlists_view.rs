@@ -15,7 +15,7 @@ use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
 use crate::types::Droppable;
-use crate::{components::playlist_element::PlaylistElement, subsonic::Subsonic};
+use crate::{components::playlist_element::{PlaylistElement, State}, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
@@ -280,6 +280,11 @@ impl relm4::SimpleComponent for PlaylistsView {
             }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
                 PlaylistElementOut::Clicked(index, list) => {
+                    // set every state in PlaylistElement to normal
+                    for list in self.playlists.guard().iter() {
+                        list.change_state(State::Normal);
+                    }
+
                     self.track_stack.set_visible_child_name("tracks");
                     if self.index_shown == Some(index.clone()) {
                         return;
@@ -321,6 +326,11 @@ impl relm4::SimpleComponent for PlaylistsView {
                 PlaylistElementOut::DisplayToast(msg) => sender
                     .output(PlaylistsViewOut::DisplayToast(msg))
                     .expect("sending failed"),
+                PlaylistElementOut::Delete(index) => {
+                    self.track_stack.set_visible_child_name("tracks-stock");
+                    self.playlists.guard().remove(index.current_index());
+                    //TODO remove playlist from server
+                }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender

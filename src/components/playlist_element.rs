@@ -11,9 +11,34 @@ pub struct PlaylistElement {
     index: relm4::factory::DynamicIndex,
     drag_src: gtk::DragSource,
 
+    main_stack: gtk::Stack,
+
     edit_area: gtk::Stack,
     edit: gtk::Button,
     delete: gtk::Button,
+}
+
+impl PlaylistElement {
+    pub fn change_state(&self, state: State) {
+        self.main_stack.set_visible_child_name(state.to_str());
+    }
+}
+
+#[derive(Debug)]
+pub enum State {
+    DeleteInProgress,
+    Edit,
+    Normal,
+}
+
+impl State {
+    fn to_str(&self) -> &str {
+        match self {
+            Self::DeleteInProgress => "delete",
+            Self::Edit => "edit",
+            Self::Normal => "normal",
+        }
+    }
 }
 
 impl PlaylistElement {
@@ -34,6 +59,7 @@ impl PlaylistElement {
 pub enum PlaylistElementIn {
     Clicked,
     DeletePressed,
+    ChangeState(State),
 }
 
 #[derive(Debug)]
@@ -42,6 +68,7 @@ pub enum PlaylistElementOut {
         relm4::factory::DynamicIndex,
         submarine::data::PlaylistWithSongs,
     ),
+    Delete(relm4::factory::DynamicIndex),
     DisplayToast(String),
 }
 
@@ -63,6 +90,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             index: index.clone(),
             drag_src: gtk::DragSource::default(),
 
+            main_stack: gtk::Stack::default(),
+
             edit_area: gtk::Stack::default(),
             edit: gtk::Button::default(),
             delete: gtk::Button::default(),
@@ -81,62 +110,89 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         gtk::ListBoxRow {
             add_css_class: "playlist-element",
 
-            gtk::Box {
-                add_css_class: "flat",
-                set_spacing: 5,
-                set_halign: gtk::Align::Fill,
+            self.main_stack.clone() -> gtk::Stack {
+                add_named[Some(State::Normal.to_str())] = &gtk::Box {
+                    add_css_class: "flat",
+                    set_spacing: 5,
+                    set_halign: gtk::Align::Fill,
 
-                add_controller = self.drag_src.clone(),
+                    add_controller = self.drag_src.clone(),
 
-                add_controller = gtk::GestureClick {
-                    connect_released[sender] => move |_w, _, _, _| {
-                        sender.input(PlaylistElementIn::Clicked);
-                    }
-                },
-
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_hexpand: true,
-                    set_homogeneous: true,
-
-                    gtk::Label {
-                        add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                        set_halign: gtk::Align::Start,
-                        set_text: &self.playlist.base.name,
+                    add_controller = gtk::GestureClick {
+                        connect_released[sender] => move |_w, _, _, _| {
+                            sender.input(PlaylistElementIn::Clicked);
+                        }
                     },
-                    gtk::Label {
-                        set_halign: gtk::Align::Start,
-                        set_text: &format!("{} songs", self.playlist.base.song_count),
+
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_hexpand: true,
+                        set_homogeneous: true,
+
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                            set_halign: gtk::Align::Start,
+                            set_text: &self.playlist.base.name,
+                        },
+                        gtk::Label {
+                            set_halign: gtk::Align::Start,
+                            set_text: &format!("{} songs", self.playlist.base.song_count),
+                        }
+                    },
+
+                    gtk::Box {
+                        self.edit_area.clone() -> gtk::Stack {
+                            set_transition_duration: 250,
+                            set_transition_type: gtk::StackTransitionType::Crossfade,
+
+                            add_named[Some("clean")] = &gtk::Box {},
+                            add_named[Some("edit")] = &gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_valign: gtk::Align::Center,
+
+                                gtk::Box {
+                                    set_spacing: 10,
+
+                                    self.edit.clone() -> gtk::Button {
+                                        set_icon_name: "edit-symbolic",
+                                        set_tooltip_text: Some("Rename Playlist"),
+                                        connect_clicked[sender] => move |_widget| {
+                                            sender.output(PlaylistElementOut::DisplayToast(String::from("edit list"))).expect("sending failed");
+                                        },
+                                    },
+                                    self.delete.clone() -> gtk::Button {
+                                        add_css_class: granite::STYLE_CLASS_DESTRUCTIVE_ACTION,
+                                        set_icon_name: "edit-delete-symbolic",
+                                        set_tooltip_text: Some("Delete Playlist"),
+
+                                        connect_clicked => PlaylistElementIn::ChangeState(State::DeleteInProgress),
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
+                add_named[Some(State::DeleteInProgress.to_str())] = &gtk::Box {
+                    gtk::Label {
+                        set_hexpand: true,
+                        set_label: &format!("Really delete \"{}\"?", self.playlist.base.name),
+                        set_halign: gtk::Align::Start,
+                    },
 
-                gtk::Box {
-                    self.edit_area.clone() -> gtk::Stack {
-                        set_transition_duration: 250,
-                        set_transition_type: gtk::StackTransitionType::Crossfade,
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_valign: gtk::Align::Center,
 
-                        add_named[Some("clean")] = &gtk::Box {},
-                        add_named[Some("edit")] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_valign: gtk::Align::Center,
+                        gtk::Box {
+                            set_spacing: 10,
 
-                            gtk::Box {
-                                set_spacing: 10,
-
-                                self.edit.clone() -> gtk::Button {
-                                    set_icon_name: "edit-symbolic",
-                                    set_tooltip_text: Some("Rename Playlist"),
-                                    connect_clicked[sender] => move |_widget| {
-                                        sender.output(PlaylistElementOut::DisplayToast(String::from("edit list"))).expect("sending failed");
-                                    },
-                                },
-                                self.delete.clone() -> gtk::Button {
-                                    add_css_class: granite::STYLE_CLASS_DESTRUCTIVE_ACTION,
-                                    set_icon_name: "edit-delete-symbolic",
-                                    set_tooltip_text: Some("Delete Playlist"),
-
-                                    connect_clicked => PlaylistElementIn::DeletePressed,
-                                }
+                            gtk::Button {
+                                set_icon_name: "process-completed-symbolic",
+                                connect_clicked => PlaylistElementIn::DeletePressed,
+                            },
+                            gtk::Button {
+                                set_icon_name: "process-stop",
+                                connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
                             }
                         }
                     }
@@ -156,8 +212,9 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     .expect("sending failed");
             }
             PlaylistElementIn::DeletePressed => {
-                //TODO
+                sender.output(PlaylistElementOut::Delete(self.index.clone())).expect("sending failed");
             }
+            PlaylistElementIn::ChangeState(state) => self.main_stack.set_visible_child_name(state.to_str()),
         }
     }
 }
