@@ -32,9 +32,9 @@ pub struct PlaylistsView {
 
 #[derive(Debug)]
 pub enum PlaylistsViewOut {
-    ReplaceQueue(Vec<submarine::data::Child>),
-    AddToQueue(Vec<submarine::data::Child>),
-    AppendToQueue(Vec<submarine::data::Child>),
+    ReplaceQueue(submarine::data::PlaylistWithSongs),
+    AddToQueue(submarine::data::PlaylistWithSongs),
+    AppendToQueue(submarine::data::PlaylistWithSongs),
     DisplayToast(String),
 }
 
@@ -342,24 +342,36 @@ impl relm4::SimpleComponent for PlaylistsView {
             },
             PlaylistsViewIn::ReplaceQueue => {
                 if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()].get_list().clone();
-                    sender.output(PlaylistsViewOut::ReplaceQueue(list.entry)).expect("sending failed");
+                    let list = self.playlists.guard()[index.current_index()]
+                        .get_list()
+                        .clone();
+                    sender
+                        .output(PlaylistsViewOut::ReplaceQueue(list))
+                        .expect("sending failed");
                 } else {
                     return;
                 }
             }
-            PlaylistsViewIn::AddToQueue =>  {
+            PlaylistsViewIn::AddToQueue => {
                 if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()].get_list().clone();
-                    sender.output(PlaylistsViewOut::AddToQueue(list.entry)).expect("sending failed");
+                    let list = self.playlists.guard()[index.current_index()]
+                        .get_list()
+                        .clone();
+                    sender
+                        .output(PlaylistsViewOut::AddToQueue(list))
+                        .expect("sending failed");
                 } else {
                     return;
                 }
             }
             PlaylistsViewIn::AppendToQueue => {
                 if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()].get_list().clone();
-                    sender.output(PlaylistsViewOut::AppendToQueue(list.entry)).expect("sending failed");
+                    let list = self.playlists.guard()[index.current_index()]
+                        .get_list()
+                        .clone();
+                    sender
+                        .output(PlaylistsViewOut::AppendToQueue(list))
+                        .expect("sending failed");
                 } else {
                     return;
                 }

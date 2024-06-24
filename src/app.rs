@@ -700,6 +700,7 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
+                BrowserOut::ReplaceQueue(drop) => self.queue.emit(QueueIn::Replace(drop)),
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
                     self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop));
                 }

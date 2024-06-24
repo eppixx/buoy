@@ -64,6 +64,7 @@ pub enum QueueIn {
     Append(Droppable),
     QueueSong(QueueSongOut),
     InsertAfterCurrentlyPlayed(Droppable),
+    Replace(Droppable),
     DisplayToast(String),
 }
 
@@ -245,6 +246,10 @@ impl relm4::Component for Queue {
                     self.playing_index = Some(song.index().clone());
                     sender.input(QueueIn::NewState(PlayState::Pause));
                 }
+            }
+            QueueIn::Replace(drop) => {
+                sender.input(QueueIn::Clear);
+                sender.input(QueueIn::Append(drop));
             }
             QueueIn::Append(id) => {
                 let songs: Vec<submarine::data::Child> = match id {

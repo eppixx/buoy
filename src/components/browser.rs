@@ -79,6 +79,7 @@ pub enum BrowserIn {
 #[derive(Debug)]
 pub enum BrowserOut {
     AppendToQueue(Droppable),
+    ReplaceQueue(Droppable),
     InsertAfterCurrentInQueue(Droppable),
     BackButtonSensitivity(bool),
     DisplayToast(String),
@@ -338,7 +339,24 @@ impl relm4::SimpleComponent for Browser {
                 PlaylistsViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
-                _ => {}
+                PlaylistsViewOut::AppendToQueue(list) => {
+                    let drop = Droppable::Playlist(Box::new(list));
+                    sender
+                        .output(BrowserOut::AppendToQueue(drop))
+                        .expect("sending failed");
+                }
+                PlaylistsViewOut::AddToQueue(list) => {
+                    let drop = Droppable::Playlist(Box::new(list));
+                    sender
+                        .output(BrowserOut::InsertAfterCurrentInQueue(drop))
+                        .expect("sending failed");
+                }
+                PlaylistsViewOut::ReplaceQueue(list) => {
+                    let drop = Droppable::Playlist(Box::new(list));
+                    sender
+                        .output(BrowserOut::ReplaceQueue(drop))
+                        .expect("sending failed");
+                }
             },
         }
     }
