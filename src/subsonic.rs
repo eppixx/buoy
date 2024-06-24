@@ -225,14 +225,18 @@ impl Subsonic {
                     })
                     .collect::<Vec<(String, &String)>>(),
             )
-        // TODO fetch playlist covers
-        // .chain::<Vec<String, &String>>(self.playlists.iter().filter_map(|playlist| {
-        //     if let Some(cover) = &playlist.cover_art {
-        //         Some((playlist.id.clone(), cover))
-        //     } else {
-        //         None
-        //     }
-        // }))
+            .chain::<Vec<(String, &String)>>(
+                self.playlists
+                    .iter()
+                    .filter_map(|playlist| {
+                        playlist
+                            .base
+                            .cover_art
+                            .as_ref()
+                            .map(|cover| (playlist.base.id.clone(), cover))
+                    })
+                    .collect::<Vec<(String, &String)>>(),
+            )
         {
             tasks.push(async move {
                 let client = Client::get().unwrap();
