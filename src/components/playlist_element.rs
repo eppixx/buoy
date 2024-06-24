@@ -1,6 +1,6 @@
 use relm4::gtk::{
     self,
-    prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
+    prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
 };
 
 use crate::types::Droppable;
@@ -14,6 +14,7 @@ pub struct PlaylistElement {
     main_stack: gtk::Stack,
 
     edit_area: gtk::Stack,
+    edit_entry: gtk::Entry,
     edit: gtk::Button,
     delete: gtk::Button,
 }
@@ -60,6 +61,7 @@ pub enum PlaylistElementIn {
     Clicked,
     DeletePressed,
     ChangeState(State),
+    ConfirmRename,
 }
 
 #[derive(Debug)]
@@ -93,6 +95,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             main_stack: gtk::Stack::default(),
 
             edit_area: gtk::Stack::default(),
+            edit_entry: gtk::Entry::default(),
             edit: gtk::Button::default(),
             delete: gtk::Button::default(),
         };
@@ -132,6 +135,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_halign: gtk::Align::Start,
+                            #[watch]
                             set_text: &self.playlist.base.name,
                         },
                         gtk::Label {
@@ -156,9 +160,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                                     self.edit.clone() -> gtk::Button {
                                         set_icon_name: "edit-symbolic",
                                         set_tooltip_text: Some("Rename Playlist"),
-                                        connect_clicked[sender] => move |_widget| {
-                                            sender.output(PlaylistElementOut::DisplayToast(String::from("edit list"))).expect("sending failed");
-                                        },
+                                        connect_clicked => PlaylistElementIn::ChangeState(State::Edit),
                                     },
                                     self.delete.clone() -> gtk::Button {
                                         add_css_class: granite::STYLE_CLASS_DESTRUCTIVE_ACTION,
@@ -172,7 +174,45 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         }
                     }
                 },
+                add_named[Some(State::Edit.to_str())] = &gtk::Box {
+                    set_spacing: 10,
+
+                    gtk::Box {
+                        set_valign: gtk::Align::Center,
+
+                        self.edit_entry.clone() -> gtk::Entry {
+                            set_hexpand: true,
+                            set_halign: gtk::Align::Fill,
+
+                            #[watch]
+                            set_text: &self.playlist.base.name,
+                            set_tooltip_text: Some("Renamed title of playlist"),
+                        }
+                    },
+
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_valign: gtk::Align::Center,
+
+                        gtk::Box {
+                            set_spacing: 10,
+
+                            gtk::Button {
+                                set_icon_name: "process-completed-symbolic",
+                                connect_clicked => PlaylistElementIn::ConfirmRename,
+                                set_tooltip_text: Some("Confirm renaming of playlist"),
+                            },
+                            gtk::Button {
+                                set_icon_name: "process-stop",
+                                connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
+                                set_tooltip_text: Some("Don't change playlist name"),
+                            }
+                        }
+                    }
+                },
                 add_named[Some(State::DeleteInProgress.to_str())] = &gtk::Box {
+                    set_spacing: 10,
+
                     gtk::Label {
                         set_hexpand: true,
                         set_label: &format!("Really delete \"{}\"?", self.playlist.base.name),
@@ -214,9 +254,19 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     .expect("sending failed");
             }
             PlaylistElementIn::DeletePressed => {
-                sender.output(PlaylistElementOut::Delete(self.index.clone())).expect("sending failed");
+                sender
+                    .output(PlaylistElementOut::Delete(self.index.clone()))
+                    .expect("sending failed");
             }
-            PlaylistElementIn::ChangeState(state) => self.main_stack.set_visible_child_name(state.to_str()),
+            PlaylistElementIn::ChangeState(state) => {
+                self.main_stack.set_visible_child_name(state.to_str())
+            }
+            PlaylistElementIn::ConfirmRename => {
+                let text = self.edit_entry.text();
+                self.playlist.base.name = String::from(text);
+                sender.input(PlaylistElementIn::ChangeState(State::Normal));
+                //TODO rename playlist on server
+            }
         }
     }
 }

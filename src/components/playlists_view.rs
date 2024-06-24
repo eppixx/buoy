@@ -15,7 +15,10 @@ use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
 use crate::types::Droppable;
-use crate::{components::playlist_element::{PlaylistElement, State}, subsonic::Subsonic};
+use crate::{
+    components::playlist_element::{PlaylistElement, State},
+    subsonic::Subsonic,
+};
 
 #[derive(Debug)]
 pub struct PlaylistsView {
