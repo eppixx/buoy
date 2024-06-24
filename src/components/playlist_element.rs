@@ -189,10 +189,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             gtk::Button {
                                 set_icon_name: "process-completed-symbolic",
                                 connect_clicked => PlaylistElementIn::DeletePressed,
+                                set_tooltip_text: Some("Confirm deletion of playlist"),
                             },
                             gtk::Button {
                                 set_icon_name: "process-stop",
                                 connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
+                                set_tooltip_text: Some("Don't delete playlist"),
                             }
                         }
                     }
