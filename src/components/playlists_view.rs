@@ -115,24 +115,17 @@ impl relm4::SimpleComponent for PlaylistsView {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
 
-            gtk::WindowHandle {
-                gtk::Label {
-                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                    set_halign: gtk::Align::Center,
-                    set_text: "Playlists",
-                },
-            },
-
             gtk::Box {
-
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     add_css_class: "playlist-view-info",
                     set_spacing: 7,
 
-                    gtk::Label {
-                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                        set_label: "Playlists",
+                    gtk::WindowHandle {
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            set_label: "Playlists",
+                        }
                     },
 
                     model.playlists.widget().clone() -> gtk::ListBox {
