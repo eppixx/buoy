@@ -22,6 +22,20 @@ impl Cover {
     }
 }
 
+enum State {
+    Stock,
+    Image,
+}
+
+impl State {
+    fn to_str(&self) -> &str {
+        match self {
+            Self::Stock => "stock",
+            Self::Image => "image",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum CoverIn {
     LoadId(Option<String>),
@@ -82,10 +96,10 @@ impl relm4::Component for Cover {
     view! {
         gtk::Box {
             model.stack.clone() -> gtk::Stack {
-                add_named[Some("stock")] = &gtk::Box {
+                add_named[Some(State::Stock.to_str())] = &gtk::Box {
                     add_css_class: "cover",
                 },
-                add_named[Some("cover")] = &model.cover.clone() -> gtk::Image {
+                add_named[Some(State::Image.to_str())] = &model.cover.clone() -> gtk::Image {
                     add_css_class: "card",
                 },
             }
@@ -100,44 +114,46 @@ impl relm4::Component for Cover {
     ) {
         match msg {
             CoverIn::ChangeImage(response) => match response {
-                subsonic_cover::Response::Empty => self.stack.set_visible_child_name("stock"),
+                subsonic_cover::Response::Empty => {
+                    self.stack.set_visible_child_name(State::Stock.to_str())
+                }
                 subsonic_cover::Response::Loaded(pixbuf) => {
                     self.cover.set_from_pixbuf(Some(&pixbuf));
-                    self.stack.set_visible_child_name("cover");
+                    self.stack.set_visible_child_name(State::Image.to_str());
                 }
             },
-            CoverIn::LoadId(None) => self.stack.set_visible_child_name("stock"),
+            CoverIn::LoadId(None) => self.stack.set_visible_child_name(State::Stock.to_str()),
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
             }
             CoverIn::LoadSong(child) => match child.album_id {
-                None => self.stack.set_visible_child_name("stock"),
+                None => self.stack.set_visible_child_name(State::Stock.to_str()),
                 Some(album_id) => {
                     let album = self.subsonic.borrow().find_album(&album_id);
                     match album {
-                        None => self.stack.set_visible_child_name("stock"),
+                        None => self.stack.set_visible_child_name(State::Stock.to_str()),
                         Some(album) => match &album.cover_art {
                             Some(id) => sender
                                 .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
-                            None => self.stack.set_visible_child_name("stock"),
+                            None => self.stack.set_visible_child_name(State::Stock.to_str()),
                         },
                     }
                 }
             },
             CoverIn::LoadAlbumId3(album) => match album.base.cover_art {
-                None => self.stack.set_visible_child_name("stock"),
+                None => self.stack.set_visible_child_name(State::Stock.to_str()),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadPlaylist(playlist) => match playlist.base.cover_art {
-                None => self.stack.set_visible_child_name("stock"),
+                None => self.stack.set_visible_child_name(State::Stock.to_str()),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadArtist(artist) => match artist.cover_art {
-                None => self.stack.set_visible_child_name("stock"),
+                None => self.stack.set_visible_child_name(State::Stock.to_str()),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
@@ -153,13 +169,13 @@ impl relm4::Component for Cover {
     ) {
         match message {
             CoverCmd::ChangeImage(id) => match id {
-                None => self.stack.set_visible_child_name("stock"),
+                None => self.stack.set_visible_child_name(State::Stock.to_str()),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverCmd::ErrorOccured(title) => {
-                self.stack.set_visible_child_name("stock");
+                self.stack.set_visible_child_name(State::Stock.to_str());
                 sender
                     .output(CoverOut::DisplayToast(title))
                     .expect("sending failed");
