@@ -131,8 +131,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     let button = bo.first_child().unwrap();
                     let bo = button.first_child().unwrap();
                     let cover = bo.first_child().unwrap();
-                    let title_view = cover.next_sibling().unwrap();
-                    let title = title_view.first_child().unwrap();
+                    let title = cover.next_sibling().unwrap();
                     let title = title.downcast::<gtk::Label>().expect("unepected element");
 
                     //actual matching

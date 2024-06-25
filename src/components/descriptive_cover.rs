@@ -15,7 +15,7 @@ use super::cover::{Cover, CoverOut};
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverInit {
     id: Option<Id>,
-    title: Option<String>,
+    title: String,
     subtitle: Option<String>,
 }
 
@@ -27,7 +27,7 @@ impl DescriptiveCoverInit {
     ) -> Self {
         Self {
             id,
-            title: Some(title.into()),
+            title: title.into(),
             subtitle: subtitle.map(|s| s.into()),
         }
     }
@@ -43,8 +43,9 @@ pub enum DescriptiveCoverIn {
 #[derive(Debug)]
 pub struct DescriptiveCover {
     cover: relm4::Controller<Cover>,
-    title: gtk::Viewport,
-    subtitle: gtk::Viewport,
+    title: String,
+    subtitle: Option<String>,
+    subtitle_label: gtk::Label,
 }
 
 #[derive(Debug)]
@@ -68,14 +69,16 @@ impl relm4::SimpleComponent for DescriptiveCover {
             cover: Cover::builder()
                 .launch((subsonic, init.id.map(|id| id.inner().into())))
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
-            title: gtk::Viewport::default(),
-            subtitle: gtk::Viewport::default(),
+            title: init.title,
+            subtitle: init.subtitle,
+            subtitle_label: gtk::Label::default(),
         };
 
         let widgets = view_output!();
 
-        sender.input(DescriptiveCoverIn::SetTitle(init.title));
-        sender.input(DescriptiveCoverIn::SetSubtitle(init.subtitle));
+        if let None = &model.subtitle {
+            model.subtitle_label.set_visible(false);
+        }
         model.cover.model().add_css_class_image("size100");
 
         relm4::ComponentParts { model, widgets }
@@ -93,41 +96,38 @@ impl relm4::SimpleComponent for DescriptiveCover {
                 model.cover.widget().clone(),
             },
 
-            model.title.clone() -> gtk::Viewport {
+            gtk::Label {
                 set_halign: gtk::Align::Center,
+                set_ellipsize: pango::EllipsizeMode::End,
+                set_max_width_chars: 15,
+                set_size_request: (150, -1),
+
+                #[watch]
+                set_label: &model.title,
             },
 
-            model.subtitle.clone() -> gtk::Viewport {
+            model.subtitle_label.clone() -> gtk::Label {
                 set_halign: gtk::Align::Center,
-            }
+                set_ellipsize: pango::EllipsizeMode::End,
+                set_max_width_chars: 15,
+                set_size_request: (150, -1),
+
+                #[watch]
+                set_label: &model.subtitle.clone().unwrap_or_default(),
+            },
         }
     }
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             DescriptiveCoverIn::SetTitle(title) => {
-                if let Some(title) = title {
-                    let label = gtk::Label::new(Some(&title));
-                    label.set_halign(gtk::Align::Center);
-                    label.set_ellipsize(pango::EllipsizeMode::End);
-                    label.set_max_width_chars(15);
-                    label.set_size_request(150, -1);
-                    self.title.set_child(Some(&label));
-                } else {
-                    self.title.set_child(None::<gtk::Label>.as_ref());
-                }
+                self.title = title.unwrap_or_default();
             }
             DescriptiveCoverIn::SetSubtitle(subtitle) => {
-                if let Some(subtitle) = subtitle {
-                    let label = gtk::Label::new(Some(&subtitle));
-                    label.set_halign(gtk::Align::Center);
-                    label.set_ellipsize(pango::EllipsizeMode::End);
-                    label.set_max_width_chars(15);
-                    label.set_size_request(150, -1);
-                    self.subtitle.set_child(Some(&label));
-                } else {
-                    self.subtitle.set_child(None::<gtk::Label>.as_ref());
+                if let None = &subtitle {
+                    self.subtitle_label.set_visible(false);
                 }
+                self.subtitle = subtitle;
             }
             DescriptiveCoverIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender

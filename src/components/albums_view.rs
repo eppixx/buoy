@@ -111,12 +111,10 @@ impl relm4::component::Component for AlbumsView {
                     let button = element.first_child().unwrap();
                     let bo = button.first_child().unwrap();
                     let cover = bo.first_child().unwrap();
-                    let title_view = cover.next_sibling().unwrap();
-                    let title = title_view.first_child().unwrap();
+                    let title = cover.next_sibling().unwrap();
                     let title = title.downcast::<gtk::Label>().expect("unepected element");
 
-                    let artist_view = title_view.next_sibling().unwrap();
-                    let artist = artist_view.first_child().unwrap();
+                    let artist = title.next_sibling().unwrap();
                     let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
                     let title_artist = format!("{} {}", title.text(), artist.text());
 
