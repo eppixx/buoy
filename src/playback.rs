@@ -140,10 +140,11 @@ impl Playback {
         Ok(play)
     }
 
-    pub fn set_track(&mut self, uri: impl AsRef<str>) {
+    pub fn set_track(&mut self, uri: impl AsRef<str>) -> anyhow::Result<()> {
         self.track_set.store(true, Ordering::Relaxed);
-        self.stop().unwrap(); //TODO error handling
+        self.stop()?;
         self.source.set_property("uri", uri.as_ref());
+        Ok(())
     }
 
     pub fn is_track_set(&self) -> bool {

@@ -130,7 +130,6 @@ impl relm4::SimpleComponent for AlbumElement {
                 set_child = &model.cover.widget().clone() {
                     set_tooltip_text: Some(&tooltip),
                 }
-                //TODO add tooltip with info about album
             }
         }
     }

@@ -214,7 +214,9 @@ impl relm4::component::AsyncComponent for App {
                 None,
             ) {
                 Ok(url) => {
-                    playback.set_track(url);
+                    if let Err(e) = playback.set_track(url) {
+                        sender.input(AppIn::DisplayToast(format!("could not set track: {e}")));
+                    }
                 }
                 Err(e) => {
                     sender.input(AppIn::DisplayToast(format!(
@@ -671,7 +673,11 @@ impl relm4::component::AsyncComponent for App {
                         None,
                     ) {
                         Ok(url) => {
-                            self.playback.set_track(url);
+                            if let Err(e) = self.playback.set_track(url) {
+                                sender.input(AppIn::DisplayToast(format!(
+                                    "could not set track: {e}"
+                                )));
+                            }
                             if let Some(length) = child.duration {
                                 self.seekbar
                                     .emit(SeekbarIn::NewRange(i64::from(length) * 1000));
@@ -688,7 +694,11 @@ impl relm4::component::AsyncComponent for App {
                     }
                 }
                 QueueOut::Stop => {
-                    self.playback.stop().unwrap(); //TODO error handling
+                    if let Err(e) = self.playback.stop() {
+                        sender.input(AppIn::DisplayToast(format!(
+                            "error while stopping playback: {e}"
+                        )));
+                    }
                     self.play_info.emit(PlayInfoIn::NewState(Box::new(None)));
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Stop));

@@ -37,14 +37,19 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
         let b = gtk::Box::default();
-        let label = gtk::Label::builder()
-            .build();
+        let label = gtk::Label::builder().build();
         b.append(&label);
         (b, (label))
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(&item.item.track.map(|i| i.to_string()).unwrap_or(String::from(" ")));
+        label.set_label(
+            &item
+                .item
+                .track
+                .map(|i| i.to_string())
+                .unwrap_or(String::from(" ")),
+        );
         b.add_controller(item.get_drag_src());
     }
 

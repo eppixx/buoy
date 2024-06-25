@@ -197,7 +197,11 @@ impl relm4::Component for ArtistView {
         _root: &Self::Root,
     ) {
         match msg {
-            ArtistViewCmd::LoadedArtist(Err(_e)) => {} //TODO error handling
+            ArtistViewCmd::LoadedArtist(Err(e)) | ArtistViewCmd::LoadedAlbums(Err(e)) => sender
+                .output(ArtistViewOut::DisplayToast(format!(
+                    "error loading artist: {e}"
+                )))
+                .expect("sending error"),
             ArtistViewCmd::LoadedArtist(Ok(artist)) => {
                 if let Some(bio) = artist.base.biography {
                     self.bio = bio;
@@ -205,7 +209,6 @@ impl relm4::Component for ArtistView {
 
                 // TODO do smth with similar artists
             }
-            ArtistViewCmd::LoadedAlbums(Err(_e)) => {} //TODO error handling
             ArtistViewCmd::LoadedAlbums(Ok(artist)) => {
                 for album in artist.album {
                     let element = AlbumElement::builder()

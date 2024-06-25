@@ -1,4 +1,3 @@
-
 use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
@@ -11,15 +10,13 @@ use relm4::{
 use std::{cell::RefCell, rc::Rc};
 
 use super::cover::{Cover, CoverOut};
-use crate::{
-    client::Client,
-    common::convert_for_label,
-    components::cover::CoverIn,
-    subsonic::Subsonic,
-    types::Droppable,
-};
 use crate::factory::playlist_tracks_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
+    TitleColumn,
+};
+use crate::{
+    client::Client, common::convert_for_label, components::cover::CoverIn, subsonic::Subsonic,
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -75,9 +72,9 @@ impl relm4::Component for AlbumView {
         };
 
         let mut tracks = relm4::typed_view::column::TypedColumnView::<
-                PlaylistTracksRow,
+            PlaylistTracksRow,
             gtk::SingleSelection,
-            >::new();
+        >::new();
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
