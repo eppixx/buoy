@@ -50,12 +50,11 @@ impl relm4::SimpleComponent for AlbumElement {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         // init cover
-        // let mut builder = DescriptiveCoverInit::default();
         let (builder, drop) = match &init {
             AlbumElementInit::AlbumId3(id3) => {
                 let builder = DescriptiveCoverInit::new(
                     id3.name.clone(),
-                    id3.cover_art.as_ref().map(|s| Id::album(s)).clone(),
+                    id3.cover_art.as_ref().map(Id::album).clone(),
                     id3.artist.clone(),
                 );
                 (builder, Droppable::Album(id3.clone()))
@@ -63,7 +62,7 @@ impl relm4::SimpleComponent for AlbumElement {
             AlbumElementInit::Child(child) => {
                 let builder = DescriptiveCoverInit::new(
                     child.title.clone(),
-                    child.cover_art.as_ref().map(|s| Id::song(s)).clone(),
+                    child.cover_art.as_ref().map(Id::song).clone(),
                     child.artist.clone(),
                 );
                 (builder, Droppable::AlbumChild(child.clone()))

@@ -76,7 +76,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
         let widgets = view_output!();
 
-        if let None = &model.subtitle {
+        if model.subtitle.is_none() {
             model.subtitle_label.set_visible(false);
         }
         model.cover.model().add_css_class_image("size100");
@@ -124,7 +124,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
                 self.title = title.unwrap_or_default();
             }
             DescriptiveCoverIn::SetSubtitle(subtitle) => {
-                if let None = &subtitle {
+                if subtitle.is_none() {
                     self.subtitle_label.set_visible(false);
                 }
                 self.subtitle = subtitle;

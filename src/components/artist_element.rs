@@ -45,7 +45,7 @@ impl relm4::SimpleComponent for ArtistElement {
         // init cover
         let builder = DescriptiveCoverInit::new(
             init.name.clone(),
-            init.cover_art.as_ref().map(|s| Id::artist(s)),
+            init.cover_art.as_ref().map(Id::artist),
             None::<&str>,
         );
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
