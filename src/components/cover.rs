@@ -3,10 +3,8 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{gtk, gtk::prelude::WidgetExt};
 
 use crate::{
-    client::Client,
     subsonic::Subsonic,
     subsonic_cover::{self},
-    types::Id,
 };
 
 #[derive(Debug)]
@@ -16,9 +14,6 @@ pub struct Cover {
     // stack shows either a stock image, a loading wheel or a loaded cover
     stack: gtk::Stack,
     cover: gtk::Image,
-
-    //raw cover id
-    id: Option<String>,
 }
 
 impl Cover {
@@ -29,7 +24,7 @@ impl Cover {
 
 #[derive(Debug)]
 pub enum CoverIn {
-    LoadImage(Option<String>),
+    LoadId(Option<String>),
     LoadSong(Box<submarine::data::Child>),
     LoadAlbumId3(Box<submarine::data::AlbumWithSongsId3>),
     LoadPlaylist(Box<submarine::data::PlaylistWithSongs>),
@@ -76,13 +71,11 @@ impl relm4::Component for Cover {
             subsonic,
             stack: gtk::Stack::default(),
             cover: gtk::Image::default(),
-
-            id,
         };
 
         let widgets = view_output!();
 
-        sender.input(CoverIn::LoadImage(model.id.clone()));
+        sender.input(CoverIn::LoadId(id));
         relm4::ComponentParts { model, widgets }
     }
 
@@ -113,11 +106,8 @@ impl relm4::Component for Cover {
                     self.stack.set_visible_child_name("cover");
                 }
             },
-            CoverIn::LoadImage(None) // | CoverIn::LoadId(None)
-                => {
-                self.stack.set_visible_child_name("stock");
-            }
-            CoverIn::LoadImage(Some(id)) => {
+            CoverIn::LoadId(None) => self.stack.set_visible_child_name("stock"),
+            CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
             }
             CoverIn::LoadSong(child) => match child.album_id {
@@ -151,7 +141,7 @@ impl relm4::Component for Cover {
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
-            }
+            },
         }
     }
 

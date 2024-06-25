@@ -10,7 +10,7 @@ use relm4::{
 };
 
 use crate::components::cover::{Cover, CoverIn, CoverOut};
-use crate::{subsonic::Subsonic, types::Id};
+use crate::subsonic::Subsonic;
 
 #[derive(Debug)]
 pub struct PlayInfo {
@@ -91,7 +91,7 @@ impl relm4::SimpleComponent for PlayInfo {
         match msg {
             PlayInfoIn::NewState(child) => match *child {
                 None => {
-                    self.covers.emit(CoverIn::LoadImage(None));
+                    self.covers.emit(CoverIn::LoadId(None));
                     self.title = String::from("Nothing is played currently");
                     self.artist = String::new();
                     self.album = String::new();
@@ -101,8 +101,6 @@ impl relm4::SimpleComponent for PlayInfo {
                     self.title = child.title;
                     self.artist = child.artist.unwrap_or_default();
                     self.album = child.album.unwrap_or_default();
-                    // self.covers
-                    //     .emit(CoverIn::LoadId(Some(Id::song(child.id.clone()))));
                 }
             },
             PlayInfoIn::Cover(msg) => match msg {

@@ -307,7 +307,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .set_edit_area(true);
 
                     // set info
-                    self.info_cover.emit(CoverIn::LoadPlaylist(Box::new(list.clone())));
+                    self.info_cover
+                        .emit(CoverIn::LoadPlaylist(Box::new(list.clone())));
                     self.info_title.set_text(&list.base.name);
                     self.info_details.set_text(&build_info_string(&list));
 

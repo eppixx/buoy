@@ -239,7 +239,8 @@ impl relm4::Component for AlbumView {
 
                 //update self
                 self.info = build_info_string(&album);
-                self.cover.emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
+                self.cover
+                    .emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
                 self.title = album.base.name;
                 self.artist = album.base.artist;
                 let tracks = AlbumTracks::builder()
