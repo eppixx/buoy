@@ -7,6 +7,7 @@ pub mod common;
 pub mod components;
 pub mod css;
 mod factory;
+mod mpris;
 mod play_state;
 mod playback;
 pub mod settings;

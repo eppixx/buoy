@@ -23,6 +23,10 @@ futures = "0.3.30"
 async-channel = "2.3.1"
 fuzzy-matcher = "0.3.7"
 
+#mpris
+zbus = "4.3.0"
+zvariant = "4.1.1"
+
 # converting strings on seekbar
 chrono = "0.4.38"
 
@@ -39,3 +43,6 @@ url = "2.5.0"
 [profile.release]
 strip = "debuginfo"
 lto = true
+
+[profile.dev]
+strip = "debuginfo"

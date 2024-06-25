@@ -12,9 +12,9 @@ use relm4::{
     Component, ComponentController, Controller, RelmWidgetExt,
 };
 
-use crate::subsonic::Subsonic;
 use crate::{
     client::Client,
+    mpris::MprisOut,
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
     settings::Settings,
@@ -31,11 +31,13 @@ use crate::{
     },
     window_state::{NavigationMode, WindowState},
 };
+use crate::{mpris::Mpris, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct App {
     playback: Playback,
     subsonic: Rc<RefCell<Subsonic>>,
+    mpris: Mpris,
 
     login_form: AsyncController<LoginForm>,
     queue: Controller<Queue>,
@@ -69,6 +71,7 @@ pub enum AppIn {
     PlayInfo(PlayInfoOut),
     DisplayToast(String),
     Navigation(NavigationMode),
+    Mpris(MprisOut),
 }
 
 #[relm4::widget_template(pub)]
@@ -254,9 +257,13 @@ impl relm4::component::AsyncComponent for App {
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
 
+        let (mpris_sender, mpris_receiver) = async_channel::unbounded();
+        let mpris = crate::mpris::Mpris::new(&mpris_sender).await.unwrap();
+
         let model = App {
             playback,
             subsonic,
+            mpris,
 
             login_form,
             queue,
@@ -312,6 +319,14 @@ impl relm4::component::AsyncComponent for App {
                 model.play_controls.emit(PlayControlIn::Disable);
             }
         }
+
+        //setup mpris
+        let sender_mpris = sender.clone();
+        gtk::glib::spawn_future_local(async move {
+            while let Ok(msg) = mpris_receiver.recv().await {
+                sender_mpris.input(AppIn::Mpris(msg));
+            }
+        });
 
         gtk::glib::spawn_future_local(async move {
             while let Ok(msg) = receiver.recv().await {
@@ -739,6 +754,7 @@ impl relm4::component::AsyncComponent for App {
                 self.search.grab_focus();
                 self.back_btn.set_visible(false);
             }
+            AppIn::Mpris(msg) => sender.input(AppIn::DisplayToast(format!("mpris msg: {msg:?}"))),
         }
     }
 
