@@ -1,5 +1,5 @@
-use std::{cell::RefCell, rc::Rc};
 
+use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
@@ -8,13 +8,18 @@ use relm4::{
     ComponentController,
 };
 
+use std::{cell::RefCell, rc::Rc};
+
 use super::cover::{Cover, CoverOut};
 use crate::{
     client::Client,
     common::convert_for_label,
-    components::{album_tracks::AlbumTracks, cover::CoverIn},
+    components::cover::CoverIn,
     subsonic::Subsonic,
     types::Droppable,
+};
+use crate::factory::playlist_tracks_row::{
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn, TitleColumn,
 };
 
 #[derive(Debug)]
@@ -23,9 +28,7 @@ pub struct AlbumView {
     title: String,
     artist: Option<String>,
     info: String,
-    view: gtk::Viewport,
-    loaded_tracks: bool,
-    tracks: Option<relm4::Controller<AlbumTracks>>,
+    tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
 }
 
 #[derive(Debug, Clone)]
@@ -71,6 +74,17 @@ impl relm4::Component for AlbumView {
             AlbumViewInit::AlbumId3(album) => album.cover_art,
         };
 
+        let mut tracks = relm4::typed_view::column::TypedColumnView::<
+                PlaylistTracksRow,
+            gtk::SingleSelection,
+            >::new();
+        tracks.append_column::<PositionColumn>();
+        tracks.append_column::<TitleColumn>();
+        tracks.append_column::<ArtistColumn>();
+        tracks.append_column::<AlbumColumn>();
+        tracks.append_column::<LengthColumn>();
+        tracks.append_column::<FavColumn>();
+
         let model = Self {
             cover: Cover::builder()
                 .launch((subsonic.clone(), cover))
@@ -78,9 +92,7 @@ impl relm4::Component for AlbumView {
             title: String::from("Unkonwn Title"),
             artist: None,
             info: String::new(),
-            view: gtk::Viewport::default(),
-            loaded_tracks: false,
-            tracks: None,
+            tracks,
         };
 
         let widgets = view_output!();
@@ -185,14 +197,8 @@ impl relm4::Component for AlbumView {
                 },
             },
 
-            model.view.clone() {
-                #[wrap(Some)]
-                set_child = &gtk::Spinner {
-                    add_css_class: "size50",
-                    set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Center,
-                    start: (),
-                }
+            model.tracks.view.clone() {
+                set_vexpand: true,
             },
         }
     }
@@ -211,7 +217,18 @@ impl relm4::Component for AlbumView {
                     .expect("sending failed"),
             },
             AlbumViewIn::SearchChanged(search) => {
-                // unimplemented!("search in AlbumView"); //TODO implemenmt
+                self.tracks.clear_filters();
+                self.tracks.add_filter(move |row| {
+                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                    let test = format!(
+                        "{} {} {}",
+                        row.item.title,
+                        row.item.artist.as_deref().unwrap_or_default(),
+                        row.item.album.as_deref().unwrap_or_default()
+                    );
+                    let score = matcher.fuzzy_match(&test, &search);
+                    score.is_some()
+                });
             }
         }
     }
@@ -229,6 +246,11 @@ impl relm4::Component for AlbumView {
                     .expect("sending failed");
             }
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
+                //load tracks
+                for track in &album.song {
+                    self.tracks.append(PlaylistTracksRow::new(track.clone()));
+                }
+
                 // update dragSource
                 let drop = Droppable::AlbumWithSongs(Box::new(album.clone()));
                 let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
@@ -243,12 +265,6 @@ impl relm4::Component for AlbumView {
                     .emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
                 self.title = album.base.name;
                 self.artist = album.base.artist;
-                let tracks = AlbumTracks::builder()
-                    .launch(album.song)
-                    .forward(sender.input_sender(), |_| AlbumViewIn::AlbumTracks);
-                self.view.set_child(Some(tracks.widget()));
-                self.tracks = Some(tracks);
-                self.loaded_tracks = true;
             }
         }
     }
