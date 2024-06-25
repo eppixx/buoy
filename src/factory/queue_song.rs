@@ -413,10 +413,6 @@ impl FactoryComponent for QueueSong {
                         });
                         vec![]
                     }
-                    Droppable::Id(_) => {
-                        tracing::error!("not implemented");
-                        vec![]
-                    }
                 };
                 if y < f64::from(widget_height) * 0.5f64 {
                     sender

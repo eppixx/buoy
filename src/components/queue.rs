@@ -310,7 +310,6 @@ impl relm4::Component for Queue {
                         });
                         return;
                     }
-                    Droppable::Id(_) => vec![], //TODO remove eventually
                 };
 
                 for song in songs {
@@ -380,7 +379,6 @@ impl relm4::Component for Queue {
                         });
                         return;
                     }
-                    Droppable::Id(_) => vec![], //TODO remove eventually
                 };
 
                 if let Some(index) = &self.playing_index {

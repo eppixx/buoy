@@ -59,7 +59,6 @@ impl Id {
 #[boxed_type(name = "Droppable")]
 pub enum Droppable {
     Queue(Vec<submarine::data::Child>),
-    Id(Id), //TODO maybe remove this later
     Child(Box<submarine::data::Child>),
     AlbumWithSongs(Box<submarine::data::AlbumWithSongsId3>),
     Album(Box<submarine::data::AlbumId3>),
