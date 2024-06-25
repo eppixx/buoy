@@ -30,8 +30,8 @@ fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
     //load css file
-    let data = std::fs::read_to_string("data/bouy.css")?;
-    let app = RelmApp::new("com.github.eppixx.bouy");
+    let data = std::fs::read_to_string("data/buoy.css")?;
+    let app = RelmApp::new("com.github.eppixx.buoy");
     app.set_global_css(&data);
     app.run_async::<App>(());
 
