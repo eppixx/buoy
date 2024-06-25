@@ -97,11 +97,12 @@ impl relm4::SimpleComponent for PlayInfo {
                     self.album = String::new();
                 }
                 Some(child) => {
+                    self.covers.emit(CoverIn::LoadSong(Box::new(child.clone())));
                     self.title = child.title;
                     self.artist = child.artist.unwrap_or_default();
                     self.album = child.album.unwrap_or_default();
-                    self.covers
-                        .emit(CoverIn::LoadId(Some(Id::song(child.id.clone()))));
+                    // self.covers
+                    //     .emit(CoverIn::LoadId(Some(Id::song(child.id.clone()))));
                 }
             },
             PlayInfoIn::Cover(msg) => match msg {

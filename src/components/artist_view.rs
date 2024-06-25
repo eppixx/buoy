@@ -78,7 +78,7 @@ impl relm4::Component for ArtistView {
         model.cover.widget().add_controller(drag_src);
 
         // load cover
-        model.cover.emit(CoverIn::LoadImage(init.cover_art.clone()));
+        model.cover.emit(CoverIn::LoadArtist(Box::new(init.clone())));
         model.cover.model().add_css_class_image("size100");
 
         // load albums

@@ -239,9 +239,9 @@ impl relm4::Component for AlbumView {
 
                 //update self
                 self.info = build_info_string(&album);
+                self.cover.emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
                 self.title = album.base.name;
                 self.artist = album.base.artist;
-                self.cover.emit(CoverIn::LoadImage(album.base.cover_art));
                 let tracks = AlbumTracks::builder()
                     .launch(album.song)
                     .forward(sender.input_sender(), |_| AlbumViewIn::AlbumTracks);

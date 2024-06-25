@@ -30,8 +30,10 @@ impl Cover {
 #[derive(Debug)]
 pub enum CoverIn {
     LoadImage(Option<String>),
-    LoadId(Option<Id>),
     LoadSong(Box<submarine::data::Child>),
+    LoadAlbumId3(Box<submarine::data::AlbumWithSongsId3>),
+    LoadPlaylist(Box<submarine::data::PlaylistWithSongs>),
+    LoadArtist(Box<submarine::data::ArtistId3>),
     ChangeImage(subsonic_cover::Response),
 }
 
@@ -111,7 +113,8 @@ impl relm4::Component for Cover {
                     self.stack.set_visible_child_name("cover");
                 }
             },
-            CoverIn::LoadImage(None) | CoverIn::LoadId(None) => {
+            CoverIn::LoadImage(None) // | CoverIn::LoadId(None)
+                => {
                 self.stack.set_visible_child_name("stock");
             }
             CoverIn::LoadImage(Some(id)) => {
@@ -131,49 +134,23 @@ impl relm4::Component for Cover {
                     }
                 }
             },
-            CoverIn::LoadId(Some(Id::Song(id))) => sender.oneshot_command(async move {
-                let client = Client::get().unwrap();
-                match client.get_song(id).await {
-                    Err(e) => CoverCmd::ErrorOccured(format!("could not get song: {e:?}")),
-                    Ok(child) => match child.album_id {
-                        None => CoverCmd::ChangeImage(child.cover_art),
-                        Some(album_id) => match client.get_album(album_id).await {
-                            Err(e) => {
-                                CoverCmd::ErrorOccured(format!("could not fetch album: {e:?}"))
-                            }
-                            Ok(album) => CoverCmd::ChangeImage(album.base.cover_art),
-                        },
-                    },
+            CoverIn::LoadAlbumId3(album) => match album.base.cover_art {
+                None => self.stack.set_visible_child_name("stock"),
+                Some(id) => {
+                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
-            }),
-            CoverIn::LoadId(Some(Id::Album(id))) => {
-                sender.oneshot_command(async move {
-                    let client = Client::get().unwrap();
-                    match client.get_album(id).await {
-                        Err(e) => CoverCmd::ErrorOccured(format!("could not fetch album: {e:?}")),
-                        Ok(album) => CoverCmd::ChangeImage(album.base.cover_art),
-                    }
-                });
-            }
-            CoverIn::LoadId(Some(Id::Artist(id))) => {
-                sender.oneshot_command(async move {
-                    let client = Client::get().unwrap();
-                    match client.get_artist(id).await {
-                        Err(e) => CoverCmd::ErrorOccured(format!("could not fetch artist: {e:?}")),
-                        Ok(artist) => CoverCmd::ChangeImage(artist.base.cover_art),
-                    }
-                });
-            }
-            CoverIn::LoadId(Some(Id::Playlist(id))) => {
-                sender.oneshot_command(async move {
-                    let client = Client::get().unwrap();
-                    match client.get_playlist(id).await {
-                        Err(e) => {
-                            CoverCmd::ErrorOccured(format!("could not fetch playlist: {e:?}"))
-                        }
-                        Ok(playlist) => CoverCmd::ChangeImage(playlist.base.cover_art),
-                    }
-                });
+            },
+            CoverIn::LoadPlaylist(playlist) => match playlist.base.cover_art {
+                None => self.stack.set_visible_child_name("stock"),
+                Some(id) => {
+                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+                }
+            },
+            CoverIn::LoadArtist(artist) => match artist.cover_art {
+                None => self.stack.set_visible_child_name("stock"),
+                Some(id) => {
+                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+                }
             }
         }
     }
