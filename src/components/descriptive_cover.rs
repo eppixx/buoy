@@ -8,13 +8,12 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::{subsonic::Subsonic, types::Id};
-
 use super::cover::{Cover, CoverOut};
+use crate::subsonic::Subsonic;
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverInit {
-    id: Option<Id>,
+    id: Option<String>,
     title: String,
     subtitle: Option<String>,
 }
@@ -22,7 +21,7 @@ pub struct DescriptiveCoverInit {
 impl DescriptiveCoverInit {
     pub fn new(
         title: impl Into<String>,
-        id: Option<Id>,
+        id: Option<String>,
         subtitle: Option<impl Into<String>>,
     ) -> Self {
         Self {
@@ -67,7 +66,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch((subsonic, init.id.map(|id| id.inner().into())))
+                .launch((subsonic, init.id))
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: init.title,
             subtitle: init.subtitle,
