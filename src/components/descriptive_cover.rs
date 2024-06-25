@@ -13,26 +13,23 @@ use crate::{subsonic::Subsonic, types::Id};
 use super::cover::{Cover, CoverOut};
 
 #[derive(Debug, Default, Clone)]
-pub struct DescriptiveCoverBuilder {
+pub struct DescriptiveCoverInit {
     id: Option<Id>,
     title: Option<String>,
     subtitle: Option<String>,
 }
 
-impl DescriptiveCoverBuilder {
-    pub fn id(mut self, id: Id) -> Self {
-        self.id = Some(id);
-        self
-    }
-
-    pub fn title(mut self, title: impl Into<String>) -> Self {
-        self.title = Some(title.into());
-        self
-    }
-
-    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
-        self.subtitle = Some(subtitle.into());
-        self
+impl DescriptiveCoverInit {
+    pub fn new(
+        title: impl Into<String>,
+        id: Option<Id>,
+        subtitle: Option<impl Into<String>>,
+    ) -> Self {
+        Self {
+            id,
+            title: Some(title.into()),
+            subtitle: subtitle.map(|s| s.into()),
+        }
     }
 }
 
@@ -57,7 +54,7 @@ pub enum DescriptiveCoverOut {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for DescriptiveCover {
-    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverBuilder);
+    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverInit);
     type Input = DescriptiveCoverIn;
     type Output = DescriptiveCoverOut;
     type Widgets = CoverWidgets;
