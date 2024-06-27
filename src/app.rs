@@ -785,7 +785,7 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
 
-                    if let Err(e) = self.playback.pause() {
+                    if let Err(e) = self.playback.play() {
                         sender.input(AppIn::DisplayToast(format!(
                             "could not play playback: {e:?}"
                         )));
