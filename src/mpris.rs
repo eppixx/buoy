@@ -1,18 +1,27 @@
-use std::collections::HashMap;
-
 use zbus::interface;
+
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 use crate::player::Command;
 
+#[derive(Debug, Default)]
+struct Info {
+    can_next: bool,
+    can_previous: bool,
+}
+
 #[derive(Debug)]
 pub struct Mpris {
+    info: Arc<Mutex<Info>>,
     _connection: zbus::Connection,
 }
 
 impl Mpris {
     pub async fn new(sender: &async_channel::Sender<MprisOut>) -> anyhow::Result<Mpris> {
-        let root = Root::new(&sender.clone());
-        let player = Player::new(sender);
+        let info = Arc::new(Mutex::new(Info::default()));
+        let root = Root { sender: sender.clone(), info: info.clone() };
+        let player = Player { sender: sender.clone(), info: info.clone() };
         let connection = zbus::conn::Builder::session()?
             .name("org.mpris.MediaPlayer2.buoy")?
             .serve_at("/org/mpris/MediaPlayer2", root)?
@@ -20,13 +29,23 @@ impl Mpris {
             .build()
             .await?;
         Ok(Mpris {
+            info,
             _connection: connection,
         })
+    }
+
+    pub fn can_play_next(&mut self, state: bool) {
+        self.info.lock().unwrap().can_next = state;
+    }
+
+    pub fn can_play_previous(&mut self, state: bool) {
+        self.info.lock().unwrap().can_previous = state;
     }
 }
 
 pub struct Root {
     sender: async_channel::Sender<MprisOut>,
+    info: Arc<Mutex<Info>>,
 }
 
 #[derive(Debug)]
@@ -34,18 +53,8 @@ pub enum MprisOut {
     WindowRaise,
     WindowQuit,
     DisplayToast(String),
-    Next,
-    Previous,
     Play,
     Player(Command),
-}
-
-impl Root {
-    fn new(sender: &async_channel::Sender<MprisOut>) -> Self {
-        Self {
-            sender: sender.clone(),
-        }
-    }
 }
 
 // implements https://specifications.freedesktop.org/mpris-spec/latest/Media_Player.html
@@ -97,25 +106,18 @@ impl Root {
 
 struct Player {
     sender: async_channel::Sender<MprisOut>,
-}
-
-impl Player {
-    fn new(sender: &async_channel::Sender<MprisOut>) -> Self {
-        Self {
-            sender: sender.clone(),
-        }
-    }
+    info: Arc<Mutex<Info>>,
 }
 
 // implementes https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html
 #[interface(name = "org.mpris.MediaPlayer2.Player")]
 impl Player {
     fn next(&self) {
-        self.sender.try_send(MprisOut::Next).unwrap();
+        self.sender.try_send(MprisOut::Player(Command::Next)).unwrap();
     }
 
     fn previous(&self) {
-        self.sender.try_send(MprisOut::Previous).unwrap();
+        self.sender.try_send(MprisOut::Player(Command::Previous)).unwrap();
     }
 
     fn pause(&self) {
@@ -264,29 +266,27 @@ impl Player {
         zvariant::Value::new(5000)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn minimum_rate(&self) -> zvariant::Value {
         zvariant::Value::new(1.0f64)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn maximum_rate(&self) -> zvariant::Value {
         zvariant::Value::new(1.0f64)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn can_go_next(&self) -> zvariant::Value {
-        // TODO
-        zvariant::Value::new(true)
+        zvariant::Value::new(self.info.lock().unwrap().can_next)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn can_go_previous(&self) -> zvariant::Value {
-        // TODO
-        zvariant::Value::new(true)
+        zvariant::Value::new(self.info.lock().unwrap().can_previous)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn can_play(&self) -> zvariant::Value {
         // TODO
         // let play = match self.settings.read().unwrap().queue_state {
@@ -298,7 +298,7 @@ impl Player {
         zvariant::Value::new(true)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn can_pause(&self) -> zvariant::Value {
         // TODO
         // if let queue_state::State::Play(_) = self.settings.read().unwrap().queue_state {
@@ -308,13 +308,13 @@ impl Player {
         zvariant::Value::new(false)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn can_seek(&self) -> zvariant::Value {
         // TODO
         zvariant::Value::new(false)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn can_control(&self) -> zvariant::Value {
         // TODO
         zvariant::Value::new(true)

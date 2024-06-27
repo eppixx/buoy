@@ -21,6 +21,8 @@ pub enum PlayControlIn {
     NewState(PlayState),
     Disable,
     Enable,
+    DisableNext(bool),
+    DisablePrevious(bool),
 }
 
 #[derive(Debug)]
@@ -117,6 +119,8 @@ impl SimpleComponent for PlayControl {
                 self.play_btn.set_sensitive(true);
                 self.next_btn.set_sensitive(true);
             }
+            PlayControlIn::DisableNext(state) => self.next_btn.set_sensitive(state),
+            PlayControlIn::DisablePrevious(state) => self.prev_btn.set_sensitive(state),
         }
     }
 }

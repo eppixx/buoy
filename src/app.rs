@@ -609,8 +609,8 @@ impl relm4::component::AsyncComponent for App {
     ) {
         match msg {
             AppIn::PlayControlOutput(input) => match input {
-                PlayControlOut::Next => self.queue.emit(QueueIn::PlayNext),
-                PlayControlOut::Previous => self.queue.emit(QueueIn::PlayPrevious),
+                PlayControlOut::Next => sender.input(AppIn::Player(Command::Next)),
+                PlayControlOut::Previous => sender.input(AppIn::Player(Command::Previous)),
                 PlayControlOut::Status(status) => {
                     match status {
                         PlayState::Pause => sender.input(AppIn::Player(Command::Stop)),
@@ -764,8 +764,24 @@ impl relm4::component::AsyncComponent for App {
             AppIn::Mpris(msg) => sender.input(AppIn::DisplayToast(format!("mpris msg: {msg:?}"))),
             AppIn::Player(cmd) => match cmd {
                 //TODO
-                Command::Next => {}
-                Command::Previous => {}
+                Command::Next => {
+                    self.queue.emit(QueueIn::PlayNext);
+                    let can_next = self.queue.model().can_play_next();
+                    self.play_controls.emit(PlayControlIn::DisableNext(can_next));
+                    self.mpris.can_play_next(can_next);
+                    let can_prev = self.queue.model().can_play_previous();
+                    self.play_controls.emit(PlayControlIn::DisablePrevious(can_prev));
+                    self.mpris.can_play_previous(can_prev);
+                }
+                Command::Previous => {
+                    self.queue.emit(QueueIn::PlayPrevious);
+                    let can_prev = self.queue.model().can_play_previous();
+                    self.play_controls.emit(PlayControlIn::DisablePrevious(can_prev));
+                    self.mpris.can_play_previous(can_prev);
+                    let can_next = self.queue.model().can_play_next();
+                    self.play_controls.emit(PlayControlIn::DisableNext(can_next));
+                    self.mpris.can_play_next(can_next);
+                }
                 Command::Play => {}
                 Command::Pause => {
                     if let Err(e) = self.playback.pause() {

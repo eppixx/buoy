@@ -49,6 +49,52 @@ impl Queue {
     pub fn playing_index(&self) -> &Option<DynamicIndex> {
         &self.playing_index
     }
+
+    pub fn can_play_next(&self) -> bool {
+        if self.songs.is_empty() {
+            return false
+        }
+
+        if self.repeat.model().current() != &Repeat::Normal {
+            return true
+        }
+
+        if self.shuffle.model().current() == &Shuffle::Shuffle {
+            return true //TODO might change later
+        }
+
+        if let Some(index) = &self.playing_index {
+            //TODO investigate why 2 instead of 1
+            if index.current_index() + 2 == self.songs.len() {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn can_play_previous(&self) -> bool {
+        if self.songs.is_empty() {
+            return false;
+        }
+
+        if self.repeat.model().current() != &Repeat::Normal {
+            return true;
+        }
+
+        if self.shuffle.model().current() == &Shuffle::Shuffle {
+            return true;
+        }
+
+        if let Some(index) = &self.playing_index {
+            //TODO investigate why 1 instead of 0
+            if index.current_index() == 1 {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 #[derive(Debug)]
