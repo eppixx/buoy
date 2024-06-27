@@ -141,8 +141,8 @@ impl Playback {
     }
 
     pub fn set_track(&mut self, uri: impl AsRef<str>) -> anyhow::Result<()> {
-        self.track_set.store(true, Ordering::Relaxed);
         self.stop()?;
+        self.track_set.store(true, Ordering::Relaxed);
         self.source.set_property("uri", uri.as_ref());
         Ok(())
     }
