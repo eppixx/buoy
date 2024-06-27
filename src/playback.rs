@@ -7,6 +7,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use crate::play_state::PlayState;
 use crate::settings::Settings;
 
 #[derive(Debug)]
@@ -160,6 +161,15 @@ impl Playback {
         Ok(())
     }
 
+    pub fn is_playing(&self) -> PlayState {
+        println!("{:?}", self.pipeline.state(None));
+        match self.pipeline.state(None) {
+            (_, gstreamer::State::Playing, _) => PlayState::Play,
+            (_, gstreamer::State::Paused, _) => PlayState::Pause,
+            _ => PlayState::Stop,
+        }
+    }
+
     pub fn stop(&mut self) -> anyhow::Result<()> {
         self.track_set.store(false, Ordering::Relaxed);
         self.pipeline.set_state(gstreamer::State::Ready)?;
@@ -172,11 +182,10 @@ impl Playback {
     }
 
     pub fn set_position(&self, position: i64) -> anyhow::Result<()> {
-        self.pipeline
-            .seek_simple(
-                gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-                position as u64 * gst::ClockTime::MSECOND,
-            )?;
+        self.pipeline.seek_simple(
+            gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
+            position as u64 * gst::ClockTime::MSECOND,
+        )?;
         Ok(())
     }
 

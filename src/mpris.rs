@@ -36,8 +36,6 @@ pub enum MprisOut {
     DisplayToast(String),
     Next,
     Previous,
-    Pause,
-    PlayPause,
     Play,
     Player(Command),
 }
