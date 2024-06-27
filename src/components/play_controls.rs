@@ -27,9 +27,10 @@ pub enum PlayControlIn {
 
 #[derive(Debug)]
 pub enum PlayControlOut {
-    Status(PlayState),
     Previous,
     Next,
+    Play,
+    Pause,
 }
 
 #[component(pub)]
@@ -77,12 +78,10 @@ impl SimpleComponent for PlayControl {
                 connect_clicked[sender] => move |btn| {
                     match btn.icon_name().unwrap().as_str() {
                         "media-playback-start-symbolic" => {
-                            sender.input(PlayControlIn::NewState(PlayState::Play));
-                            sender.output(PlayControlOut::Status(PlayState::Play)).unwrap();
+                            sender.output(PlayControlOut::Play).expect("sending failed");
                         }
                         "media-playback-pause-symbolic" => {
-                            sender.input(PlayControlIn::NewState(PlayState::Pause));
-                            sender.output(PlayControlOut::Status(PlayState::Pause)).unwrap();
+                            sender.output(PlayControlOut::Pause).expect("sending failed");
                         }
                         _ => unreachable!("unkonwn icon name"),
                     }

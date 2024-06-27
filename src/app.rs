@@ -611,20 +611,8 @@ impl relm4::component::AsyncComponent for App {
             AppIn::PlayControlOutput(input) => match input {
                 PlayControlOut::Next => sender.input(AppIn::Player(Command::Next)),
                 PlayControlOut::Previous => sender.input(AppIn::Player(Command::Previous)),
-                PlayControlOut::Status(status) => {
-                    match status {
-                        PlayState::Pause => sender.input(AppIn::Player(Command::Stop)),
-                        PlayState::Play => {
-                            if !self.playback.is_track_set() {
-                                self.queue.emit(QueueIn::PlayNext);
-                            } else {
-                                self.playback.play().unwrap();
-                            }
-                        }
-                        PlayState::Stop => sender.input(AppIn::Player(Command::Stop)),
-                    }
-                    self.queue.emit(QueueIn::NewState(status));
-                }
+                PlayControlOut::Play => sender.input(AppIn::Player(Command::Play)),
+                PlayControlOut::Pause => sender.input(AppIn::Player(Command::Pause)),
             },
             AppIn::Seekbar(msg) => match msg {
                 SeekbarOut::SeekDragged(seek_in_ms) => {
