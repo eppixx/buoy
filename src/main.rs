@@ -10,6 +10,7 @@ mod factory;
 mod mpris;
 mod play_state;
 mod playback;
+pub mod player;
 pub mod settings;
 pub mod subsonic;
 pub mod subsonic_cover;
