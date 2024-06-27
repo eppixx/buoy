@@ -67,13 +67,13 @@ impl Playback {
 
             let is_audio = new_pad_type.starts_with("audio/x-raw");
             if !is_audio {
-                tracing::warn!("audio is no raw type, but {} - ignoring.", new_pad_type);
+                tracing::warn!("audio is no raw type, but {new_pad_type} - ignoring.");
                 return;
             }
 
             let res = src_pad.link(&sink_pad);
             if res.is_err() {
-                tracing::error!("type is {} but link failed.", new_pad_type);
+                tracing::error!("type is {new_pad_type} but link failed.");
             }
         });
 
@@ -171,13 +171,13 @@ impl Playback {
         Ok(())
     }
 
-    pub fn set_position(&self, position: i64) {
+    pub fn set_position(&self, position: i64) -> anyhow::Result<()> {
         self.pipeline
             .seek_simple(
                 gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
                 position as u64 * gst::ClockTime::MSECOND,
-            )
-            .expect("seek failed");
+            )?;
+        Ok(())
     }
 
     /// returns position in seconds

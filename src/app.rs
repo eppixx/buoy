@@ -625,7 +625,11 @@ impl relm4::component::AsyncComponent for App {
                 }
             },
             AppIn::Seekbar(msg) => match msg {
-                SeekbarOut::SeekDragged(seek_in_ms) => self.playback.set_position(seek_in_ms),
+                SeekbarOut::SeekDragged(seek_in_ms) => {
+                    if let Err(e) = self.playback.set_position(seek_in_ms) {
+                        sender.input(AppIn::DisplayToast(format!("seek failed: {e:?}")));
+                    }
+                }
             },
             AppIn::VolumeChange(value) => {
                 self.playback.set_volume(value);
