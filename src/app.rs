@@ -759,6 +759,9 @@ impl relm4::component::AsyncComponent for App {
             AppIn::Player(cmd) => match cmd {
                 //TODO
                 Command::Next => {
+                    if !self.queue.model().can_play_next() {
+                        return;
+                    }
                     self.queue.emit(QueueIn::PlayNext);
                     let can_next = self.queue.model().can_play_next();
                     self.play_controls
@@ -771,6 +774,9 @@ impl relm4::component::AsyncComponent for App {
                     self.mpris.set_state(PlayState::Play);
                 }
                 Command::Previous => {
+                    if !self.queue.model().can_play_previous() {
+                        return;
+                    }
                     self.queue.emit(QueueIn::PlayPrevious);
                     let can_prev = self.queue.model().can_play_previous();
                     self.play_controls
