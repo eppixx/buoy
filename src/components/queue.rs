@@ -237,9 +237,14 @@ impl relm4::Component for Queue {
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            QueueIn::SetCurrent(None) => {
+            QueueIn::SetCurrent(None) | QueueIn::NewState(PlayState::Stop) => {
+                if let Some(index) = &self.playing_index {
+                    if let Some(song) = self.songs.get(index.current_index()) {
+                        song.new_play_state(&PlayState::Stop);
+                    }
+                }
+
                 self.playing_index = None;
-                sender.input(QueueIn::NewState(PlayState::Stop));
             }
             QueueIn::SetCurrent(Some(index)) => {
                 if let Some(song) = self.songs.get(index) {

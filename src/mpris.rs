@@ -35,12 +35,14 @@ pub enum MprisOut {
     Pause,
     PlayPause,
     Play,
-    Stop,
+    Player(Command),
 }
 
 impl Root {
     fn new(sender: &async_channel::Sender<MprisOut>) -> Self {
-        Self { sender: sender.clone() }
+        Self {
+            sender: sender.clone(),
+        }
     }
 }
 
@@ -97,7 +99,9 @@ struct Player {
 
 impl Player {
     fn new(sender: &async_channel::Sender<MprisOut>) -> Self {
-        Self { sender: sender.clone() }
+        Self {
+            sender: sender.clone(),
+        }
     }
 }
 
@@ -121,7 +125,9 @@ impl Player {
     }
 
     fn stop(&self) {
-        self.sender.try_send(MprisOut::Stop).unwrap();
+        self.sender
+            .try_send(MprisOut::Player(Command::Stop))
+            .unwrap();
     }
 
     fn play(&self) {

@@ -17,6 +17,7 @@ use crate::{
     mpris::MprisOut,
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
+    player::Command,
     settings::Settings,
 };
 use crate::{
@@ -72,6 +73,7 @@ pub enum AppIn {
     DisplayToast(String),
     Navigation(NavigationMode),
     Mpris(MprisOut),
+    Player(Command),
 }
 
 #[relm4::widget_template(pub)]
@@ -619,7 +621,7 @@ impl relm4::component::AsyncComponent for App {
                                 self.playback.play().unwrap();
                             }
                         }
-                        PlayState::Stop => self.playback.stop().unwrap(),
+                        PlayState::Stop => sender.input(AppIn::Player(Command::Stop)),
                     }
                     self.queue.emit(QueueIn::NewState(status));
                 }
@@ -758,7 +760,19 @@ impl relm4::component::AsyncComponent for App {
                 self.search.grab_focus();
                 self.back_btn.set_visible(false);
             }
+            AppIn::Mpris(MprisOut::Player(cmd)) => sender.input(AppIn::Player(cmd)),
             AppIn::Mpris(msg) => sender.input(AppIn::DisplayToast(format!("mpris msg: {msg:?}"))),
+            AppIn::Player(cmd) => match cmd {
+                //TODO
+                Command::Next => {}
+                Command::Previous => {}
+                Command::Play => {}
+                Command::Pause => {
+                Command::Stop => {
+                }
+                Command::Seek(offset) => {}
+                Command::Volume(volume) => {}
+            },
         }
     }
 
