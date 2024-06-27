@@ -3,6 +3,7 @@ use zbus::interface;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+use crate::play_state::PlayState;
 use crate::player::Command;
 
 #[derive(Debug, Default)]
@@ -11,6 +12,7 @@ struct Info {
     can_previous: bool,
     can_play: bool,
     volume: f64,
+    state: PlayState,
 }
 
 #[derive(Debug)]
@@ -56,6 +58,10 @@ impl Mpris {
 
     pub fn set_volume(&mut self, volume: f64) {
         self.info.lock().unwrap().volume = volume;
+    }
+
+    pub fn set_state(&mut self, state: PlayState) {
+        self.info.lock().unwrap().state = state;
     }
 }
 
@@ -177,12 +183,9 @@ impl Player {
 
     fn open_uri(&self, _uri: &str) {}
 
-    //Playing, Paused, Stopped
     #[zbus(property)]
     pub fn playback_status(&self) -> zvariant::Value {
-        // zvariant::Value::new(String::from(&self.settings.read().unwrap().queue_state))
-        //TODO
-        zvariant::Value::new("Playing")
+        zvariant::Value::new(self.info.lock().unwrap().state.to_mpris_string())
     }
 
     //None, Track, Playlist

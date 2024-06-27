@@ -768,6 +768,7 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls
                         .emit(PlayControlIn::DisablePrevious(can_prev));
                     self.mpris.can_play_previous(can_prev);
+                    self.mpris.set_state(PlayState::Play);
                 }
                 Command::Previous => {
                     self.queue.emit(QueueIn::PlayPrevious);
@@ -779,6 +780,7 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls
                         .emit(PlayControlIn::DisableNext(can_next));
                     self.mpris.can_play_next(can_next);
+                    self.mpris.set_state(PlayState::Play);
                 }
                 Command::Play => {
                     if !self.queue.model().can_play() {
@@ -799,6 +801,7 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls
                         .emit(PlayControlIn::DisableNext(can_next));
                     self.mpris.can_play_next(can_next);
+                    self.mpris.set_state(PlayState::Play);
                 }
                 Command::Pause => {
                     if let Err(e) = self.playback.pause() {
@@ -809,6 +812,7 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Pause));
                     self.queue.emit(QueueIn::NewState(PlayState::Pause));
+                    self.mpris.set_state(PlayState::Pause);
                 }
                 Command::PlayPause => match self.playback.is_playing() {
                     PlayState::Stop | PlayState::Pause => {
@@ -825,6 +829,7 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.queue.emit(QueueIn::NewState(PlayState::Stop));
+                    self.mpris.set_state(PlayState::Stop);
                 }
                 Command::Seek(offset) => {}
                 Command::Volume(volume) => {
