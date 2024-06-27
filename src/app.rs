@@ -782,7 +782,22 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls.emit(PlayControlIn::DisableNext(can_next));
                     self.mpris.can_play_next(can_next);
                 }
-                Command::Play => {}
+                Command::Play => {
+                    if !self.queue.model().can_play() {
+                        return;
+                    }
+
+                    if let Err(e) = self.playback.pause() {
+                        sender.input(AppIn::DisplayToast(format!("could not play playback: {e:?}")));
+                    }
+                    self.mpris.can_play(true);
+                    let can_prev = self.queue.model().can_play_previous();
+                    self.play_controls.emit(PlayControlIn::DisablePrevious(can_prev));
+                    self.mpris.can_play_previous(can_prev);
+                    let can_next = self.queue.model().can_play_next();
+                    self.play_controls.emit(PlayControlIn::DisableNext(can_next));
+                    self.mpris.can_play_next(can_next);
+                }
                 Command::Pause => {
                     if let Err(e) = self.playback.pause() {
                         sender.input(AppIn::DisplayToast(format!(

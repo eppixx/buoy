@@ -9,6 +9,7 @@ use crate::player::Command;
 struct Info {
     can_next: bool,
     can_previous: bool,
+    can_play: bool,
 }
 
 #[derive(Debug)]
@@ -40,6 +41,10 @@ impl Mpris {
 
     pub fn can_play_previous(&mut self, state: bool) {
         self.info.lock().unwrap().can_previous = state;
+    }
+
+    pub fn can_play(&mut self, state: bool) {
+        self.info.lock().unwrap().can_play = state;
     }
 }
 
@@ -288,14 +293,7 @@ impl Player {
 
     #[zbus(property)]
     pub fn can_play(&self) -> zvariant::Value {
-        // TODO
-        // let play = match self.settings.read().unwrap().queue_state {
-        //     queue_state::State::Pause(_) => true,
-        //     queue_state::State::Stop if self.queue_empty => true,
-        //     _ => false,
-        // };
-        // zvariant::Value::new(play)
-        zvariant::Value::new(true)
+        zvariant::Value::new(self.info.lock().unwrap().can_play)
     }
 
     #[zbus(property)]

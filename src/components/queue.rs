@@ -50,6 +50,10 @@ impl Queue {
         &self.playing_index
     }
 
+    pub fn can_play(&self) -> bool {
+        !self.songs.is_empty()
+    }
+
     pub fn can_play_next(&self) -> bool {
         if self.songs.is_empty() {
             return false
