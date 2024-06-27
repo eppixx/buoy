@@ -56,15 +56,15 @@ impl Queue {
 
     pub fn can_play_next(&self) -> bool {
         if self.songs.is_empty() {
-            return false
+            return false;
         }
 
         if self.repeat.model().current() != &Repeat::Normal {
-            return true
+            return true;
         }
 
         if self.shuffle.model().current() == &Shuffle::Shuffle {
-            return true //TODO might change later
+            return true; //TODO might change later
         }
 
         if let Some(index) = &self.playing_index {

@@ -10,6 +10,7 @@ struct Info {
     can_next: bool,
     can_previous: bool,
     can_play: bool,
+    volume: f64,
 }
 
 #[derive(Debug)]
@@ -21,8 +22,14 @@ pub struct Mpris {
 impl Mpris {
     pub async fn new(sender: &async_channel::Sender<MprisOut>) -> anyhow::Result<Mpris> {
         let info = Arc::new(Mutex::new(Info::default()));
-        let root = Root { sender: sender.clone(), info: info.clone() };
-        let player = Player { sender: sender.clone(), info: info.clone() };
+        let root = Root {
+            sender: sender.clone(),
+            info: info.clone(),
+        };
+        let player = Player {
+            sender: sender.clone(),
+            info: info.clone(),
+        };
         let connection = zbus::conn::Builder::session()?
             .name("org.mpris.MediaPlayer2.buoy")?
             .serve_at("/org/mpris/MediaPlayer2", root)?
@@ -45,6 +52,10 @@ impl Mpris {
 
     pub fn can_play(&mut self, state: bool) {
         self.info.lock().unwrap().can_play = state;
+    }
+
+    pub fn set_volume(&mut self, volume: f64) {
+        self.info.lock().unwrap().volume = volume;
     }
 }
 
@@ -118,11 +129,15 @@ struct Player {
 #[interface(name = "org.mpris.MediaPlayer2.Player")]
 impl Player {
     fn next(&self) {
-        self.sender.try_send(MprisOut::Player(Command::Next)).unwrap();
+        self.sender
+            .try_send(MprisOut::Player(Command::Next))
+            .unwrap();
     }
 
     fn previous(&self) {
-        self.sender.try_send(MprisOut::Player(Command::Previous)).unwrap();
+        self.sender
+            .try_send(MprisOut::Player(Command::Previous))
+            .unwrap();
     }
 
     fn pause(&self) {
@@ -252,20 +267,20 @@ impl Player {
     }
 
     //ranges from 0.0 to 1.0
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn volume(&self) -> zvariant::Value {
-        // zvariant::Value::new(self.volume)
-        zvariant::Value::new(1.0f64)
+        zvariant::Value::new(self.info.lock().unwrap().volume)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     pub fn set_volume(&mut self, volume: f64) {
-        // self.settings.write().unwrap().set_volume(volume);
-        //TODO
+        self.sender
+            .try_send(MprisOut::Player(Command::Volume(volume)))
+            .unwrap()
     }
 
     //time im mircoseconds
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn position(&self) -> zvariant::Value {
         // TODO
         zvariant::Value::new(5000)

@@ -63,7 +63,6 @@ pub enum AppIn {
     DeleteCache,
     PlayControlOutput(PlayControlOut),
     Seekbar(SeekbarOut),
-    VolumeChange(f64),
     Playback(PlaybackOut),
     LoginForm(LoginFormOut),
     Equalizer(EqualizerOut),
@@ -262,7 +261,7 @@ impl relm4::component::AsyncComponent for App {
         let (mpris_sender, mpris_receiver) = async_channel::unbounded();
         let mpris = crate::mpris::Mpris::new(&mpris_sender).await.unwrap();
 
-        let model = App {
+        let mut model = App {
             playback,
             subsonic,
             mpris,
@@ -315,6 +314,7 @@ impl relm4::component::AsyncComponent for App {
         {
             let settings = Settings::get().lock().unwrap();
             model.volume_btn.set_value(settings.volume);
+            model.mpris.set_volume(settings.volume);
 
             // playcontrol
             if model.queue.model().songs().is_empty() {
@@ -523,7 +523,7 @@ impl relm4::component::AsyncComponent for App {
                                     model.volume_btn.clone() {
                                         set_focus_on_click: false,
                                         connect_value_changed[sender] => move |_scale, value| {
-                                            sender.input(AppIn::VolumeChange(value));
+                                            sender.input(AppIn::Player(Command::Volume(value)));
                                         }
                                     },
 
@@ -633,12 +633,6 @@ impl relm4::component::AsyncComponent for App {
                     }
                 }
             },
-            AppIn::VolumeChange(value) => {
-                self.playback.set_volume(value);
-                let mut settings = Settings::get().lock().unwrap();
-                settings.volume = value;
-                settings.save();
-            }
             AppIn::Playback(playback) => match playback {
                 PlaybackOut::TrackEnd => self.queue.emit(QueueIn::PlayNext),
                 PlaybackOut::Seek(ms) => {
@@ -767,19 +761,23 @@ impl relm4::component::AsyncComponent for App {
                 Command::Next => {
                     self.queue.emit(QueueIn::PlayNext);
                     let can_next = self.queue.model().can_play_next();
-                    self.play_controls.emit(PlayControlIn::DisableNext(can_next));
+                    self.play_controls
+                        .emit(PlayControlIn::DisableNext(can_next));
                     self.mpris.can_play_next(can_next);
                     let can_prev = self.queue.model().can_play_previous();
-                    self.play_controls.emit(PlayControlIn::DisablePrevious(can_prev));
+                    self.play_controls
+                        .emit(PlayControlIn::DisablePrevious(can_prev));
                     self.mpris.can_play_previous(can_prev);
                 }
                 Command::Previous => {
                     self.queue.emit(QueueIn::PlayPrevious);
                     let can_prev = self.queue.model().can_play_previous();
-                    self.play_controls.emit(PlayControlIn::DisablePrevious(can_prev));
+                    self.play_controls
+                        .emit(PlayControlIn::DisablePrevious(can_prev));
                     self.mpris.can_play_previous(can_prev);
                     let can_next = self.queue.model().can_play_next();
-                    self.play_controls.emit(PlayControlIn::DisableNext(can_next));
+                    self.play_controls
+                        .emit(PlayControlIn::DisableNext(can_next));
                     self.mpris.can_play_next(can_next);
                 }
                 Command::Play => {
@@ -788,14 +786,18 @@ impl relm4::component::AsyncComponent for App {
                     }
 
                     if let Err(e) = self.playback.pause() {
-                        sender.input(AppIn::DisplayToast(format!("could not play playback: {e:?}")));
+                        sender.input(AppIn::DisplayToast(format!(
+                            "could not play playback: {e:?}"
+                        )));
                     }
                     self.mpris.can_play(true);
                     let can_prev = self.queue.model().can_play_previous();
-                    self.play_controls.emit(PlayControlIn::DisablePrevious(can_prev));
+                    self.play_controls
+                        .emit(PlayControlIn::DisablePrevious(can_prev));
                     self.mpris.can_play_previous(can_prev);
                     let can_next = self.queue.model().can_play_next();
-                    self.play_controls.emit(PlayControlIn::DisableNext(can_next));
+                    self.play_controls
+                        .emit(PlayControlIn::DisableNext(can_next));
                     self.mpris.can_play_next(can_next);
                 }
                 Command::Pause => {
@@ -825,7 +827,14 @@ impl relm4::component::AsyncComponent for App {
                     self.queue.emit(QueueIn::NewState(PlayState::Stop));
                 }
                 Command::Seek(offset) => {}
-                Command::Volume(volume) => {}
+                Command::Volume(volume) => {
+                    self.playback.set_volume(volume);
+                    self.volume_btn.set_value(volume);
+                    self.mpris.set_volume(volume);
+                    let mut settings = Settings::get().lock().unwrap();
+                    settings.volume = volume;
+                    settings.save();
+                }
             },
         }
     }
