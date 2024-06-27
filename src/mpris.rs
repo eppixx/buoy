@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use zbus::interface;
 
+use crate::player::Command;
+
 #[derive(Debug)]
 pub struct Mpris {
     _connection: zbus::Connection,
@@ -17,7 +19,9 @@ impl Mpris {
             .serve_at("/org/mpris/MediaPlayer2", player)?
             .build()
             .await?;
-        Ok(Mpris { _connection: connection, })
+        Ok(Mpris {
+            _connection: connection,
+        })
     }
 }
 
@@ -117,11 +121,15 @@ impl Player {
     }
 
     fn pause(&self) {
-        self.sender.try_send(MprisOut::Pause).unwrap();
+        self.sender
+            .try_send(MprisOut::Player(Command::Stop))
+            .unwrap();
     }
 
     fn play_pause(&self) {
-        self.sender.try_send(MprisOut::PlayPause).unwrap();
+        self.sender
+            .try_send(MprisOut::Player(Command::PlayPause))
+            .unwrap();
     }
 
     fn stop(&self) {
@@ -231,7 +239,10 @@ impl Player {
         // }
 
         //TODO
-        map.insert("xesam:title", zvariant::Value::new(String::from("Test title")));
+        map.insert(
+            "xesam:title",
+            zvariant::Value::new(String::from("Test title")),
+        );
         zvariant::Value::new(map)
     }
 
