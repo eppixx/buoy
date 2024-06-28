@@ -751,14 +751,6 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
                     self.queue.emit(QueueIn::PlayNext);
-                    let can_next = self.queue.model().can_play_next();
-                    self.play_controls
-                        .emit(PlayControlIn::DisableNext(can_next));
-                    self.mpris.can_play_next(can_next);
-                    let can_prev = self.queue.model().can_play_previous();
-                    self.play_controls
-                        .emit(PlayControlIn::DisablePrevious(can_prev));
-                    self.mpris.can_play_previous(can_prev);
                     self.mpris.set_state(PlayState::Play);
                 }
                 Command::Previous => {
@@ -766,14 +758,6 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
                     self.queue.emit(QueueIn::PlayPrevious);
-                    let can_prev = self.queue.model().can_play_previous();
-                    self.play_controls
-                        .emit(PlayControlIn::DisablePrevious(can_prev));
-                    self.mpris.can_play_previous(can_prev);
-                    let can_next = self.queue.model().can_play_next();
-                    self.play_controls
-                        .emit(PlayControlIn::DisableNext(can_next));
-                    self.mpris.can_play_next(can_next);
                     self.mpris.set_state(PlayState::Play);
                 }
                 Command::Play => {

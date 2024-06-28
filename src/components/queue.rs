@@ -68,8 +68,7 @@ impl Queue {
         }
 
         if let Some(index) = &self.playing_index {
-            //TODO investigate why 2 instead of 1
-            if index.current_index() + 2 == self.songs.len() {
+            if index.current_index() + 1 == self.songs.len() {
                 return false;
             }
         }
@@ -91,8 +90,7 @@ impl Queue {
         }
 
         if let Some(index) = &self.playing_index {
-            //TODO investigate why 1 instead of 0
-            if index.current_index() == 1 {
+            if index.current_index() == 0 {
                 return false;
             }
         }
