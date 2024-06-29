@@ -3,6 +3,7 @@ use zbus::interface;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+use crate::client::Client;
 use crate::play_state::PlayState;
 use crate::player::Command;
 
@@ -13,12 +14,17 @@ struct Info {
     can_play: bool,
     volume: f64,
     state: PlayState,
+    song: Option<submarine::data::Child>,
 }
 
 #[derive(Debug)]
 pub struct Mpris {
     info: Arc<Mutex<Info>>,
-    _connection: zbus::Connection,
+    sender: async_channel::Sender<DataChanged>,
+}
+
+enum DataChanged {
+    Metadata,
 }
 
 impl Mpris {
@@ -38,10 +44,27 @@ impl Mpris {
             .serve_at("/org/mpris/MediaPlayer2", player)?
             .build()
             .await?;
-        Ok(Mpris {
-            info,
-            _connection: connection,
-        })
+
+        let server = connection.object_server();
+        let interface = server
+            .interface::<_, Player>("/org/mpris/MediaPlayer2")
+            .await?;
+
+        let (sender, receiver) = async_channel::unbounded();
+        relm4::gtk::glib::spawn_future_local(async move {
+            let interface_ref = interface.get().await;
+            let ctx = interface.signal_context();
+            while let Ok(msg) = receiver.recv().await {
+                let result = match msg {
+                    DataChanged::Metadata => interface_ref.metadata_changed(ctx).await,
+                };
+                if let Err(e) = result {
+                    tracing::error!("error while interacting with dbus: {e:?}");
+                }
+            }
+        });
+
+        Ok(Mpris { info, sender })
     }
 
     pub fn can_play_next(&mut self, state: bool) {
@@ -62,6 +85,13 @@ impl Mpris {
 
     pub fn set_state(&mut self, state: PlayState) {
         self.info.lock().unwrap().state = state;
+    }
+
+    pub async fn set_song(&mut self, song: Option<submarine::data::Child>) {
+        self.info.lock().unwrap().song = song;
+        self.sender
+            .try_send(DataChanged::Metadata)
+            .expect("sending failed");
     }
 }
 
@@ -228,44 +258,43 @@ impl Player {
         //TODO
     }
 
+    /// specifications: https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/
     #[zbus(property)]
     pub fn metadata(&self) -> zvariant::Value {
         let mut map = HashMap::new();
-        // let track = self.playing_track.lock().unwrap();
-        // if let Some(track) = &*track {
-        //     use zvariant::Value;
-        //     map.insert("mpris:trackid", Value::new(String::from(track.id())));
-        //     // from sec to ms
-        //     map.insert("mpris:length", Value::new(track.length() * 1000));
-        //     map.insert("xesam:title", Value::new(String::from(track.title())));
-        //     if let Some(album) = &track.album() {
-        //         map.insert("xesam:album", Value::new(String::from(album)));
-        //     }
-        //     if let Some(artist) = &track.artist() {
-        //         map.insert("xesam:albumArtist", Value::new(String::from(artist)));
-        //     }
-        //     if let Some(artist) = &track.artist() {
-        //         map.insert("xesam:artist", Value::new(vec![String::from(artist)]));
-        //     }
-        //     if let Some(number) = &track.disc_number() {
-        //         map.insert("xesam:discNumber", zvariant::Value::new(*number));
-        //     }
-        //     if let Some(number) = &track.track_number() {
-        //         map.insert("xesam:trackNumber", zvariant::Value::new(*number));
-        //     }
-        //     if let Some(url) = &self.cover_url {
-        //         map.insert("mpris:artUrl", Value::new(url));
-        //     }
-        //     //TODO
-        //     // map.insert("xesam:useCount", zvariant::Value::new(5));
-        //     // map.insert("xesam:genre", zvariant::Value::new(vec!["Blues", "Phonk"]));
-        // }
-
-        //TODO
-        map.insert(
-            "xesam:title",
-            zvariant::Value::new(String::from("Test title")),
-        );
+        if let Some(song) = &self.info.lock().unwrap().song {
+            use zvariant::Value;
+            map.insert("mpris:trackid", Value::new(String::from(&song.id)));
+            map.insert("xesam:title", Value::new(String::from(&song.title)));
+            if let Some(duration) = song.duration {
+                // from sec to ms
+                map.insert("mpris:length", Value::new(duration * 1000));
+            }
+            if let Some(artist) = &song.artist {
+                map.insert("xesam:albumArtist", Value::new(String::from(artist)));
+            }
+            if let Some(album) = &song.album {
+                map.insert("xesam:album", Value::new(String::from(album)));
+            }
+            if let Some(artist) = &song.artist {
+                map.insert("xesam:artist", Value::new(vec![String::from(artist)]));
+            }
+            if let Some(number) = song.disc_number {
+                map.insert("xesam:discNumber", Value::new(number));
+            }
+            if let Some(number) = song.track {
+                map.insert("xesam:trackNumber", Value::new(number));
+            }
+            if let Some(id) = &song.cover_art {
+                let client = Client::get().unwrap();
+                if let Ok(url) = client.get_cover_art_url(id, Some(100)) {
+                    map.insert("mpris:artUrl", Value::new(url.to_string()));
+                }
+            }
+            if let Some(count) = song.play_count {
+                map.insert("xesam:useCount", Value::new(count));
+            }
+        }
         zvariant::Value::new(map)
     }
 

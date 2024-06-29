@@ -663,6 +663,7 @@ impl relm4::component::AsyncComponent for App {
                     // update playcontrol
                     self.play_info
                         .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
+                    self.mpris.set_song(Some(*child.clone())).await;
 
                     // set playback
                     let client = Client::get().unwrap();
@@ -703,6 +704,7 @@ impl relm4::component::AsyncComponent for App {
                         )));
                     }
                     self.play_info.emit(PlayInfoIn::NewState(Box::new(None)));
+                    self.mpris.set_song(None).await;
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.seekbar.emit(SeekbarIn::Disable);
