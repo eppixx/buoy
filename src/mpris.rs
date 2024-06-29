@@ -404,7 +404,6 @@ impl Player {
 
     #[zbus(property)]
     fn can_control(&self) -> zvariant::Value {
-        // TODO
         zvariant::Value::new(true)
     }
 }
