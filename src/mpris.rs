@@ -389,12 +389,7 @@ impl Player {
 
     #[zbus(property)]
     pub fn can_pause(&self) -> zvariant::Value {
-        // TODO
-        // if let queue_state::State::Play(_) = self.settings.read().unwrap().queue_state {
-        //     return zvariant::Value::new(true);
-        // }
-
-        zvariant::Value::new(false)
+        zvariant::Value::new(true)
     }
 
     #[zbus(property)]
