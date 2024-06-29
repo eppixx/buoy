@@ -702,7 +702,9 @@ impl relm4::component::AsyncComponent for App {
 
                     // playback play
                     if let Err(e) = self.playback.play() {
-                        sender.input(AppIn::DisplayToast(format!("could set playback to play: {e:?}")));
+                        sender.input(AppIn::DisplayToast(format!(
+                            "could set playback to play: {e:?}"
+                        )));
                     }
 
                     // update seekbar
@@ -734,6 +736,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 QueueOut::QueueEmpty => self.play_controls.emit(PlayControlIn::Disable),
                 QueueOut::QueueNotEmpty => self.play_controls.emit(PlayControlIn::Enable),
+                QueueOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },
             AppIn::Browser(msg) => match msg {
@@ -837,6 +840,10 @@ impl relm4::component::AsyncComponent for App {
                     let mut settings = Settings::get().lock().unwrap();
                     settings.volume = volume;
                     settings.save();
+                }
+                Command::Repeat(repeat) => {
+                    self.mpris.set_loop_status(repeat.clone());
+                    self.queue.emit(QueueIn::SetRepeat(repeat));
                 }
             },
         }

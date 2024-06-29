@@ -1,7 +1,8 @@
-use crate::components::sequence_button::Sequence;
+use crate::{components::sequence_button::Sequence, mpris::MprisString};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum Repeat {
+    #[default]
     Normal,
     One,
     All,
@@ -29,6 +30,24 @@ impl Sequence for Repeat {
             Self::Normal => Some("no repeat"),
             Self::One => Some("repeat current song"),
             Self::All => Some("repeat queue"),
+        }
+    }
+}
+
+impl MprisString for Repeat {
+    fn to_mpris_string(&self) -> String {
+        match self {
+            Self::Normal => String::from("None"),
+            Self::One => String::from("Track"),
+            Self::All => String::from("Playlist"),
+        }
+    }
+
+    fn from_mpris_string(value: impl AsRef<str>) -> Self {
+        match value.as_ref() {
+            "Track" => Self::One,
+            "Playlist" => Self::All,
+            "None" | _ => Self::Normal,
         }
     }
 }

@@ -19,9 +19,12 @@ use crate::{
     },
     factory::queue_song::{QueueSong, QueueSongOut},
     play_state::PlayState,
+    player::Command,
     subsonic::Subsonic,
     types::Droppable,
 };
+
+use super::sequence_button::SequenceButtonIn;
 
 #[derive(Debug)]
 pub struct Queue {
@@ -106,7 +109,9 @@ pub enum QueueIn {
     Remove,
     NewState(PlayState),
     SomeIsSelected(bool),
-    ToggleShuffle,
+    ToggleShuffle(Shuffle),
+    RepeatClicked(Repeat),
+    SetRepeat(Repeat),
     PlayNext,
     PlayPrevious,
     Append(Droppable),
@@ -122,6 +127,7 @@ pub enum QueueOut {
     Stop,
     QueueEmpty,
     QueueNotEmpty,
+    Player(Command),
     DisplayToast(String),
 }
 
@@ -152,11 +158,13 @@ impl relm4::Component for Queue {
             SequenceButton::<Shuffle>::builder()
                 .launch(Shuffle::Sequential)
                 .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOut::Clicked => QueueIn::ToggleShuffle,
+                    SequenceButtonOut::Clicked(shuffle) => QueueIn::ToggleShuffle(shuffle),
                 });
         let repeat: relm4::Controller<SequenceButton<Repeat>> = SequenceButton::<Repeat>::builder()
             .launch(Repeat::Normal)
-            .detach();
+            .forward(sender.input_sender(), |msg| match msg {
+                SequenceButtonOut::Clicked(repeat) => QueueIn::RepeatClicked(repeat),
+            });
 
         let mut model = Queue {
             subsonic,
@@ -500,8 +508,16 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
-            QueueIn::ToggleShuffle => {
+            QueueIn::ToggleShuffle(shuffle) => {
                 //TODO sth useful
+            }
+            QueueIn::RepeatClicked(repeat) => {
+                sender
+                    .output(QueueOut::Player(Command::Repeat(repeat)))
+                    .expect("sending failed");
+            }
+            QueueIn::SetRepeat(repeat) => {
+                self.repeat.emit(SequenceButtonIn::SetTo(repeat));
             }
             QueueIn::PlayNext => {
                 if self.songs.is_empty() {

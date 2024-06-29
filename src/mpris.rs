@@ -4,8 +4,15 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use crate::client::Client;
+use crate::components::sequence_button_impl::repeat::Repeat;
 use crate::play_state::PlayState;
 use crate::player::Command;
+
+pub trait MprisString {
+    fn to_mpris_string(&self) -> String;
+    /// on unusable input it defaults to Normal
+    fn from_mpris_string(value: impl AsRef<str>) -> Self;
+}
 
 #[derive(Debug, Default)]
 struct Info {
@@ -15,6 +22,7 @@ struct Info {
     volume: f64,
     state: PlayState,
     song: Option<submarine::data::Child>,
+    loop_status: Repeat,
 }
 
 #[derive(Debug)]
@@ -30,6 +38,7 @@ enum DataChanged {
     CanPlayPrev,
     CanPlay,
     Volume,
+    Repeat,
 }
 
 impl Mpris {
@@ -67,6 +76,7 @@ impl Mpris {
                     DataChanged::CanPlayPrev => interface_ref.can_go_previous_changed(ctx).await,
                     DataChanged::CanPlay => interface_ref.can_play_changed(ctx).await,
                     DataChanged::Volume => interface_ref.volume_changed(ctx).await,
+                    DataChanged::Repeat => interface_ref.loop_status_changed(ctx).await,
                 };
                 if let Err(e) = result {
                     tracing::error!("error while interacting with dbus: {e:?}");
@@ -79,33 +89,50 @@ impl Mpris {
 
     pub fn can_play_next(&mut self, state: bool) {
         self.info.lock().unwrap().can_next = state;
-        self.sender.try_send(DataChanged::CanPlayNext).expect("sending failed");
+        self.sender
+            .try_send(DataChanged::CanPlayNext)
+            .expect("sending failed");
     }
 
     pub fn can_play_previous(&mut self, state: bool) {
         self.info.lock().unwrap().can_previous = state;
-        self.sender.try_send(DataChanged::CanPlayPrev).expect("sending failed");
+        self.sender
+            .try_send(DataChanged::CanPlayPrev)
+            .expect("sending failed");
     }
 
     pub fn can_play(&mut self, state: bool) {
         self.info.lock().unwrap().can_play = state;
-        self.sender.try_send(DataChanged::CanPlay).expect("sending failed");
+        self.sender
+            .try_send(DataChanged::CanPlay)
+            .expect("sending failed");
     }
 
     pub fn set_volume(&mut self, volume: f64) {
         self.info.lock().unwrap().volume = volume;
-        self.sender.try_send(DataChanged::Volume).expect("sending failed");
+        self.sender
+            .try_send(DataChanged::Volume)
+            .expect("sending failed");
     }
 
     pub fn set_state(&mut self, state: PlayState) {
         self.info.lock().unwrap().state = state;
-        self.sender.try_send(DataChanged::Playback).expect("sending failed");
+        self.sender
+            .try_send(DataChanged::Playback)
+            .expect("sending failed");
     }
 
     pub async fn set_song(&mut self, song: Option<submarine::data::Child>) {
         self.info.lock().unwrap().song = song;
         self.sender
             .try_send(DataChanged::Metadata)
+            .expect("sending failed");
+    }
+
+    pub fn set_loop_status(&mut self, repeat: Repeat) {
+        self.info.lock().unwrap().loop_status = repeat;
+        self.sender
+            .try_send(DataChanged::Repeat)
             .expect("sending failed");
     }
 }
@@ -236,15 +263,16 @@ impl Player {
     //None, Track, Playlist
     #[zbus(property)]
     pub fn loop_status(&self) -> zvariant::Value {
-        // zvariant::Value::new(String::from(self.settings.read().unwrap().queue_repeat()))
-        //TODO
-        zvariant::Value::new(false)
+        zvariant::Value::new(self.info.lock().unwrap().loop_status.to_mpris_string())
     }
 
     #[zbus(property)]
     fn set_loop_status(&mut self, loop_status: &str) {
-        // zvariant::Value::new(String::from(self.settings.read().unwrap().queue_repeat()))
-        //TODO
+        let repeat = Repeat::from_mpris_string(loop_status);
+        self.info.lock().unwrap().loop_status = repeat.clone();
+        self.sender
+            .try_send(MprisOut::Player(Command::Repeat(repeat)))
+            .expect("sending failed");
     }
 
     //playback speed; 1.0 is normal speed, 0.5 is half speed

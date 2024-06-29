@@ -15,32 +15,33 @@ pub trait Sequence: std::fmt::Debug + 'static {
 
 /// A button that changes its icon when pressed
 #[derive(Debug)]
-pub struct SequenceButton<T: Sequence> {
+pub struct SequenceButton<T: Sequence + Clone> {
     btn: gtk::Button,
     sequence: T,
 }
 
-impl<T: Sequence> SequenceButton<T> {
+impl<T: Sequence + Clone> SequenceButton<T> {
     pub fn current(&self) -> &T {
         &self.sequence
     }
 }
 
 #[derive(Debug)]
-pub enum SequenceButtonIn {
+pub enum SequenceButtonIn<T: Sequence + Clone> {
     Toggle,
+    SetTo(T),
 }
 
 #[derive(Debug)]
-pub enum SequenceButtonOut {
-    Clicked,
+pub enum SequenceButtonOut<T: Sequence + Clone> {
+    Clicked(T),
 }
 
 #[relm4::component(pub)]
-impl<T: Sequence> relm4::SimpleComponent for SequenceButton<T> {
+impl<T: Sequence + Clone> relm4::SimpleComponent for SequenceButton<T> {
     type Init = T;
-    type Input = SequenceButtonIn;
-    type Output = SequenceButtonOut;
+    type Input = SequenceButtonIn<T>;
+    type Output = SequenceButtonOut<T>;
 
     fn init(
         params: Self::Init,
@@ -73,7 +74,12 @@ impl<T: Sequence> relm4::SimpleComponent for SequenceButton<T> {
                 self.btn.set_icon_name(self.sequence.current());
                 self.btn.set_tooltip_text(self.sequence.tooltip());
             }
+            SequenceButtonIn::SetTo(sequence) => {
+                self.sequence = sequence;
+                self.btn.set_icon_name(self.sequence.current());
+                self.btn.set_tooltip_text(self.sequence.tooltip());
+            }
         }
-        _ = sender.output(SequenceButtonOut::Clicked);
+        _ = sender.output(SequenceButtonOut::Clicked(self.sequence.clone()));
     }
 }
