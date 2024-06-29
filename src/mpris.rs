@@ -381,6 +381,7 @@ impl Player {
         zvariant::Value::new(self.info.lock().unwrap().can_previous)
     }
 
+    /// if a playable track is possible to play, not if a track is playing/pausing
     #[zbus(property)]
     pub fn can_play(&self) -> zvariant::Value {
         zvariant::Value::new(self.info.lock().unwrap().can_play)

@@ -734,8 +734,14 @@ impl relm4::component::AsyncComponent for App {
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.seekbar.emit(SeekbarIn::Disable);
                 }
-                QueueOut::QueueEmpty => self.play_controls.emit(PlayControlIn::Disable),
-                QueueOut::QueueNotEmpty => self.play_controls.emit(PlayControlIn::Enable),
+                QueueOut::QueueEmpty => {
+                    self.play_controls.emit(PlayControlIn::Disable);
+                    self.mpris.can_play(false);
+                }
+                QueueOut::QueueNotEmpty => {
+                    self.play_controls.emit(PlayControlIn::Enable);
+                    self.mpris.can_play(true);
+                }
                 QueueOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },
@@ -800,7 +806,6 @@ impl relm4::component::AsyncComponent for App {
                             "could not play playback: {e:?}"
                         )));
                     }
-                    self.mpris.can_play(true);
                     self.recalculate_mpris_next_prev();
                     self.mpris.set_state(PlayState::Play);
                 }
