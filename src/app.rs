@@ -57,6 +57,19 @@ pub struct App {
     toasts: granite::Toast,
 }
 
+impl App {
+    fn recalculate_mpris_next_prev(&mut self) {
+        let can_prev = self.queue.model().can_play_previous();
+        self.play_controls
+            .emit(PlayControlIn::DisablePrevious(can_prev));
+        self.mpris.can_play_previous(can_prev);
+        let can_next = self.queue.model().can_play_next();
+        self.play_controls
+            .emit(PlayControlIn::DisableNext(can_next));
+        self.mpris.can_play_next(can_next);
+    }
+}
+
 #[derive(Debug)]
 pub enum AppIn {
     ResetLogin,
@@ -660,15 +673,10 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
-                    // update playcontrol
-                    self.play_info
-                        .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
-                    self.mpris.set_song(Some(*child.clone())).await;
-
-                    // set playback
+                    // set playback track
                     let client = Client::get().unwrap();
                     match client.stream_url(
-                        child.id,
+                        child.clone().id,
                         None,
                         None::<&str>,
                         None,
@@ -681,21 +689,36 @@ impl relm4::component::AsyncComponent for App {
                                 sender.input(AppIn::DisplayToast(format!(
                                     "could not set track: {e}"
                                 )));
+                                return;
                             }
-                            if let Some(length) = child.duration {
-                                self.seekbar
-                                    .emit(SeekbarIn::NewRange(i64::from(length) * 1000));
-                            } else {
-                                self.seekbar.emit(SeekbarIn::NewRange(0));
-                            }
-                            self.playback.play().unwrap();
                         }
                         Err(e) => {
                             sender.input(AppIn::DisplayToast(format!(
                                 "could not find song streaming url: {e:?}"
                             )));
+                            return;
                         }
                     }
+
+                    // playback play
+                    if let Err(e) = self.playback.play() {
+                        sender.input(AppIn::DisplayToast(format!("could set playback to play: {e:?}")));
+                    }
+
+                    // update seekbar
+                    if let Some(length) = child.duration {
+                        self.seekbar
+                            .emit(SeekbarIn::NewRange(i64::from(length) * 1000));
+                    } else {
+                        self.seekbar.emit(SeekbarIn::NewRange(0));
+                    }
+
+                    // update playcontrol
+                    self.play_info
+                        .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
+                    self.mpris.set_song(Some(*child)).await;
+                    self.recalculate_mpris_next_prev();
+                    self.mpris.set_state(PlayState::Play);
                 }
                 QueueOut::Stop => {
                     if let Err(e) = self.playback.stop() {
@@ -753,6 +776,7 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
                     self.queue.emit(QueueIn::PlayNext);
+                    self.recalculate_mpris_next_prev();
                     self.mpris.set_state(PlayState::Play);
                 }
                 Command::Previous => {
@@ -760,6 +784,7 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
                     self.queue.emit(QueueIn::PlayPrevious);
+                    self.recalculate_mpris_next_prev();
                     self.mpris.set_state(PlayState::Play);
                 }
                 Command::Play => {
@@ -773,14 +798,7 @@ impl relm4::component::AsyncComponent for App {
                         )));
                     }
                     self.mpris.can_play(true);
-                    let can_prev = self.queue.model().can_play_previous();
-                    self.play_controls
-                        .emit(PlayControlIn::DisablePrevious(can_prev));
-                    self.mpris.can_play_previous(can_prev);
-                    let can_next = self.queue.model().can_play_next();
-                    self.play_controls
-                        .emit(PlayControlIn::DisableNext(can_next));
-                    self.mpris.can_play_next(can_next);
+                    self.recalculate_mpris_next_prev();
                     self.mpris.set_state(PlayState::Play);
                 }
                 Command::Pause => {

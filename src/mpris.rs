@@ -25,6 +25,11 @@ pub struct Mpris {
 
 enum DataChanged {
     Metadata,
+    Playback,
+    CanPlayNext,
+    CanPlayPrev,
+    CanPlay,
+    Volume,
 }
 
 impl Mpris {
@@ -57,6 +62,11 @@ impl Mpris {
             while let Ok(msg) = receiver.recv().await {
                 let result = match msg {
                     DataChanged::Metadata => interface_ref.metadata_changed(ctx).await,
+                    DataChanged::Playback => interface_ref.playback_status_changed(ctx).await,
+                    DataChanged::CanPlayNext => interface_ref.can_go_next_changed(ctx).await,
+                    DataChanged::CanPlayPrev => interface_ref.can_go_previous_changed(ctx).await,
+                    DataChanged::CanPlay => interface_ref.can_play_changed(ctx).await,
+                    DataChanged::Volume => interface_ref.volume_changed(ctx).await,
                 };
                 if let Err(e) = result {
                     tracing::error!("error while interacting with dbus: {e:?}");
@@ -69,22 +79,27 @@ impl Mpris {
 
     pub fn can_play_next(&mut self, state: bool) {
         self.info.lock().unwrap().can_next = state;
+        self.sender.try_send(DataChanged::CanPlayNext).expect("sending failed");
     }
 
     pub fn can_play_previous(&mut self, state: bool) {
         self.info.lock().unwrap().can_previous = state;
+        self.sender.try_send(DataChanged::CanPlayPrev).expect("sending failed");
     }
 
     pub fn can_play(&mut self, state: bool) {
         self.info.lock().unwrap().can_play = state;
+        self.sender.try_send(DataChanged::CanPlay).expect("sending failed");
     }
 
     pub fn set_volume(&mut self, volume: f64) {
         self.info.lock().unwrap().volume = volume;
+        self.sender.try_send(DataChanged::Volume).expect("sending failed");
     }
 
     pub fn set_state(&mut self, state: PlayState) {
         self.info.lock().unwrap().state = state;
+        self.sender.try_send(DataChanged::Playback).expect("sending failed");
     }
 
     pub async fn set_song(&mut self, song: Option<submarine::data::Child>) {
