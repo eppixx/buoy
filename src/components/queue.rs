@@ -511,7 +511,9 @@ impl relm4::Component for Queue {
             }
             QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
             QueueIn::ToggleShuffle(shuffle) => {
-                //TODO sth useful
+                sender
+                    .output(QueueOut::Player(Command::Shuffle(shuffle)))
+                    .expect("sending failed");
             }
             QueueIn::RepeatClicked(repeat) => {
                 sender
