@@ -332,8 +332,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                     let list = match self.playlists.get(index.current_index()) {
                         None => {
                             sender
-                                .output(PlaylistsViewOut::DisplayToast(format!(
-                                    "index does not point to a playlist"
+                                .output(PlaylistsViewOut::DisplayToast(String::from(
+                                    "index does not point to a playlist",
                                 )))
                                 .expect("sending failed");
                             return;

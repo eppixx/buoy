@@ -167,7 +167,6 @@ pub struct Root {
 pub enum MprisOut {
     WindowRaise,
     WindowQuit,
-    DisplayToast(String),
     Play,
     Player(Command),
 }

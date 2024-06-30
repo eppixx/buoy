@@ -47,7 +47,8 @@ impl MprisString for Repeat {
         match value.as_ref() {
             "Track" => Self::One,
             "Playlist" => Self::All,
-            "None" | _ => Self::Normal,
+            // otherwise Normal, includes "None"
+            _ => Self::Normal,
         }
     }
 }
