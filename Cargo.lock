@@ -285,6 +285,7 @@ dependencies = [
  "granite-rs",
  "gstreamer",
  "postcard",
+ "rand",
  "relm4",
  "relm4-components",
  "serde",

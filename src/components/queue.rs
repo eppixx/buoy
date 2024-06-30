@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use rand::seq::IteratorRandom;
 use relm4::{
     factory::FactoryVecDeque,
     gtk::gdk,
@@ -528,19 +529,25 @@ impl relm4::Component for Queue {
                     return;
                 }
 
+                let repeat = self.repeat.model().current().clone();
+                let shuffle = self.shuffle.model().current().clone();
+
                 match &self.playing_index {
                     None => self.songs.front().unwrap().activate(),
                     Some(index) => {
                         match index.current_index() {
                             // at end of queue with repeat current song
-                            i if *self.repeat.model().current() == Repeat::One => {
+                            i if repeat == Repeat::One => {
                                 self.songs.get(i).unwrap().activate();
                             }
                             // at end of queue with repeat queue
-                            i if i + 1 == self.songs.len()
-                                && *self.repeat.model().current() == Repeat::All =>
-                            {
+                            i if i + 1 == self.songs.len() && repeat == Repeat::All => {
                                 self.songs.get(0).unwrap().activate();
+                            }
+                            // repeat has priority over shuffle
+                            _i if shuffle == Shuffle::Shuffle => {
+                                let mut rng = rand::thread_rng();
+                                self.songs.iter().choose(&mut rng).unwrap().activate();
                             }
                             // at end of queue
                             i if i + 1 == self.songs.len() => {
@@ -558,15 +565,23 @@ impl relm4::Component for Queue {
                     return;
                 }
 
+                let repeat = self.repeat.model().current().clone();
+                let shuffle = self.shuffle.model().current().clone();
+
                 if let Some(index) = &self.playing_index {
                     match index.current_index() {
                         // previous with repeat current song
-                        i if *self.repeat.model().current() == Repeat::One => {
+                        i if repeat == Repeat::One => {
                             self.songs.get(i).unwrap().activate();
                         }
                         // at start of queue with repeat queue
-                        0 if *self.repeat.model().current() == Repeat::All => {
+                        0 if repeat == Repeat::All => {
                             self.songs.get(self.songs.len() - 1).unwrap().activate();
+                        }
+                        // repeat has priority over shuffle
+                        _i if shuffle == Shuffle::Shuffle => {
+                            let mut rng = rand::thread_rng();
+                            self.songs.iter().choose(&mut rng).unwrap().activate();
                         }
                         // at start of queue
                         0 => self.songs.get(0).unwrap().activate(),
