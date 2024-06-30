@@ -415,8 +415,7 @@ impl Player {
 
     #[zbus(property)]
     pub fn can_seek(&self) -> zvariant::Value {
-        // TODO
-        zvariant::Value::new(false)
+        zvariant::Value::new(true)
     }
 
     #[zbus(property)]
