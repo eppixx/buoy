@@ -8,8 +8,8 @@ pub enum Command {
     Pause,
     PlayPause,
     Stop,
-    /// in seconds
-    Seek(i64),
+    /// in ms
+    SetSongPosition(i64),
     /// ranges from 0.0f64 to 1.0f64
     Volume(f64),
     Repeat(Repeat),

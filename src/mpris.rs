@@ -23,6 +23,7 @@ struct Info {
     state: PlayState,
     song: Option<submarine::data::Child>,
     loop_status: Repeat,
+    song_position: i64, // in microseconds
 }
 
 #[derive(Debug)]
@@ -39,6 +40,7 @@ enum DataChanged {
     CanPlay,
     Volume,
     Repeat,
+    SongPosition,
 }
 
 impl Mpris {
@@ -77,6 +79,7 @@ impl Mpris {
                     DataChanged::CanPlay => interface_ref.can_play_changed(ctx).await,
                     DataChanged::Volume => interface_ref.volume_changed(ctx).await,
                     DataChanged::Repeat => interface_ref.loop_status_changed(ctx).await,
+                    DataChanged::SongPosition => interface_ref.position_changed(ctx).await,
                 };
                 if let Err(e) = result {
                     tracing::error!("error while interacting with dbus: {e:?}");
@@ -133,6 +136,13 @@ impl Mpris {
         self.info.lock().unwrap().loop_status = repeat;
         self.sender
             .try_send(DataChanged::Repeat)
+            .expect("sending failed");
+    }
+
+    pub fn set_position(&mut self, position: i64) {
+        self.info.lock().unwrap().song_position = position;
+        self.sender
+            .try_send(DataChanged::SongPosition)
             .expect("sending failed");
     }
 }
@@ -241,16 +251,17 @@ impl Player {
     }
 
     /// * `offset` - Position relative to current position to seek to in microseconds
-    fn seek(&self, offset: i32) {
-        // self.sender.try_send(MprisOut::Seek(offset)).unwrap();
-        //TODO
+    fn seek(&self, offset: i64) {
+        self.info.lock().unwrap().song_position += offset;
+        self.sender.try_send(MprisOut::Player(Command::SetSongPosition(self.info.lock().unwrap().song_position))).expect("sending failed");
     }
 
     /// * `index` - Index id of the track to set to
     /// * `pos` - Position to seek to in micoseconds
-    fn set_position(&self, index: i32, pos: i32) {
-        // self.sender.try_send(MprisOut::SetSeekPosition(index, pos)).unwrap()
-        //TODO
+    fn set_position(&self, index: i32, pos: i64) {
+        //TODO check index
+        self.info.lock().unwrap().song_position = pos;
+        self.sender.try_send(MprisOut::Player(Command::SetSongPosition(pos))).expect("sending failed");
     }
 
     fn open_uri(&self, _uri: &str) {}
@@ -311,7 +322,7 @@ impl Player {
             map.insert("xesam:title", Value::new(String::from(&song.title)));
             if let Some(duration) = song.duration {
                 // from sec to ms
-                map.insert("mpris:length", Value::new(duration * 1000));
+                map.insert("mpris:length", Value::new(duration));
             }
             if let Some(artist) = &song.artist {
                 map.insert("xesam:albumArtist", Value::new(String::from(artist)));
@@ -354,11 +365,10 @@ impl Player {
             .unwrap()
     }
 
-    //time im mircoseconds
+    //time im microseconds
     #[zbus(property)]
     fn position(&self) -> zvariant::Value {
-        // TODO
-        zvariant::Value::new(5000)
+        zvariant::Value::new(self.info.lock().unwrap().song_position)
     }
 
     #[zbus(property)]

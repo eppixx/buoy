@@ -24,7 +24,7 @@ const TICK: u64 = 250; // update rate for Seekbar
 #[derive(Debug)]
 pub enum PlaybackOut {
     TrackEnd,
-    Seek(i64), // in ms
+    SongPosition(i64), // in ms
 }
 
 impl Playback {
@@ -92,7 +92,7 @@ impl Playback {
                             .expect("sending failed");
                     }
                     MessageView::StreamStart(..) => {
-                        send.try_send(PlaybackOut::Seek(0)).expect("sending failed");
+                        send.try_send(PlaybackOut::SongPosition(0)).expect("sending failed");
                     }
                     _ => {}
                 }
@@ -120,7 +120,7 @@ impl Playback {
                     Some(clock) => clock.seconds() as i64,
                     None => 0,
                 };
-                send.try_send(PlaybackOut::Seek(seconds * 1000))
+                send.try_send(PlaybackOut::SongPosition(seconds * 1000))
                     .expect("sending failed");
                 stamp.replace(current);
             }
