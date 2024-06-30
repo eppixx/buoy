@@ -112,6 +112,7 @@ pub enum QueueIn {
     ToggleShuffle(Shuffle),
     RepeatClicked(Repeat),
     SetRepeat(Repeat),
+    SetShuffle(Shuffle),
     PlayNext,
     PlayPrevious,
     Append(Droppable),
@@ -518,6 +519,9 @@ impl relm4::Component for Queue {
             }
             QueueIn::SetRepeat(repeat) => {
                 self.repeat.emit(SequenceButtonIn::SetTo(repeat));
+            }
+            QueueIn::SetShuffle(shuffle) => {
+                self.shuffle.emit(SequenceButtonIn::SetTo(shuffle));
             }
             QueueIn::PlayNext => {
                 if self.songs.is_empty() {

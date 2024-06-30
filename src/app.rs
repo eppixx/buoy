@@ -850,6 +850,10 @@ impl relm4::component::AsyncComponent for App {
                     self.mpris.set_loop_status(repeat.clone());
                     self.queue.emit(QueueIn::SetRepeat(repeat));
                 }
+                Command::Shuffle(shuffle) => {
+                    self.mpris.set_shuffle(shuffle.clone());
+                    self.queue.emit(QueueIn::SetShuffle(shuffle));
+                }
             },
         }
     }

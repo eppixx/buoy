@@ -1,7 +1,8 @@
 use crate::components::sequence_button::Sequence;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum Shuffle {
+    #[default]
     Sequential,
     Shuffle,
 }

@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::client::Client;
 use crate::components::sequence_button_impl::repeat::Repeat;
+use crate::components::sequence_button_impl::shuffle::Shuffle;
 use crate::play_state::PlayState;
 use crate::player::Command;
 
@@ -23,6 +24,7 @@ struct Info {
     state: PlayState,
     song: Option<submarine::data::Child>,
     loop_status: Repeat,
+    shuffle: Shuffle,
     song_position: i64, // in microseconds
 }
 
@@ -40,6 +42,7 @@ enum DataChanged {
     CanPlay,
     Volume,
     Repeat,
+    Shuffle,
     SongPosition,
 }
 
@@ -79,6 +82,7 @@ impl Mpris {
                     DataChanged::CanPlay => interface_ref.can_play_changed(ctx).await,
                     DataChanged::Volume => interface_ref.volume_changed(ctx).await,
                     DataChanged::Repeat => interface_ref.loop_status_changed(ctx).await,
+                    DataChanged::Shuffle => interface_ref.shuffle_changed(ctx).await,
                     DataChanged::SongPosition => interface_ref.position_changed(ctx).await,
                 };
                 if let Err(e) = result {
@@ -136,6 +140,13 @@ impl Mpris {
         self.info.lock().unwrap().loop_status = repeat;
         self.sender
             .try_send(DataChanged::Repeat)
+            .expect("sending failed");
+    }
+
+    pub fn set_shuffle(&mut self, shuffle: Shuffle) {
+        self.info.lock().unwrap().shuffle = shuffle;
+        self.sender
+            .try_send(DataChanged::Shuffle)
             .expect("sending failed");
     }
 
@@ -297,19 +308,19 @@ impl Player {
 
     #[zbus(property)]
     pub fn shuffle(&self) -> zvariant::Value {
-        //TODO
-        zvariant::Value::new(false)
+        let shuffle = self.info.lock().unwrap().shuffle == Shuffle::Shuffle;
+        zvariant::Value::new(shuffle)
     }
 
     #[zbus(property)]
     fn set_shuffle(&mut self, shuffle: bool) {
-        // let mut settings = self.settings.write().unwrap();
-        // let random = match shuffle {
-        //     true => shuffle::Shuffle::Random,
-        //     false => shuffle::Shuffle::Sequential,
-        // };
-        // settings.set_queue_random(random);
-        //TODO
+        let shuffle = if shuffle {
+            Shuffle::Shuffle
+        }else {
+            Shuffle::Sequential
+        };
+        self.info.lock().unwrap().shuffle = shuffle.clone();
+        self.sender.try_send(MprisOut::Player(Command::Shuffle(shuffle))).expect("sending failed");
     }
 
     /// specifications: https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/
