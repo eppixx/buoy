@@ -132,6 +132,7 @@ pub enum QueueOut {
     Player(Command),
     CreatePlaylist,
     DisplayToast(String),
+    DesktopNotification(submarine::data::Child),
 }
 
 #[derive(Debug)]
@@ -564,6 +565,10 @@ impl relm4::Component for Queue {
                         }
                     }
                 }
+                if let Some(index) = &self.playing_index {
+                    let song: submarine::data::Child = self.songs.guard().get(index.current_index()).unwrap().info().clone();
+                    sender.output(QueueOut::DesktopNotification(song)).expect("sending failed");
+                }
             }
             QueueIn::PlayPrevious => {
                 if self.songs.is_empty() {
@@ -593,6 +598,11 @@ impl relm4::Component for Queue {
                         i => self.songs.get(i - 1).unwrap().activate(),
                     }
                 }
+                if let Some(index) = &self.playing_index {
+                    let song: submarine::data::Child = self.songs.guard().get(index.current_index()).unwrap().info().clone();
+                    sender.output(QueueOut::DesktopNotification(song)).expect("sending failed");
+                }
+
             }
             QueueIn::QueueSong(msg) => match msg {
                 QueueSongOut::Activated(index, info) => {

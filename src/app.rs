@@ -553,16 +553,39 @@ impl relm4::component::AsyncComponent for App {
                                                 set_orientation: gtk::Orientation::Vertical,
                                                 set_spacing: 15,
 
-                                                gtk::Button {
-                                                    add_css_class: "destructive-action",
-                                                    set_label: "Logout from Server",
-                                                    connect_clicked => AppIn::ResetLogin,
+                                                gtk::CenterBox {
+                                                    #[wrap(Some)]
+                                                    set_start_widget = &gtk::Label {
+                                                        set_text: "Send desktop notifications",
+                                                    },
+                                                    #[wrap(Some)]
+                                                    set_end_widget = &gtk::Switch {
+                                                        set_state: Settings::get().lock().unwrap().send_notifications,
+                                                        connect_state_set => move |_switch, value| {
+                                                            Settings::get().lock().unwrap().send_notifications = value;
+                                                            println!("new switch value: {value}");
+                                                            gtk::glib::signal::Propagation::Proceed
+                                                        }
+                                                    },
                                                 },
-                                                gtk::Button {
-                                                    add_css_class: "destructive-action",
-                                                    set_label: "Delete cache",
-                                                    connect_clicked => AppIn::DeleteCache,
-                                                }
+                                                gtk::Separator {},
+                                                gtk::Box {
+                                                    set_halign: gtk::Align::End,
+                                                    gtk::Button {
+                                                        add_css_class: "destructive-action",
+                                                        set_label: "Delete cache",
+                                                        connect_clicked => AppIn::DeleteCache,
+                                                    }
+                                                },
+                                                gtk::Box {
+                                                    set_halign: gtk::Align::End,
+                                                    gtk::Button {
+                                                        add_css_class: "destructive-action",
+                                                        set_label: "Logout from Server",
+                                                        connect_clicked => AppIn::ResetLogin,
+                                                    },
+
+                                                },
                                             },
                                         },
                                     },
@@ -748,6 +771,20 @@ impl relm4::component::AsyncComponent for App {
                     ));
                 }
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
+                QueueOut::DesktopNotification(child) => {
+                    if Settings::get().lock().unwrap().send_notifications {
+                        if let Err(e) = notify_rust::Notification::new()
+                            .summary("buoy")
+                            .body(&format!("{}\n{}", child.title, child.artist.unwrap_or(String::from("Unkonwn Artist"))))
+                            .show()
+                        {
+                            sender.input(AppIn::DisplayToast(format!(
+                                "could not send desktop notification: {e:?}"
+                            )));
+                        }
+                    }
+                }
+
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),

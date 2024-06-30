@@ -41,6 +41,9 @@ xdg = "2.5.2"
 # for validating urls
 url = "2.5.0"
 
+# desktop notifications
+notify-rust = { version = "4.11.0" }
+
 
 [profile.release]
 strip = "debuginfo"

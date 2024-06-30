@@ -41,6 +41,9 @@ pub struct Settings {
     #[serde(default = "default_volume")]
     pub volume: f64,
 
+    #[serde(default)]
+    pub send_notifications: bool,
+
     #[serde(default)] //defaults to false
     pub equalizer_enabled: bool,
     #[serde(default)] //defaults to [0.0f64; 10]
