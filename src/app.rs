@@ -635,7 +635,7 @@ impl relm4::component::AsyncComponent for App {
                 }
             },
             AppIn::Playback(playback) => match playback {
-                PlaybackOut::TrackEnd => self.queue.emit(QueueIn::PlayNext),
+                PlaybackOut::TrackEnd => sender.input(AppIn::Player(Command::Next)),
                 PlaybackOut::SongPosition(ms) => {
                     sender.input(AppIn::Player(Command::SetSongPosition(ms)))
                 }
