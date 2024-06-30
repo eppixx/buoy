@@ -773,13 +773,29 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 QueueOut::DesktopNotification(child) => {
                     if Settings::get().lock().unwrap().send_notifications {
-                        if let Err(e) = notify_rust::Notification::new()
-                            .summary("buoy")
-                            .body(&format!("{}\n{}", child.title, child.artist.unwrap_or(String::from("Unkonwn Artist"))))
-                            .show()
-                        {
+                        let image: Option<notify_rust::Image> = {
+                            let client = Client::get().unwrap();
+                            if let Ok(raw) = client.get_cover_art(child.cover_art.unwrap(), Some(100)).await {
+                                let image_buffer = image::load_from_memory(&raw).unwrap().to_rgb8();
+                                let buffer: Vec<u8> = image_buffer.to_vec();
+                                match notify_rust::Image::from_rgb(image_buffer.width() as i32, image_buffer.height() as i32, buffer) {
+                                    Ok(image) => Some(image),
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            }
+                        };
+
+                        let mut notify = notify_rust::Notification::new();
+                            notify.summary("buoy");
+                            notify.body(&format!("{}\n{}", child.title, child.artist.unwrap_or(String::from("Unkonwn Artist"))));
+                        if let Some(image) = image {
+                            notify.image_data(image);
+                        }
+                        if let Err(e) = notify.show() {
                             sender.input(AppIn::DisplayToast(format!(
-                                "could not send desktop notification: {e:?}"
+                                "Could not send desktop notification: {e:?}"
                             )));
                         }
                     }

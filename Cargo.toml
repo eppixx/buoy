@@ -42,7 +42,8 @@ xdg = "2.5.2"
 url = "2.5.0"
 
 # desktop notifications
-notify-rust = { version = "4.11.0" }
+notify-rust = { version = "4.11.0", features = ["images"] }
+image = "0.25.1"
 
 
 [profile.release]
