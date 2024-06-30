@@ -161,8 +161,6 @@ impl Subsonic {
             .expect("cannot create cache directory");
         std::fs::write(cache_path, cache).unwrap();
 
-        tracing::info!("saving cover cache");
-
         Ok(())
     }
 
@@ -188,7 +186,8 @@ impl Subsonic {
     }
 
     pub fn delete_playlist(&mut self, list: &submarine::data::PlaylistWithSongs) {
-        self.playlists.retain(|candidate| candidate.base.id != list.base.id);
+        self.playlists
+            .retain(|candidate| candidate.base.id != list.base.id);
         self.save().expect("saving failed");
     }
 

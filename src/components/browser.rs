@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use itertools::Itertools;
 use relm4::{
     component::AsyncComponentController,
     gtk::{
@@ -383,25 +384,77 @@ impl relm4::component::AsyncComponent for Browser {
                         view.emit(PlaylistsViewIn::DeletePlaylist(index.clone()));
                     }
                 }
-                PlaylistsViewOut::CreatePlaylist => sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![])),
+                PlaylistsViewOut::CreatePlaylist => {
+                    sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![]))
+                }
             },
             BrowserIn::NewPlaylist(name, list) => {
-                //TODO check for maximum tracks to add to list
-
-                //create playlist on server
+                const CHUNKS: usize = 100;
                 let client = Client::get().unwrap();
                 let ids = list.iter().map(|track| track.id.clone()).collect();
-                let list = match client.create_playlist(name, ids).await {
-                    Err(e) => {
-                        sender
-                            .output(BrowserOut::DisplayToast(format!(
-                                "could not create playlist on server: {e:?}"
-                            )))
-                            .expect("sending failed");
-                        return;
+
+                //decide wether to create a playlist whole or in chunks
+                let list = if list.len() < CHUNKS {
+                    match client.create_playlist(name, ids).await {
+                        Err(e) => {
+                            sender
+                                .output(BrowserOut::DisplayToast(format!(
+                                    "could not create playlist on server: {e:?}"
+                                )))
+                                .expect("sending failed");
+                            return;
+                        }
+                        Ok(list) => list,
                     }
-                    Ok(list) => list,
+                } else {
+                    tracing::info!("create a new playlist on server in chunks");
+                    let first: Vec<_> = ids.iter().take(CHUNKS).collect();
+                    let mut playlist = match client.create_playlist(name, first).await {
+                        Err(e) => {
+                            sender
+                                .output(BrowserOut::DisplayToast(format!(
+                                    "could not create playlist on server: {e:?}"
+                                )))
+                                .expect("sending failed");
+                            return;
+                        }
+                        Ok(list) => list,
+                    };
+                    let mut index = 0;
+                    for ids in &ids.iter().skip(CHUNKS).chunks(CHUNKS) {
+                        index += 1;
+                        if let Err(e) = client
+                            .update_playlist(
+                                playlist.base.id.clone(),
+                                None::<String>,
+                                None::<String>,
+                                None,
+                                ids.collect(),
+                                vec![],
+                            )
+                            .await
+                        {
+                            sender
+                                .output(BrowserOut::DisplayToast(format!(
+                                    "could not update playlist on server: {e:?}"
+                                )))
+                                .expect("sending failed");
+                            break;
+                        }
+
+                        let mut part: Vec<_> = list
+                            .iter()
+                            .skip(index * CHUNKS)
+                            .take(CHUNKS)
+                            .cloned()
+                            .collect();
+                        playlist.base.song_count += part.len() as i32;
+                        playlist.entry.append(&mut part);
+                    }
+
+                    playlist
                 };
+
                 //update playlists in subsonic
                 self.subsonic.borrow_mut().push_playlist(&list);
 

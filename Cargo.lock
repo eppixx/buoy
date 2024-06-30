@@ -284,6 +284,7 @@ dependencies = [
  "fuzzy-matcher",
  "granite-rs",
  "gstreamer",
+ "itertools",
  "postcard",
  "rand",
  "relm4",
@@ -2007,7 +2008,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "submarine"
 version = "0.1.0"
-source = "git+https://github.com/eppixx/submarine#05af9b7ad432cd589ff87272b1c1f01056fa6c33"
+source = "git+https://github.com/eppixx/submarine#e94e7d96a11e108cb58f2c2df2847e2bf84e27c0"
 dependencies = [
  "cfg-if",
  "chrono",

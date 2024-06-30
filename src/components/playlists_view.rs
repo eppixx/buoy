@@ -38,7 +38,10 @@ pub enum PlaylistsViewOut {
     ReplaceQueue(submarine::data::PlaylistWithSongs),
     AddToQueue(submarine::data::PlaylistWithSongs),
     AppendToQueue(submarine::data::PlaylistWithSongs),
-    DeletePlaylist(relm4::factory::DynamicIndex, submarine::data::PlaylistWithSongs),
+    DeletePlaylist(
+        relm4::factory::DynamicIndex,
+        submarine::data::PlaylistWithSongs,
+    ),
     CreatePlaylist,
     DisplayToast(String),
 }
@@ -338,7 +341,10 @@ impl relm4::SimpleComponent for PlaylistsView {
                         Some(list) => list,
                     };
                     sender
-                        .output(PlaylistsViewOut::DeletePlaylist(index, list.get_list().clone()))
+                        .output(PlaylistsViewOut::DeletePlaylist(
+                            index,
+                            list.get_list().clone(),
+                        ))
                         .expect("sending failed");
                 }
             },
