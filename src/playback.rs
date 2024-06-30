@@ -92,7 +92,8 @@ impl Playback {
                             .expect("sending failed");
                     }
                     MessageView::StreamStart(..) => {
-                        send.try_send(PlaybackOut::SongPosition(0)).expect("sending failed");
+                        send.try_send(PlaybackOut::SongPosition(0))
+                            .expect("sending failed");
                     }
                     _ => {}
                 }

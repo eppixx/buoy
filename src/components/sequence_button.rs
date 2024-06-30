@@ -73,7 +73,9 @@ impl<T: Sequence + Clone> relm4::SimpleComponent for SequenceButton<T> {
                 self.sequence.next();
                 self.btn.set_icon_name(self.sequence.current());
                 self.btn.set_tooltip_text(self.sequence.tooltip());
-                sender.output(SequenceButtonOut::Clicked(self.sequence.clone())).expect("sending failed");
+                sender
+                    .output(SequenceButtonOut::Clicked(self.sequence.clone()))
+                    .expect("sending failed");
             }
             SequenceButtonIn::SetTo(sequence) => {
                 self.sequence = sequence;

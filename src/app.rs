@@ -636,7 +636,9 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::Playback(playback) => match playback {
                 PlaybackOut::TrackEnd => self.queue.emit(QueueIn::PlayNext),
-                PlaybackOut::SongPosition(ms) => sender.input(AppIn::Player(Command::SetSongPosition(ms))),
+                PlaybackOut::SongPosition(ms) => {
+                    sender.input(AppIn::Player(Command::SetSongPosition(ms)))
+                }
             },
             AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
@@ -835,7 +837,8 @@ impl relm4::component::AsyncComponent for App {
                 }
                 Command::SetSongPosition(pos_ms) => {
                     self.seekbar.emit(SeekbarIn::SeekTo(pos_ms));
-                    self.play_controls.emit(PlayControlIn::NewState(PlayState::Play));
+                    self.play_controls
+                        .emit(PlayControlIn::NewState(PlayState::Play));
                     self.mpris.set_position(pos_ms);
                 }
                 Command::Volume(volume) => {

@@ -264,7 +264,11 @@ impl Player {
     /// * `offset` - Position relative to current position to seek to in microseconds
     fn seek(&self, offset: i64) {
         self.info.lock().unwrap().song_position += offset;
-        self.sender.try_send(MprisOut::Player(Command::SetSongPosition(self.info.lock().unwrap().song_position))).expect("sending failed");
+        self.sender
+            .try_send(MprisOut::Player(Command::SetSongPosition(
+                self.info.lock().unwrap().song_position,
+            )))
+            .expect("sending failed");
     }
 
     /// * `index` - Index id of the track to set to
@@ -272,7 +276,9 @@ impl Player {
     fn set_position(&self, index: i32, pos: i64) {
         //TODO check index
         self.info.lock().unwrap().song_position = pos;
-        self.sender.try_send(MprisOut::Player(Command::SetSongPosition(pos))).expect("sending failed");
+        self.sender
+            .try_send(MprisOut::Player(Command::SetSongPosition(pos)))
+            .expect("sending failed");
     }
 
     fn open_uri(&self, _uri: &str) {}
@@ -316,11 +322,13 @@ impl Player {
     fn set_shuffle(&mut self, shuffle: bool) {
         let shuffle = if shuffle {
             Shuffle::Shuffle
-        }else {
+        } else {
             Shuffle::Sequential
         };
         self.info.lock().unwrap().shuffle = shuffle.clone();
-        self.sender.try_send(MprisOut::Player(Command::Shuffle(shuffle))).expect("sending failed");
+        self.sender
+            .try_send(MprisOut::Player(Command::Shuffle(shuffle)))
+            .expect("sending failed");
     }
 
     /// specifications: https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/
