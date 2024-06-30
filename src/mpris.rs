@@ -51,7 +51,6 @@ impl Mpris {
         let info = Arc::new(Mutex::new(Info::default()));
         let root = Root {
             sender: sender.clone(),
-            info: info.clone(),
         };
         let player = Player {
             sender: sender.clone(),
@@ -160,23 +159,18 @@ impl Mpris {
 
 pub struct Root {
     sender: async_channel::Sender<MprisOut>,
-    info: Arc<Mutex<Info>>,
 }
 
 #[derive(Debug)]
 pub enum MprisOut {
-    WindowRaise,
     WindowQuit,
-    Play,
     Player(Command),
 }
 
 // implements https://specifications.freedesktop.org/mpris-spec/latest/Media_Player.html
 #[interface(name = "org.mpris.MediaPlayer2")]
 impl Root {
-    fn raise(&self) {
-        self.sender.try_send(MprisOut::WindowRaise).unwrap();
-    }
+    fn raise(&self) {}
 
     fn quit(&self) {
         self.sender.try_send(MprisOut::WindowQuit).unwrap();
@@ -189,7 +183,7 @@ impl Root {
 
     #[zbus(property)]
     fn can_raise(&self) -> bool {
-        true
+        false
     }
 
     #[zbus(property)]
@@ -257,7 +251,9 @@ impl Player {
     }
 
     fn play(&self) {
-        self.sender.try_send(MprisOut::Play).unwrap();
+        self.sender
+            .try_send(MprisOut::Player(Command::Play))
+            .unwrap();
     }
 
     /// * `offset` - Position relative to current position to seek to in microseconds

@@ -780,10 +780,11 @@ impl relm4::component::AsyncComponent for App {
                 self.search.grab_focus();
                 self.back_btn.set_visible(false);
             }
-            AppIn::Mpris(MprisOut::Player(cmd)) => sender.input(AppIn::Player(cmd)),
-            AppIn::Mpris(msg) => sender.input(AppIn::DisplayToast(format!("mpris msg: {msg:?}"))),
+            AppIn::Mpris(msg) => match msg {
+                MprisOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
+                MprisOut::WindowQuit => relm4::main_application().quit(),
+            },
             AppIn::Player(cmd) => match cmd {
-                //TODO
                 Command::Next => {
                     if !self.queue.model().can_play_next() {
                         return;
