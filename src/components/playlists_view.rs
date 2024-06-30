@@ -38,6 +38,7 @@ pub enum PlaylistsViewOut {
     ReplaceQueue(submarine::data::PlaylistWithSongs),
     AddToQueue(submarine::data::PlaylistWithSongs),
     AppendToQueue(submarine::data::PlaylistWithSongs),
+    DeletePlaylist(relm4::factory::DynamicIndex, submarine::data::PlaylistWithSongs),
     DisplayToast(String),
 }
 
@@ -51,6 +52,7 @@ pub enum PlaylistsViewIn {
     PlaylistElement(PlaylistElementOut),
     Cover(CoverOut),
     NewPlaylistFromQueue(submarine::data::PlaylistWithSongs),
+    DeletePlaylist(relm4::factory::DynamicIndex),
 }
 
 #[relm4::component(pub)]
@@ -331,9 +333,20 @@ impl relm4::SimpleComponent for PlaylistsView {
                     .output(PlaylistsViewOut::DisplayToast(msg))
                     .expect("sending failed"),
                 PlaylistElementOut::Delete(index) => {
-                    self.track_stack.set_visible_child_name("tracks-stock");
-                    self.playlists.guard().remove(index.current_index());
-                    //TODO remove playlist from server
+                    let list = match self.playlists.get(index.current_index()) {
+                        None => {
+                            sender
+                                .output(PlaylistsViewOut::DisplayToast(format!(
+                                    "index does not point to a playlist"
+                                )))
+                                .expect("sending failed");
+                            return;
+                        }
+                        Some(list) => list,
+                    };
+                    sender
+                        .output(PlaylistsViewOut::DeletePlaylist(index, list.get_list().clone()))
+                        .expect("sending failed");
                 }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
@@ -374,6 +387,10 @@ impl relm4::SimpleComponent for PlaylistsView {
             PlaylistsViewIn::NewPlaylistFromQueue(list) => {
                 //show new playlist
                 self.playlists.guard().push_back(list);
+            }
+            PlaylistsViewIn::DeletePlaylist(index) => {
+                self.track_stack.set_visible_child_name("tracks-stock");
+                self.playlists.guard().remove(index.current_index());
             }
         }
     }

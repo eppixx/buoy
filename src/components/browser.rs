@@ -363,6 +363,26 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::ReplaceQueue(drop))
                         .expect("sending failed");
                 }
+                PlaylistsViewOut::DeletePlaylist(index, list) => {
+                    //delete playlist from server
+                    let client = Client::get().unwrap();
+                    if let Err(e) = client.delete_playlist(list.base.id.clone()).await {
+                        sender
+                            .output(BrowserOut::DisplayToast(format!(
+                                "could not delete playlist from server: {e:?}"
+                            )))
+                            .expect("sending failed");
+                        return;
+                    }
+
+                    //delete paylist from subsonic cache
+                    self.subsonic.borrow_mut().delete_playlist(&list);
+
+                    //update views
+                    for view in &self.playlists_views {
+                        view.emit(PlaylistsViewIn::DeletePlaylist(index.clone()));
+                    }
+                }
             },
             BrowserIn::NewPlaylistFromQueue(list) => {
                 //create playlist on server
@@ -380,7 +400,7 @@ impl relm4::component::AsyncComponent for Browser {
                     Ok(list) => list,
                 };
                 //update playlists in subsonic
-                self.subsonic.borrow_mut().push_playlist(list.clone());
+                self.subsonic.borrow_mut().push_playlist(&list);
 
                 //show new playlists in views
                 for view in &self.playlists_views {

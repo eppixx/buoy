@@ -182,8 +182,13 @@ impl Subsonic {
         &self.playlists
     }
 
-    pub fn push_playlist(&mut self, list: submarine::data::PlaylistWithSongs) {
-        self.playlists.push(list);
+    pub fn push_playlist(&mut self, list: &submarine::data::PlaylistWithSongs) {
+        self.playlists.push(list.clone());
+        self.save().expect("saving failed");
+    }
+
+    pub fn delete_playlist(&mut self, list: &submarine::data::PlaylistWithSongs) {
+        self.playlists.retain(|candidate| candidate.base.id != list.base.id);
         self.save().expect("saving failed");
     }
 
