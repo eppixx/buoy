@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use relm4::{
-    component::{AsyncComponent, AsyncComponentController},
+    component::AsyncComponentController,
     gtk::{
         self,
         prelude::{BoxExt, OrientableExt, WidgetExt},
@@ -18,7 +18,7 @@ use super::{
     dashboard::{Dashboard, DashboardIn, DashboardOut},
     playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
 };
-use crate::{subsonic::Subsonic, types::Droppable};
+use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Views {
@@ -74,6 +74,7 @@ pub enum BrowserIn {
     ArtistsView(ArtistsViewOut),
     ArtistView(Box<ArtistViewOut>),
     PlaylistsView(PlaylistsViewOut),
+    NewPlaylistFromQueue(Vec<submarine::data::Child>),
 }
 
 #[derive(Debug)]
@@ -85,17 +86,18 @@ pub enum BrowserOut {
     DisplayToast(String),
 }
 
-#[relm4::component(pub)]
-impl relm4::SimpleComponent for Browser {
+#[relm4::component(async, pub)]
+impl relm4::component::AsyncComponent for Browser {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = BrowserIn;
     type Output = BrowserOut;
+    type CommandOutput = ();
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: relm4::ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
+        sender: relm4::AsyncComponentSender<Self>,
+    ) -> relm4::component::AsyncComponentParts<Self> {
         let model = Self {
             subsonic: init,
             history_widget: vec![],
@@ -113,7 +115,7 @@ impl relm4::SimpleComponent for Browser {
         sender.input(BrowserIn::DashboardClicked);
         sender.input(BrowserIn::BackClicked);
 
-        relm4::ComponentParts { model, widgets }
+        relm4::component::AsyncComponentParts { model, widgets }
     }
 
     view! {
@@ -127,7 +129,12 @@ impl relm4::SimpleComponent for Browser {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        msg: Self::Input,
+        sender: relm4::AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
             BrowserIn::SearchChanged(search) => {
                 for view in &self.dashboards {
@@ -239,10 +246,9 @@ impl relm4::SimpleComponent for Browser {
                     return;
                 }
 
-                let playlists: relm4::component::Controller<PlaylistsView> =
-                    PlaylistsView::builder()
-                        .launch(self.subsonic.clone())
-                        .forward(sender.input_sender(), BrowserIn::PlaylistsView);
+                let playlists: relm4::Controller<PlaylistsView> = PlaylistsView::builder()
+                    .launch(self.subsonic.clone())
+                    .forward(sender.input_sender(), BrowserIn::PlaylistsView);
                 self.history_widget
                     .push(Views::Playlists(playlists.widget().clone()));
                 self.playlists_views.push(playlists);
@@ -358,6 +364,29 @@ impl relm4::SimpleComponent for Browser {
                         .expect("sending failed");
                 }
             },
+            BrowserIn::NewPlaylistFromQueue(list) => {
+                //create playlist on server
+                let client = Client::get().unwrap();
+                let ids = list.iter().map(|track| track.id.clone()).collect();
+                let list = match client.create_playlist("Playlist from queue", ids).await {
+                    Err(e) => {
+                        sender
+                            .output(BrowserOut::DisplayToast(format!(
+                                "could not create playlist on server: {e:?}"
+                            )))
+                            .expect("sending failed");
+                        return;
+                    }
+                    Ok(list) => list,
+                };
+                //update playlists in subsonic
+                self.subsonic.borrow_mut().push_playlist(list.clone());
+
+                //show new playlists in views
+                for view in &self.playlists_views {
+                    view.emit(PlaylistsViewIn::NewPlaylistFromQueue(list.clone()));
+                }
+            }
         }
     }
 }

@@ -182,6 +182,11 @@ impl Subsonic {
         &self.playlists
     }
 
+    pub fn push_playlist(&mut self, list: submarine::data::PlaylistWithSongs) {
+        self.playlists.push(list);
+        self.save().expect("saving failed");
+    }
+
     pub fn cover(&mut self, id: &str) -> subsonic_cover::Response {
         self.covers.cover(id)
     }

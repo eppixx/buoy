@@ -50,6 +50,7 @@ pub enum PlaylistsViewIn {
     NewPlaylist(Vec<submarine::data::Child>),
     PlaylistElement(PlaylistElementOut),
     Cover(CoverOut),
+    NewPlaylistFromQueue(submarine::data::PlaylistWithSongs),
 }
 
 #[relm4::component(pub)]
@@ -369,6 +370,10 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .output(PlaylistsViewOut::AppendToQueue(list))
                         .expect("sending failed");
                 }
+            }
+            PlaylistsViewIn::NewPlaylistFromQueue(list) => {
+                //show new playlist
+                self.playlists.guard().push_back(list);
             }
         }
     }

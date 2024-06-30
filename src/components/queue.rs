@@ -130,6 +130,7 @@ pub enum QueueOut {
     QueueEmpty,
     QueueNotEmpty,
     Player(Command),
+    CreatePlaylist,
     DisplayToast(String),
 }
 
@@ -263,7 +264,9 @@ impl relm4::Component for Queue {
                     set_icon_name: "document-new-symbolic",
                     set_tooltip: "add queue to playlists",
                     set_focus_on_click: false,
-                    // TODO add new playlist
+                    connect_clicked[sender] => move |_btn| {
+                        sender.output(QueueOut::CreatePlaylist).expect("sending failed");
+                    },
                 },
 
                 pack_end = &gtk::Label {

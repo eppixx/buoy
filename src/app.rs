@@ -45,7 +45,7 @@ pub struct App {
     play_controls: Controller<PlayControl>,
     seekbar: Controller<Seekbar>,
     play_info: Controller<PlayInfo>,
-    browser: Controller<Browser>,
+    browser: AsyncController<Browser>,
     equalizer: Controller<Equalizer>,
 
     main_stack: gtk::Stack,
@@ -741,6 +741,10 @@ impl relm4::component::AsyncComponent for App {
                     self.mpris.can_play(true);
                 }
                 QueueOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
+                QueueOut::CreatePlaylist => {
+                    self.browser
+                        .emit(BrowserIn::NewPlaylistFromQueue(self.queue.model().songs()));
+                }
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },
             AppIn::Browser(msg) => match msg {
