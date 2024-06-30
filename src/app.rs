@@ -743,7 +743,7 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
                 QueueOut::CreatePlaylist => {
                     self.browser
-                        .emit(BrowserIn::NewPlaylistFromQueue(self.queue.model().songs()));
+                        .emit(BrowserIn::NewPlaylist(String::from("Playlist from Queue"), self.queue.model().songs()));
                 }
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
             },

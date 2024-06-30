@@ -74,7 +74,7 @@ pub enum BrowserIn {
     ArtistsView(ArtistsViewOut),
     ArtistView(Box<ArtistViewOut>),
     PlaylistsView(PlaylistsViewOut),
-    NewPlaylistFromQueue(Vec<submarine::data::Child>),
+    NewPlaylist(String, Vec<submarine::data::Child>),
 }
 
 #[derive(Debug)]
@@ -383,12 +383,15 @@ impl relm4::component::AsyncComponent for Browser {
                         view.emit(PlaylistsViewIn::DeletePlaylist(index.clone()));
                     }
                 }
+                PlaylistsViewOut::CreatePlaylist => sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![])),
             },
-            BrowserIn::NewPlaylistFromQueue(list) => {
+            BrowserIn::NewPlaylist(name, list) => {
+                //TODO check for maximum tracks to add to list
+
                 //create playlist on server
                 let client = Client::get().unwrap();
                 let ids = list.iter().map(|track| track.id.clone()).collect();
-                let list = match client.create_playlist("Playlist from queue", ids).await {
+                let list = match client.create_playlist(name, ids).await {
                     Err(e) => {
                         sender
                             .output(BrowserOut::DisplayToast(format!(
@@ -404,7 +407,7 @@ impl relm4::component::AsyncComponent for Browser {
 
                 //show new playlists in views
                 for view in &self.playlists_views {
-                    view.emit(PlaylistsViewIn::NewPlaylistFromQueue(list.clone()));
+                    view.emit(PlaylistsViewIn::NewPlaylist(list.clone()));
                 }
             }
         }

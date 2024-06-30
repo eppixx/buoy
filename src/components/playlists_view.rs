@@ -39,6 +39,7 @@ pub enum PlaylistsViewOut {
     AddToQueue(submarine::data::PlaylistWithSongs),
     AppendToQueue(submarine::data::PlaylistWithSongs),
     DeletePlaylist(relm4::factory::DynamicIndex, submarine::data::PlaylistWithSongs),
+    CreatePlaylist,
     DisplayToast(String),
 }
 
@@ -48,10 +49,9 @@ pub enum PlaylistsViewIn {
     ReplaceQueue,
     AddToQueue,
     AppendToQueue,
-    NewPlaylist(Vec<submarine::data::Child>),
     PlaylistElement(PlaylistElementOut),
     Cover(CoverOut),
-    NewPlaylistFromQueue(submarine::data::PlaylistWithSongs),
+    NewPlaylist(submarine::data::PlaylistWithSongs),
     DeletePlaylist(relm4::factory::DynamicIndex),
 }
 
@@ -152,7 +152,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                                 }
                             },
 
-                            connect_clicked => PlaylistsViewIn::NewPlaylist(vec![]),
+                            connect_clicked[sender] => move |_btn| {
+                                sender.output(PlaylistsViewOut::CreatePlaylist).expect("sending failed");
+                            }
                         }
                     }
                 }
@@ -275,15 +277,6 @@ impl relm4::SimpleComponent for PlaylistsView {
                     score.is_some()
                 });
             }
-            PlaylistsViewIn::NewPlaylist(list) => {
-                //TODO show new playlist
-                //TODO add playlist to server
-                sender
-                    .output(PlaylistsViewOut::DisplayToast(String::from(
-                        "new playlist clicked",
-                    )))
-                    .expect("sending failed");
-            }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
                 PlaylistElementOut::Clicked(index, list) => {
                     // set every state in PlaylistElement to normal
@@ -384,7 +377,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .expect("sending failed");
                 }
             }
-            PlaylistsViewIn::NewPlaylistFromQueue(list) => {
+            PlaylistsViewIn::NewPlaylist(list) => {
                 //show new playlist
                 self.playlists.guard().push_back(list);
             }
