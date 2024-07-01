@@ -6,6 +6,7 @@ use std::{
 };
 
 use crate::client::Client;
+use crate::components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle};
 
 const PREFIX: &str = "Buoy";
 const FILE_NAME: &str = "config.toml";
@@ -40,6 +41,11 @@ pub struct Settings {
 
     #[serde(default = "default_volume")]
     pub volume: f64,
+
+    #[serde(default)]
+    pub repeat: Repeat,
+    #[serde(default)]
+    pub shuffle: Shuffle,
 
     #[serde(default)]
     pub send_notifications: bool,

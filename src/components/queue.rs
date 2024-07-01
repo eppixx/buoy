@@ -21,6 +21,7 @@ use crate::{
     factory::queue_song::{QueueSong, QueueSongOut},
     play_state::PlayState,
     player::Command,
+    settings::Settings,
     subsonic::Subsonic,
     types::Droppable,
 };
@@ -200,6 +201,16 @@ impl relm4::Component for Queue {
         sender.input(QueueIn::SetCurrent(index));
 
         let widgets = view_output!();
+
+        {
+            let settings = Settings::get().lock().unwrap();
+            model
+                .shuffle
+                .emit(SequenceButtonIn::SetTo(settings.shuffle.clone()));
+            model
+                .repeat
+                .emit(SequenceButtonIn::SetTo(settings.repeat.clone()));
+        }
 
         model.update_clear_btn_sensitivity();
 
@@ -526,11 +537,19 @@ impl relm4::Component for Queue {
             }
             QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
             QueueIn::ToggleShuffle(shuffle) => {
+                {
+                    let mut settings = Settings::get().lock().unwrap();
+                    settings.shuffle = shuffle.clone();
+                }
                 sender
                     .output(QueueOut::Player(Command::Shuffle(shuffle)))
                     .expect("sending failed");
             }
             QueueIn::RepeatClicked(repeat) => {
+                {
+                    let mut settings = Settings::get().lock().unwrap();
+                    settings.repeat = repeat.clone();
+                }
                 sender
                     .output(QueueOut::Player(Command::Repeat(repeat)))
                     .expect("sending failed");

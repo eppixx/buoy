@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::components::sequence_button::Sequence;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Shuffle {
     #[default]
     Sequential,
