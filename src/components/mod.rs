@@ -9,6 +9,7 @@ pub mod cover;
 pub mod dashboard;
 pub mod descriptive_cover;
 pub mod equalizer;
+pub mod filter_box;
 pub mod login_form;
 pub mod play_controls;
 pub mod play_info;

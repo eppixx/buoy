@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, ToggleButtonExt, WidgetExt},
     },
     ComponentController,
 };
@@ -12,13 +12,15 @@ use relm4::{
 use super::album_element::AlbumElementOut;
 use crate::{
     components::album_element::{AlbumElement, AlbumElementInit},
+    components::filter_box::{Category, FilterBox, FilterBoxIn, FilterBoxOut},
     subsonic::Subsonic,
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct AlbumsView {
     albums: gtk::FlowBox,
     album_list: Vec<relm4::Controller<AlbumElement>>,
+    filters: relm4::Controller<FilterBox>,
 }
 
 #[derive(Debug)]
@@ -31,6 +33,8 @@ pub enum AlbumsViewOut {
 pub enum AlbumsViewIn {
     AlbumElement(AlbumElementOut),
     SearchChanged(String),
+    FilterBox(FilterBoxOut),
+    ClearFilters,
 }
 
 #[relm4::component(pub)]
@@ -45,7 +49,13 @@ impl relm4::component::Component for AlbumsView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::component::ComponentParts<Self> {
-        let mut model = Self::default();
+        let mut model = Self {
+            albums: gtk::FlowBox::default(),
+            album_list: vec![],
+            filters: FilterBox::builder()
+                .launch(Category::all())
+                .forward(sender.input_sender(), Self::Input::FilterBox),
+        };
         let widgets = view_output!();
 
         // add albums with cover and title
@@ -69,11 +79,36 @@ impl relm4::component::Component for AlbumsView {
             set_hexpand: true,
 
             gtk::WindowHandle {
-                gtk::Label {
-                    add_css_class: "h2",
-                    set_label: "Albums",
-                    set_halign: gtk::Align::Center,
-                },
+                gtk::CenterBox {
+                    #[wrap(Some)]
+                    set_center_widget = &gtk::Label {
+                        add_css_class: "h2",
+                        set_label: "Albums",
+                        set_halign: gtk::Align::Center,
+                    },
+
+                    #[wrap(Some)]
+                    set_end_widget = &gtk::Box {
+                        set_spacing: 10,
+
+                        gtk::MenuButton {
+                            set_label: "Filter ",
+                            #[wrap(Some)]
+                            set_popover = &gtk::Popover {
+                                set_focus_on_click: false,
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+
+                                    model.filters.widget(),
+                                }
+                            }
+                        },
+                        gtk::Button {
+                            set_icon_name: "user-trash-symbolic",
+                            connect_clicked => Self::Input::ClearFilters,
+                        }
+                    }
+                }
             },
 
             gtk::ScrolledWindow {
@@ -124,6 +159,10 @@ impl relm4::component::Component for AlbumsView {
                     score.is_some()
                 });
             }
+            AlbumsViewIn::FilterBox(msg) => match msg {
+                _ => sender.output(AlbumsViewOut::DisplayToast(format!("filter event: {msg:?}"))).unwrap(),
+            },
+            AlbumsViewIn::ClearFilters => self.filters.emit(FilterBoxIn::ClearFilters),
         }
     }
 }
