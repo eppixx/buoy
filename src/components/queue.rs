@@ -101,6 +101,17 @@ impl Queue {
 
         true
     }
+
+    pub fn current_song(&self) -> Option<submarine::data::Child> {
+        match &self.playing_index {
+            None => None,
+            Some(index) => self
+                .songs
+                .get(index.current_index())
+                .as_ref()
+                .map(|queue_song| queue_song.info().clone()),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -565,10 +576,6 @@ impl relm4::Component for Queue {
                         }
                     }
                 }
-                if let Some(index) = &self.playing_index {
-                    let song: submarine::data::Child = self.songs.guard().get(index.current_index()).unwrap().info().clone();
-                    sender.output(QueueOut::DesktopNotification(Box::new(song))).expect("sending failed");
-                }
             }
             QueueIn::PlayPrevious => {
                 if self.songs.is_empty() {
@@ -598,11 +605,6 @@ impl relm4::Component for Queue {
                         i => self.songs.get(i - 1).unwrap().activate(),
                     }
                 }
-                if let Some(index) = &self.playing_index {
-                    let song: submarine::data::Child = self.songs.guard().get(index.current_index()).unwrap().info().clone();
-                    sender.output(QueueOut::DesktopNotification(Box::new(song))).expect("sending failed");
-                }
-
             }
             QueueIn::QueueSong(msg) => match msg {
                 QueueSongOut::Activated(index, info) => {

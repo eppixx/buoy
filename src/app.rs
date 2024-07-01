@@ -83,6 +83,7 @@ pub enum AppIn {
     Browser(BrowserOut),
     PlayInfo(PlayInfoOut),
     DisplayToast(String),
+    DesktopNotification,
     Navigation(NavigationMode),
     Mpris(MprisOut),
     Player(Command),
@@ -727,6 +728,8 @@ impl relm4::component::AsyncComponent for App {
                         )));
                     }
 
+                    sender.input(AppIn::DesktopNotification);
+
                     // update seekbar
                     if let Some(length) = child.duration {
                         self.seekbar
@@ -774,10 +777,17 @@ impl relm4::component::AsyncComponent for App {
                     if Settings::get().lock().unwrap().send_notifications {
                         let image: Option<notify_rust::Image> = {
                             let client = Client::get().unwrap();
-                            if let Ok(raw) = client.get_cover_art(child.cover_art.unwrap(), Some(100)).await {
+                            if let Ok(raw) = client
+                                .get_cover_art(child.cover_art.unwrap(), Some(100))
+                                .await
+                            {
                                 let image_buffer = image::load_from_memory(&raw).unwrap().to_rgb8();
                                 let buffer: Vec<u8> = image_buffer.to_vec();
-                                match notify_rust::Image::from_rgb(image_buffer.width() as i32, image_buffer.height() as i32, buffer) {
+                                match notify_rust::Image::from_rgb(
+                                    image_buffer.width() as i32,
+                                    image_buffer.height() as i32,
+                                    buffer,
+                                ) {
                                     Ok(image) => Some(image),
                                     Err(_) => None,
                                 }
@@ -787,8 +797,12 @@ impl relm4::component::AsyncComponent for App {
                         };
 
                         let mut notify = notify_rust::Notification::new();
-                            notify.summary("buoy");
-                            notify.body(&format!("{}\n{}", child.title, child.artist.unwrap_or(String::from("Unkonwn Artist"))));
+                        notify.summary("buoy");
+                        notify.body(&format!(
+                            "{}\n{}",
+                            child.title,
+                            child.artist.unwrap_or(String::from("Unkonwn Artist"))
+                        ));
                         if let Some(image) = image {
                             notify.image_data(image);
                         }
@@ -799,7 +813,6 @@ impl relm4::component::AsyncComponent for App {
                         }
                     }
                 }
-
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
@@ -817,6 +830,67 @@ impl relm4::component::AsyncComponent for App {
                 tracing::error!(title);
                 self.toasts.set_title(&title);
                 self.toasts.send_notification();
+            }
+            AppIn::DesktopNotification => {
+                if !Settings::get().lock().unwrap().send_notifications {
+                    return;
+                }
+
+                // take current song, then its album, then the album art
+                let song = self.queue.model().current_song();
+                if let Some(song) = song {
+                    if let Some(album) = song.album_id {
+                        let album = self.subsonic.borrow().find_album(&album);
+                        if let Some(album) = album {
+                            let image: Option<notify_rust::Image> = {
+                                if let Some(cover_art) = album.cover_art {
+                                    if let Some(buffer) =
+                                        self.subsonic.borrow().cover_raw(&cover_art)
+                                    {
+                                        match image::load_from_memory(&buffer) {
+                                            Err(e) => {
+                                                tracing::error!("converting cached buffer: {e:?}");
+                                                None
+                                            }
+                                            Ok(image_buffer) => {
+                                                let image_buffer = image_buffer.to_rgb8();
+                                                let buffer: Vec<u8> = image_buffer.to_vec();
+                                                match notify_rust::Image::from_rgb(
+                                                    image_buffer.width() as i32,
+                                                    image_buffer.height() as i32,
+                                                    buffer,
+                                                ) {
+                                                    Ok(image) => Some(image),
+                                                    Err(_) => None,
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    None
+                                }
+                            };
+
+                            let mut notify = notify_rust::Notification::new();
+                            notify.summary("buoy");
+                            notify.body(&format!(
+                                "{}\n{}",
+                                song.title,
+                                song.artist.unwrap_or(String::from("Unkonwn Artist"))
+                            ));
+                            if let Some(image) = image {
+                                notify.image_data(image);
+                            }
+                            if let Err(e) = notify.show() {
+                                sender.input(AppIn::DisplayToast(format!(
+                                    "Could not send desktop notification: {e:?}"
+                                )));
+                            }
+                        }
+                    }
+                }
             }
             AppIn::Navigation(NavigationMode::Normal) => {
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));

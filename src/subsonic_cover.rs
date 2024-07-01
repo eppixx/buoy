@@ -63,6 +63,13 @@ impl SubsonicCovers {
         tracing::info!("fetched all covers");
     }
 
+    pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
+        match self.buffers.get(id) {
+            None => None,
+            Some(buffer) => buffer.clone(),
+        }
+    }
+
     pub fn cover(&mut self, id: &str) -> Response {
         match self.covers.get(id) {
             Some(Some(cover)) => {

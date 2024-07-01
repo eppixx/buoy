@@ -191,6 +191,10 @@ impl Subsonic {
         self.save().expect("saving failed");
     }
 
+    pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
+        self.covers.cover_raw(id)
+    }
+
     pub fn cover(&mut self, id: &str) -> subsonic_cover::Response {
         self.covers.cover(id)
     }
