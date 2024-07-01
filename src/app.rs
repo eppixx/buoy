@@ -563,7 +563,6 @@ impl relm4::component::AsyncComponent for App {
                                                         set_state: Settings::get().lock().unwrap().send_notifications,
                                                         connect_state_set => move |_switch, value| {
                                                             Settings::get().lock().unwrap().send_notifications = value;
-                                                            println!("new switch value: {value}");
                                                             gtk::glib::signal::Propagation::Proceed
                                                         }
                                                     },

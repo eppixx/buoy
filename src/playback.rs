@@ -163,7 +163,6 @@ impl Playback {
     }
 
     pub fn is_playing(&self) -> PlayState {
-        println!("{:?}", self.pipeline.state(None));
         match self.pipeline.state(None) {
             (_, gstreamer::State::Playing, _) => PlayState::Play,
             (_, gstreamer::State::Paused, _) => PlayState::Pause,
