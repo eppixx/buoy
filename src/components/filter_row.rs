@@ -51,11 +51,10 @@ impl Category {
 
     pub fn albums_view() -> Vec<Self> {
         vec![
-            Self::Title,
+            Self::Album,
+            Self::Artist,
             Self::Year,
             Self::Cd,
-            Self::Artist,
-            Self::Album,
             Self::Genre,
             Self::Duration,
         ]
@@ -68,7 +67,7 @@ impl Category {
             Self::Cd => "cd",
             Self::TrackNumber => "track_number",
             Self::Artist => "artist",
-            Self::Album => "Album",
+            Self::Album => "album",
             Self::Genre => "genre",
             Self::Duration => "duration",
             Self::BitRate => "bit_rate",
@@ -171,8 +170,7 @@ impl OrderRow {
             let label = gtk::Label::new(Some("Selection"));
             list_item
                 .downcast_ref::<gtk::ListItem>()
-                .expect("is not a
-ListItem")
+                .expect("is not a ListItem")
                 .set_child(Some(&label));
         });
         factory.connect_bind(move |_, list_item| {

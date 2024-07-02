@@ -155,7 +155,8 @@ impl relm4::SimpleComponent for FilterBox {
                     .expect("is not a BoxedAnyObject");
                 let category: std::cell::Ref<Category> = boxed.borrow();
                 let index = self.filters.guard().push_back(category.clone());
-                self.filters.send(index.current_index(), FilterRowIn::SetTo(category.clone()));
+                self.filters
+                    .send(index.current_index(), FilterRowIn::SetTo(category.clone()));
                 sender
                     .output(Self::Output::FiltersChanged)
                     .expect("sending failed");
