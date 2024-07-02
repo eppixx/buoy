@@ -1,129 +1,31 @@
-use std::cmp::Ordering;
-
-use gstreamer::glib::BoxedAnyObject;
 use gtk::prelude::OrientableExt;
 use relm4::gtk::{
     self, glib,
-    prelude::{BoxExt, ButtonExt, EntryExt, ListItemExt, WidgetExt},
+    prelude::{BoxExt, ButtonExt, WidgetExt},
 };
 
-#[derive(Debug)]
-pub enum Category {
-    Favorite,
-    Year,
-    Cd,
-    TrackNumber,
-    Artist,
-    Album,
-    Genre,
-    Duration,
-    BitRate,
-}
+use crate::components::filter_row::FilterRow;
 
-impl Category {
-    pub fn all() -> Vec<Self> {
-        vec![
-            Self::Favorite,
-            Self::Year,
-            Self::Cd,
-            Self::TrackNumber,
-            Self::Artist,
-            Self::Album,
-            Self::Genre,
-            Self::Duration,
-            Self::BitRate,
-        ]
-    }
-}
+use super::filter_row::{Category, FilterRowOut};
 
 #[derive(Debug)]
-pub enum Filter {
-    Favorited(bool),
-    Year(Ordering, usize),
-    Cd(bool, usize),
-    TrackNumber(Ordering, usize),
-    Artist(bool, String),
-    Album(bool, String),
-}
-
-#[derive(Debug, Clone)]
-struct OrderRow {
-    order: Ordering,
-    label: String,
-}
-
-// adapted from https://gtk-rs.org/gtk4-rs/stable/latest/book/list_widgets.html
-impl Filter {
-    fn order() -> gtk::gio::ListStore {
-        let data: [OrderRow; 3] = [
-            OrderRow {
-                order: Ordering::Equal,
-                label: String::from("equal to"),
-            },
-            OrderRow {
-                order: Ordering::Greater,
-                label: String::from("greater than"),
-            },
-            OrderRow {
-                order: Ordering::Less,
-                label: String::from("less than"),
-            },
-        ];
-        let store = gtk::gio::ListStore::new::<BoxedAnyObject>();
-        for d in data {
-            store.append(&BoxedAnyObject::new(d));
-        }
-        store
-    }
-
-    fn factory() -> gtk::SignalListItemFactory {
-        use glib::object::Cast;
-        use granite::prelude::CastNone;
-
-        let factory = gtk::SignalListItemFactory::new();
-        factory.connect_setup(move |_, list_item| {
-            let label = gtk::Label::new(None);
-            list_item
-                .downcast_ref::<gtk::ListItem>()
-                .expect("Needs to be ListItem")
-                .set_child(Some(&label));
-        });
-
-        factory.connect_bind(move |_, list_item| {
-            // Get `BoxedAnyObject` from `ListItem`
-            let boxed = list_item
-                .downcast_ref::<gtk::ListItem>()
-                .expect("Needs to be ListItem")
-                .item()
-                .and_downcast::<BoxedAnyObject>()
-                .expect("The item has to be an `IntegerObject`.");
-
-            // Get `Label` from `ListItem`
-            let label = list_item
-                .downcast_ref::<gtk::ListItem>()
-                .expect("Needs to be ListItem")
-                .child()
-                .and_downcast::<gtk::Label>()
-                .expect("The child has to be a `Label`.");
-
-            // Set "label" to "number"
-            label.set_label(&boxed.borrow::<OrderRow>().label);
-        });
-
-        factory
-    }
-}
-
-#[derive(Debug, Default)]
 pub struct FilterBox {
-    categories: Vec<Category>,
-    filters: Vec<Filter>,
+    possible_categories: Vec<Category>,
+    filters: relm4::factory::FactoryVecDeque<FilterRow>,
 }
+
+// impl FilterBox {
+//     pub fn get_filters(&self) -> &Vec<Filter> {
+//         &self.filters
+//     }
+// }
 
 #[derive(Debug)]
 pub enum FilterBoxIn {
     ClearFilters,
     Favorited(bool),
+    AddNewFilter,
+    FilterRow(FilterRowOut),
 }
 
 #[derive(Debug)]
@@ -142,7 +44,12 @@ impl relm4::SimpleComponent for FilterBox {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Self::default();
+        let model = Self {
+            possible_categories: init,
+            filters: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::ListBox::default())
+                .forward(sender.input_sender(), Self::Input::FilterRow),
+        };
 
         let widgets = view_output!();
 
@@ -179,34 +86,12 @@ impl relm4::SimpleComponent for FilterBox {
                 }
             },
 
-            gtk::CenterBox {
-                #[wrap(Some)]
-                set_start_widget = &gtk::Label {
-                    set_text: "Year",
-                },
-                #[wrap(Some)]
-                set_center_widget = &gtk::DropDown {
-                    set_focus_on_click: false,
-                    set_margin_start: 15,
-                    set_margin_end: 15,
-                    set_model: Some(&Filter::order()),
-                    set_factory: Some(&Filter::factory()),
-                },
-                #[wrap(Some)]
-                set_end_widget = &gtk::Box {
-                    gtk::Entry {
-                        set_focus_on_click: false,
-                        set_placeholder_text: Some("1990"),
-                    },
-                    gtk::Button {
-                        set_icon_name: "user-trash-symbolic",
-                    }
-                }
-
-            },
+            model.filters.widget().clone() -> gtk::ListBox {},
 
             gtk::Button {
                 set_label: "Add new filter",
+
+                connect_clicked => Self::Input::AddNewFilter,
             }
         }
     }
@@ -214,17 +99,28 @@ impl relm4::SimpleComponent for FilterBox {
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             Self::Input::ClearFilters => {
-                self.filters.clear();
+                self.filters.guard().clear();
                 sender
                     .output(Self::Output::FiltersChanged)
                     .expect("sending failed");
             }
             Self::Input::Favorited(value) => {
-                self.filters.push(Filter::Favorited(value));
                 sender
                     .output(Self::Output::FiltersChanged)
                     .expect("sending failed");
             }
+            Self::Input::AddNewFilter => {
+                self.filters.guard().push_back(());
+                sender
+                    .output(Self::Output::FiltersChanged)
+                    .expect("sending failed");
+            }
+            Self::Input::FilterRow(msg) => match msg {
+                FilterRowOut::RemoveFilter(index) => {
+                    _ = self.filters.guard().remove(index.current_index())
+                }
+                _ => println!("do sth with msg: {msg:?}"),
+            },
         }
     }
 }

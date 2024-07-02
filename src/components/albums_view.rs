@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, ToggleButtonExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, WidgetExt},
     },
     ComponentController,
 };
@@ -12,7 +12,8 @@ use relm4::{
 use super::album_element::AlbumElementOut;
 use crate::{
     components::album_element::{AlbumElement, AlbumElementInit},
-    components::filter_box::{Category, FilterBox, FilterBoxIn, FilterBoxOut},
+    components::filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
+    components::filter_row::Category,
     subsonic::Subsonic,
 };
 
@@ -96,6 +97,8 @@ impl relm4::component::Component for AlbumsView {
                             #[wrap(Some)]
                             set_popover = &gtk::Popover {
                                 set_focus_on_click: false,
+                                set_autohide: true,
+
                                 gtk::Box {
                                     set_orientation: gtk::Orientation::Vertical,
 
@@ -160,7 +163,11 @@ impl relm4::component::Component for AlbumsView {
                 });
             }
             AlbumsViewIn::FilterBox(msg) => match msg {
-                _ => sender.output(AlbumsViewOut::DisplayToast(format!("filter event: {msg:?}"))).unwrap(),
+                _ => sender
+                    .output(AlbumsViewOut::DisplayToast(format!(
+                        "filter event: {msg:?}"
+                    )))
+                    .unwrap(),
             },
             AlbumsViewIn::ClearFilters => self.filters.emit(FilterBoxIn::ClearFilters),
         }

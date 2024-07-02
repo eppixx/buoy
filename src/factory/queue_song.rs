@@ -480,11 +480,6 @@ impl FactoryComponent for QueueSong {
                     })
                     .expect("sending failed");
             }
-            // QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
-            //     .output(QueueSongOut::DisplayToast(format!(
-            //         "moving song failed: {e}",
-            //     )))
-            //     .expect("sending failed"),
             QueueSongCmd::InsertChildrenBelow(Ok((index, songs))) => {
                 sender
                     .output(QueueSongOut::DropBelow {
