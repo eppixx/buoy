@@ -34,7 +34,7 @@ impl FilterBox {
 #[derive(Debug)]
 pub enum FilterBoxIn {
     ClearFilters,
-    Favorited(bool),
+    Favorited,
     AddNewFilter,
     FilterRow(FilterRowOut),
 }
@@ -103,8 +103,8 @@ impl relm4::SimpleComponent for FilterBox {
                 #[wrap(Some)]
                 set_end_widget = &model.favorite_switch.clone() -> gtk::Switch {
                     set_margin_start: 15,
-                    connect_state_set[sender] => move |_btn, state| {
-                        sender.input(Self::Input::Favorited(state));
+                    connect_state_set[sender] => move |_btn, _state| {
+                        sender.input(Self::Input::Favorited);
                         glib::signal::Propagation::Proceed
                     }
                 }
@@ -141,7 +141,7 @@ impl relm4::SimpleComponent for FilterBox {
                     .output(Self::Output::FiltersChanged)
                     .expect("sending failed");
             }
-            Self::Input::Favorited(value) => {
+            Self::Input::Favorited => {
                 sender
                     .output(Self::Output::FiltersChanged)
                     .expect("sending failed");
