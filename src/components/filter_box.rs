@@ -4,21 +4,31 @@ use relm4::gtk::{
     prelude::{BoxExt, ButtonExt, WidgetExt},
 };
 
+use super::filter_row::{Category, Filter, FilterRowOut};
 use crate::components::filter_row::FilterRow;
-
-use super::filter_row::{Category, FilterRowOut};
 
 #[derive(Debug)]
 pub struct FilterBox {
     possible_categories: Vec<Category>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
+    favorite_switch: gtk::Switch,
 }
 
-// impl FilterBox {
-//     pub fn get_filters(&self) -> &Vec<Filter> {
-//         &self.filters
-//     }
-// }
+impl FilterBox {
+    pub fn get_filters(&self) -> Vec<Filter> {
+        let mut filters: Vec<Filter> = self
+            .filters
+            .iter()
+            .filter_map(|row| row.filter().as_ref())
+            .cloned()
+            .collect();
+
+        if self.favorite_switch.is_active() {
+            filters.push(Filter::Favorite(true));
+        }
+        filters
+    }
+}
 
 #[derive(Debug)]
 pub enum FilterBoxIn {
@@ -49,6 +59,7 @@ impl relm4::SimpleComponent for FilterBox {
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), Self::Input::FilterRow),
+            favorite_switch: gtk::Switch::default(),
         };
 
         let widgets = view_output!();
@@ -63,11 +74,20 @@ impl relm4::SimpleComponent for FilterBox {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 10,
 
-            gtk::Label {
-                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                set_hexpand: true,
-                set_halign: gtk::Align::Center,
-                set_text: "Active Filters",
+            gtk::CenterBox {
+                #[wrap(Some)]
+                set_center_widget = &gtk::Label {
+                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                    set_hexpand: true,
+                    set_halign: gtk::Align::Center,
+                    set_text: "Active Filters",
+                },
+                #[wrap(Some)]
+                set_end_widget = &gtk::Image {
+                    set_icon_name: Some("dialog-information-symbolic"),
+                    set_tooltip_text: Some("Elements will be shown when every condition is true.\nText input allows for regular expressions"),
+                    //TODO show examples for regular expression
+                }
             },
 
             gtk::CenterBox {
@@ -77,7 +97,7 @@ impl relm4::SimpleComponent for FilterBox {
                     set_text: "Show Favorites",
                 },
                 #[wrap(Some)]
-                set_end_widget = &gtk::Switch {
+                set_end_widget = &model.favorite_switch.clone() -> gtk::Switch {
                     set_margin_start: 15,
                     connect_state_set[sender] => move |_btn, state| {
                         sender.input(Self::Input::Favorited(state));
@@ -90,7 +110,6 @@ impl relm4::SimpleComponent for FilterBox {
 
             gtk::Button {
                 set_label: "Add new filter",
-
                 connect_clicked => Self::Input::AddNewFilter,
             }
         }
@@ -117,9 +136,18 @@ impl relm4::SimpleComponent for FilterBox {
             }
             Self::Input::FilterRow(msg) => match msg {
                 FilterRowOut::RemoveFilter(index) => {
-                    _ = self.filters.guard().remove(index.current_index())
+                    self.filters.guard().remove(index.current_index());
+                    println!("current filters {:?}", self.get_filters());
+                    sender
+                        .output(Self::Output::FiltersChanged)
+                        .expect("sending failed");
                 }
-                _ => println!("do sth with msg: {msg:?}"),
+                FilterRowOut::ParameterChanged => {
+                    sender
+                        .output(FilterBoxOut::FiltersChanged)
+                        .expect("sending failed");
+                    println!("current filters {:?}", self.get_filters());
+                }
             },
         }
     }
