@@ -54,7 +54,7 @@ impl relm4::component::Component for AlbumsView {
             albums: gtk::FlowBox::default(),
             album_list: vec![],
             filters: FilterBox::builder()
-                .launch(Category::all()) //TODO not show all categories
+                .launch(Category::albums_view())
                 .forward(sender.input_sender(), Self::Input::FilterBox),
         };
         let widgets = view_output!();
