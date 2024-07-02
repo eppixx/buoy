@@ -5,7 +5,7 @@ use relm4::gtk::{
 
 use std::cmp::Ordering;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Category {
     Title,
     Year,
@@ -16,6 +16,22 @@ pub enum Category {
     Genre,
     Duration,
     BitRate,
+}
+
+impl std::fmt::Display for Category {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Title => write!(f, "Title"),
+            Self::Year => write!(f, "Year"),
+            Self::Cd => write!(f, "Cd"),
+            Self::TrackNumber => write!(f, "Track Number"),
+            Self::Artist => write!(f, "Artist"),
+            Self::Album => write!(f, "Album"),
+            Self::Genre => write!(f, "Genre"),
+            Self::Duration => write!(f, "Duration"),
+            Self::BitRate => write!(f, "Bit Rate"),
+        }
+    }
 }
 
 impl Category {
@@ -33,6 +49,18 @@ impl Category {
         ]
     }
 
+    pub fn albums_view() -> Vec<Self> {
+        vec![
+            Self::Title,
+            Self::Year,
+            Self::Cd,
+            Self::Artist,
+            Self::Album,
+            Self::Genre,
+            Self::Duration,
+        ]
+    }
+
     pub fn to_str(&self) -> &str {
         match self {
             Self::Title => "title",
@@ -45,6 +73,48 @@ impl Category {
             Self::Duration => "duration",
             Self::BitRate => "bit_rate",
         }
+    }
+
+    pub fn store(categories: Vec<Self>) -> gio::ListStore {
+        let store = gio::ListStore::new::<glib::BoxedAnyObject>();
+        for category in categories.iter() {
+            store.append(&glib::BoxedAnyObject::new(category.clone()));
+        }
+        store
+    }
+
+    pub fn factory() -> gtk::SignalListItemFactory {
+        use glib::object::Cast;
+        use granite::prelude::CastNone;
+
+        let factory = gtk::SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            let label = gtk::Label::new(Some("Category"));
+            list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .set_child(Some(&label));
+        });
+        factory.connect_bind(move |_, list_item| {
+            // get BoxedAnyObject from ListItem
+            let boxed = list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .item()
+                .and_downcast::<glib::BoxedAnyObject>()
+                .expect("item is not a BoxedAnyObject");
+            // get label from ListItem
+            let label = list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .child()
+                .and_downcast::<gtk::Label>()
+                .expect("child has to be a Label");
+            // set label from category
+            label.set_label(&boxed.borrow::<Category>().to_string());
+        });
+
+        factory
     }
 }
 
@@ -98,31 +168,29 @@ impl OrderRow {
 
         let factory = gtk::SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let label = gtk::Label::new(None);
+            let label = gtk::Label::new(Some("Selection"));
             list_item
                 .downcast_ref::<gtk::ListItem>()
-                .expect("Needs to be ListItem")
+                .expect("is not a
+ListItem")
                 .set_child(Some(&label));
         });
-
         factory.connect_bind(move |_, list_item| {
-            // Get `BoxedAnyObject` from `ListItem`
+            // get BoxedAnyObject from ListItem
             let boxed = list_item
                 .downcast_ref::<gtk::ListItem>()
-                .expect("Needs to be ListItem")
+                .expect("ist not a ListItem")
                 .item()
                 .and_downcast::<glib::BoxedAnyObject>()
-                .expect("The item has to be an `IntegerObject`.");
-
-            // Get `Label` from `ListItem`
+                .expect("item is not a BoxedAnyObject");
+            // get label from ListItem
             let label = list_item
                 .downcast_ref::<gtk::ListItem>()
-                .expect("Needs to be ListItem")
+                .expect("is not a ListItem")
                 .child()
                 .and_downcast::<gtk::Label>()
-                .expect("The child has to be a `Label`.");
-
-            // Set "label" to "number"
+                .expect("is not a Label");
+            // set label from OrderRow
             label.set_label(&boxed.borrow::<OrderRow>().label);
         });
 
@@ -132,10 +200,11 @@ impl OrderRow {
 
 #[derive(Debug)]
 pub struct FilterRow {
-    category: Option<Category>,
+    category: Category,
     filter: Option<Filter>,
     index: relm4::factory::DynamicIndex,
     stack: gtk::Stack,
+
     year_entry: gtk::Entry,
     year_dropdown: gtk::DropDown,
     cd_entry: gtk::Entry,
@@ -173,22 +242,23 @@ pub enum FilterRowOut {
 
 #[relm4::factory(pub)]
 impl relm4::factory::FactoryComponent for FilterRow {
-    type Init = ();
+    type Init = Category;
     type Input = FilterRowIn;
     type Output = FilterRowOut;
     type ParentWidget = gtk::ListBox;
     type CommandOutput = ();
 
     fn init_model(
-        _init: Self::Init,
+        init: Self::Init,
         index: &relm4::factory::DynamicIndex,
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         Self {
-            category: None,
+            category: init.clone(),
             filter: None,
             index: index.clone(),
             stack: gtk::Stack::default(),
+
             year_entry: gtk::Entry::default(),
             year_dropdown: gtk::DropDown::default(),
             cd_entry: gtk::Entry::default(),
@@ -210,49 +280,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
         gtk::ListBoxRow {
             set_selectable: false,
             set_activatable: false,
-            set_margin_top: 5,
-            set_margin_bottom: 5,
+            set_margin_top: 10,
+            set_margin_bottom: 10,
 
             self.stack.clone() {
-
-                add_child = &gtk::Box {
-                    gtk::Button {
-                        set_label: "Filter by year",
-                        connect_clicked => Self::Input::SetTo(Category::Year),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by title",
-                        connect_clicked => Self::Input::SetTo(Category::Title),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by album",
-                        connect_clicked => Self::Input::SetTo(Category::Album),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by artist",
-                        connect_clicked => Self::Input::SetTo(Category::Artist),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by genre",
-                        connect_clicked => Self::Input::SetTo(Category::Genre),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by duration",
-                        connect_clicked => Self::Input::SetTo(Category::Duration),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by cd",
-                        connect_clicked => Self::Input::SetTo(Category::Cd),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by bitrate",
-                        connect_clicked => Self::Input::SetTo(Category::BitRate),
-                    },
-                    gtk::Button {
-                        set_label: "Filter by track number",
-                        connect_clicked => Self::Input::SetTo(Category::TrackNumber),
-                    },
-                },
                 add_named[Some(Category::Year.to_str())] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
@@ -489,27 +520,25 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 .expect("sending failed"),
             Self::Input::SetTo(category) => {
                 self.stack.set_visible_child_name(category.to_str());
-                self.category = Some(category);
             }
             Self::Input::ParameterChanged => {
                 use glib::object::Cast;
 
                 // update local filter
                 match &self.category {
-                    None => unreachable!("category should be set at this point"),
-                    Some(Category::Title) => {
+                    Category::Title => {
                         self.filter = Some(Filter::Title(self.title_entry.text().into()))
                     }
-                    Some(Category::Artist) => {
+                    Category::Artist => {
                         self.filter = Some(Filter::Artist(self.artist_entry.text().into()))
                     }
-                    Some(Category::Album) => {
+                    Category::Album => {
                         self.filter = Some(Filter::Album(self.album_entry.text().into()))
                     }
-                    Some(Category::Genre) => {
+                    Category::Genre => {
                         self.filter = Some(Filter::Genre(self.genre_entry.text().into()))
                     }
-                    Some(Category::Year) => {
+                    Category::Year => {
                         let order = self.year_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
@@ -530,7 +559,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
-                    Some(Category::Cd) => {
+                    Category::Cd => {
                         let order = self.cd_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
@@ -551,7 +580,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
-                    Some(Category::TrackNumber) => {
+                    Category::TrackNumber => {
                         let order = self.track_number_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
@@ -573,7 +602,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
-                    Some(Category::Duration) => {
+                    Category::Duration => {
                         let order = self.duration_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
@@ -594,7 +623,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
-                    Some(Category::BitRate) => {
+                    Category::BitRate => {
                         let order = self.bit_rate_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()

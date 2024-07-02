@@ -4,12 +4,13 @@ use relm4::gtk::{
     prelude::{BoxExt, ButtonExt, WidgetExt},
 };
 
-use super::filter_row::{Category, Filter, FilterRowOut};
+use super::filter_row::{Category, Filter, FilterRowIn, FilterRowOut};
 use crate::components::filter_row::FilterRow;
 
 #[derive(Debug)]
 pub struct FilterBox {
-    possible_categories: Vec<Category>,
+    // possible_categories: Vec<Category>,
+    category_selection: gtk::DropDown,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
     favorite_switch: gtk::Switch,
 }
@@ -50,12 +51,13 @@ impl relm4::SimpleComponent for FilterBox {
     type Output = FilterBoxOut;
 
     fn init(
-        init: Self::Init,
+        possible_categories: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
-            possible_categories: init,
+            // possible_categories: init,
+            category_selection: gtk::DropDown::default(),
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), Self::Input::FilterRow),
@@ -90,6 +92,8 @@ impl relm4::SimpleComponent for FilterBox {
                 }
             },
 
+            gtk::Separator {},
+
             gtk::CenterBox {
                 #[wrap(Some)]
                 set_start_widget = &gtk::Label {
@@ -108,9 +112,23 @@ impl relm4::SimpleComponent for FilterBox {
 
             model.filters.widget().clone() -> gtk::ListBox {},
 
-            gtk::Button {
-                set_label: "Add new filter",
-                connect_clicked => Self::Input::AddNewFilter,
+            gtk::Separator {},
+
+            gtk::Box {
+                set_spacing: 10,
+                set_halign: gtk::Align::Center,
+
+                gtk::Label {
+                    set_text: "Select filter",
+                },
+                model.category_selection.clone() {
+                    set_model: Some(&Category::store(possible_categories.clone())),
+                    set_factory: Some(&Category::factory()),
+                },
+                gtk::Button {
+                    set_label: "Add new filter",
+                    connect_clicked => Self::Input::AddNewFilter,
+                }
             }
         }
     }
@@ -129,7 +147,15 @@ impl relm4::SimpleComponent for FilterBox {
                     .expect("sending failed");
             }
             Self::Input::AddNewFilter => {
-                self.filters.guard().push_back(());
+                use glib::object::Cast;
+
+                let list_item = self.category_selection.selected_item().unwrap();
+                let boxed = list_item
+                    .downcast_ref::<glib::BoxedAnyObject>()
+                    .expect("is not a BoxedAnyObject");
+                let category: std::cell::Ref<Category> = boxed.borrow();
+                let index = self.filters.guard().push_back(category.clone());
+                self.filters.send(index.current_index(), FilterRowIn::SetTo(category.clone()));
                 sender
                     .output(Self::Output::FiltersChanged)
                     .expect("sending failed");
