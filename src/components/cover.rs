@@ -19,6 +19,7 @@ impl Cover {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum State {
     Stock,
     Image,
@@ -188,5 +189,17 @@ impl relm4::Component for Cover {
                     .expect("sending failed");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gtk_helper::stack::test_self;
+
+    #[test]
+    fn state_enum_conversion() {
+        test_self(State::Stock);
+        test_self(State::Image);
     }
 }
