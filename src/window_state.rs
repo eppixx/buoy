@@ -1,30 +1,75 @@
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WindowState {
     Loading,
     LoginForm,
     Main,
 }
 
-impl WindowState {
-    pub fn to_str(&self) -> &str {
+impl std::fmt::Display for WindowState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Loading => "Loading",
-            Self::LoginForm => "Login Form",
-            Self::Main => "Main",
+            Self::Loading => write!(f, "Loading"),
+            Self::LoginForm => write!(f, "Login Form"),
+            Self::Main => write!(f, "Main"),
         }
     }
 }
 
-#[derive(Debug)]
+impl TryFrom<String> for WindowState {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Loading" => Ok(Self::Loading),
+            "Login Form" => Ok(Self::LoginForm),
+            "Main" => Ok(Self::Main),
+            e => Err(format!("\"{e}\" is not a State")),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NavigationMode {
     Normal,
     Search,
 }
 
-impl NavigationMode {
-    pub fn to_str(&self) -> &str {
+impl std::fmt::Display for NavigationMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Normal => "Normal",
-            Self::Search => "Search",
+            Self::Normal => write!(f, "Normal"),
+            Self::Search => write!(f, "Search"),
         }
+    }
+}
+
+impl TryFrom<String> for NavigationMode {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Normal" => Ok(Self::Normal),
+            "Search" => Ok(Self::Search),
+            e => Err(format!("\"{e}\" is not a Mode")),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gtk_helper::stack::test_self;
+
+    #[test]
+    fn window_state_conversion() {
+        test_self(WindowState::Loading);
+        test_self(WindowState::LoginForm);
+        test_self(WindowState::Main);
+    }
+
+    #[test]
+    fn navigation_mode_conversion() {
+        test_self(NavigationMode::Normal);
+        test_self(NavigationMode::Search);
     }
 }

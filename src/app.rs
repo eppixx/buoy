@@ -14,6 +14,7 @@ use relm4::{
 
 use crate::{
     client::Client,
+    gtk_helper::stack::StackExt,
     mpris::MprisOut,
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
@@ -354,12 +355,10 @@ impl relm4::component::AsyncComponent for App {
             let client = Client::get_mut().lock().unwrap();
 
             match &client.inner {
-                Some(_client) => model
-                    .main_stack
-                    .set_visible_child_name(WindowState::Main.to_str()),
+                Some(_client) => model.main_stack.set_visible_child_enum(&WindowState::Main),
                 None => model
                     .main_stack
-                    .set_visible_child_name(WindowState::LoginForm.to_str()),
+                    .set_visible_child_enum(&WindowState::LoginForm),
             }
         }
 
@@ -388,7 +387,7 @@ impl relm4::component::AsyncComponent for App {
                 set_transition_type: gtk::StackTransitionType::Crossfade,
                 set_transition_duration: 200,
 
-                add_named[Some(WindowState::Main.to_str())] = &gtk::Box {
+                add_enumed[WindowState::Main] = &gtk::Box {
                     add_css_class: "main-box",
                     set_orientation: gtk::Orientation::Vertical,
 
@@ -469,7 +468,7 @@ impl relm4::component::AsyncComponent for App {
                                     },
 
                                     model.search_stack.clone() -> gtk::Stack {
-                                        add_named[Some(NavigationMode::Normal.to_str())] = &gtk::Box {
+                                        add_enumed[NavigationMode::Normal] = &gtk::Box {
                                             gtk::Button {
                                                 add_css_class: "browser-navigation-button",
                                                 set_icon_name: "go-home-symbolic",
@@ -511,7 +510,7 @@ impl relm4::component::AsyncComponent for App {
                                                 }
                                             },
                                         },
-                                        add_named[Some(NavigationMode::Search.to_str())] = &model.search.clone() -> gtk::SearchEntry {
+                                        add_enumed[NavigationMode::Search] = &model.search.clone() -> gtk::SearchEntry {
                                             set_placeholder_text: Some("Search..."),
                                             connect_search_changed[browser_sender] => move |w| {
                                                 browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
@@ -603,7 +602,7 @@ impl relm4::component::AsyncComponent for App {
                         }
                     }
                 },
-                add_named[Some(WindowState::LoginForm.to_str())] = &gtk::WindowHandle {
+                add_enumed[WindowState::LoginForm] = &gtk::WindowHandle {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
 
@@ -620,7 +619,7 @@ impl relm4::component::AsyncComponent for App {
                         }
                     }
                 },
-                add_named[Some(WindowState::Loading.to_str())] = &gtk::WindowHandle {
+                add_enumed[WindowState::Loading] = &gtk::WindowHandle {
                     #[template]
                     LoadingState {
                         #[template_child]
@@ -666,7 +665,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
                     self.main_stack
-                        .set_visible_child_name(WindowState::Loading.to_str());
+                        .set_visible_child_enum(&WindowState::Loading);
                 }
             },
             AppIn::Equalizer(_changed) => {
@@ -676,7 +675,7 @@ impl relm4::component::AsyncComponent for App {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
                 self.main_stack
-                    .set_visible_child_name(WindowState::LoginForm.to_str());
+                    .set_visible_child_enum(&WindowState::LoginForm);
                 sender.input(AppIn::DeleteCache);
             }
             AppIn::DeleteCache => {
@@ -690,7 +689,7 @@ impl relm4::component::AsyncComponent for App {
                     )));
                 }
                 self.main_stack
-                    .set_visible_child_name(WindowState::Loading.to_str());
+                    .set_visible_child_enum(&WindowState::Loading);
             }
             AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
@@ -895,14 +894,14 @@ impl relm4::component::AsyncComponent for App {
             AppIn::Navigation(NavigationMode::Normal) => {
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
                 self.search_stack
-                    .set_visible_child_name(NavigationMode::Normal.to_str());
+                    .set_visible_child_enum(&NavigationMode::Normal);
                 self.back_btn.set_visible(true);
             }
             AppIn::Navigation(NavigationMode::Search) => {
                 self.browser
                     .emit(BrowserIn::SearchChanged(self.search.text().to_string()));
                 self.search_stack
-                    .set_visible_child_name(NavigationMode::Search.to_str());
+                    .set_visible_child_enum(&NavigationMode::Search);
                 self.search.grab_focus();
                 self.back_btn.set_visible(false);
             }

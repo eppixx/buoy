@@ -7,6 +7,7 @@ pub mod common;
 pub mod components;
 pub mod css;
 mod factory;
+pub mod gtk_helper;
 mod mpris;
 mod play_state;
 mod playback;
@@ -16,7 +17,6 @@ pub mod subsonic;
 pub mod subsonic_cover;
 pub mod types;
 pub mod window_state;
-pub mod gtk_helper;
 
 fn main() -> anyhow::Result<()> {
     //enable logging
