@@ -55,6 +55,33 @@ impl TryFrom<String> for State {
     }
 }
 
+#[derive(Debug)]
+pub enum EditState {
+    Clean,
+    Edit,
+}
+
+impl std::fmt::Display for EditState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Clean => write!(f, "Clean"),
+            Self::Edit => write!(f, "Edit"),
+        }
+    }
+}
+
+impl TryFrom<String> for EditState {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Clean" => Ok(Self::Clean),
+            "Edit" => Ok(Self::Edit),
+            e => Err(format!("\"{e}\" is not a State")),
+        }
+    }
+}
+
 impl PlaylistElement {
     pub fn get_list(&self) -> &submarine::data::PlaylistWithSongs {
         &self.playlist
@@ -62,9 +89,9 @@ impl PlaylistElement {
 
     pub fn set_edit_area(&self, status: bool) {
         if status {
-            self.edit_area.set_visible_child_name("edit");
+            self.edit_area.set_visible_child_enum(&EditState::Edit);
         } else {
-            self.edit_area.set_visible_child_name("clean");
+            self.edit_area.set_visible_child_enum(&EditState::Clean);
         }
     }
 }
@@ -162,8 +189,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             set_transition_duration: 250,
                             set_transition_type: gtk::StackTransitionType::Crossfade,
 
-                            add_named[Some("clean")] = &gtk::Box {},
-                            add_named[Some("edit")] = &gtk::Box {
+                            add_enumed[EditState::Clean] = &gtk::Box {},
+                            add_enumed[EditState::Edit] = &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
                                 set_valign: gtk::Align::Center,
 
@@ -271,9 +298,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     .output(PlaylistElementOut::Delete(self.index.clone()))
                     .expect("sending failed");
             }
-            PlaylistElementIn::ChangeState(state) => {
-                self.main_stack.set_visible_child_enum(&state)
-            }
+            PlaylistElementIn::ChangeState(state) => self.main_stack.set_visible_child_enum(&state),
             PlaylistElementIn::ConfirmRename => {
                 let text = self.edit_entry.text();
                 self.playlist.base.name = String::from(text);
