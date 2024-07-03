@@ -16,6 +16,7 @@ pub mod subsonic;
 pub mod subsonic_cover;
 pub mod types;
 pub mod window_state;
+pub mod gtk_helper;
 
 fn main() -> anyhow::Result<()> {
     //enable logging
