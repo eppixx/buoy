@@ -20,6 +20,33 @@ use crate::{
     subsonic::Subsonic,
 };
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum TracksState {
+    Tracks,
+    Stock,
+}
+
+impl std::fmt::Display for TracksState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Tracks => write!(f, "Tracks"),
+            Self::Stock => write!(f, "Stock"),
+        }
+    }
+}
+
+impl TryFrom<String> for TracksState {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Tracks" => Ok(Self::Tracks),
+            "Stock" => Ok(Self::Stock),
+            e => Err(format!("\"{e}\" is not a State")),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct PlaylistsView {
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
@@ -407,4 +434,16 @@ fn build_info_string(list: &submarine::data::PlaylistWithSongs) -> String {
         convert_for_label(i64::from(list.base.duration) * 1000),
         created
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gtk_helper::stack::test_self;
+
+    #[test]
+    fn track_state_conversion() {
+        test_self(TracksState::Tracks);
+        test_self(TracksState::Stock);
+    }
 }
