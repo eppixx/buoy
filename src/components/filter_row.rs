@@ -81,20 +81,6 @@ impl Category {
         ]
     }
 
-    pub fn to_str(&self) -> &str {
-        match self {
-            Self::Title => "title",
-            Self::Year => "year",
-            Self::Cd => "cd",
-            Self::TrackNumber => "track_number",
-            Self::Artist => "artist",
-            Self::Album => "album",
-            Self::Genre => "genre",
-            Self::Duration => "duration",
-            Self::BitRate => "bit_rate",
-        }
-    }
-
     pub fn store(categories: Vec<Self>) -> gio::ListStore {
         let store = gio::ListStore::new::<glib::BoxedAnyObject>();
         for category in categories.iter() {
