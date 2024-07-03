@@ -2,10 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use relm4::{gtk, gtk::prelude::WidgetExt};
 
-use crate::{
-    subsonic::Subsonic,
-    subsonic_cover::{self},
-};
+use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
 
 #[derive(Debug)]
 pub struct Cover {
@@ -27,11 +24,23 @@ enum State {
     Image,
 }
 
-impl State {
-    fn to_str(&self) -> &str {
+impl std::fmt::Display for State {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Stock => "stock",
-            Self::Image => "image",
+            Self::Stock => write!(f, "Stock"),
+            Self::Image => write!(f, "Image"),
+        }
+    }
+}
+
+impl TryFrom<String> for State {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Stock" => Ok(Self::Stock),
+            "Image" => Ok(Self::Image),
+            e => Err(format!("\"{e}\" is not a State")),
         }
     }
 }
@@ -96,10 +105,10 @@ impl relm4::Component for Cover {
     view! {
         gtk::Box {
             model.stack.clone() -> gtk::Stack {
-                add_named[Some(State::Stock.to_str())] = &gtk::Box {
+                add_enumed[State::Stock] = &gtk::Box {
                     add_css_class: "cover",
                 },
-                add_named[Some(State::Image.to_str())] = &model.cover.clone() -> gtk::Image {
+                add_enumed[State::Image] = &model.cover.clone() -> gtk::Image {
                     add_css_class: "card",
                 },
             }
@@ -114,46 +123,44 @@ impl relm4::Component for Cover {
     ) {
         match msg {
             CoverIn::ChangeImage(response) => match response {
-                subsonic_cover::Response::Empty => {
-                    self.stack.set_visible_child_name(State::Stock.to_str())
-                }
+                subsonic_cover::Response::Empty => self.stack.set_visible_child_enum(&State::Stock),
                 subsonic_cover::Response::Loaded(pixbuf) => {
                     self.cover.set_from_pixbuf(Some(&pixbuf));
-                    self.stack.set_visible_child_name(State::Image.to_str());
+                    self.stack.set_visible_child_enum(&State::Image);
                 }
             },
-            CoverIn::LoadId(None) => self.stack.set_visible_child_name(State::Stock.to_str()),
+            CoverIn::LoadId(None) => self.stack.set_visible_child_enum(&State::Stock),
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
             }
             CoverIn::LoadSong(child) => match child.album_id {
-                None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                None => self.stack.set_visible_child_enum(&State::Stock),
                 Some(album_id) => {
                     let album = self.subsonic.borrow().find_album(&album_id);
                     match album {
-                        None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                        None => self.stack.set_visible_child_enum(&State::Stock),
                         Some(album) => match &album.cover_art {
                             Some(id) => sender
                                 .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
-                            None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                            None => self.stack.set_visible_child_enum(&State::Stock),
                         },
                     }
                 }
             },
             CoverIn::LoadAlbumId3(album) => match album.base.cover_art {
-                None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                None => self.stack.set_visible_child_enum(&State::Stock),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadPlaylist(playlist) => match playlist.base.cover_art {
-                None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                None => self.stack.set_visible_child_enum(&State::Stock),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadArtist(artist) => match artist.cover_art {
-                None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                None => self.stack.set_visible_child_enum(&State::Stock),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
@@ -169,13 +176,13 @@ impl relm4::Component for Cover {
     ) {
         match message {
             CoverCmd::ChangeImage(id) => match id {
-                None => self.stack.set_visible_child_name(State::Stock.to_str()),
+                None => self.stack.set_visible_child_enum(&State::Stock),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverCmd::ErrorOccured(title) => {
-                self.stack.set_visible_child_name(State::Stock.to_str());
+                self.stack.set_visible_child_enum(&State::Stock);
                 sender
                     .output(CoverOut::DisplayToast(title))
                     .expect("sending failed");

@@ -36,3 +36,13 @@ impl StackExt for gtk::Stack {
         }
     }
 }
+
+#[cfg(test)]
+pub fn test_self<T>(state: T)
+where
+    T: Display + TryFrom<String> + PartialEq + std::fmt::Debug,
+    <T as TryFrom<std::string::String>>::Error: PartialEq,
+    <T as TryFrom<std::string::String>>::Error: std::fmt::Debug,
+{
+    assert_eq!(Ok(&state), T::try_from(state.to_string()).as_ref());
+}

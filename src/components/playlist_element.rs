@@ -25,7 +25,7 @@ impl PlaylistElement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum State {
     DeleteInProgress,
     Edit,
@@ -55,7 +55,7 @@ impl TryFrom<String> for State {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum EditState {
     Clean,
     Edit,
@@ -312,11 +312,18 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gtk_helper::stack::test_self;
 
     #[test]
     fn test_state_conversion() {
-        State::try_from(State::Normal.to_string()).unwrap();
-        State::try_from(State::Edit.to_string()).unwrap();
-        State::try_from(State::DeleteInProgress.to_string()).unwrap();
+        test_self(State::Normal);
+        test_self(State::Edit);
+        test_self(State::DeleteInProgress);
+    }
+
+    #[test]
+    fn test_edit_state_conversion() {
+        test_self(EditState::Edit);
+        test_self(EditState::Clean);
     }
 }
