@@ -284,7 +284,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 PlaylistElementOut::Clicked(index, list) => {
                     // set every state in PlaylistElement to normal
                     for list in self.playlists.guard().iter() {
-                        list.change_state(State::Normal);
+                        list.change_state(&State::Normal);
                     }
 
                     self.track_stack.set_visible_child_name("tracks");

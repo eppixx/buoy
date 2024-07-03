@@ -3,7 +3,7 @@ use relm4::gtk::{
     prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
 };
 
-use crate::types::Droppable;
+use crate::{gtk_helper::stack::StackExt, types::Droppable};
 
 #[derive(Debug)]
 pub struct PlaylistElement {
@@ -20,8 +20,8 @@ pub struct PlaylistElement {
 }
 
 impl PlaylistElement {
-    pub fn change_state(&self, state: State) {
-        self.main_stack.set_visible_child_name(state.to_str());
+    pub fn change_state(&self, state: &State) {
+        self.main_stack.set_visible_child_enum(state);
     }
 }
 
@@ -32,12 +32,25 @@ pub enum State {
     Normal,
 }
 
-impl State {
-    fn to_str(&self) -> &str {
+impl std::fmt::Display for State {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::DeleteInProgress => "delete",
-            Self::Edit => "edit",
-            Self::Normal => "normal",
+            Self::DeleteInProgress => write!(f, "Delete dialog"),
+            Self::Edit => write!(f, "Editing"),
+            Self::Normal => write!(f, "Normal"),
+        }
+    }
+}
+
+impl TryFrom<String> for State {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Delete dialog" => Ok(Self::DeleteInProgress),
+            "Editing" => Ok(Self::Edit),
+            "Normal" => Ok(Self::Normal),
+            e => Err(format!("\"{e}\" is not a State")),
         }
     }
 }
@@ -114,7 +127,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             add_css_class: "playlist-element",
 
             self.main_stack.clone() -> gtk::Stack {
-                add_named[Some(State::Normal.to_str())] = &gtk::Box {
+                add_enumed[State::Normal] = &gtk::Box {
                     add_css_class: "flat",
                     set_spacing: 5,
                     set_halign: gtk::Align::Fill,
@@ -174,7 +187,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         }
                     }
                 },
-                add_named[Some(State::Edit.to_str())] = &gtk::Box {
+                add_enumed[State::Edit] = &gtk::Box {
                     set_spacing: 10,
 
                     gtk::Box {
@@ -210,7 +223,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         }
                     }
                 },
-                add_named[Some(State::DeleteInProgress.to_str())] = &gtk::Box {
+                add_enumed[State::DeleteInProgress] = &gtk::Box {
                     set_spacing: 10,
 
                     gtk::Label {
@@ -259,7 +272,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     .expect("sending failed");
             }
             PlaylistElementIn::ChangeState(state) => {
-                self.main_stack.set_visible_child_name(state.to_str())
+                self.main_stack.set_visible_child_enum(&state)
             }
             PlaylistElementIn::ConfirmRename => {
                 let text = self.edit_entry.text();
@@ -268,5 +281,17 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 //TODO rename playlist on server
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_state_conversion() {
+        State::try_from(State::Normal.to_string()).unwrap();
+        State::try_from(State::Edit.to_string()).unwrap();
+        State::try_from(State::DeleteInProgress.to_string()).unwrap();
     }
 }
