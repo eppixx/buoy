@@ -5,7 +5,9 @@ use relm4::gtk::{
 
 use std::cmp::Ordering;
 
-#[derive(Debug, Clone)]
+use crate::gtk_helper::stack::StackExt;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Category {
     Title,
     Year,
@@ -30,6 +32,25 @@ impl std::fmt::Display for Category {
             Self::Genre => write!(f, "Genre"),
             Self::Duration => write!(f, "Duration"),
             Self::BitRate => write!(f, "Bit Rate"),
+        }
+    }
+}
+
+impl TryFrom<String> for Category {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Title" => Ok(Self::Title),
+            "Year" => Ok(Self::Year),
+            "Cd" => Ok(Self::Cd),
+            "Track Number" => Ok(Self::TrackNumber),
+            "Artist" => Ok(Self::Artist),
+            "Album" => Ok(Self::Album),
+            "Genre" => Ok(Self::Genre),
+            "Duration" => Ok(Self::Duration),
+            "Bit Rate" => Ok(Self::BitRate),
+            e => Err(format!("\"{e}\" is not a State")),
         }
     }
 }
@@ -282,7 +303,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
             set_margin_bottom: 10,
 
             self.stack.clone() {
-                add_named[Some(Category::Year.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Year] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By year",
@@ -311,7 +332,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::Cd.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Cd] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By cd number",
@@ -340,7 +361,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::TrackNumber.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::TrackNumber] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By track number",
@@ -369,7 +390,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::Duration.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Duration] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By duration",
@@ -398,7 +419,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::BitRate.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::BitRate] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By bit rate",
@@ -427,7 +448,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::Title.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Title] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By title name",
@@ -447,7 +468,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::Artist.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Artist] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By artist name",
@@ -467,7 +488,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::Album.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Album] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By album name",
@@ -487,7 +508,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 },
-                add_named[Some(Category::Genre.to_str())] = &gtk::CenterBox {
+                add_enumed[Category::Genre] = &gtk::CenterBox {
                     #[wrap(Some)]
                     set_start_widget = &gtk::Label {
                         set_text: "By genre",
@@ -517,7 +538,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 .output(FilterRowOut::RemoveFilter(self.index.clone()))
                 .expect("sending failed"),
             Self::Input::SetTo(category) => {
-                self.stack.set_visible_child_name(category.to_str());
+                self.stack.set_visible_child_enum(&category);
             }
             Self::Input::ParameterChanged => {
                 use glib::object::Cast;
@@ -648,5 +669,24 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     .expect("sending failed");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gtk_helper::stack::test_self;
+
+    #[test]
+    fn category_enum_conversion() {
+        test_self(Category::Title);
+        test_self(Category::Year);
+        test_self(Category::Cd);
+        test_self(Category::TrackNumber);
+        test_self(Category::Artist);
+        test_self(Category::Album);
+        test_self(Category::Genre);
+        test_self(Category::Duration);
+        test_self(Category::BitRate);
     }
 }
