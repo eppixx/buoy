@@ -2,6 +2,10 @@ contents > box {
   margin: 15px;
 }
 
+.entry-error {
+  color: red;
+}
+
 .window-titlebar {
   min-height: 35px;
   margin: 0px 5px;

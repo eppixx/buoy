@@ -554,17 +554,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = self.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
-                            // self.year_entry.set_secondary_icon_name(None);
                             self.year_entry.set_tooltip_text(None);
+                            self.year_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
-                            // self.year_entry
-                            //     .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            // self.year_entry.set_secondary_icon_tooltip_text(Some(
-                            //     "Needs to input a valid number",
-                            // ));
-                            self.year_entry
-                                .set_tooltip_text(Some("Needs to input a valid number"));
+                            self.year_entry.add_css_class("entry-error");
+                            self.year_entry.set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
                     Category::Cd => {
