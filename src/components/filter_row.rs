@@ -210,7 +210,7 @@ pub struct FilterRow {
     index: relm4::factory::DynamicIndex,
     stack: gtk::Stack,
 
-    year_entry: gtk::Entry,
+    year_entry: gtk::SpinButton,
     year_dropdown: gtk::DropDown,
     cd_entry: gtk::Entry,
     cd_dropdown: gtk::DropDown,
@@ -264,7 +264,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
             index: index.clone(),
             stack: gtk::Stack::default(),
 
-            year_entry: gtk::Entry::default(),
+            year_entry: gtk::SpinButton::default(),
             year_dropdown: gtk::DropDown::default(),
             cd_entry: gtk::Entry::default(),
             cd_dropdown: gtk::DropDown::default(),
@@ -306,9 +306,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     #[wrap(Some)]
                     set_end_widget = &gtk::Box {
                         set_spacing: 5,
-                        self.year_entry.clone() -> gtk::Entry {
+                        self.year_entry.clone() -> gtk::SpinButton {
+                            set_digits: 0,
+                            set_value: 2010f64,
+                            set_adjustment: &gtk::Adjustment::new(2010f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
+                            set_hexpand: true,
                             set_focus_on_click: false,
-                            set_text: "0",
                             connect_text_notify => Self::Input::ParameterChanged,
                         },
                         gtk::Button {
@@ -551,15 +554,15 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = self.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
-                            self.year_entry.set_secondary_icon_name(None);
+                            // self.year_entry.set_secondary_icon_name(None);
                             self.year_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            self.year_entry
-                                .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            self.year_entry.set_secondary_icon_tooltip_text(Some(
-                                "Needs to input a valid number",
-                            ));
+                            // self.year_entry
+                            //     .set_secondary_icon_name(Some("dialog-error-symbolic"));
+                            // self.year_entry.set_secondary_icon_tooltip_text(Some(
+                            //     "Needs to input a valid number",
+                            // ));
                             self.year_entry
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
