@@ -128,14 +128,14 @@ impl Category {
 pub enum Filter {
     Favorite(bool),
     Title(String),
-    Year(Ordering, usize),
-    Cd(Ordering, usize),
+    Year(Ordering, i32),
+    Cd(Ordering, i32),
     TrackNumber(Ordering, usize),
     Artist(String),
     Album(String),
     Genre(String),
     BitRate(Ordering, usize),
-    Duration(Ordering, usize),
+    Duration(Ordering, i32),
 }
 
 #[derive(Debug, Clone)]
@@ -549,7 +549,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.year_entry.text().parse::<usize>() {
+                        if let Ok(number) = self.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
                             self.year_entry.set_secondary_icon_name(None);
                             self.year_entry.set_tooltip_text(None);
@@ -570,7 +570,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.cd_entry.text().parse::<usize>() {
+                        if let Ok(number) = self.cd_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Cd(order.order, number));
                             self.cd_entry.set_secondary_icon_name(None);
                             self.cd_entry.set_tooltip_text(None);
@@ -613,7 +613,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.duration_entry.text().parse::<usize>() {
+                        if let Ok(number) = self.duration_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Duration(order.order, number));
                             self.duration_entry.set_secondary_icon_name(None);
                             self.duration_entry.set_tooltip_text(None);

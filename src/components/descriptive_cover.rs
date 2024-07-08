@@ -47,7 +47,7 @@ pub struct DescriptiveCover {
     subtitle_label: gtk::Label,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DescriptiveCoverOut {
     DisplayToast(String),
 }

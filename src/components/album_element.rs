@@ -19,9 +19,16 @@ use crate::{
 #[derive(Debug)]
 pub struct AlbumElement {
     cover: relm4::Controller<DescriptiveCover>,
+    init: AlbumElementInit,
 }
 
-#[derive(Debug)]
+impl AlbumElement {
+    pub fn info(&self) -> &AlbumElementInit {
+        &self.init
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum AlbumElementIn {
     DescriptiveCover(DescriptiveCoverOut),
 }
@@ -72,7 +79,10 @@ impl relm4::SimpleComponent for AlbumElement {
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
             .launch((subsonic, builder))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
-        let model = Self { cover };
+        let model = Self {
+            cover,
+            init: init.clone(),
+        };
 
         // tooltip string
         let tooltip = match &init {

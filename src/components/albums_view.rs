@@ -11,9 +11,11 @@ use relm4::{
 
 use super::album_element::AlbumElementOut;
 use crate::{
-    components::album_element::{AlbumElement, AlbumElementInit},
-    components::filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
-    components::filter_row::Category,
+    components::{
+        album_element::{AlbumElement, AlbumElementInit},
+        filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
+        filter_row::{Category, Filter},
+    },
     subsonic::Subsonic,
 };
 
@@ -162,13 +164,87 @@ impl relm4::component::Component for AlbumsView {
                     score.is_some()
                 });
             }
-            AlbumsViewIn::FilterBox(msg) => match msg {
-                _ => sender
-                    .output(AlbumsViewOut::DisplayToast(format!(
-                        "filter event: {msg:?}"
-                    )))
-                    .unwrap(),
-            },
+            AlbumsViewIn::FilterBox(FilterBoxOut::FiltersChanged) => {
+                let filters = self.filters.model().get_filters();
+                //TODO fix hacky way of figuring out what element we are iterating over
+                let albums: Vec<_> = self
+                    .album_list
+                    .iter()
+                    .map(|controller| controller.model().info().clone())
+                    .collect();
+                self.albums.set_filter_func(move |element| {
+                    use glib::object::Cast;
+                    let button = element.first_child().unwrap();
+                    let bo = button.first_child().unwrap();
+                    let cover = bo.first_child().unwrap();
+                    let title = cover.next_sibling().unwrap();
+                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+                    let artist = title.next_sibling().unwrap();
+                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+
+                    let mut visible = true;
+                    for album in &albums {
+                        match album {
+                            AlbumElementInit::Child(child) => {
+                                if child.title == title.text()
+                                    && child.artist == Some(artist.text().into())
+                                {
+                                    for filter in &filters {
+                                        match filter {
+                                            Filter::Favorite(value)
+                                                if *value != child.starred.is_some() =>
+                                            {
+                                                visible = false
+                                            }
+                                            //TODO Favorite false, true and NONE set
+                                            //TODO add matching for regular expressions
+                                            Filter::Album(value) if value != &title.text() => {
+                                                visible = false
+                                            }
+                                            Filter::Artist(value) if value != &artist.text() => {
+                                                visible = false
+                                            }
+                                            Filter::Year(order, value) => {
+                                                if let Some(year) = &child.year {
+                                                    if year.cmp(value) != *order {
+                                                        visible = false;
+                                                    }
+                                                } else {
+                                                    visible = false;
+                                                }
+                                            }
+                                            Filter::Cd(order, value) => {
+                                                if let Some(disc) = &child.disc_number {
+                                                    if disc.cmp(value) != *order {
+                                                        visible = false;
+                                                    }
+                                                } else {
+                                                    visible = false;
+                                                }
+                                            }
+                                            Filter::Genre(value) if value != &artist.text() => {
+                                                visible = false
+                                            }
+                                            Filter::Duration(order, value) => {
+                                                if let Some(duration) = &child.duration {
+                                                    if duration.cmp(value) != *order {
+                                                        visible = false;
+                                                    }
+                                                } else {
+                                                    visible = false;
+                                                }
+                                            }
+                                            _ => unreachable!("there are filters that shouldnt be"),
+                                        }
+                                    }
+                                }
+                            }
+                            AlbumElementInit::AlbumId3(album) => {}
+                        }
+                    }
+                    visible
+                });
+            }
             AlbumsViewIn::ClearFilters => self.filters.emit(FilterBoxIn::ClearFilters),
         }
     }
