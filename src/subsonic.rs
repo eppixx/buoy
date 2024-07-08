@@ -15,7 +15,7 @@ enum Error {
     NoClient,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Subsonic {
     scan_status: Option<i64>,
     artists: Vec<submarine::data::ArtistId3>,
