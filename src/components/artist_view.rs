@@ -205,6 +205,8 @@ impl relm4::Component for ArtistView {
             ArtistViewCmd::LoadedArtist(Ok(artist)) => {
                 if let Some(bio) = artist.base.biography {
                     self.bio = bio;
+                } else {
+                    self.bio = String::from("No biography found");
                 }
 
                 // TODO do smth with similar artists
