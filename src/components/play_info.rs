@@ -44,7 +44,7 @@ impl relm4::SimpleComponent for PlayInfo {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             covers: Cover::builder()
-                .launch((subsonic, child.clone().and_then(|child| child.cover_art)))
+                .launch((subsonic, child.clone().and_then(|child| child.cover_art), false))
                 .forward(sender.input_sender(), PlayInfoIn::Cover),
             title: String::from("Nothing is played currently"),
             artist: String::new(),

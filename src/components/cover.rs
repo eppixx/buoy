@@ -7,10 +7,12 @@ use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
 #[derive(Debug)]
 pub struct Cover {
     subsonic: Rc<RefCell<Subsonic>>,
+    id: Option<String>,
 
     // stack shows either a stock image, a loading wheel or a loaded cover
     stack: gtk::Stack,
     cover: gtk::Image,
+    favorite: gtk::Image,
 }
 
 impl Cover {
@@ -80,24 +82,35 @@ pub enum CoverCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
-    type Init = (Rc<RefCell<Subsonic>>, Option<String>);
+    type Init = (Rc<RefCell<Subsonic>>, Option<String>, bool);
     type Input = CoverIn;
     type Output = CoverOut;
     type Widgets = CoverWidgets;
     type CommandOutput = CoverCmd;
 
     fn init(
-        (subsonic, id): Self::Init,
+        (subsonic, id, show_favorite): Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             subsonic,
+            id: id.clone(),
             stack: gtk::Stack::default(),
             cover: gtk::Image::default(),
+            favorite: gtk::Image::default(),
         };
 
         let widgets = view_output!();
+
+        if show_favorite {
+            model.favorite.set_halign(gtk::Align::End);
+            model.favorite.set_valign(gtk::Align::End);
+            model.favorite.set_width_request(24);
+            model.favorite.set_height_request(24);
+            model.favorite.set_icon_name(Some("non-starred-symbolic"));
+            widgets.overlay.add_overlay(&model.favorite.clone());
+        }
 
         sender.input(CoverIn::LoadId(id));
         relm4::ComponentParts { model, widgets }
@@ -105,13 +118,17 @@ impl relm4::Component for Cover {
 
     view! {
         gtk::Box {
-            model.stack.clone() -> gtk::Stack {
-                add_enumed[State::Stock] = &gtk::Box {
-                    add_css_class: "cover",
-                },
-                add_enumed[State::Image] = &model.cover.clone() -> gtk::Image {
-                    add_css_class: "card",
-                },
+            #[name = "overlay"]
+            gtk::Overlay {
+                #[wrap(Some)]
+                set_child = &model.stack.clone() -> gtk::Stack {
+                    add_enumed[State::Stock] = &gtk::Box {
+                        add_css_class: "cover",
+                    },
+                    add_enumed[State::Image] = &model.cover.clone() -> gtk::Image {
+                        add_css_class: "card",
+                    },
+                }
             }
         }
     }

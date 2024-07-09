@@ -53,7 +53,7 @@ impl relm4::SimpleComponent for ArtistElement {
         let builder =
             DescriptiveCoverInit::new(init.name.clone(), init.cover_art.clone(), None::<&str>);
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch((subsonic, builder))
+            .launch((subsonic, builder, true))
             .forward(sender.input_sender(), ArtistElementIn::DescriptiveCover);
         let model = Self {
             cover,

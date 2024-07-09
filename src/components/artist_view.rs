@@ -60,7 +60,7 @@ impl relm4::Component for ArtistView {
         let model = Self {
             subsonic: subsonic.clone(),
             cover: Cover::builder()
-                .launch((subsonic, init.clone().cover_art))
+                .launch((subsonic, init.clone().cover_art, true))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),

@@ -84,7 +84,7 @@ impl relm4::Component for AlbumView {
 
         let model = Self {
             cover: Cover::builder()
-                .launch((subsonic.clone(), cover))
+                .launch((subsonic.clone(), cover, true))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             title: String::from("Unkonwn Title"),
             artist: None,

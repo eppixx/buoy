@@ -131,7 +131,7 @@ impl FactoryComponent for QueueSong {
         sender: FactorySender<Self>,
     ) -> Self {
         let cover = Cover::builder()
-            .launch((subsonic, init.cover_art.clone()))
+            .launch((subsonic, init.cover_art.clone(), false))
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.model().add_css_class_image("size32");
         cover.emit(CoverIn::LoadSong(Box::new(init.clone())));

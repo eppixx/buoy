@@ -77,7 +77,7 @@ impl relm4::SimpleComponent for AlbumElement {
         };
 
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch((subsonic, builder))
+            .launch((subsonic, builder, true))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self {
             cover,
