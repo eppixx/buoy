@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, ToggleButtonExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, ToggleButtonExt, WidgetExt}, FlowBoxChild,
     },
     ComponentController,
 };
@@ -188,14 +188,7 @@ impl relm4::component::Component for AlbumsView {
                     .map(|controller| controller.model().info().clone())
                     .collect();
                 self.albums.set_filter_func(move |element| {
-                    use glib::object::Cast;
-                    let button = element.first_child().unwrap();
-                    let bo = button.first_child().unwrap();
-                    let cover = bo.first_child().unwrap();
-                    let title = cover.next_sibling().unwrap();
-                    let title = title.downcast::<gtk::Label>().expect("unepected element");
-                    let artist = title.next_sibling().unwrap();
-                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+                    let (title, artist) = get_info_of_flowboxchild(element);
 
                     for album in &albums {
                         match album {
@@ -227,14 +220,7 @@ impl relm4::component::Component for AlbumsView {
                     .map(|controller| controller.model().info().clone())
                     .collect();
                 self.albums.set_filter_func(move |element| {
-                    use glib::object::Cast;
-                    let button = element.first_child().unwrap();
-                    let bo = button.first_child().unwrap();
-                    let cover = bo.first_child().unwrap();
-                    let title = cover.next_sibling().unwrap();
-                    let title = title.downcast::<gtk::Label>().expect("unepected element");
-                    let artist = title.next_sibling().unwrap();
-                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+                    let (title, artist) = get_info_of_flowboxchild(element);
 
                     let mut visible = true;
                     for album in &albums {
@@ -302,4 +288,17 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::ClearFilters => self.filters.emit(FilterBoxIn::ClearFilters),
         }
     }
+}
+
+fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) {
+    use glib::object::Cast;
+    let button = element.first_child().unwrap();
+    let bo = button.first_child().unwrap();
+    let cover = bo.first_child().unwrap();
+    let title = cover.next_sibling().unwrap();
+    let title = title.downcast::<gtk::Label>().expect("unepected element");
+    let artist = title.next_sibling().unwrap();
+    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+
+    (title, artist)
 }
