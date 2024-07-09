@@ -19,6 +19,13 @@ use super::descriptive_cover::DescriptiveCoverOut;
 #[derive(Debug)]
 pub struct ArtistElement {
     cover: relm4::Controller<DescriptiveCover>,
+    init: submarine::data::ArtistId3,
+}
+
+impl ArtistElement {
+    pub fn info(&self) -> &submarine::data::ArtistId3 {
+        &self.init
+    }
 }
 
 #[derive(Debug)]
@@ -48,7 +55,10 @@ impl relm4::SimpleComponent for ArtistElement {
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
             .launch((subsonic, builder))
             .forward(sender.input_sender(), ArtistElementIn::DescriptiveCover);
-        let model = Self { cover };
+        let model = Self {
+            cover,
+            init: init.clone(),
+        };
 
         let widgets = view_output!();
 

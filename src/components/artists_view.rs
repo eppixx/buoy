@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, ToggleButtonExt, WidgetExt}, FlowBoxChild,
     },
     loading_widgets::LoadingWidgets,
     view, Component, ComponentController,
@@ -28,6 +28,7 @@ pub enum ArtistsViewOut {
 pub enum ArtistsViewIn {
     ArtistElement(ArtistElementOut),
     SearchChanged(String),
+    ShowStarred(bool),
 }
 
 #[relm4::component(async, pub)]
@@ -91,10 +92,29 @@ impl relm4::component::AsyncComponent for ArtistsView {
             set_hexpand: true,
 
             gtk::WindowHandle {
-                gtk::Label {
-                    add_css_class: "h2",
-                    set_label: "Artists",
-                    set_halign: gtk::Align::Center,
+                gtk::CenterBox {
+                    #[wrap(Some)]
+                    set_center_widget = &gtk::Label {
+                        add_css_class: "h2",
+                        set_label: "Artists",
+                        set_halign: gtk::Align::Center,
+                    },
+
+                    #[wrap(Some)]
+                    set_end_widget = &gtk::Box {
+                        gtk::ToggleButton {
+                            set_icon_name: "non-starred-symbolic",
+                            connect_clicked[sender] => move |btn| {
+                                if btn.is_active() {
+                                    btn.set_icon_name("starred-symbolic");
+                                } else {
+                                    btn.set_icon_name("non-starred-symbolic");
+                                }
+                                sender.input(Self::Input::ShowStarred(btn.is_active()));
+                            },
+                            set_tooltip_text: Some("Toggle showing favortited albums"),
+                        },
+                    }
                 },
             },
 
@@ -124,22 +144,47 @@ impl relm4::component::AsyncComponent for ArtistsView {
             },
             ArtistsViewIn::SearchChanged(search) => {
                 self.artists.set_filter_func(move |element| {
-                    use glib::object::Cast;
+                    let title = get_title_of_flowboxchild(element);
 
-                    // get the Label of the FlowBoxChild
-                    let bo = element.first_child().unwrap();
-                    let button = bo.first_child().unwrap();
-                    let bo = button.first_child().unwrap();
-                    let cover = bo.first_child().unwrap();
-                    let title = cover.next_sibling().unwrap();
-                    let title = title.downcast::<gtk::Label>().expect("unepected element");
-
-                    //actual matching
+                    //fuzzy matching
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                     let score = matcher.fuzzy_match(&title.text(), &search);
                     score.is_some()
                 });
             }
+            ArtistsViewIn::ShowStarred(false) => {
+                self.artists.set_filter_func(move |_element| true);
+            }
+            ArtistsViewIn::ShowStarred(true) => {
+                //TODO find a better way to match which element is starred
+                //gather artists
+                let artists: Vec<_> = self
+                    .artist_list
+                    .iter()
+                    .map(|controller| controller.model().info().clone())
+                    .collect();
+                self.artists.set_filter_func(move |element| {
+                    let title = get_title_of_flowboxchild(element);
+                    for artist in &artists {
+                        // if artist matches text check starred
+                        if artist.name == title.text() {
+                            return artist.starred.is_some();
+                        }
+                    }
+                    true
+                });
+            }
         }
     }
+}
+
+fn get_title_of_flowboxchild(element: &FlowBoxChild) -> gtk::Label {
+    use glib::object::Cast;
+    let bo = element.first_child().unwrap();
+    let button = bo.first_child().unwrap();
+    let bo = button.first_child().unwrap();
+    let cover = bo.first_child().unwrap();
+    let title = cover.next_sibling().unwrap();
+    let title = title.downcast::<gtk::Label>().expect("unepected element");
+    title
 }
