@@ -104,6 +104,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     set_end_widget = &gtk::Box {
                         gtk::ToggleButton {
                             set_icon_name: "non-starred-symbolic",
+                            set_width_request: 50,
                             connect_clicked[sender] => move |btn| {
                                 if btn.is_active() {
                                     btn.set_icon_name("starred-symbolic");

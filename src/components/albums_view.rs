@@ -97,6 +97,7 @@ impl relm4::component::Component for AlbumsView {
 
                         gtk::ToggleButton {
                             set_icon_name: "non-starred-symbolic",
+                            set_width_request: 50,
                             connect_clicked[sender] => move |btn| {
                                 if btn.is_active() {
                                     btn.set_icon_name("starred-symbolic");
