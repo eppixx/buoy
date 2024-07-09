@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, ToggleButtonExt, WidgetExt},
     },
     ComponentController,
 };
@@ -38,6 +38,7 @@ pub enum AlbumsViewIn {
     SearchChanged(String),
     FilterBox(FilterBoxOut),
     ClearFilters,
+    ShowStarred(bool),
 }
 
 #[relm4::component(pub)]
@@ -93,6 +94,19 @@ impl relm4::component::Component for AlbumsView {
                     #[wrap(Some)]
                     set_end_widget = &gtk::Box {
                         set_spacing: 10,
+
+                        gtk::ToggleButton {
+                            set_icon_name: "non-starred-symbolic",
+                            connect_clicked[sender] => move |btn| {
+                                if btn.is_active() {
+                                    btn.set_icon_name("starred-symbolic");
+                                } else {
+                                    btn.set_icon_name("non-starred-symbolic");
+                                }
+                                sender.input(Self::Input::ShowStarred(btn.is_active()));
+                            },
+                            set_tooltip_text: Some("Toggle showing favortited albums"),
+                        },
 
                         gtk::MenuButton {
                             set_label: "Filter ",
@@ -162,6 +176,46 @@ impl relm4::component::Component for AlbumsView {
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                     let score = matcher.fuzzy_match(&title_artist, &search);
                     score.is_some()
+                });
+            }
+            AlbumsViewIn::ShowStarred(false) => {
+                self.albums.set_filter_func(move |_element| true);
+            }
+            AlbumsViewIn::ShowStarred(true) => {
+                let albums: Vec<_> = self
+                    .album_list
+                    .iter()
+                    .map(|controller| controller.model().info().clone())
+                    .collect();
+                self.albums.set_filter_func(move |element| {
+                    use glib::object::Cast;
+                    let button = element.first_child().unwrap();
+                    let bo = button.first_child().unwrap();
+                    let cover = bo.first_child().unwrap();
+                    let title = cover.next_sibling().unwrap();
+                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+                    let artist = title.next_sibling().unwrap();
+                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+
+                    for album in &albums {
+                        match album {
+                            AlbumElementInit::Child(child) => {
+                                if child.title == title.text()
+                                    && child.artist == Some(artist.text().into())
+                                {
+                                    return child.starred.is_some();
+                                }
+                            }
+                            AlbumElementInit::AlbumId3(album) => {
+                                if album.name == title.text()
+                                    && album.artist == Some(artist.text().into())
+                                {
+                                    return album.starred.is_some();
+                                }
+                            }
+                        }
+                    }
+                    true
                 });
             }
             AlbumsViewIn::FilterBox(FilterBoxOut::FiltersChanged) => {

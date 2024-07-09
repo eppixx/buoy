@@ -559,7 +559,8 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         } else {
                             self.filter = None;
                             self.year_entry.add_css_class("entry-error");
-                            self.year_entry.set_tooltip_text(Some("Please enter a valid number"));
+                            self.year_entry
+                                .set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
                     Category::Cd => {
