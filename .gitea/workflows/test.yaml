@@ -10,4 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libgstreamer1.0-dev libgranite-7-dev && cargo build
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libgstreamer1.0-dev libgranite-7-dev && cargo build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: buoy
+          path: target/release/buoy
