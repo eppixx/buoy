@@ -35,6 +35,7 @@ impl Playback {
         let pipeline = gst::Pipeline::with_name("playback");
         // Create the elements
         let source = gst::ElementFactory::make_with_name("uridecodebin", Some("source"))?;
+        source.set_property("download", true);
         let convert = gst::ElementFactory::make_with_name("audioconvert", Some("convert"))?;
         let volume = gst::ElementFactory::make_with_name("volume", Some("volume"))?;
         let equalizer =
