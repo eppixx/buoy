@@ -43,13 +43,14 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(
-            &item
-                .item
-                .track
-                .map(|i| i.to_string())
-                .unwrap_or(String::from(" ")),
-        );
+        let mut text = String::new();
+        if let Some(cd) = item.item.disc_number {
+            text = format!("{cd}.");
+        }
+        if let Some(track) = item.item.track {
+            text = format!("{text}{track:02}")
+        }
+        label.set_label(&text);
         b.add_controller(item.get_drag_src());
     }
 
