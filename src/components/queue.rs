@@ -249,9 +249,18 @@ impl relm4::Component for Queue {
                         },
 
                         #[wrap(Some)]
-                        set_placeholder = &gtk::Label {
-                            add_css_class: "h3",
-                            set_label: "Queue is empty\nDrop music here",
+                        set_placeholder = &gtk::Box {
+                            set_valign: gtk::Align::Center,
+                            set_orientation: gtk::Orientation::Vertical,
+
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_label: "Queue is empty",
+                            },
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                set_label: "Drag music here to add it",
+                            },
 
                             add_controller = gtk::DropTarget {
                                 set_actions: gdk::DragAction::MOVE,
