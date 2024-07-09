@@ -187,6 +187,5 @@ fn get_title_of_flowboxchild(element: &FlowBoxChild) -> gtk::Label {
     let bo = button.first_child().unwrap();
     let cover = bo.first_child().unwrap();
     let title = cover.next_sibling().unwrap();
-    let title = title.downcast::<gtk::Label>().expect("unepected element");
-    title
+    title.downcast::<gtk::Label>().expect("unepected element")
 }
