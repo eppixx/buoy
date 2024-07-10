@@ -172,8 +172,8 @@ impl Subsonic {
         &self.album_list
     }
 
-    pub fn find_album(&self, id: &str) -> Option<submarine::data::Child> {
-        self.album_list.iter().find(|album| album.id == id).cloned()
+    pub fn find_album(&self, id: impl AsRef<str>) -> Option<submarine::data::Child> {
+        self.album_list.iter().find(|album| album.id == id.as_ref()).cloned()
     }
 
     pub fn playlists(&self) -> &Vec<submarine::data::PlaylistWithSongs> {
