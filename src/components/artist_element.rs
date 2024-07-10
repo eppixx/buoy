@@ -11,7 +11,7 @@ use relm4::{
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 use super::descriptive_cover::DescriptiveCoverOut;
@@ -53,7 +53,7 @@ impl relm4::SimpleComponent for ArtistElement {
         let builder =
             DescriptiveCoverInit::new(init.name.clone(), init.cover_art.clone(), None::<&str>);
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch((subsonic, builder, true))
+            .launch((subsonic, builder, true, Some(Id::artist(init.id.clone()))))
             .forward(sender.input_sender(), ArtistElementIn::DescriptiveCover);
         let model = Self {
             cover,

@@ -3,11 +3,12 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{gtk, gtk::prelude::WidgetExt};
 
 use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
+use crate::types::Id;
 
 #[derive(Debug)]
 pub struct Cover {
     subsonic: Rc<RefCell<Subsonic>>,
-    id: Option<String>,
+    id: Option<Id>,
 
     // stack shows either a stock image, a loading wheel or a loaded cover
     stack: gtk::Stack,
@@ -82,20 +83,20 @@ pub enum CoverCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
-    type Init = (Rc<RefCell<Subsonic>>, Option<String>, bool);
+    type Init = (Rc<RefCell<Subsonic>>, Option<String>, bool, Option<Id>);
     type Input = CoverIn;
     type Output = CoverOut;
     type Widgets = CoverWidgets;
     type CommandOutput = CoverCmd;
 
     fn init(
-        (subsonic, id, show_favorite): Self::Init,
+        (subsonic, id, show_favorite, typ): Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             subsonic,
-            id: id.clone(),
+            id: typ,
             stack: gtk::Stack::default(),
             cover: gtk::Image::default(),
             favorite: gtk::Image::default(),
@@ -108,7 +109,30 @@ impl relm4::Component for Cover {
             model.favorite.set_valign(gtk::Align::End);
             model.favorite.set_width_request(24);
             model.favorite.set_height_request(24);
-            model.favorite.set_icon_name(Some("non-starred-symbolic"));
+
+            if let Some(typ) = &model.id {
+                let mut starred = false;
+                match typ {
+                    Id::Album(id) => {
+                        let album = model.subsonic.borrow().find_album(id);
+                        if let Some(album) = album {
+                            starred = album.starred.is_some();
+                        }
+                    }
+                    Id::Artist(id) => {
+                        let artist = model.subsonic.borrow().find_artist(id);
+                        if let Some(artist) = artist {
+                            starred = artist.starred.is_some();
+                        }
+                    }
+                    Id::Song(_id) | Id::Playlist(_id) => {} // cant be favorited
+                }
+                if starred {
+                    model.favorite.set_icon_name(Some("starred-symbolic"));
+                }
+            } else {
+                model.favorite.set_icon_name(Some("non-starred-symbolic"));
+            }
             widgets.overlay.add_overlay(&model.favorite.clone());
         }
 
@@ -151,24 +175,38 @@ impl relm4::Component for Cover {
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
             }
-            CoverIn::LoadSong(child) => match child.album_id {
-                None => self.stack.set_visible_child_enum(&State::Stock),
-                Some(album_id) => {
-                    let album = self.subsonic.borrow().find_album(&album_id);
-                    match album {
-                        None => self.stack.set_visible_child_enum(&State::Stock),
-                        Some(album) => match &album.cover_art {
-                            Some(id) => sender
-                                .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
+            CoverIn::LoadSong(child) => {
+                self.favorite.set_icon_name(Some("starred-symbolic"));
+                if child.starred.is_some() {
+                    println!("song starred");
+                    self.favorite.set_icon_name(Some("starred-symbolic"));
+                }
+                match child.album_id {
+                    None => self.stack.set_visible_child_enum(&State::Stock),
+                    Some(album_id) => {
+                        let album = self.subsonic.borrow().find_album(album_id);
+                        match album {
                             None => self.stack.set_visible_child_enum(&State::Stock),
-                        },
+                            Some(album) => match &album.cover_art {
+                                Some(id) => sender
+                                    .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
+                                None => self.stack.set_visible_child_enum(&State::Stock),
+                            },
+                        }
                     }
                 }
             },
-            CoverIn::LoadAlbumId3(album) => match album.base.cover_art {
-                None => self.stack.set_visible_child_enum(&State::Stock),
-                Some(id) => {
-                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+            CoverIn::LoadAlbumId3(album) => {
+                self.favorite.set_icon_name(Some("starred-symbolic"));
+                if album.base.starred.is_some() {
+                    println!("album starred");
+                    self.favorite.set_icon_name(Some("starred-symbolic"));
+                }
+                match album.base.cover_art {
+                    None => self.stack.set_visible_child_enum(&State::Stock),
+                    Some(id) => {
+                        sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+                    }
                 }
             },
             CoverIn::LoadPlaylist(playlist) => match playlist.base.cover_art {
@@ -177,10 +215,17 @@ impl relm4::Component for Cover {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
-            CoverIn::LoadArtist(artist) => match artist.cover_art {
-                None => self.stack.set_visible_child_enum(&State::Stock),
-                Some(id) => {
-                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+            CoverIn::LoadArtist(artist) => {
+                self.favorite.set_icon_name(Some("starred-symbolic"));
+                if artist.starred.is_some() {
+                    println!("artist starred");
+                    self.favorite.set_icon_name(Some("starred-symbolic"));
+                }
+                match artist.cover_art {
+                    None => self.stack.set_visible_child_enum(&State::Stock),
+                    Some(id) => {
+                        sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+                    }
                 }
             },
         }

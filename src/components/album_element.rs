@@ -13,7 +13,7 @@ use crate::{
     common::convert_for_label,
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -57,14 +57,14 @@ impl relm4::SimpleComponent for AlbumElement {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         // init cover
-        let (builder, drop) = match &init {
+        let (builder, drop, id) = match &init {
             AlbumElementInit::AlbumId3(id3) => {
                 let builder = DescriptiveCoverInit::new(
                     id3.name.clone(),
                     id3.cover_art.clone(),
                     id3.artist.clone(),
                 );
-                (builder, Droppable::Album(id3.clone()))
+                (builder, Droppable::Album(id3.clone()), id3.id.clone())
             }
             AlbumElementInit::Child(child) => {
                 let builder = DescriptiveCoverInit::new(
@@ -72,12 +72,12 @@ impl relm4::SimpleComponent for AlbumElement {
                     child.cover_art.clone(),
                     child.artist.clone(),
                 );
-                (builder, Droppable::AlbumChild(child.clone()))
+                (builder, Droppable::AlbumChild(child.clone()), child.id.clone())
             }
         };
 
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch((subsonic, builder, true))
+            .launch((subsonic, builder, true, Some(Id::album(id))))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self {
             cover,

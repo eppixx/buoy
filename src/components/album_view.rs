@@ -16,7 +16,7 @@ use crate::factory::playlist_tracks_row::{
 };
 use crate::{
     client::Client, common::convert_for_label, components::cover::CoverIn, subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -66,9 +66,9 @@ impl relm4::Component for AlbumView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let cover = match init.clone() {
-            AlbumViewInit::Child(child) => child.cover_art,
-            AlbumViewInit::AlbumId3(album) => album.cover_art,
+        let (cover, id) = match init.clone() {
+            AlbumViewInit::Child(child) => (child.cover_art, child.id),
+            AlbumViewInit::AlbumId3(album) => (album.cover_art, album.id),
         };
 
         let mut tracks = relm4::typed_view::column::TypedColumnView::<
@@ -84,7 +84,7 @@ impl relm4::Component for AlbumView {
 
         let model = Self {
             cover: Cover::builder()
-                .launch((subsonic.clone(), cover, true))
+                .launch((subsonic.clone(), cover, true, Some(Id::album(id))))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             title: String::from("Unkonwn Title"),
             artist: None,

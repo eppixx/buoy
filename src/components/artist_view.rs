@@ -13,7 +13,7 @@ use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
-use crate::{client::Client, subsonic::Subsonic, types::Droppable};
+use crate::{client::Client, subsonic::Subsonic, types::{Droppable, Id}};
 
 #[derive(Debug)]
 pub struct ArtistView {
@@ -60,7 +60,7 @@ impl relm4::Component for ArtistView {
         let model = Self {
             subsonic: subsonic.clone(),
             cover: Cover::builder()
-                .launch((subsonic, init.clone().cover_art, true))
+                .launch((subsonic, init.clone().cover_art, true, Some(Id::artist(init.id.clone()))))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),

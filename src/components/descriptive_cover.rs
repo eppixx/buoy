@@ -10,10 +10,11 @@ use relm4::{
 
 use super::cover::{Cover, CoverOut};
 use crate::subsonic::Subsonic;
+use crate::types::Id;
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverInit {
-    id: Option<String>,
+    cover_id: Option<String>,
     title: String,
     subtitle: Option<String>,
 }
@@ -21,11 +22,11 @@ pub struct DescriptiveCoverInit {
 impl DescriptiveCoverInit {
     pub fn new(
         title: impl Into<String>,
-        id: Option<String>,
+        cover_id: Option<String>,
         subtitle: Option<impl Into<String>>,
     ) -> Self {
         Self {
-            id,
+            cover_id,
             title: title.into(),
             subtitle: subtitle.map(|s| s.into()),
         }
@@ -54,19 +55,19 @@ pub enum DescriptiveCoverOut {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for DescriptiveCover {
-    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverInit, bool);
+    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverInit, bool, Option<Id>);
     type Input = DescriptiveCoverIn;
     type Output = DescriptiveCoverOut;
     type Widgets = CoverWidgets;
 
     fn init(
-        (subsonic, init, show_favorite): Self::Init,
+        (subsonic, init, show_favorite, id): Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch((subsonic, init.id, show_favorite))
+                .launch((subsonic, init.cover_id, show_favorite, id))
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: init.title,
             subtitle: init.subtitle,

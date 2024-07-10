@@ -115,7 +115,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             track_stack: gtk::Stack::default(),
             tracks,
             info_cover: Cover::builder()
-                .launch((init.clone(), None, false))
+                .launch((init.clone(), None, false, None))
                 .forward(sender.input_sender(), PlaylistsViewIn::Cover),
             info_cover_controller: gtk::DragSource::default(),
             info_title: gtk::Label::default(),
