@@ -77,8 +77,6 @@ pub enum CoverOut {
 
 #[derive(Debug)]
 pub enum CoverCmd {
-    ChangeImage(Option<String>),
-    ErrorOccured(String),
 }
 
 #[relm4::component(pub)]
@@ -234,22 +232,10 @@ impl relm4::Component for Cover {
     fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        sender: relm4::ComponentSender<Self>,
+        _sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
-            CoverCmd::ChangeImage(id) => match id {
-                None => self.stack.set_visible_child_enum(&State::Stock),
-                Some(id) => {
-                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
-                }
-            },
-            CoverCmd::ErrorOccured(title) => {
-                self.stack.set_visible_child_enum(&State::Stock);
-                sender
-                    .output(CoverOut::DisplayToast(title))
-                    .expect("sending failed");
-            }
         }
     }
 }
