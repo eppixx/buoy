@@ -1,8 +1,8 @@
 use relm4::gtk::{
     self,
-    prelude::{BoxExt, OrientableExt, WidgetExt},
+    prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
 };
-use relm4::{ComponentController, RelmWidgetExt};
+use relm4::{ComponentController, RelmWidgetExt, RelmRemoveAllExt};
 use rand::prelude::SliceRandom;
 
 use std::cell::RefCell;
@@ -11,8 +11,9 @@ use std::rc::Rc;
 use crate::components::album_element::{AlbumElement, AlbumElementInit, AlbumElementOut};
 use crate::subsonic::Subsonic;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Dashboard {
+    subsonic: Rc<RefCell<Subsonic>>,
     recently_added: gtk::Box,
     recently_played: gtk::FlowBox,
     random_album: gtk::Box,
@@ -29,6 +30,7 @@ pub enum DashboardOut {
 pub enum DashboardIn {
     SearchChanged(String),
     AlbumElement(AlbumElementOut),
+    ClickedRandomize,
 }
 
 #[relm4::component(pub)]
@@ -43,7 +45,13 @@ impl relm4::Component for Dashboard {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Dashboard::default();
+        let model = Self {
+            subsonic: subsonic.clone(),
+            recently_added: gtk::Box::default(),
+            recently_played: gtk::FlowBox::default(),
+            random_album: gtk::Box::default(),
+            most_played: gtk::Box::default(),
+        };
 
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
@@ -64,22 +72,7 @@ impl relm4::Component for Dashboard {
             });
 
         //load random albums
-        let mut rng = rand::thread_rng();
-        albums.shuffle(&mut rng);
-        albums
-            .iter()
-            .take(10)
-            .map(|album| {
-                AlbumElement::builder()
-                    .launch((
-                        subsonic.clone(),
-                        AlbumElementInit::Child(Box::new(album.clone())),
-                    ))
-                    .forward(sender.input_sender(), DashboardIn::AlbumElement)
-            })
-            .for_each(|album| {
-                model.random_album.append(album.widget())
-            });
+        sender.input(DashboardIn::ClickedRandomize);
 
         //load most played albums
         albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
@@ -152,10 +145,19 @@ impl relm4::Component for Dashboard {
                         }
                     },
 
-                    gtk::Label {
-                        add_css_class: "h3",
-                        set_halign: gtk::Align::Start,
-                        set_text: "Random"
+                    gtk::Box {
+                        set_spacing: 7,
+
+                        gtk::Label {
+                            add_css_class: "h3",
+                            set_halign: gtk::Align::Start,
+                            set_text: "Random"
+                        },
+                        gtk::Button {
+                            set_icon_name: "media-playlist-shuffle-symbolic",
+                            set_tooltip: "Rerandomize albums",
+                            connect_clicked => DashboardIn::ClickedRandomize,
+                        }
                     },
                     gtk::ScrolledWindow {
                         set_vscrollbar_policy: gtk::PolicyType::Never,
@@ -210,6 +212,26 @@ impl relm4::Component for Dashboard {
                     .output(DashboardOut::DisplayToast(title))
                     .expect("sending failed"),
             },
+            DashboardIn::ClickedRandomize => {
+                self.random_album.remove_all();
+                let mut rng = rand::thread_rng();
+                let mut albums = self.subsonic.borrow().albums().clone();
+                albums.shuffle(&mut rng);
+                albums
+                    .iter()
+                    .take(10)
+                    .map(|album| {
+                        AlbumElement::builder()
+                            .launch((
+                                self.subsonic.clone(),
+                                AlbumElementInit::Child(Box::new(album.clone())),
+                            ))
+                            .forward(sender.input_sender(), DashboardIn::AlbumElement)
+                    })
+                    .for_each(|album| {
+                        self.random_album.append(album.widget())
+                    });
+            }
         }
     }
 }
