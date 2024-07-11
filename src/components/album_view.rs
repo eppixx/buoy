@@ -194,8 +194,10 @@ impl relm4::Component for AlbumView {
                 },
             },
 
-            model.tracks.view.clone() {
-                set_vexpand: true,
+            gtk::ScrolledWindow {
+                model.tracks.view.clone() {
+                    set_vexpand: true,
+                }
             },
         }
     }
