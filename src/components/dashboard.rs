@@ -3,6 +3,7 @@ use relm4::gtk::{
     prelude::{BoxExt, OrientableExt, WidgetExt},
 };
 use relm4::{ComponentController, RelmWidgetExt};
+use rand::prelude::SliceRandom;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -14,7 +15,7 @@ use crate::subsonic::Subsonic;
 pub struct Dashboard {
     recently_added: gtk::Box,
     recently_played: gtk::FlowBox,
-    random_album: gtk::FlowBox,
+    random_album: gtk::Box,
     most_played: gtk::Box,
 }
 
@@ -47,7 +48,7 @@ impl relm4::Component for Dashboard {
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
         albums.sort_by(|a, b| a.created.cmp(&b.created));
-        let albums: Vec<relm4::Controller<AlbumElement>> = albums
+        albums
             .iter()
             .take(10)
             .map(|album| {
@@ -58,15 +59,31 @@ impl relm4::Component for Dashboard {
                     ))
                     .forward(sender.input_sender(), DashboardIn::AlbumElement)
             })
-            .collect();
-        for album in albums {
-            model.recently_added.append(album.widget());
-        }
+            .for_each(|album| {
+                model.recently_added.append(album.widget());
+            });
+
+        //load random albums
+        let mut rng = rand::thread_rng();
+        albums.shuffle(&mut rng);
+        albums
+            .iter()
+            .take(10)
+            .map(|album| {
+                AlbumElement::builder()
+                    .launch((
+                        subsonic.clone(),
+                        AlbumElementInit::Child(Box::new(album.clone())),
+                    ))
+                    .forward(sender.input_sender(), DashboardIn::AlbumElement)
+            })
+            .for_each(|album| {
+                model.random_album.append(album.widget())
+            });
 
         //load most played albums
-        let mut albums = subsonic.borrow().albums().clone();
         albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
-        let albums: Vec<relm4::Controller<AlbumElement>> = albums
+        albums
             .iter()
             .take(10)
             .map(|album| {
@@ -77,12 +94,11 @@ impl relm4::Component for Dashboard {
                     ))
                     .forward(sender.input_sender(), DashboardIn::AlbumElement)
             })
-            .collect();
-        for album in albums {
-            model.most_played.append(album.widget());
-        }
-        let widgets = view_output!();
+            .for_each(|album| {
+                model.most_played.append(album.widget());
+            });
 
+        let widgets = view_output!();
         relm4::ComponentParts { model, widgets }
     }
 
