@@ -10,12 +10,13 @@ use std::rc::Rc;
 
 use crate::components::album_element::{AlbumElement, AlbumElementInit, AlbumElementOut};
 use crate::subsonic::Subsonic;
+use crate::client::Client;
 
 #[derive(Debug)]
 pub struct Dashboard {
     subsonic: Rc<RefCell<Subsonic>>,
     recently_added: gtk::Box,
-    recently_played: gtk::FlowBox,
+    recently_played: gtk::Box,
     random_album: gtk::Box,
     most_played: gtk::Box,
 }
@@ -33,12 +34,17 @@ pub enum DashboardIn {
     ClickedRandomize,
 }
 
+#[derive(Debug)]
+pub enum DashboardCmd {
+    LoadedRecentlyPlayed(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
+}
+
 #[relm4::component(pub)]
 impl relm4::Component for Dashboard {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = DashboardIn;
     type Output = DashboardOut;
-    type CommandOutput = ();
+    type CommandOutput = DashboardCmd;
 
     fn init(
         subsonic: Self::Init,
@@ -48,7 +54,7 @@ impl relm4::Component for Dashboard {
         let model = Self {
             subsonic: subsonic.clone(),
             recently_added: gtk::Box::default(),
-            recently_played: gtk::FlowBox::default(),
+            recently_played: gtk::Box::default(),
             random_album: gtk::Box::default(),
             most_played: gtk::Box::default(),
         };
@@ -70,6 +76,12 @@ impl relm4::Component for Dashboard {
             .for_each(|album| {
                 model.recently_added.append(album.widget());
             });
+
+        //load recently played albums
+        sender.oneshot_command(async move {
+            let client = Client::get().unwrap();
+            DashboardCmd::LoadedRecentlyPlayed(client.get_album_list2(submarine::api::get_album_list::Order::Recent, Some(10), None, None::<String>).await)
+        });
 
         //load random albums
         sender.input(DashboardIn::ClickedRandomize);
@@ -230,6 +242,31 @@ impl relm4::Component for Dashboard {
                     })
                     .for_each(|album| {
                         self.random_album.append(album.widget())
+                    });
+            }
+        }
+    }
+
+    fn update_cmd(
+        &mut self,
+        msg: Self::CommandOutput,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            DashboardCmd::LoadedRecentlyPlayed(Err(_e)) => {}
+            DashboardCmd::LoadedRecentlyPlayed(Ok(list)) => {
+                list.iter()
+                    .map(|album| {
+                        AlbumElement::builder()
+                            .launch((
+                                self.subsonic.clone(),
+                                AlbumElementInit::Child(Box::new(album.clone())),
+                            ))
+                            .forward(sender.input_sender(), DashboardIn::AlbumElement)
+                    })
+                    .for_each(|album| {
+                        self.recently_played.append(album.widget());
                     });
             }
         }
