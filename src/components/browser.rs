@@ -193,7 +193,7 @@ impl relm4::component::AsyncComponent for Browser {
                 }
 
                 let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
-                    .launch(())
+                    .launch(self.subsonic.clone())
                     .forward(sender.input_sender(), BrowserIn::Dashboard);
                 self.history_widget
                     .push(Views::Dashboard(dashboard.widget().clone()));
@@ -260,8 +260,12 @@ impl relm4::component::AsyncComponent for Browser {
                     .expect("main window gone");
             }
             BrowserIn::Dashboard(output) => {
-                match output {}
-                //TODO react to output
+                match output {
+                    DashboardOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id))),
+                    DashboardOut::DisplayToast(title) => sender
+                        .output(BrowserOut::DisplayToast(title))
+                        .expect("sending failed"),
+                }
             }
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
