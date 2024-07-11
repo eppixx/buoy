@@ -1,16 +1,16 @@
+use rand::prelude::SliceRandom;
 use relm4::gtk::{
     self,
     prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
 };
-use relm4::{ComponentController, RelmWidgetExt, RelmRemoveAllExt};
-use rand::prelude::SliceRandom;
+use relm4::{ComponentController, RelmRemoveAllExt, RelmWidgetExt};
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::client::Client;
 use crate::components::album_element::{AlbumElement, AlbumElementInit, AlbumElementOut};
 use crate::subsonic::Subsonic;
-use crate::client::Client;
 
 #[derive(Debug)]
 pub struct Dashboard {
@@ -80,7 +80,16 @@ impl relm4::Component for Dashboard {
         //load recently played albums
         sender.oneshot_command(async move {
             let client = Client::get().unwrap();
-            DashboardCmd::LoadedRecentlyPlayed(client.get_album_list2(submarine::api::get_album_list::Order::Recent, Some(10), None, None::<String>).await)
+            DashboardCmd::LoadedRecentlyPlayed(
+                client
+                    .get_album_list2(
+                        submarine::api::get_album_list::Order::Recent,
+                        Some(10),
+                        None,
+                        None::<String>,
+                    )
+                    .await,
+            )
         });
 
         //load random albums
@@ -240,9 +249,7 @@ impl relm4::Component for Dashboard {
                             ))
                             .forward(sender.input_sender(), DashboardIn::AlbumElement)
                     })
-                    .for_each(|album| {
-                        self.random_album.append(album.widget())
-                    });
+                    .for_each(|album| self.random_album.append(album.widget()));
             }
         }
     }

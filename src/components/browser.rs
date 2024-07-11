@@ -259,14 +259,14 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .expect("main window gone");
             }
-            BrowserIn::Dashboard(output) => {
-                match output {
-                    DashboardOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id))),
-                    DashboardOut::DisplayToast(title) => sender
-                        .output(BrowserOut::DisplayToast(title))
-                        .expect("sending failed"),
+            BrowserIn::Dashboard(output) => match output {
+                DashboardOut::ClickedAlbum(id) => {
+                    sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id)))
                 }
-            }
+                DashboardOut::DisplayToast(title) => sender
+                    .output(BrowserOut::DisplayToast(title))
+                    .expect("sending failed"),
+            },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
                     let init: AlbumViewInit = match id {
