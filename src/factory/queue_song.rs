@@ -153,19 +153,20 @@ impl FactoryComponent for QueueSong {
         let content = gdk::ContentProvider::for_value(&index.to_value());
         model.drag_src.set_content(Some(&content));
         model.drag_src.set_actions(gdk::DragAction::MOVE);
-        if let Some(album) = init.album_id {
-            let album_id = subsonic.borrow().find_album(album);
-            if let Some(album) = album_id {
+        let album = subsonic.borrow().album_of_song(init);
+        model.drag_src.connect_drag_begin(move |src, _drag| {
+            if let Some(album) = &album {
                 if let Some(cover_id) = &album.cover_art {
-                    match subsonic.borrow_mut().cover_icon(&cover_id) {
+                    let cover = subsonic.borrow().cover_icon(&cover_id);
+                    match cover {
                         Some(tex) => {
-                            model.drag_src.set_icon(Some(&tex), 0, 0);
+                            src.set_icon(Some(&tex), 0, 0);
                         }
                         None => {}
                     }
                 }
             }
-        }
+        });
 
         model
     }

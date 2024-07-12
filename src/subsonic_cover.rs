@@ -105,7 +105,7 @@ impl SubsonicCovers {
         }
     }
 
-    pub fn cover_icon(&mut self, id: &str) -> Option<gdk::Texture> {
+    pub fn cover_icon(&self, id: &str) -> Option<gdk::Texture> {
         match self.cover_raw(id) {
             None => None,
             Some(buffer) => {

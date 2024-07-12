@@ -200,6 +200,14 @@ impl Subsonic {
         self.album_list.iter().find(|album| album.id == id.as_ref()).cloned()
     }
 
+    pub fn album_of_song(&self, child: submarine::data::Child) -> Option<submarine::data::Child> {
+        if let Some(album) = child.album_id {
+            self.find_album(album)
+        } else {
+            None
+        }
+    }
+
     pub fn playlists(&self) -> &Vec<submarine::data::PlaylistWithSongs> {
         &self.playlists
     }
@@ -223,7 +231,7 @@ impl Subsonic {
         self.covers.cover(id)
     }
 
-    pub fn cover_icon(&mut self, id: &str) -> Option<relm4::gtk::gdk::Texture> {
+    pub fn cover_icon(&self, id: &str) -> Option<relm4::gtk::gdk::Texture> {
         self.covers.cover_icon(id)
     }
 
