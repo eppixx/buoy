@@ -60,7 +60,7 @@ impl relm4::Component for ArtistView {
         let model = Self {
             subsonic: subsonic.clone(),
             cover: Cover::builder()
-                .launch((subsonic, init.clone().cover_art, true, Some(Id::artist(init.id.clone()))))
+                .launch((subsonic.clone(), init.clone().cover_art, true, Some(Id::artist(init.id.clone()))))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             title: init.name.clone(),
             bio: String::new(),
@@ -75,6 +75,18 @@ impl relm4::Component for ArtistView {
         let drag_src = gtk::DragSource::new();
         drag_src.set_actions(gtk::gdk::DragAction::COPY);
         drag_src.set_content(Some(&content));
+        let artist = init.clone();
+        drag_src.connect_drag_begin(move |src, _drag| {
+            if let Some(cover_id) = &artist.cover_art {
+                let cover = subsonic.borrow().cover_icon(&cover_id);
+                match cover {
+                    Some(tex) => {
+                        src.set_icon(Some(&tex), 0, 0);
+                    }
+                    None => {}
+                }
+            }
+        });
         model.cover.widget().add_controller(drag_src);
 
         // load cover

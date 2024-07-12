@@ -21,6 +21,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct AlbumView {
+    subsonic: Rc<RefCell<Subsonic>>,
     cover: relm4::Controller<Cover>,
     title: String,
     artist: Option<String>,
@@ -83,6 +84,7 @@ impl relm4::Component for AlbumView {
         tracks.append_column::<FavColumn>();
 
         let model = Self {
+            subsonic: subsonic.clone(),
             cover: Cover::builder()
                 .launch((subsonic.clone(), cover, true, Some(Id::album(id))))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
@@ -259,6 +261,19 @@ impl relm4::Component for AlbumView {
                 let drag_src = gtk::DragSource::new();
                 drag_src.set_actions(gtk::gdk::DragAction::COPY);
                 drag_src.set_content(Some(&content));
+                let subsonic = self.subsonic.clone();
+                let alb = album.clone();
+                drag_src.connect_drag_begin(move |src, _drag| {
+                    if let Some(cover_id) = &alb.base.cover_art {
+                        let cover = subsonic.borrow().cover_icon(&cover_id);
+                        match cover {
+                            Some(tex) => {
+                                src.set_icon(Some(&tex), 0, 0);
+                            }
+                            None => {}
+                        }
+                    }
+                });
                 self.cover.widget().add_controller(drag_src);
 
                 //update self

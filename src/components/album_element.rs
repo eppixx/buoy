@@ -77,7 +77,7 @@ impl relm4::SimpleComponent for AlbumElement {
         };
 
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch((subsonic, builder, true, Some(Id::album(id))))
+            .launch((subsonic.clone(), builder, true, Some(Id::album(id))))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self {
             cover,
@@ -119,6 +119,21 @@ impl relm4::SimpleComponent for AlbumElement {
         let drag_src = gtk::DragSource::new();
         drag_src.set_actions(gtk::gdk::DragAction::COPY);
         drag_src.set_content(Some(&content));
+        let cover_art = match init {
+            AlbumElementInit::AlbumId3(album) => album.cover_art.clone(),
+            AlbumElementInit::Child(album) => album.cover_art.clone(),
+        };
+        drag_src.connect_drag_begin(move |src, _drag| {
+            if let Some(cover_id) = &cover_art {
+                let cover = subsonic.borrow().cover_icon(&cover_id);
+                match cover {
+                    Some(tex) => {
+                        src.set_icon(Some(&tex), 0, 0);
+                    }
+                    None => {}
+                }
+            }
+        });
         model.cover.widget().add_controller(drag_src);
 
         relm4::ComponentParts { model, widgets }
