@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use relm4::{gtk, gtk::prelude::WidgetExt};
+use relm4::{gtk, gtk::prelude::{WidgetExt, ButtonExt}};
 
-use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
+use crate::{gtk_helper::stack::StackExt, subsonic::{Subsonic, Sync}, subsonic_cover};
 use crate::types::Id;
 
 #[derive(Debug)]
@@ -13,7 +13,7 @@ pub struct Cover {
     // stack shows either a stock image, a loading wheel or a loaded cover
     stack: gtk::Stack,
     cover: gtk::Image,
-    favorite: gtk::Image,
+    favorite: gtk::Button,
 }
 
 impl Cover {
@@ -57,6 +57,7 @@ pub enum CoverIn {
     LoadPlaylist(Box<submarine::data::PlaylistWithSongs>),
     LoadArtist(Box<submarine::data::ArtistId3>),
     ChangeImage(subsonic_cover::Response),
+    SetFavorite(bool),
 }
 
 // use tuple struct to keep the logging small
@@ -76,8 +77,7 @@ pub enum CoverOut {
 }
 
 #[derive(Debug)]
-pub enum CoverCmd {
-}
+pub enum CoverCmd {}
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
@@ -97,11 +97,12 @@ impl relm4::Component for Cover {
             id: typ,
             stack: gtk::Stack::default(),
             cover: gtk::Image::default(),
-            favorite: gtk::Image::default(),
+            favorite: gtk::Button::default(),
         };
 
         let widgets = view_output!();
 
+        // set favorite icon
         if show_favorite {
             model.favorite.set_halign(gtk::Align::End);
             model.favorite.set_valign(gtk::Align::End);
@@ -126,12 +127,44 @@ impl relm4::Component for Cover {
                     Id::Song(_id) | Id::Playlist(_id) => {} // cant be favorited
                 }
                 if starred {
-                    model.favorite.set_icon_name(Some("starred-symbolic"));
+                    model.favorite.set_icon_name("starred-symbolic");
                 }
             } else {
-                model.favorite.set_icon_name(Some("non-starred-symbolic"));
+                model.favorite.set_icon_name("non-starred-symbolic");
             }
             widgets.overlay.add_overlay(&model.favorite.clone());
+
+            if let Some(id) = model.id.clone() {
+                let subsonic = model.subsonic.clone();
+                model.favorite.connect_clicked(move|btn| {
+                    println!("clicked on {id:?}");
+                    if btn.icon_name().as_deref() == Some("starred-symbolic") {
+                        subsonic.borrow().send(Sync::Favorited(id.inner().to_string(), false));
+                    } else {
+                        subsonic.borrow().send(Sync::Favorited(id.inner().to_string(), true));
+                    }
+                });
+            }
+        }
+
+        // receive changes
+        let sender = sender.clone();
+        let receiver = model.subsonic.borrow().receiver().clone();
+        let relm_sender = sender.clone();
+        let local_id = model.id.clone();
+        if let Some(local_id) = local_id {
+            gtk::glib::spawn_future_local(async move {
+                while let Ok(msg) = receiver.recv().await {
+                    println!("received msg {msg:?}");
+                    match msg {
+                        Sync::Favorited(changed_id, value) if local_id.inner() == changed_id => {
+                            println!("received signal to be {value}");
+                            relm_sender.input(CoverIn::SetFavorite(value));
+                        }
+                        _ => {}
+                    }
+                }
+            });
         }
 
         sender.input(CoverIn::LoadId(id));
@@ -172,13 +205,13 @@ impl relm4::Component for Cover {
             CoverIn::LoadId(None) => self.stack.set_visible_child_enum(&State::Stock),
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+                // update favorite
+                // sender.oneshot_command(async move {
+                    
+                // });
             }
             CoverIn::LoadSong(child) => {
-                self.favorite.set_icon_name(Some("starred-symbolic"));
-                if child.starred.is_some() {
-                    println!("song starred");
-                    self.favorite.set_icon_name(Some("starred-symbolic"));
-                }
+                sender.input(CoverIn::SetFavorite(child.starred.is_some()));
                 match child.album_id {
                     None => self.stack.set_visible_child_enum(&State::Stock),
                     Some(album_id) => {
@@ -195,11 +228,7 @@ impl relm4::Component for Cover {
                 }
             },
             CoverIn::LoadAlbumId3(album) => {
-                self.favorite.set_icon_name(Some("starred-symbolic"));
-                if album.base.starred.is_some() {
-                    println!("album starred");
-                    self.favorite.set_icon_name(Some("starred-symbolic"));
-                }
+                sender.input(CoverIn::SetFavorite(album.base.starred.is_some()));
                 match album.base.cover_art {
                     None => self.stack.set_visible_child_enum(&State::Stock),
                     Some(id) => {
@@ -214,11 +243,7 @@ impl relm4::Component for Cover {
                 }
             },
             CoverIn::LoadArtist(artist) => {
-                self.favorite.set_icon_name(Some("starred-symbolic"));
-                if artist.starred.is_some() {
-                    println!("artist starred");
-                    self.favorite.set_icon_name(Some("starred-symbolic"));
-                }
+                sender.input(CoverIn::SetFavorite(artist.starred.is_some()));
                 match artist.cover_art {
                     None => self.stack.set_visible_child_enum(&State::Stock),
                     Some(id) => {
@@ -226,6 +251,8 @@ impl relm4::Component for Cover {
                     }
                 }
             },
+            CoverIn::SetFavorite(true) => self.favorite.set_icon_name("starred-symbolic"),
+            CoverIn::SetFavorite(false) => self.favorite.set_icon_name("non-starred-symbolic"),
         }
     }
 
@@ -235,8 +262,7 @@ impl relm4::Component for Cover {
         _sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        match message {
-        }
+        match message {}
     }
 }
 
