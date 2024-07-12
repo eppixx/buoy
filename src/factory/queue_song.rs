@@ -19,6 +19,7 @@ use crate::{
     css::DragState,
     play_state::PlayState,
     subsonic::Subsonic,
+    subsonic_cover::Response,
     types::{Droppable, Id},
 };
 
@@ -131,7 +132,7 @@ impl FactoryComponent for QueueSong {
         sender: FactorySender<Self>,
     ) -> Self {
         let cover = Cover::builder()
-            .launch((subsonic, init.cover_art.clone(), false, None))
+            .launch((subsonic.clone(), init.cover_art.clone(), false, None))
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.model().add_css_class_image("size32");
         cover.emit(CoverIn::LoadSong(Box::new(init.clone())));
@@ -153,6 +154,19 @@ impl FactoryComponent for QueueSong {
         let content = gdk::ContentProvider::for_value(&index.to_value());
         model.drag_src.set_content(Some(&content));
         model.drag_src.set_actions(gdk::DragAction::MOVE);
+        if let Some(album) = init.album_id {
+            let album_id = subsonic.borrow().find_album(album);
+            if let Some(album) = album_id {
+                if let Some(cover_id) = &album.cover_art {
+                    match subsonic.borrow_mut().cover(&cover_id) {
+                        Response::Loaded(tex) => {
+                            model.drag_src.set_icon(Some(&tex), 0, 0);
+                        }
+                        Response::Empty => {}
+                    }
+                }
+            }
+        }
 
         model
     }

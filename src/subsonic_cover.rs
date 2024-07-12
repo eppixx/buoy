@@ -125,6 +125,26 @@ impl SubsonicCovers {
         tracing::info!("loaded subsonic cover cache");
         let result = postcard::from_bytes::<Self>(&content)?;
 
+        //convert buffers to textures
+        for (id, buffer) in &result.buffers {
+            match buffer {
+                None => _ = self.covers.insert(id.into(), None),
+                Some(buffer) => {
+                    let bytes = gtk::glib::Bytes::from(buffer);
+                    match gdk::Texture::from_bytes(&bytes) {
+                        Ok(tex) => {
+                            _ = self.covers.insert(id.into(), Some(tex));
+                        }
+                        Err(e) => {
+                            tracing::warn!("error while converting buffer from cache: {e}");
+                            self.covers.insert(id.into(), None);
+                        }
+                    }
+                }
+            }
+        }
+        println!("size of covers {}", self.covers.len());
+
         self.buffers = result.buffers;
         Ok(())
     }
