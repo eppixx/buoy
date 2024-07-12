@@ -2,7 +2,7 @@ use futures::StreamExt;
 use relm4::gtk::{self, gdk};
 use serde::{Deserialize, Serialize};
 
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Cursor};
 
 use crate::client::Client;
 
@@ -99,6 +99,37 @@ impl SubsonicCovers {
                     _ => {
                         self.covers.insert(id.into(), None);
                         Response::Empty
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn cover_icon(&mut self, id: &str) -> Option<gdk::Texture> {
+        match self.cover_raw(id) {
+            None => None,
+            Some(buffer) => {
+                match image::load_from_memory(&buffer) {
+                    Err(e) => {
+                        tracing::warn!("converting buffer to image: {e}");
+                        None
+                    }
+                    Ok(image) => {
+                        let thumb = image.thumbnail(32, 32);
+                        let mut writer = Cursor::new(vec![]);
+                        let color_type = image::ExtendedColorType::from(thumb.color());
+                        if let Err(e) = image::write_buffer_with_format(&mut writer, thumb.as_bytes(), thumb.width(), thumb.height(), color_type, image::ImageFormat::Png) {
+                            tracing::warn!("converting thumbnail to png: {e:?}");
+                            return None;
+                        }
+                        let bytes = gtk::glib::Bytes::from(&writer.into_inner());
+                        match gdk::Texture::from_bytes(&bytes) {
+                            Ok(texture) => Some(texture),
+                            Err(e) => {
+                                tracing::warn!("converting buffer to icon: {e}");
+                                None
+                            }
+                        }
                     }
                 }
             }

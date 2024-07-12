@@ -19,7 +19,6 @@ use crate::{
     css::DragState,
     play_state::PlayState,
     subsonic::Subsonic,
-    subsonic_cover::Response,
     types::{Droppable, Id},
 };
 
@@ -158,11 +157,11 @@ impl FactoryComponent for QueueSong {
             let album_id = subsonic.borrow().find_album(album);
             if let Some(album) = album_id {
                 if let Some(cover_id) = &album.cover_art {
-                    match subsonic.borrow_mut().cover(&cover_id) {
-                        Response::Loaded(tex) => {
+                    match subsonic.borrow_mut().cover_icon(&cover_id) {
+                        Some(tex) => {
                             model.drag_src.set_icon(Some(&tex), 0, 0);
                         }
-                        Response::Empty => {}
+                        None => {}
                     }
                 }
             }

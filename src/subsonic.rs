@@ -223,6 +223,10 @@ impl Subsonic {
         self.covers.cover(id)
     }
 
+    pub fn cover_icon(&mut self, id: &str) -> Option<relm4::gtk::gdk::Texture> {
+        self.covers.cover_icon(id)
+    }
+
     pub fn delete_cache(&mut self) -> anyhow::Result<()> {
         // delete stored covers
         self.covers.delete_cache()?;
