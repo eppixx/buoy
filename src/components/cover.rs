@@ -165,7 +165,7 @@ impl relm4::Component for Cover {
             CoverIn::ChangeImage(response) => match response {
                 subsonic_cover::Response::Empty => self.stack.set_visible_child_enum(&State::Stock),
                 subsonic_cover::Response::Loaded(pixbuf) => {
-                    self.cover.set_from_pixbuf(Some(&pixbuf));
+                    self.cover.set_from_paintable(Some(&pixbuf));
                     self.stack.set_visible_child_enum(&State::Image);
                 }
             },

@@ -1,5 +1,5 @@
 use futures::StreamExt;
-use relm4::gtk;
+use relm4::gtk::{self, gdk};
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
@@ -17,7 +17,7 @@ pub struct SubsonicCovers {
     buffers: HashMap<String, Option<Vec<u8>>>,
     /// converted from buffers, can be copied
     #[serde(skip)]
-    covers: HashMap<String, Option<gtk::gdk_pixbuf::Pixbuf>>,
+    covers: HashMap<String, Option<gdk::Texture>>,
 }
 
 #[derive(Default, Debug)]
@@ -26,7 +26,7 @@ pub enum Response {
     #[default]
     Empty,
     /// downloaded image from server
-    Loaded(gtk::gdk_pixbuf::Pixbuf),
+    Loaded(gdk::Texture),
 }
 
 impl SubsonicCovers {
@@ -82,14 +82,10 @@ impl SubsonicCovers {
                     Some(Some(buffer)) => {
                         // converting buffer to image
                         let bytes = gtk::glib::Bytes::from(buffer);
-                        let stream = gtk::gio::MemoryInputStream::from_bytes(&bytes);
-                        match gtk::gdk_pixbuf::Pixbuf::from_stream(
-                            &stream,
-                            gtk::gio::Cancellable::NONE,
-                        ) {
-                            Ok(pixbuf) => {
-                                self.covers.insert(id.into(), Some(pixbuf.clone()));
-                                Response::Loaded(pixbuf)
+                        match gdk::Texture::from_bytes(&bytes) {
+                            Ok(texture) => {
+                                self.covers.insert(id.into(), Some(texture.clone()));
+                                Response::Loaded(texture)
                             }
                             Err(e) => {
                                 // could not convert to image
