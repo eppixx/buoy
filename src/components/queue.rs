@@ -277,7 +277,7 @@ impl relm4::Component for Queue {
                 },
 
                 add_controller = gtk::DropTarget {
-                    set_actions: gdk::DragAction::MOVE,
+                    set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
                     set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
                     connect_drop[sender] => move |_target, value, _x, _y| {
                         if let Ok(drop) = value.get::<Droppable>() {

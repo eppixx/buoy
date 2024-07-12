@@ -117,7 +117,7 @@ impl relm4::SimpleComponent for AlbumElement {
         //setup DropSource
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         let drag_src = gtk::DragSource::new();
-        drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+        drag_src.set_actions(gtk::gdk::DragAction::COPY);
         drag_src.set_content(Some(&content));
         model.cover.widget().add_controller(drag_src);
 
