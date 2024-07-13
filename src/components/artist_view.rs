@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, OrientableExt, ToValue, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
     ComponentController,
 };
@@ -18,7 +18,9 @@ use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 #[derive(Debug)]
 pub struct ArtistView {
     subsonic: Rc<RefCell<Subsonic>>,
+    init: submarine::data::ArtistId3,
     cover: relm4::Controller<Cover>,
+    favorite: gtk::Button,
     title: String,
     bio: String,
     albums: gtk::FlowBox,
@@ -30,7 +32,8 @@ pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
     Cover(CoverOut),
     SearchChanged(String),
-    Favorited(String, bool),
+    FavoritedArtist(String, bool),
+    FavoritedAlbum(String, bool),
 }
 
 #[derive(Debug)]
@@ -62,9 +65,11 @@ impl relm4::Component for ArtistView {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             subsonic: subsonic.clone(),
+            init: init.clone(),
             cover: Cover::builder()
                 .launch((subsonic.clone(), init.clone().cover_art))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
+            favorite: gtk::Button::default(),
             title: init.name.clone(),
             bio: String::new(),
             albums: gtk::FlowBox::default(),
@@ -122,9 +127,29 @@ impl relm4::Component for ArtistView {
                 set_spacing: 15,
                 add_css_class: "artist-view-info",
 
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    model.cover.widget().clone() -> gtk::Box {},
+                gtk::Overlay {
+                    add_overlay = &model.favorite.clone() {
+                        set_halign: gtk::Align::End,
+                        set_valign: gtk::Align::End,
+                        set_width_request: 24,
+                        set_height_request: 24,
+                        set_icon_name: "non-starred-symbolic",
+
+                        connect_clicked[sender, init] => move |btn| {
+                            let state = match btn.icon_name().as_deref() {
+                                Some("non-starred-symbolic") => true,
+                                Some("starred-symbolic") => false,
+                                _ => true,
+                            };
+                            sender.output(ArtistViewOut::FavoriteArtistClicked(init.id.clone(), state)).expect("sending failed");
+                        }
+                    },
+
+                    #[wrap(Some)]
+                    set_child = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        model.cover.widget().clone() -> gtk::Box {},
+                    },
                 },
 
                 gtk::WindowHandle {
@@ -188,7 +213,8 @@ impl relm4::Component for ArtistView {
                     use glib::object::Cast;
 
                     // get the Label of the FlowBoxChild
-                    let button = element.first_child().unwrap();
+                    let overlay = element.first_child().unwrap();
+                    let button = overlay.first_child().unwrap();
                     let bo = button.first_child().unwrap();
                     let cover = bo.first_child().unwrap();
                     let title = cover.next_sibling().unwrap();
@@ -200,7 +226,15 @@ impl relm4::Component for ArtistView {
                     score.is_some()
                 });
             }
-            ArtistViewIn::Favorited(id, state) => {
+            ArtistViewIn::FavoritedArtist(id, state) => {
+                if self.init.id == id {
+                    match state {
+                        true => self.favorite.set_icon_name("starred-symbolic"),
+                        false => self.favorite.set_icon_name("non-starred-symbolic"),
+                    }
+                }
+            }
+            ArtistViewIn::FavoritedAlbum(id, state) => {
                 for album in &self.album_elements {
                     album.emit(AlbumElementIn::Favorited(id.clone(), state));
                 }
