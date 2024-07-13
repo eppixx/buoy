@@ -824,6 +824,7 @@ impl relm4::component::AsyncComponent for App {
                 BrowserOut::BackButtonSensitivity(status) => self.back_btn.set_sensitive(status),
                 BrowserOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 BrowserOut::ChangedView => {
+                    self.browser.emit(BrowserIn::SearchChanged(String::new()));
                     self.search_btn.set_active(false);
                     self.search_stack.set_visible_child_enum(&NavigationMode::Normal);
                 }
