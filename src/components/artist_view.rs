@@ -10,7 +10,7 @@ use relm4::{
 };
 
 use super::{
-    album_element::{AlbumElement, AlbumElementInit, AlbumElementOut},
+    album_element::{AlbumElement, AlbumElementInit, AlbumElementIn, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
 use crate::{client::Client, subsonic::Subsonic, types::{Droppable, Id}};
@@ -30,12 +30,15 @@ pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
     Cover(CoverOut),
     SearchChanged(String),
+    Favorited(String, bool),
 }
 
 #[derive(Debug)]
 pub enum ArtistViewOut {
     AlbumClicked(AlbumElementInit),
     DisplayToast(String),
+    FavoriteAlbumClicked(String, bool),
+    FavoriteArtistClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -176,6 +179,7 @@ impl relm4::Component for ArtistView {
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(ArtistViewOut::DisplayToast(title))
                     .expect("sending failed"),
+                AlbumElementOut::FavoriteClicked(id, state) => sender.output(ArtistViewOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
             },
             ArtistViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
@@ -198,6 +202,11 @@ impl relm4::Component for ArtistView {
                     let score = matcher.fuzzy_match(&title.text(), &search);
                     score.is_some()
                 });
+            }
+            ArtistViewIn::Favorited(id, state) => {
+                for album in &self.album_elements {
+                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
             }
         }
     }

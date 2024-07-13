@@ -11,7 +11,7 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use super::artist_element::ArtistElementOut;
+use super::artist_element::{ArtistElementIn, ArtistElementOut};
 use crate::{components::artist_element::ArtistElement, subsonic::Subsonic};
 
 #[derive(Debug)]
@@ -23,6 +23,8 @@ pub struct ArtistsView {
 #[derive(Debug)]
 pub enum ArtistsViewOut {
     ClickedArtist(submarine::data::ArtistId3),
+    DisplayToast(String),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -30,6 +32,7 @@ pub enum ArtistsViewIn {
     ArtistElement(ArtistElementOut),
     SearchChanged(String),
     ShowStarred(bool),
+    Favorited(String, bool),
 }
 
 #[relm4::component(async, pub)]
@@ -143,6 +146,8 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 ArtistElementOut::Clicked(id) => {
                     sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap();
                 }
+                ArtistElementOut::DisplayToast(msg) => sender.output(ArtistsViewOut::DisplayToast(msg)).expect("sending failed"),
+                ArtistElementOut::FavoriteClicked(id, state) => sender.output(ArtistsViewOut::FavoriteClicked(id, state)).expect("sending failed"),
             },
             ArtistsViewIn::SearchChanged(search) => {
                 self.artists.set_filter_func(move |element| {
@@ -176,13 +181,19 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     true
                 });
             }
+            ArtistsViewIn::Favorited(id, state) => {
+                for artist in &self.artist_list {
+                    artist.emit(ArtistElementIn::Favorited(id.clone(), state));
+                }
+            }
         }
     }
 }
 
 fn get_title_of_flowboxchild(element: &FlowBoxChild) -> gtk::Label {
     use glib::object::Cast;
-    let bo = element.first_child().unwrap();
+    let overlay = element.first_child().unwrap();
+    let bo = overlay.first_child().unwrap();
     let button = bo.first_child().unwrap();
     let bo = button.first_child().unwrap();
     let cover = bo.first_child().unwrap();

@@ -10,7 +10,7 @@ use relm4::{
     ComponentController,
 };
 
-use super::album_element::AlbumElementOut;
+use super::album_element::{AlbumElementIn, AlbumElementOut};
 use crate::{
     components::{
         album_element::{AlbumElement, AlbumElementInit},
@@ -31,6 +31,7 @@ pub struct AlbumsView {
 pub enum AlbumsViewOut {
     Clicked(AlbumElementInit),
     DisplayToast(String),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -40,6 +41,7 @@ pub enum AlbumsViewIn {
     FilterBox(FilterBoxOut),
     ClearFilters,
     ShowStarred(bool),
+    Favorited(String, bool),
 }
 
 #[relm4::component(pub)]
@@ -158,13 +160,15 @@ impl relm4::component::Component for AlbumsView {
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(AlbumsViewOut::DisplayToast(title))
                     .expect("sending failed"),
+                AlbumElementOut::FavoriteClicked(id, state) => sender.output(AlbumsViewOut::FavoriteClicked(id, state)).expect("sending failed"),
             },
             AlbumsViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
                     use glib::object::Cast;
 
                     // get the Label of the FlowBoxChild
-                    let button = element.first_child().unwrap();
+                    let overlay = element.first_child().unwrap();
+                    let button = overlay.first_child().unwrap();
                     let bo = button.first_child().unwrap();
                     let cover = bo.first_child().unwrap();
                     let title = cover.next_sibling().unwrap();
@@ -288,6 +292,11 @@ impl relm4::component::Component for AlbumsView {
                 });
             }
             AlbumsViewIn::ClearFilters => self.filters.emit(FilterBoxIn::ClearFilters),
+            AlbumsViewIn::Favorited(id, state) => {
+                for album in &self.album_list {
+                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
+            }
         }
     }
 }

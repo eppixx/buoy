@@ -26,16 +26,17 @@ use crate::{
 #[boxed_type(name = "QueueSongIndex")]
 pub struct Index(DynamicIndex);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum QueueSongIn {
     Activated,
     DraggedOver(f64),
     DragLeave,
     NewState(PlayState),
-    StarredClicked,
     DroppedSong { drop: Droppable, y: f64 },
     MoveSong { index: Index, y: f64 },
     Cover(CoverOut),
+    FavoriteClicked,
+    FavoriteSong(String, bool),
 }
 
 #[derive(Debug)]
@@ -61,6 +62,7 @@ pub enum QueueSongOut {
         dest: DynamicIndex,
     },
     DisplayToast(String),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -69,7 +71,7 @@ pub struct QueueSong {
     info: submarine::data::Child,
     cover: relm4::Controller<Cover>,
     playing: PlayState,
-    favorited: bool,
+    favorited: gtk::Button,
     index: DynamicIndex,
     sender: FactorySender<Self>,
     drag_src: gtk::DragSource,
@@ -107,7 +109,6 @@ impl QueueSong {
 
 #[derive(Debug)]
 pub enum QueueSongCmd {
-    Favorited(Result<bool, submarine::SubsonicError>),
     InsertChildrenAbove(
         Result<(DynamicIndex, Vec<submarine::data::Child>), submarine::SubsonicError>,
     ),
@@ -140,13 +141,19 @@ impl FactoryComponent for QueueSong {
             info: init.clone(),
             cover,
             playing: PlayState::Stop,
-            favorited: init.starred.is_some(),
+            favorited: gtk::Button::default(),
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
         };
 
         DragState::reset(&mut model.root_widget);
+
+        if init.starred.is_some() {
+            model.favorited.set_icon_name("starred-symbolic");
+        } else {
+            model.favorited.set_icon_name("non-starred-symbolic");
+        }
 
         // setup DragSource
         let index = Index(index.clone());
@@ -227,21 +234,10 @@ impl FactoryComponent for QueueSong {
                     set_label: &convert_for_label(i64::from(self.info.duration.unwrap_or(0)) * 1000),
                 },
 
-                #[transition = "Crossfade"]
-                if self.favorited {
-                    gtk::Button {
-                        set_icon_name: "starred",
-                        set_tooltip: "Click to unfavorite song",
-                        set_focus_on_click: false,
-                        connect_clicked => QueueSongIn::StarredClicked,
-                    }
-                } else {
-                    gtk::Button {
-                        set_icon_name: "non-starred",
-                        set_tooltip: "Click to favorite song",
-                        set_focus_on_click: false,
-                        connect_clicked => QueueSongIn::StarredClicked,
-                    }
+                self.favorited.clone() {
+                    set_tooltip: "Click to (un)favorite song",
+                    set_focus_on_click: false,
+                    connect_clicked => QueueSongIn::FavoriteClicked,
                 },
             },
 
@@ -332,20 +328,6 @@ impl FactoryComponent for QueueSong {
             QueueSongIn::DragLeave => DragState::reset(&mut self.root_widget),
             QueueSongIn::NewState(state) => {
                 self.playing = state;
-            }
-            QueueSongIn::StarredClicked => {
-                let id = self.info.id.clone();
-                let favorite = self.favorited;
-                sender.oneshot_command(async move {
-                    let client = Client::get().unwrap();
-                    let empty: Vec<&str> = vec![];
-
-                    let result = match favorite {
-                        true => client.unstar(vec![id], empty.clone(), empty).await,
-                        false => client.star(vec![id], empty.clone(), empty).await,
-                    };
-                    QueueSongCmd::Favorited(result.map(|_| !favorite))
-                });
             }
             QueueSongIn::DroppedSong { drop, y } => {
                 sender.input(QueueSongIn::DragLeave);
@@ -469,17 +451,21 @@ impl FactoryComponent for QueueSong {
                     .output(QueueSongOut::DisplayToast(title))
                     .expect("sending failed"),
             },
+            QueueSongIn::FavoriteClicked => {
+                match self.favorited.icon_name().as_deref() {
+                    Some("starred-symbolic") => sender.output(QueueSongOut::FavoriteClicked(self.info.id.clone(), false)).expect("sending failed"),
+                    Some("non-starred-symbolic") => sender.output(QueueSongOut::FavoriteClicked(self.info.id.clone(), true)).expect("sending failed"),
+                    _ => {}
+                }
+            }
+            QueueSongIn::FavoriteSong(id, true) if id == self.info.id => self.favorited.set_icon_name("starred-symbolic"),
+            QueueSongIn::FavoriteSong(id, false) if id == self.info.id => self.favorited.set_icon_name("non-starred-symbolic"),
+            QueueSongIn::FavoriteSong(_, _) => {},
         }
     }
 
     fn update_cmd(&mut self, message: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
         match message {
-            QueueSongCmd::Favorited(Err(e)) => sender
-                .output(QueueSongOut::DisplayToast(format!(
-                    "favoriting failed: {e}",
-                )))
-                .expect("sending failed"),
-            QueueSongCmd::Favorited(Ok(state)) => self.favorited = state,
             QueueSongCmd::InsertChildrenAbove(Err(e))
             | QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
                 .output(QueueSongOut::DisplayToast(format!(

@@ -71,7 +71,7 @@ impl std::fmt::Debug for Image {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CoverOut {
     DisplayToast(String),
 }

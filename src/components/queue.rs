@@ -18,7 +18,7 @@ use crate::{
         sequence_button::{SequenceButton, SequenceButtonOut},
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song::{QueueSong, QueueSongOut},
+    factory::queue_song::{QueueSong, QueueSongIn, QueueSongOut},
     play_state::PlayState,
     player::Command,
     settings::Settings,
@@ -139,6 +139,7 @@ pub enum QueueIn {
     InsertAfterCurrentlyPlayed(Droppable),
     Replace(Droppable),
     DisplayToast(String),
+    Favorite(String, bool),
 }
 
 #[derive(Debug)]
@@ -151,6 +152,7 @@ pub enum QueueOut {
     CreatePlaylist,
     DisplayToast(String),
     DesktopNotification(Box<submarine::data::Child>),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -779,10 +781,14 @@ impl relm4::Component for Queue {
                         self.last_selected = Some(target);
                     }
                 }
+                QueueSongOut::FavoriteClicked(id, state) => sender.output(QueueOut::FavoriteClicked(id, state)).expect("sending failed"),
             },
             QueueIn::DisplayToast(title) => sender
                 .output(QueueOut::DisplayToast(title))
                 .expect("sending failed"),
+            QueueIn::Favorite(id, state) => {
+                self.songs.broadcast(QueueSongIn::FavoriteSong(id, state));
+            }
         }
     }
 

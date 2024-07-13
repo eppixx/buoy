@@ -20,6 +20,7 @@ use super::descriptive_cover::DescriptiveCoverOut;
 pub struct ArtistElement {
     cover: relm4::Controller<DescriptiveCover>,
     init: submarine::data::ArtistId3,
+    favorite: gtk::Button,
 }
 
 impl ArtistElement {
@@ -31,11 +32,14 @@ impl ArtistElement {
 #[derive(Debug)]
 pub enum ArtistElementIn {
     DescriptiveCover(DescriptiveCoverOut),
+    Favorited(String, bool),
 }
 
 #[derive(Debug)]
 pub enum ArtistElementOut {
     Clicked(submarine::data::ArtistId3),
+    DisplayToast(String),
+    FavoriteClicked(String, bool),
 }
 
 #[relm4::component(pub)]
@@ -58,6 +62,7 @@ impl relm4::SimpleComponent for ArtistElement {
         let model = Self {
             cover,
             init: init.clone(),
+            favorite: gtk::Button::default(),
         };
 
         let widgets = view_output!();
@@ -89,17 +94,64 @@ impl relm4::SimpleComponent for ArtistElement {
         gtk::Box {
             add_css_class: "artist-element",
 
-            gtk::Button {
-                add_css_class: "flat",
-                set_halign: gtk::Align::Center,
+            gtk::Overlay {
+                add_overlay = &gtk::Box {
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Start,
+                    set_margin_top: 85,
+                    set_margin_start: 75,
 
-                connect_clicked[sender, init] => move |_btn| {
-                    sender.output(ArtistElementOut::Clicked(init.clone())).unwrap();
+                    model.favorite.clone() -> gtk::Button {
+                        set_width_request: 24,
+                        set_height_request: 24,
+                        set_icon_name: "non-starred-symbolic",
+
+                        connect_clicked[sender, init] => move |btn| {
+                            match btn.icon_name().as_deref() {
+                                Some("starred-symbolic") => sender.output(ArtistElementOut::FavoriteClicked(init.id.clone(), false)).expect("sending failed"),
+                                Some("non-starred-symbolic") => sender.output(ArtistElementOut::FavoriteClicked(init.id.clone(), true)).expect("sending failed"),
+                                _ => {}
+                            }
+                        }
+                    }
                 },
 
                 #[wrap(Some)]
-                set_child = &model.cover.widget().clone(),
+                set_child = &gtk::Button {
+                    add_css_class: "flat",
+                    set_halign: gtk::Align::Center,
+
+                    connect_clicked[sender, init] => move |_btn| {
+                        sender.output(ArtistElementOut::Clicked(init.clone())).unwrap();
+                    },
+
+                    #[wrap(Some)]
+                    set_child = &model.cover.widget().clone(),
+                }
             }
         }
     }
+
+    fn update(
+        &mut self,
+        msg: Self::Input,
+        sender: relm4::ComponentSender<Self>,
+    ) {
+        match msg {
+            ArtistElementIn::DescriptiveCover(msg) => match msg {
+                DescriptiveCoverOut::DisplayToast(msg) => sender.output(ArtistElementOut::DisplayToast(msg)).expect("sending failed"),
+            }
+            ArtistElementIn::Favorited(id, state)=> {
+                if self.init.id == id {
+                    match state {
+                        true => self.favorite.set_icon_name("starred-symbolic"),
+                        false => self.favorite.set_icon_name("non-starred-symbolic"),
+                    }
+                }
+                tracing::error!("implement");
+            }
+        }
+    }
+
+
 }

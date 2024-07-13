@@ -25,6 +25,7 @@ pub struct Dashboard {
 pub enum DashboardOut {
     ClickedAlbum(AlbumElementInit),
     DisplayToast(String),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -32,6 +33,7 @@ pub enum DashboardIn {
     SearchChanged(String),
     AlbumElement(AlbumElementOut),
     ClickedRandomize,
+    Favorited(String, bool),
 }
 
 #[derive(Debug)]
@@ -232,6 +234,7 @@ impl relm4::Component for Dashboard {
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(DashboardOut::DisplayToast(title))
                     .expect("sending failed"),
+                AlbumElementOut::FavoriteClicked(id, state) => sender.output(DashboardOut::FavoriteClicked(id, state)).expect("sending failed"),
             },
             DashboardIn::ClickedRandomize => {
                 self.random_album.remove_all();
@@ -250,6 +253,9 @@ impl relm4::Component for Dashboard {
                             .forward(sender.input_sender(), DashboardIn::AlbumElement)
                     })
                     .for_each(|album| self.random_album.append(album.widget()));
+            }
+            DashboardIn::Favorited(id, state) => {
+                tracing::error!("implement favorite dashboard");
             }
         }
     }

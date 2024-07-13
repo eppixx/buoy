@@ -88,6 +88,9 @@ pub enum AppIn {
     Navigation(NavigationMode),
     Mpris(MprisOut),
     Player(Command),
+    FavoriteAlbumClicked(String, bool),
+    FavoriteArtistClicked(String, bool),
+    FavoriteSongClicked(String, bool),
 }
 
 #[relm4::widget_template(pub)]
@@ -814,6 +817,7 @@ impl relm4::component::AsyncComponent for App {
                         }
                     }
                 }
+                QueueOut::FavoriteClicked(id, state) => sender.input(AppIn::FavoriteSongClicked(id, state)),
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
@@ -828,6 +832,9 @@ impl relm4::component::AsyncComponent for App {
                     self.search_btn.set_active(false);
                     self.search_stack.set_visible_child_enum(&NavigationMode::Normal);
                 }
+                BrowserOut::FavoriteAlbumClicked(id, state) => sender.input(AppIn::FavoriteAlbumClicked(id, state)),
+                BrowserOut::FavoriteArtistClicked(id, state) => sender.input(AppIn::FavoriteArtistClicked(id, state)),
+                BrowserOut::FavoriteSongClicked(id, state) => sender.input(AppIn::FavoriteSongClicked(id, state)),
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
@@ -997,6 +1004,26 @@ impl relm4::component::AsyncComponent for App {
                     self.queue.emit(QueueIn::SetShuffle(shuffle));
                 }
             },
+            AppIn::FavoriteAlbumClicked(id, state) => {
+                println!("album favorited");
+                //TODO change subsonic
+                //TODO change on server
+                self.browser.emit(BrowserIn::FavoriteAlbum(id, state));
+            }
+            AppIn::FavoriteArtistClicked(id, state) => {
+                println!("artist favorited");
+                //TODO change subsonic
+                //TODO change on server
+                self.queue.emit(QueueIn::Favorite(id.clone(), state));
+                self.browser.emit(BrowserIn::FavoriteArtist(id, state));
+            }
+            AppIn::FavoriteSongClicked(id, state) => {
+                println!("song favorited");
+                //TODO change subsonic
+                //TODO change on server
+                self.queue.emit(QueueIn::Favorite(id.clone(), state));
+                self.browser.emit(BrowserIn::FavoriteSong(id, state));
+            }
         }
     }
 

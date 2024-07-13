@@ -76,7 +76,9 @@ pub enum BrowserIn {
     ArtistView(Box<ArtistViewOut>),
     PlaylistsView(PlaylistsViewOut),
     NewPlaylist(String, Vec<submarine::data::Child>),
-    FavoriteClicked(String, bool),
+    FavoriteAlbum(String, bool),
+    FavoriteArtist(String, bool),
+    FavoriteSong(String, bool),
 }
 
 #[derive(Debug)]
@@ -87,6 +89,9 @@ pub enum BrowserOut {
     BackButtonSensitivity(bool),
     DisplayToast(String),
     ChangedView,
+    FavoriteAlbumClicked(String, bool),
+    FavoriteArtistClicked(String, bool),
+    FavoriteSongClicked(String, bool),
 }
 
 #[relm4::component(async, pub)]
@@ -268,6 +273,7 @@ impl relm4::component::AsyncComponent for Browser {
                 DashboardOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
+                DashboardOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
             },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
@@ -295,6 +301,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumsViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
+                AlbumsViewOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
@@ -315,6 +322,8 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
+                ArtistsViewOut::DisplayToast(msg) => sender.output(BrowserOut::DisplayToast(msg)).expect("sending failed"),
+                ArtistsViewOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteArtistClicked(id, state)).expect("sending failed"),
             },
             BrowserIn::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(drop) => {
@@ -326,7 +335,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
-                AlbumViewOut::FavoriteClicked(id, state) => sender.input(BrowserIn::FavoriteClicked(id, state)),
+                AlbumViewOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
@@ -352,6 +361,8 @@ impl relm4::component::AsyncComponent for Browser {
                 ArtistViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
+                ArtistViewOut::FavoriteAlbumClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
+                ArtistViewOut::FavoriteArtistClicked(id, state) => sender.output(BrowserOut::FavoriteArtistClicked(id, state)).expect("sending failed"),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => sender
@@ -474,27 +485,36 @@ impl relm4::component::AsyncComponent for Browser {
                     view.emit(PlaylistsViewIn::NewPlaylist(list.clone()));
                 }
             }
-            BrowserIn::FavoriteClicked(id, state) => {
-                // for view in &self.dashboards {
-                //     view.emit(DashboardIn::Favorited(id, state));
-                // }
-                // for view in &self.artistss {
-                //     view.emit(ArtistsViewIn::Favorited(id, state));
-                // }
-                // for view in &self.albumss {
-                //     view.emit(AlbumsViewIn::Favorited(id, state));
-                // }
+            BrowserIn::FavoriteSong(id, state) => {
+                //notify all views with songs in them
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::Favorited(id.clone(), state));
                 }
-                // for view in &self.artist_views {
-                //     view.emit(ArtistViewIn::Favorited(id, state));
-                // }
-                // for view in &self.playlists_views {
-                //     view.emit(PlaylistsViewIn::Favorited(id, state));
-                // }
-
+                for view in &self.playlists_views {
+                    // view.emit(PlaylistsViewIn::Favorited(id, state));
+                }
                 //TODO add for track view
+            }
+            BrowserIn::FavoriteAlbum(id, state) => {
+                //notify all views with albums in them
+                for view in &self.dashboards {
+                    view.emit(DashboardIn::Favorited(id.clone(), state));
+                }
+                for view in &self.albumss {
+                    view.emit(AlbumsViewIn::Favorited(id.clone(), state));
+                }
+                for view in &self.album_views {
+                    view.emit(AlbumViewIn::Favorited(id.clone(), state));
+                }
+            }
+            BrowserIn::FavoriteArtist(id, state) => {
+                //notify all views with artists in them
+                for view in &self.artist_views {
+                    view.emit(ArtistViewIn::Favorited(id.clone(), state));
+                }
+                for view in &self.artistss {
+                    view.emit(ArtistsViewIn::Favorited(id.clone(), state));
+                }
             }
         }
     }

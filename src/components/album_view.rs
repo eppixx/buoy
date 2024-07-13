@@ -332,7 +332,7 @@ impl relm4::Component for AlbumView {
                     .emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
                 self.title = album.base.name;
                 self.artist = album.base.artist;
-                if let Some(_) = album.base.starred {
+                if album.base.starred.is_some() {
                     self.favorite.set_icon_name("starred-symbolic");
                 }
             }
