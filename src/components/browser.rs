@@ -85,6 +85,7 @@ pub enum BrowserOut {
     InsertAfterCurrentInQueue(Droppable),
     BackButtonSensitivity(bool),
     DisplayToast(String),
+    ChangedView,
 }
 
 #[relm4::component(async, pub)]
@@ -269,6 +270,8 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
+                    sender.output(BrowserOut::ChangedView).expect("sending failed");
+
                     let init: AlbumViewInit = match id {
                         AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
                         AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
@@ -294,6 +297,8 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
+                    sender.output(BrowserOut::ChangedView).expect("sending failed");
+
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
                         .launch((self.subsonic.clone(), id))
                         .forward(sender.input_sender(), |msg| {
