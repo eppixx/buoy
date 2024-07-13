@@ -146,8 +146,12 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 ArtistElementOut::Clicked(id) => {
                     sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap();
                 }
-                ArtistElementOut::DisplayToast(msg) => sender.output(ArtistsViewOut::DisplayToast(msg)).expect("sending failed"),
-                ArtistElementOut::FavoriteClicked(id, state) => sender.output(ArtistsViewOut::FavoriteClicked(id, state)).expect("sending failed"),
+                ArtistElementOut::DisplayToast(msg) => sender
+                    .output(ArtistsViewOut::DisplayToast(msg))
+                    .expect("sending failed"),
+                ArtistElementOut::FavoriteClicked(id, state) => sender
+                    .output(ArtistsViewOut::FavoriteClicked(id, state))
+                    .expect("sending failed"),
             },
             ArtistsViewIn::SearchChanged(search) => {
                 self.artists.set_filter_func(move |element| {

@@ -448,16 +448,22 @@ impl FactoryComponent for QueueSong {
                     .output(QueueSongOut::DisplayToast(title))
                     .expect("sending failed"),
             },
-            QueueSongIn::FavoriteClicked => {
-                match self.favorited.icon_name().as_deref() {
-                    Some("starred-symbolic") => sender.output(QueueSongOut::FavoriteClicked(self.info.id.clone(), false)).expect("sending failed"),
-                    Some("non-starred-symbolic") => sender.output(QueueSongOut::FavoriteClicked(self.info.id.clone(), true)).expect("sending failed"),
-                    _ => {}
-                }
+            QueueSongIn::FavoriteClicked => match self.favorited.icon_name().as_deref() {
+                Some("starred-symbolic") => sender
+                    .output(QueueSongOut::FavoriteClicked(self.info.id.clone(), false))
+                    .expect("sending failed"),
+                Some("non-starred-symbolic") => sender
+                    .output(QueueSongOut::FavoriteClicked(self.info.id.clone(), true))
+                    .expect("sending failed"),
+                _ => {}
+            },
+            QueueSongIn::FavoriteSong(id, true) if id == self.info.id => {
+                self.favorited.set_icon_name("starred-symbolic")
             }
-            QueueSongIn::FavoriteSong(id, true) if id == self.info.id => self.favorited.set_icon_name("starred-symbolic"),
-            QueueSongIn::FavoriteSong(id, false) if id == self.info.id => self.favorited.set_icon_name("non-starred-symbolic"),
-            QueueSongIn::FavoriteSong(_, _) => {},
+            QueueSongIn::FavoriteSong(id, false) if id == self.info.id => {
+                self.favorited.set_icon_name("non-starred-symbolic")
+            }
+            QueueSongIn::FavoriteSong(_, _) => {}
         }
     }
 

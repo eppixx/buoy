@@ -234,7 +234,9 @@ impl relm4::Component for Dashboard {
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(DashboardOut::DisplayToast(title))
                     .expect("sending failed"),
-                AlbumElementOut::FavoriteClicked(id, state) => sender.output(DashboardOut::FavoriteClicked(id, state)).expect("sending failed"),
+                AlbumElementOut::FavoriteClicked(id, state) => sender
+                    .output(DashboardOut::FavoriteClicked(id, state))
+                    .expect("sending failed"),
             },
             DashboardIn::ClickedRandomize => {
                 self.random_album.remove_all();

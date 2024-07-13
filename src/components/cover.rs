@@ -131,28 +131,24 @@ impl relm4::Component for Cover {
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
             }
-            CoverIn::LoadSong(child) => {
-                match child.album_id {
-                    None => self.stack.set_visible_child_enum(&State::Stock),
-                    Some(album_id) => {
-                        let album = self.subsonic.borrow().find_album(album_id);
-                        match album {
+            CoverIn::LoadSong(child) => match child.album_id {
+                None => self.stack.set_visible_child_enum(&State::Stock),
+                Some(album_id) => {
+                    let album = self.subsonic.borrow().find_album(album_id);
+                    match album {
+                        None => self.stack.set_visible_child_enum(&State::Stock),
+                        Some(album) => match &album.cover_art {
+                            Some(id) => sender
+                                .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
                             None => self.stack.set_visible_child_enum(&State::Stock),
-                            Some(album) => match &album.cover_art {
-                                Some(id) => sender
-                                    .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
-                                None => self.stack.set_visible_child_enum(&State::Stock),
-                            },
-                        }
+                        },
                     }
                 }
             },
-            CoverIn::LoadAlbumId3(album) => {
-                match album.base.cover_art {
-                    None => self.stack.set_visible_child_enum(&State::Stock),
-                    Some(id) => {
-                        sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
-                    }
+            CoverIn::LoadAlbumId3(album) => match album.base.cover_art {
+                None => self.stack.set_visible_child_enum(&State::Stock),
+                Some(id) => {
+                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadPlaylist(playlist) => match playlist.base.cover_art {
@@ -161,12 +157,10 @@ impl relm4::Component for Cover {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
-            CoverIn::LoadArtist(artist) => {
-                match artist.cover_art {
-                    None => self.stack.set_visible_child_enum(&State::Stock),
-                    Some(id) => {
-                        sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
-                    }
+            CoverIn::LoadArtist(artist) => match artist.cover_art {
+                None => self.stack.set_visible_child_enum(&State::Stock),
+                Some(id) => {
+                    sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
         }

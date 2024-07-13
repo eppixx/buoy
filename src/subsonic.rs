@@ -169,7 +169,10 @@ impl Subsonic {
     }
 
     pub fn find_artist(&self, id: impl AsRef<str>) -> Option<submarine::data::ArtistId3> {
-        self.artists.iter().find(|artist| artist.id == id.as_ref()).cloned()
+        self.artists
+            .iter()
+            .find(|artist| artist.id == id.as_ref())
+            .cloned()
     }
 
     pub fn albums(&self) -> &Vec<submarine::data::Child> {
@@ -177,7 +180,10 @@ impl Subsonic {
     }
 
     pub fn find_album(&self, id: impl AsRef<str>) -> Option<submarine::data::Child> {
-        self.album_list.iter().find(|album| album.id == id.as_ref()).cloned()
+        self.album_list
+            .iter()
+            .find(|album| album.id == id.as_ref())
+            .cloned()
     }
 
     pub fn album_of_song(&self, child: submarine::data::Child) -> Option<submarine::data::Child> {

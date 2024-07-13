@@ -10,7 +10,7 @@ use relm4::{
 };
 
 use super::{
-    album_element::{AlbumElement, AlbumElementInit, AlbumElementIn, AlbumElementOut},
+    album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
 use crate::{client::Client, subsonic::Subsonic, types::Droppable};
@@ -201,7 +201,9 @@ impl relm4::Component for ArtistView {
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(ArtistViewOut::DisplayToast(title))
                     .expect("sending failed"),
-                AlbumElementOut::FavoriteClicked(id, state) => sender.output(ArtistViewOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
+                AlbumElementOut::FavoriteClicked(id, state) => sender
+                    .output(ArtistViewOut::FavoriteAlbumClicked(id, state))
+                    .expect("sending failed"),
             },
             ArtistViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender

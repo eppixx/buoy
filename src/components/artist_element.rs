@@ -129,16 +129,14 @@ impl relm4::SimpleComponent for ArtistElement {
         }
     }
 
-    fn update(
-        &mut self,
-        msg: Self::Input,
-        sender: relm4::ComponentSender<Self>,
-    ) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             ArtistElementIn::DescriptiveCover(msg) => match msg {
-                DescriptiveCoverOut::DisplayToast(msg) => sender.output(ArtistElementOut::DisplayToast(msg)).expect("sending failed"),
-            }
-            ArtistElementIn::Favorited(id, state)=> {
+                DescriptiveCoverOut::DisplayToast(msg) => sender
+                    .output(ArtistElementOut::DisplayToast(msg))
+                    .expect("sending failed"),
+            },
+            ArtistElementIn::Favorited(id, state) => {
                 if self.init.id == id {
                     match state {
                         true => self.favorite.set_icon_name("starred-symbolic"),
@@ -149,6 +147,4 @@ impl relm4::SimpleComponent for ArtistElement {
             }
         }
     }
-
-
 }

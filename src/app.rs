@@ -817,7 +817,9 @@ impl relm4::component::AsyncComponent for App {
                         }
                     }
                 }
-                QueueOut::FavoriteClicked(id, state) => sender.input(AppIn::FavoriteSongClicked(id, state)),
+                QueueOut::FavoriteClicked(id, state) => {
+                    sender.input(AppIn::FavoriteSongClicked(id, state))
+                }
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
@@ -830,11 +832,18 @@ impl relm4::component::AsyncComponent for App {
                 BrowserOut::ChangedView => {
                     self.browser.emit(BrowserIn::SearchChanged(String::new()));
                     self.search_btn.set_active(false);
-                    self.search_stack.set_visible_child_enum(&NavigationMode::Normal);
+                    self.search_stack
+                        .set_visible_child_enum(&NavigationMode::Normal);
                 }
-                BrowserOut::FavoriteAlbumClicked(id, state) => sender.input(AppIn::FavoriteAlbumClicked(id, state)),
-                BrowserOut::FavoriteArtistClicked(id, state) => sender.input(AppIn::FavoriteArtistClicked(id, state)),
-                BrowserOut::FavoriteSongClicked(id, state) => sender.input(AppIn::FavoriteSongClicked(id, state)),
+                BrowserOut::FavoriteAlbumClicked(id, state) => {
+                    sender.input(AppIn::FavoriteAlbumClicked(id, state))
+                }
+                BrowserOut::FavoriteArtistClicked(id, state) => {
+                    sender.input(AppIn::FavoriteArtistClicked(id, state))
+                }
+                BrowserOut::FavoriteSongClicked(id, state) => {
+                    sender.input(AppIn::FavoriteSongClicked(id, state))
+                }
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),

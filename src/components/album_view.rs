@@ -15,10 +15,7 @@ use crate::factory::playlist_tracks_row::{
     TitleColumn,
 };
 use crate::{
-    client::Client,
-    common::convert_for_label,
-    components::cover::CoverIn,
-    subsonic::Subsonic,
+    client::Client, common::convert_for_label, components::cover::CoverIn, subsonic::Subsonic,
     types::Droppable,
 };
 
@@ -267,26 +264,24 @@ impl relm4::Component for AlbumView {
                     score.is_some()
                 });
             }
-            AlbumViewIn::Favorited(id, state) => {
-                match &self.init {
-                    AlbumViewInit::Child(child) => {
-                        if child.id == id {
-                            match state {
-                                true => self.favorite.set_icon_name("starred-symbolic"),
-                                false => self.favorite.set_icon_name("non-starred-symbolic"),
-                            }
-                        }
-                    }
-                    AlbumViewInit::AlbumId3(album) => {
-                        if album.id == id {
-                            match state {
-                                true => self.favorite.set_icon_name("starred-symbolic"),
-                                false => self.favorite.set_icon_name("non-starred-symbolic"),
-                            }
+            AlbumViewIn::Favorited(id, state) => match &self.init {
+                AlbumViewInit::Child(child) => {
+                    if child.id == id {
+                        match state {
+                            true => self.favorite.set_icon_name("starred-symbolic"),
+                            false => self.favorite.set_icon_name("non-starred-symbolic"),
                         }
                     }
                 }
-            }
+                AlbumViewInit::AlbumId3(album) => {
+                    if album.id == id {
+                        match state {
+                            true => self.favorite.set_icon_name("starred-symbolic"),
+                            false => self.favorite.set_icon_name("non-starred-symbolic"),
+                        }
+                    }
+                }
+            },
         }
     }
 

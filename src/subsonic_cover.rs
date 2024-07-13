@@ -108,31 +108,36 @@ impl SubsonicCovers {
     pub fn cover_icon(&self, id: &str) -> Option<gdk::Texture> {
         match self.cover_raw(id) {
             None => None,
-            Some(buffer) => {
-                match image::load_from_memory(&buffer) {
-                    Err(e) => {
-                        tracing::warn!("converting buffer to image: {e}");
-                        None
+            Some(buffer) => match image::load_from_memory(&buffer) {
+                Err(e) => {
+                    tracing::warn!("converting buffer to image: {e}");
+                    None
+                }
+                Ok(image) => {
+                    let thumb = image.thumbnail(32, 32);
+                    let mut writer = Cursor::new(vec![]);
+                    let color_type = image::ExtendedColorType::from(thumb.color());
+                    if let Err(e) = image::write_buffer_with_format(
+                        &mut writer,
+                        thumb.as_bytes(),
+                        thumb.width(),
+                        thumb.height(),
+                        color_type,
+                        image::ImageFormat::Png,
+                    ) {
+                        tracing::warn!("converting thumbnail to png: {e:?}");
+                        return None;
                     }
-                    Ok(image) => {
-                        let thumb = image.thumbnail(32, 32);
-                        let mut writer = Cursor::new(vec![]);
-                        let color_type = image::ExtendedColorType::from(thumb.color());
-                        if let Err(e) = image::write_buffer_with_format(&mut writer, thumb.as_bytes(), thumb.width(), thumb.height(), color_type, image::ImageFormat::Png) {
-                            tracing::warn!("converting thumbnail to png: {e:?}");
-                            return None;
-                        }
-                        let bytes = gtk::glib::Bytes::from(&writer.into_inner());
-                        match gdk::Texture::from_bytes(&bytes) {
-                            Ok(texture) => Some(texture),
-                            Err(e) => {
-                                tracing::warn!("converting buffer to icon: {e}");
-                                None
-                            }
+                    let bytes = gtk::glib::Bytes::from(&writer.into_inner());
+                    match gdk::Texture::from_bytes(&bytes) {
+                        Ok(texture) => Some(texture),
+                        Err(e) => {
+                            tracing::warn!("converting buffer to icon: {e}");
+                            None
                         }
                     }
                 }
-            }
+            },
         }
     }
 

@@ -273,11 +273,15 @@ impl relm4::component::AsyncComponent for Browser {
                 DashboardOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
-                DashboardOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
+                DashboardOut::FavoriteClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteAlbumClicked(id, state))
+                    .expect("sending failed"),
             },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
-                    sender.output(BrowserOut::ChangedView).expect("sending failed");
+                    sender
+                        .output(BrowserOut::ChangedView)
+                        .expect("sending failed");
 
                     let init: AlbumViewInit = match id {
                         AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
@@ -301,11 +305,15 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumsViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
-                AlbumsViewOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
+                AlbumsViewOut::FavoriteClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteAlbumClicked(id, state))
+                    .expect("sending failed"),
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
-                    sender.output(BrowserOut::ChangedView).expect("sending failed");
+                    sender
+                        .output(BrowserOut::ChangedView)
+                        .expect("sending failed");
 
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
                         .launch((self.subsonic.clone(), id))
@@ -322,8 +330,12 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
-                ArtistsViewOut::DisplayToast(msg) => sender.output(BrowserOut::DisplayToast(msg)).expect("sending failed"),
-                ArtistsViewOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteArtistClicked(id, state)).expect("sending failed"),
+                ArtistsViewOut::DisplayToast(msg) => sender
+                    .output(BrowserOut::DisplayToast(msg))
+                    .expect("sending failed"),
+                ArtistsViewOut::FavoriteClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteArtistClicked(id, state))
+                    .expect("sending failed"),
             },
             BrowserIn::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(drop) => {
@@ -335,7 +347,9 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
-                AlbumViewOut::FavoriteClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
+                AlbumViewOut::FavoriteClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteAlbumClicked(id, state))
+                    .expect("sending failed"),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
@@ -361,8 +375,12 @@ impl relm4::component::AsyncComponent for Browser {
                 ArtistViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
-                ArtistViewOut::FavoriteAlbumClicked(id, state) => sender.output(BrowserOut::FavoriteAlbumClicked(id, state)).expect("sending failed"),
-                ArtistViewOut::FavoriteArtistClicked(id, state) => sender.output(BrowserOut::FavoriteArtistClicked(id, state)).expect("sending failed"),
+                ArtistViewOut::FavoriteAlbumClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteAlbumClicked(id, state))
+                    .expect("sending failed"),
+                ArtistViewOut::FavoriteArtistClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteArtistClicked(id, state))
+                    .expect("sending failed"),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => sender

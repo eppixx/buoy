@@ -6,7 +6,7 @@ use relm4::{
     gtk::gdk,
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt, AdjustmentExt},
+        prelude::{AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
     },
     prelude::DynamicIndex,
     ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
@@ -781,7 +781,9 @@ impl relm4::Component for Queue {
                         self.last_selected = Some(target);
                     }
                 }
-                QueueSongOut::FavoriteClicked(id, state) => sender.output(QueueOut::FavoriteClicked(id, state)).expect("sending failed"),
+                QueueSongOut::FavoriteClicked(id, state) => sender
+                    .output(QueueOut::FavoriteClicked(id, state))
+                    .expect("sending failed"),
             },
             QueueIn::DisplayToast(title) => sender
                 .output(QueueOut::DisplayToast(title))

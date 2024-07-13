@@ -160,7 +160,9 @@ impl relm4::component::Component for AlbumsView {
                 AlbumElementOut::DisplayToast(title) => sender
                     .output(AlbumsViewOut::DisplayToast(title))
                     .expect("sending failed"),
-                AlbumElementOut::FavoriteClicked(id, state) => sender.output(AlbumsViewOut::FavoriteClicked(id, state)).expect("sending failed"),
+                AlbumElementOut::FavoriteClicked(id, state) => sender
+                    .output(AlbumsViewOut::FavoriteClicked(id, state))
+                    .expect("sending failed"),
             },
             AlbumsViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
