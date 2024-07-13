@@ -22,7 +22,9 @@ use crate::{
 #[derive(Debug)]
 pub struct AlbumView {
     subsonic: Rc<RefCell<Subsonic>>,
+    init: AlbumViewInit,
     cover: relm4::Controller<Cover>,
+    favorite: gtk::Button,
     title: String,
     artist: Option<String>,
     info: String,
@@ -39,6 +41,7 @@ pub enum AlbumViewInit {
 pub enum AlbumViewOut {
     AppendAlbum(Droppable),
     InsertAfterCurrentPLayed(Droppable),
+    FavoriteClicked(String, bool),
     DisplayToast(String),
 }
 
@@ -46,6 +49,7 @@ pub enum AlbumViewOut {
 pub enum AlbumViewIn {
     AlbumTracks,
     Cover(CoverOut),
+    Favorited(String, bool),
     SearchChanged(String),
 }
 
@@ -85,15 +89,18 @@ impl relm4::Component for AlbumView {
 
         let model = Self {
             subsonic: subsonic.clone(),
+            init: init.clone(),
             cover: Cover::builder()
-                .launch((subsonic.clone(), cover, true, Some(Id::album(id))))
+                .launch((subsonic.clone(), cover, false, Some(Id::album(id))))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
+            favorite: gtk::Button::default(),
             title: String::from("Unkonwn Title"),
             artist: None,
             info: String::new(),
             tracks,
         };
 
+        let init2 = init.clone();
         let widgets = view_output!();
         model.cover.model().add_css_class_image("size100");
 
@@ -120,7 +127,30 @@ impl relm4::Component for AlbumView {
                 set_spacing: 15,
                 add_css_class: "album-view-info",
 
-                model.cover.widget().clone() -> gtk::Box {},
+                gtk::Overlay {
+                    #[wrap(Some)]
+                    set_child = &model.cover.widget().clone() -> gtk::Box {},
+                    add_overlay = &model.favorite.clone() {
+                        set_halign: gtk::Align::End,
+                        set_valign: gtk::Align::End,
+                        set_width_request: 24,
+                        set_height_request: 24,
+                        set_icon_name: "non-starred-symbolic",
+
+                        connect_clicked[sender] => move |btn| {
+                            let id: String = match &init2 {
+                                AlbumViewInit::Child(child) => child.id.clone(),
+                                AlbumViewInit::AlbumId3(album) => album.id.clone(),
+                            };
+                            let state = match btn.icon_name().as_deref() {
+                                Some("non-starred-symbolic") => true,
+                                Some("starred-symbolic") => false,
+                                _ => true,
+                            };
+                            sender.output(AlbumViewOut::FavoriteClicked(id, state)).expect("sending failed");
+                        }
+                    }
+                },
 
                 gtk::WindowHandle {
                     set_hexpand: true,
@@ -234,6 +264,26 @@ impl relm4::Component for AlbumView {
                     score.is_some()
                 });
             }
+            AlbumViewIn::Favorited(id, state) => {
+                match &self.init {
+                    AlbumViewInit::Child(child) => {
+                        if child.id == id {
+                            match state {
+                                true => self.favorite.set_icon_name("starred-symbolic"),
+                                false => self.favorite.set_icon_name("non-starred-symbolic"),
+                            }
+                        }
+                    }
+                    AlbumViewInit::AlbumId3(album) => {
+                        if album.id == id {
+                            match state {
+                                true => self.favorite.set_icon_name("starred-symbolic"),
+                                false => self.favorite.set_icon_name("non-starred-symbolic"),
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -282,6 +332,9 @@ impl relm4::Component for AlbumView {
                     .emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
                 self.title = album.base.name;
                 self.artist = album.base.artist;
+                if let Some(_) = album.base.starred {
+                    self.favorite.set_icon_name("starred-symbolic");
+                }
             }
         }
     }

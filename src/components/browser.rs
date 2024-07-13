@@ -76,6 +76,7 @@ pub enum BrowserIn {
     ArtistView(Box<ArtistViewOut>),
     PlaylistsView(PlaylistsViewOut),
     NewPlaylist(String, Vec<submarine::data::Child>),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -325,6 +326,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),
+                AlbumViewOut::FavoriteClicked(id, state) => sender.input(BrowserIn::FavoriteClicked(id, state)),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
@@ -471,6 +473,28 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.playlists_views {
                     view.emit(PlaylistsViewIn::NewPlaylist(list.clone()));
                 }
+            }
+            BrowserIn::FavoriteClicked(id, state) => {
+                // for view in &self.dashboards {
+                //     view.emit(DashboardIn::Favorited(id, state));
+                // }
+                // for view in &self.artistss {
+                //     view.emit(ArtistsViewIn::Favorited(id, state));
+                // }
+                // for view in &self.albumss {
+                //     view.emit(AlbumsViewIn::Favorited(id, state));
+                // }
+                for view in &self.album_views {
+                    view.emit(AlbumViewIn::Favorited(id.clone(), state));
+                }
+                // for view in &self.artist_views {
+                //     view.emit(ArtistViewIn::Favorited(id, state));
+                // }
+                // for view in &self.playlists_views {
+                //     view.emit(PlaylistsViewIn::Favorited(id, state));
+                // }
+
+                //TODO add for track view
             }
         }
     }
