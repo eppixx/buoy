@@ -6,7 +6,7 @@ use relm4::{
     gtk::gdk,
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt, AdjustmentExt},
     },
     prelude::DynamicIndex,
     ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
@@ -200,6 +200,8 @@ impl relm4::Component for Queue {
         sender.input(QueueIn::Append(Droppable::Queue(songs)));
         sender.input(QueueIn::SetCurrent(index));
 
+        let songs = model.songs.widget().clone();
+        let scrolled = gtk::ScrolledWindow::default();
         let widgets = view_output!();
 
         {
@@ -222,7 +224,7 @@ impl relm4::Component for Queue {
             add_css_class: "queue",
             set_orientation: gtk::Orientation::Vertical,
 
-            gtk::ScrolledWindow {
+            scrolled.clone() -> gtk::ScrolledWindow {
                 set_vexpand: true,
 
                 if model.loading_queue {
@@ -246,6 +248,25 @@ impl relm4::Component for Queue {
 
                         connect_selected_rows_changed[sender] => move |widget| {
                             sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
+                        },
+
+                        add_controller = gtk::DropControllerMotion {
+                            connect_motion => move |_self, x, y| {
+                                const SCROLL_ZONE: f32 = 60f32;
+                                const SCROLL_MOVE: f64 = 5f64;
+
+                                let point = gtk::graphene::Point::new(x as f32, y as f32);
+                                let computed = songs.compute_point(&scrolled, &point).unwrap();
+                                if computed.y() < SCROLL_ZONE {
+                                    let vadj = scrolled.vadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    scrolled.set_vadjustment(Some(&vadj));
+                                } else if computed.y() > scrolled.height() as f32 - SCROLL_ZONE {
+                                    let vadj = scrolled.vadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    scrolled.set_vadjustment(Some(&vadj));
+                                }
+                            },
                         },
 
                         #[wrap(Some)]
