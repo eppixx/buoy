@@ -91,7 +91,7 @@ impl relm4::Component for AlbumView {
             subsonic: subsonic.clone(),
             init: init.clone(),
             cover: Cover::builder()
-                .launch((subsonic.clone(), cover, false, Some(Id::album(id))))
+                .launch((subsonic.clone(), cover))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             favorite: gtk::Button::default(),
             title: String::from("Unkonwn Title"),

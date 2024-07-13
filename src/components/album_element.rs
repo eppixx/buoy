@@ -60,14 +60,14 @@ impl relm4::SimpleComponent for AlbumElement {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         // init cover
-        let (builder, drop, id) = match &init {
+        let (builder, drop) = match &init {
             AlbumElementInit::AlbumId3(id3) => {
                 let builder = DescriptiveCoverInit::new(
                     id3.name.clone(),
                     id3.cover_art.clone(),
                     id3.artist.clone(),
                 );
-                (builder, Droppable::Album(id3.clone()), id3.id.clone())
+                (builder, Droppable::Album(id3.clone()))
             }
             AlbumElementInit::Child(child) => {
                 let builder = DescriptiveCoverInit::new(
@@ -75,12 +75,12 @@ impl relm4::SimpleComponent for AlbumElement {
                     child.cover_art.clone(),
                     child.artist.clone(),
                 );
-                (builder, Droppable::AlbumChild(child.clone()), child.id.clone())
+                (builder, Droppable::AlbumChild(child.clone()))
             }
         };
 
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
-            .launch((subsonic.clone(), builder, true, Some(Id::album(id))))
+            .launch((subsonic.clone(), builder))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self {
             cover,

@@ -55,19 +55,19 @@ pub enum DescriptiveCoverOut {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for DescriptiveCover {
-    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverInit, bool, Option<Id>);
+    type Init = (Rc<RefCell<Subsonic>>, DescriptiveCoverInit);
     type Input = DescriptiveCoverIn;
     type Output = DescriptiveCoverOut;
     type Widgets = CoverWidgets;
 
     fn init(
-        (subsonic, init, show_favorite, id): Self::Init,
+        (subsonic, init): Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             cover: Cover::builder()
-                .launch((subsonic, init.cover_id, show_favorite, id))
+                .launch((subsonic, init.cover_id))
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: init.title,
             subtitle: init.subtitle,

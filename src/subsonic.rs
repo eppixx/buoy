@@ -15,25 +15,14 @@ enum Error {
     NoClient,
 }
 
-#[derive(Debug)]
-pub enum Sync {
-    Favorited(String, bool),
-}
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Subsonic {
-    #[serde(skip, default = "default_sync")]
-    sync: (async_channel::Sender<Sync>, async_channel::Receiver<Sync>),
     scan_status: Option<i64>,
     artists: Vec<submarine::data::ArtistId3>,
     album_list: Vec<submarine::data::Child>,
     playlists: Vec<submarine::data::PlaylistWithSongs>,
     #[serde(skip)]
     covers: SubsonicCovers,
-}
-
-fn default_sync() -> (async_channel::Sender<Sync>, async_channel::Receiver<Sync>) {
-    async_channel::unbounded()
 }
 
 impl Subsonic {
@@ -76,14 +65,6 @@ impl Subsonic {
         let result = toml::from_str::<Self>(&content)?;
 
         Ok(result)
-    }
-
-    pub fn receiver(&self) -> &async_channel::Receiver<Sync> {
-        &self.sync.1
-    }
-
-    pub fn send(&self, msg: Sync) {
-        self.sync.0.try_send(msg).unwrap();
     }
 
     pub async fn new() -> anyhow::Result<Self> {
@@ -136,7 +117,6 @@ impl Subsonic {
         };
 
         let result = Self {
-            sync: async_channel::unbounded(),
             scan_status: scan_status.count,
             artists,
             album_list,
