@@ -1027,11 +1027,26 @@ impl relm4::component::AsyncComponent for App {
                 self.browser.emit(BrowserIn::FavoriteArtist(id, state));
             }
             AppIn::FavoriteSongClicked(id, state) => {
-                println!("song favorited");
-                //TODO change subsonic
-                //TODO change on server
-                self.queue.emit(QueueIn::Favorite(id.clone(), state));
-                self.browser.emit(BrowserIn::FavoriteSong(id, state));
+                // change on server
+                let client = Client::get().unwrap();
+                let empty: Vec<String> = vec![];
+                let result = match state {
+                    true => client.star(vec![&id], empty.clone(), empty).await,
+                    false => client.unstar(vec![&id], empty.clone(), empty).await,
+                };
+                match result {
+                    Err(e) => {
+                        sender.input(AppIn::DisplayToast(format!("could not star song: {e:?}")));
+                    }
+                    Ok(_info) => {
+                        // change subsonic
+                        self.subsonic.borrow_mut().favorite_song(id.clone(), state);
+                        
+                        //update views
+                        self.queue.emit(QueueIn::Favorite(id.clone(), state));
+                        self.browser.emit(BrowserIn::FavoriteSong(id, state));
+                    }
+                }
             }
         }
     }
