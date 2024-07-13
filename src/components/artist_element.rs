@@ -11,7 +11,7 @@ use relm4::{
 use crate::{
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
     subsonic::Subsonic,
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 use super::descriptive_cover::DescriptiveCoverOut;
@@ -75,12 +75,9 @@ impl relm4::SimpleComponent for ArtistElement {
         drag_src.set_content(Some(&content));
         drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(cover_id) = &init.cover_art {
-                let cover = subsonic.borrow().cover_icon(&cover_id);
-                match cover {
-                    Some(tex) => {
-                        src.set_icon(Some(&tex), 0, 0);
-                    }
-                    None => {}
+                let cover = subsonic.borrow().cover_icon(cover_id);
+                if let Some(tex) = cover {
+                    src.set_icon(Some(&tex), 0, 0);
                 }
             }
         });

@@ -164,12 +164,9 @@ impl FactoryComponent for QueueSong {
         model.drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(album) = &album {
                 if let Some(cover_id) = &album.cover_art {
-                    let cover = subsonic.borrow().cover_icon(&cover_id);
-                    match cover {
-                        Some(tex) => {
-                            src.set_icon(Some(&tex), 0, 0);
-                        }
-                        None => {}
+                    let cover = subsonic.borrow().cover_icon(cover_id);
+                    if let Some(tex) = cover {
+                        src.set_icon(Some(&tex), 0, 0);
                     }
                 }
             }

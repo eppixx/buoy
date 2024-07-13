@@ -13,7 +13,7 @@ use super::{
     album_element::{AlbumElement, AlbumElementInit, AlbumElementIn, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };
-use crate::{client::Client, subsonic::Subsonic, types::{Droppable, Id}};
+use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug)]
 pub struct ArtistView {
@@ -81,12 +81,9 @@ impl relm4::Component for ArtistView {
         let artist = init.clone();
         drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(cover_id) = &artist.cover_art {
-                let cover = subsonic.borrow().cover_icon(&cover_id);
-                match cover {
-                    Some(tex) => {
-                        src.set_icon(Some(&tex), 0, 0);
-                    }
-                    None => {}
+                let cover = subsonic.borrow().cover_icon(cover_id);
+                if let Some(tex) = cover {
+                    src.set_icon(Some(&tex), 0, 0);
                 }
             }
         });

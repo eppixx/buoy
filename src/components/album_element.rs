@@ -13,7 +13,7 @@ use crate::{
     common::convert_for_label,
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
     subsonic::Subsonic,
-    types::{Droppable, Id},
+    types::Droppable,
 };
 
 #[derive(Debug)]
@@ -130,12 +130,9 @@ impl relm4::SimpleComponent for AlbumElement {
         };
         drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(cover_id) = &cover_art {
-                let cover = subsonic.borrow().cover_icon(&cover_id);
-                match cover {
-                    Some(tex) => {
-                        src.set_icon(Some(&tex), 0, 0);
-                    }
-                    None => {}
+                let cover = subsonic.borrow().cover_icon(cover_id);
+                if let Some(tex) = cover {
+                    src.set_icon(Some(&tex), 0, 0);
                 }
             }
         });

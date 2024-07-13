@@ -254,7 +254,7 @@ impl relm4::Component for Dashboard {
                     })
                     .for_each(|album| self.random_album.append(album.widget()));
             }
-            DashboardIn::Favorited(id, state) => {
+            DashboardIn::Favorited(_id, state) => {
                 tracing::error!("implement favorite dashboard");
             }
         }

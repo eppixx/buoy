@@ -853,7 +853,7 @@ impl relm4::component::AsyncComponent for App {
                 let song = self.queue.model().current_song();
                 if let Some(song) = song {
                     if let Some(album) = song.album_id {
-                        let album = self.subsonic.borrow().find_album(&album);
+                        let album = self.subsonic.borrow().find_album(album);
                         if let Some(album) = album {
                             let image: Option<notify_rust::Image> = {
                                 if let Some(cover_art) = album.cover_art {

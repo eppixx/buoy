@@ -10,7 +10,6 @@ use relm4::{
 
 use super::cover::{Cover, CoverOut};
 use crate::subsonic::Subsonic;
-use crate::types::Id;
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverInit {
