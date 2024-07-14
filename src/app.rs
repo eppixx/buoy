@@ -572,6 +572,27 @@ impl relm4::component::AsyncComponent for App {
                                                         }
                                                     },
                                                 },
+                                                gtk::CenterBox {
+                                                    #[wrap(Some)]
+                                                    set_start_widget = &gtk::Label {
+                                                        set_text: "Scrobble threshold",
+                                                    },
+                                                    #[wrap(Some)]
+                                                    set_end_widget = &gtk::SpinButton {
+                                                        set_numeric: true,
+                                                        set_range: (0.0, 1.0),
+                                                        set_increments: (0.1, 0.1),
+                                                        set_digits: 1,
+                                                        set_value: 0.8f64,
+                                                        set_width_request: 85,
+                                                        set_tooltip: "When the threshold while playing is passed, the play count is increased",
+
+                                                        connect_value_changed => move |spin| {
+
+                                                            Settings::get().lock().unwrap().scrobble_threshold = spin.value();
+                                                        }
+                                                    }
+                                                },
                                                 gtk::Separator {},
                                                 gtk::Box {
                                                     set_halign: gtk::Align::End,

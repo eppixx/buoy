@@ -50,6 +50,9 @@ pub struct Settings {
     #[serde(default)]
     pub send_notifications: bool,
 
+    #[serde(default = "default_scrobble")]
+    pub scrobble_threshold: f64,
+
     #[serde(default)] //defaults to false
     pub equalizer_enabled: bool,
     #[serde(default)] //defaults to [0.0f64; 10]
@@ -69,6 +72,10 @@ fn default_paned_position() -> i32 {
 }
 
 fn default_volume() -> f64 {
+    0.75
+}
+
+fn default_scrobble() -> f64 {
     0.75
 }
 
