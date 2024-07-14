@@ -1014,17 +1014,44 @@ impl relm4::component::AsyncComponent for App {
                 }
             },
             AppIn::FavoriteAlbumClicked(id, state) => {
-                println!("album favorited");
-                //TODO change subsonic
-                //TODO change on server
-                self.browser.emit(BrowserIn::FavoriteAlbum(id, state));
+                let client = Client::get().unwrap();
+                let empty: Vec<String> = vec![];
+                let result = match state {
+                    true => client.star(empty.clone(), vec![&id], empty).await,
+                    false => client.unstar(empty.clone(), vec![&id], empty).await,
+                };
+                match result {
+                    Err(e) => {
+                        sender.input(AppIn::DisplayToast(format!("could not star album: {e:?}")));
+                    }
+                    Ok(_info) => {
+                        // change subsonic
+                        self.subsonic.borrow_mut().favorite_song(id.clone(), state);
+
+                        //update view
+                        self.browser.emit(BrowserIn::FavoriteAlbum(id, state));
+                    }
+                }
             }
             AppIn::FavoriteArtistClicked(id, state) => {
-                println!("artist favorited");
-                //TODO change subsonic
-                //TODO change on server
-                self.queue.emit(QueueIn::Favorite(id.clone(), state));
-                self.browser.emit(BrowserIn::FavoriteArtist(id, state));
+                let client = Client::get().unwrap();
+                let empty: Vec<String> = vec![];
+                let result = match state {
+                    true => client.star(empty.clone(), empty, vec![&id]).await,
+                    false => client.unstar(empty.clone(), empty, vec![&id]).await,
+                };
+                match result {
+                    Err(e) => {
+                        sender.input(AppIn::DisplayToast(format!("could not star artist: {e:?}")));
+                    }
+                    Ok(_info) => {
+                        // change subsonic
+                        self.subsonic.borrow_mut().favorite_song(id.clone(), state);
+
+                        //update view
+                        self.browser.emit(BrowserIn::FavoriteArtist(id, state));
+                    }
+                }
             }
             AppIn::FavoriteSongClicked(id, state) => {
                 // change on server
@@ -1041,7 +1068,7 @@ impl relm4::component::AsyncComponent for App {
                     Ok(_info) => {
                         // change subsonic
                         self.subsonic.borrow_mut().favorite_song(id.clone(), state);
-                        
+
                         //update views
                         self.queue.emit(QueueIn::Favorite(id.clone(), state));
                         self.browser.emit(BrowserIn::FavoriteSong(id, state));
