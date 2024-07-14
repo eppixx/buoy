@@ -2,7 +2,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::gtk::glib::prelude::ToValue;
 use relm4::gtk::{
     self,
-    prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+    prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt, ListModelExt},
 };
 use relm4::{Component, ComponentController};
 
@@ -84,6 +84,7 @@ pub enum PlaylistsViewIn {
     Cover(CoverOut),
     NewPlaylist(submarine::data::PlaylistWithSongs),
     DeletePlaylist(relm4::factory::DynamicIndex),
+    Favorited(String, bool),
 }
 
 #[relm4::component(pub)]
@@ -419,6 +420,28 @@ impl relm4::SimpleComponent for PlaylistsView {
             PlaylistsViewIn::DeletePlaylist(index) => {
                 self.track_stack.set_visible_child_name("tracks-stock");
                 self.playlists.guard().remove(index.current_index());
+            }
+            PlaylistsViewIn::Favorited(id, state) => {
+                use relm4::typed_view::TypedListItem;
+
+                let len = self.tracks.view.columns().n_items();
+                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).into_iter().filter_map(|i| self.tracks.get(i)).collect();
+                for track in tracks {
+                    let track_id = track.borrow().item.id.clone();
+                    if track_id == id {
+                        match state {
+                            true => {
+                                track.borrow_mut().fav.set_value(String::from("starred-symbolic"));
+                                track.borrow_mut().item.starred = Some(chrono::offset::Local::now().into());
+                            }
+                            false => {
+                                track.borrow_mut().fav.set_value(String::from("non-starred-symbolic"));
+                                track.borrow_mut().item.starred = None;
+                            }
+                        }
+                    }
+                }
+
             }
         }
     }

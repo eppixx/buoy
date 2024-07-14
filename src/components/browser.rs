@@ -509,7 +509,7 @@ impl relm4::component::AsyncComponent for Browser {
                     view.emit(AlbumViewIn::FavoritedSong(id.clone(), state));
                 }
                 for view in &self.playlists_views {
-                    // view.emit(PlaylistsViewIn::Favorited(id, state));
+                    view.emit(PlaylistsViewIn::Favorited(id.clone(), state));
                 }
                 //TODO add for track view
             }
