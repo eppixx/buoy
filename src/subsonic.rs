@@ -197,7 +197,7 @@ impl Subsonic {
     pub fn favorite_song(&mut self, id: impl AsRef<str>, state: bool) {
         for playlist in &mut self.playlists {
             for song in &mut playlist.entry {
-                if &song.id == id.as_ref() {
+                if song.id == id.as_ref() {
                     match state {
                         true => song.starred = Some(chrono::offset::Local::now().into()),
                         false => song.starred = None,

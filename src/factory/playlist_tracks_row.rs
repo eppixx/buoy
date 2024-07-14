@@ -18,10 +18,6 @@ impl PartialEq for PlaylistTracksRow {
     fn eq(&self, other: &Self) -> bool {
         self.item == other.item
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.item.eq(&other.item)
-    }
 }
 
 impl PlaylistTracksRow {

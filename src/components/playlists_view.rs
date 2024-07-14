@@ -425,7 +425,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 use relm4::typed_view::TypedListItem;
 
                 let len = self.tracks.view.columns().n_items();
-                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).into_iter().filter_map(|i| self.tracks.get(i)).collect();
+                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
                     let track_id = track.borrow().item.id.clone();
                     if track_id == id {

@@ -2,7 +2,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt, ListModelExtManual, ListModelExt}
+        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt, ListModelExt}
     },
     ComponentController,
 };
@@ -287,7 +287,7 @@ impl relm4::Component for AlbumView {
                 use relm4::typed_view::TypedListItem;
 
                 let len = self.tracks.view.columns().n_items();
-                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).into_iter().filter_map(|i| self.tracks.get(i)).collect();
+                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
                     let track_id = track.borrow().item.id.clone();
                     if track_id == id {
