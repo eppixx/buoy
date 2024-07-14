@@ -49,6 +49,7 @@ impl TryFrom<String> for TracksState {
 
 #[derive(Debug)]
 pub struct PlaylistsView {
+    subsonic: Rc<RefCell<Subsonic>>,
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
     index_shown: Option<relm4::factory::DynamicIndex>,
 
@@ -92,7 +93,7 @@ impl relm4::SimpleComponent for PlaylistsView {
     type Output = PlaylistsViewOut;
 
     fn init(
-        init: Self::Init,
+        subsonic: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -107,6 +108,7 @@ impl relm4::SimpleComponent for PlaylistsView {
         tracks.append_column::<FavColumn>();
 
         let mut model = PlaylistsView {
+            subsonic: subsonic.clone(),
             playlists: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
@@ -115,7 +117,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             track_stack: gtk::Stack::default(),
             tracks,
             info_cover: Cover::builder()
-                .launch((init.clone(), None))
+                .launch((subsonic, None))
                 .forward(sender.input_sender(), PlaylistsViewIn::Cover),
             info_cover_controller: gtk::DragSource::default(),
             info_title: gtk::Label::default(),
@@ -140,7 +142,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             .add_controller(model.info_cover_controller.clone());
 
         // add playlists to list
-        for playlist in init.borrow().playlists() {
+        for playlist in model.subsonic.borrow().playlists() {
             model.playlists.guard().push_back(playlist.clone());
         }
 
@@ -348,7 +350,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                     //set tracks
                     self.tracks.clear();
                     for track in list.entry {
-                        self.tracks.append(PlaylistTracksRow::new(track));
+                        self.tracks.append(PlaylistTracksRow::new(&self.subsonic, track));
                     }
                     self.index_shown = Some(index);
                 }

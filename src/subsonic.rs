@@ -186,8 +186,8 @@ impl Subsonic {
             .cloned()
     }
 
-    pub fn album_of_song(&self, child: submarine::data::Child) -> Option<submarine::data::Child> {
-        if let Some(album) = child.album_id {
+    pub fn album_of_song(&self, child: &submarine::data::Child) -> Option<submarine::data::Child> {
+        if let Some(album) = &child.album_id {
             self.find_album(album)
         } else {
             None
@@ -205,6 +205,7 @@ impl Subsonic {
                 }
             }
         }
+        self.save().expect("saving failed");
     }
 
     pub fn playlists(&self) -> &Vec<submarine::data::PlaylistWithSongs> {

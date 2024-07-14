@@ -1,17 +1,40 @@
-use relm4::gtk::{
+use std::{cell::RefCell, rc::Rc};
+
+use relm4::{gtk::{
     self,
     prelude::{BoxExt, ToValue, WidgetExt},
-};
+}, RelmObjectExt};
 
-use crate::{common::convert_for_label, types::Droppable};
+use crate::{common::convert_for_label, subsonic::Subsonic, types::Droppable};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct PlaylistTracksRow {
+    subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
+    pub fav: relm4::binding::StringBinding,
 }
+
+impl PartialEq for PlaylistTracksRow {
+    fn eq(&self, other: &Self) -> bool {
+        self.item == other.item
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.item.eq(&other.item)
+    }
+}
+
 impl PlaylistTracksRow {
-    pub fn new(item: submarine::data::Child) -> Self {
-        Self { item }
+    pub fn new(subsonic: &Rc<RefCell<Subsonic>>, item: submarine::data::Child) -> Self {
+        let fav = match item.starred.is_some() {
+            true => String::from("starred-symbolic"),
+            false => String::from("non-starred-symbolic"),
+        };
+        Self {
+            subsonic: subsonic.clone(),
+            item,
+            fav: relm4::binding::StringBinding::new(fav),
+        }
     }
 
     fn get_drag_src(&self) -> gtk::DragSource {
@@ -20,6 +43,19 @@ impl PlaylistTracksRow {
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
         src.set_actions(gtk::gdk::DragAction::MOVE);
+
+        let album = self.subsonic.borrow().album_of_song(&self.item);
+        let subsonic = self.subsonic.clone();
+        src.connect_drag_begin(move |src, _drag| {
+            if let Some(album) = &album {
+                if let Some(cover_id) = &album.cover_art {
+                    let cover = subsonic.borrow().cover_icon(cover_id);
+                    if let Some(tex) = cover {
+                        src.set_icon(Some(&tex), 0, 0);
+                    }
+                }
+            }
+        });
         src
     }
 }
@@ -200,9 +236,7 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, image: &mut Self::Root) {
-        if item.item.starred.is_some() {
-            image.set_from_icon_name(Some("starred"));
-        }
+        image.add_write_only_binding(&item.fav, "icon_name");
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

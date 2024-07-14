@@ -160,7 +160,7 @@ impl FactoryComponent for QueueSong {
         let content = gdk::ContentProvider::for_value(&index.to_value());
         model.drag_src.set_content(Some(&content));
         model.drag_src.set_actions(gdk::DragAction::MOVE);
-        let album = subsonic.borrow().album_of_song(init);
+        let album = subsonic.borrow().album_of_song(&init);
         model.drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(album) = &album {
                 if let Some(cover_id) = &album.cover_art {

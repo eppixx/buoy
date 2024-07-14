@@ -506,7 +506,7 @@ impl relm4::component::AsyncComponent for Browser {
             BrowserIn::FavoriteSong(id, state) => {
                 //notify all views with songs in them
                 for view in &self.album_views {
-                    view.emit(AlbumViewIn::Favorited(id.clone(), state));
+                    view.emit(AlbumViewIn::FavoritedSong(id.clone(), state));
                 }
                 for view in &self.playlists_views {
                     // view.emit(PlaylistsViewIn::Favorited(id, state));
@@ -522,7 +522,7 @@ impl relm4::component::AsyncComponent for Browser {
                     view.emit(AlbumsViewIn::Favorited(id.clone(), state));
                 }
                 for view in &self.album_views {
-                    view.emit(AlbumViewIn::Favorited(id.clone(), state));
+                    view.emit(AlbumViewIn::FavoritedAlbum(id.clone(), state));
                 }
                 for view in &self.artist_views {
                     view.emit(ArtistViewIn::FavoritedAlbum(id.clone(), state));

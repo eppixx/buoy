@@ -2,7 +2,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt, ListModelExtManual, ListModelExt}
     },
     ComponentController,
 };
@@ -49,7 +49,8 @@ pub enum AlbumViewOut {
 pub enum AlbumViewIn {
     AlbumTracks,
     Cover(CoverOut),
-    Favorited(String, bool),
+    FavoritedAlbum(String, bool),
+    FavoritedSong(String, bool),
     SearchChanged(String),
 }
 
@@ -264,7 +265,7 @@ impl relm4::Component for AlbumView {
                     score.is_some()
                 });
             }
-            AlbumViewIn::Favorited(id, state) => match &self.init {
+            AlbumViewIn::FavoritedAlbum(id, state) => match &self.init {
                 AlbumViewInit::Child(child) => {
                     if child.id == id {
                         match state {
@@ -282,6 +283,27 @@ impl relm4::Component for AlbumView {
                     }
                 }
             },
+            AlbumViewIn::FavoritedSong(id, state) => {
+                use relm4::typed_view::TypedListItem;
+
+                let len = self.tracks.view.columns().n_items();
+                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).into_iter().filter_map(|i| self.tracks.get(i)).collect();
+                for track in tracks {
+                    let track_id = track.borrow().item.id.clone();
+                    if track_id == id {
+                        match state {
+                            true => {
+                                track.borrow_mut().fav.set_value(String::from("starred-symbolic"));
+                                track.borrow_mut().item.starred = Some(chrono::offset::Local::now().into());
+                            }
+                            false => {
+                                track.borrow_mut().fav.set_value(String::from("non-starred-symbolic"));
+                                track.borrow_mut().item.starred = None;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -300,7 +322,7 @@ impl relm4::Component for AlbumView {
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 //load tracks
                 for track in &album.song {
-                    self.tracks.append(PlaylistTracksRow::new(track.clone()));
+                    self.tracks.append(PlaylistTracksRow::new(&self.subsonic, track.clone()));
                 }
 
                 // update dragSource
