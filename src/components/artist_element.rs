@@ -143,7 +143,6 @@ impl relm4::SimpleComponent for ArtistElement {
                         false => self.favorite.set_icon_name("non-starred-symbolic"),
                     }
                 }
-                tracing::error!("implement");
             }
         }
     }
