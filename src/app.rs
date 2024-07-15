@@ -751,8 +751,8 @@ impl relm4::component::AsyncComponent for App {
                     sender.input(AppIn::DesktopNotification);
 
                     //scrobble
-                    let settings = Settings::get().lock().unwrap();
-                    if settings.scrobble {
+                    let scrobble = Settings::get().lock().unwrap().scrobble;
+                    if scrobble {
                         match client.scrobble(vec![(&child.id, None)], Some(true)).await {
                         Ok(_) => println!("successful scrobble"),
                             Err(e) => {
