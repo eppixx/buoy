@@ -40,7 +40,7 @@ pub enum AlbumViewInit {
 #[derive(Debug)]
 pub enum AlbumViewOut {
     AppendAlbum(Droppable),
-    InsertAfterCurrentPLayed(Droppable),
+    InsertAfterCurrentPlayed(Droppable),
     ReplaceQueue(Droppable),
     FavoriteClicked(String, bool),
     DisplayToast(String),
@@ -214,10 +214,10 @@ impl relm4::Component for AlbumView {
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
-                                            sender.output(AlbumViewOut::InsertAfterCurrentPLayed(Droppable::AlbumChild(child.clone()))).unwrap();
+                                            sender.output(AlbumViewOut::InsertAfterCurrentPlayed(Droppable::AlbumChild(child.clone()))).unwrap();
                                         }
                                         AlbumViewInit::AlbumId3(album) => {
-                                            sender.output(AlbumViewOut::InsertAfterCurrentPLayed(Droppable::Album(album.clone()))).unwrap();
+                                            sender.output(AlbumViewOut::InsertAfterCurrentPlayed(Droppable::Album(album.clone()))).unwrap();
                                         }
                                     }
                                 }

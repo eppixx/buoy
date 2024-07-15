@@ -341,7 +341,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::AppendAlbum(drop) => {
                     sender.output(BrowserOut::AppendToQueue(drop)).unwrap();
                 }
-                AlbumViewOut::InsertAfterCurrentPLayed(drop) => sender
+                AlbumViewOut::InsertAfterCurrentPlayed(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
                 AlbumViewOut::ReplaceQueue(drop) => {
@@ -374,6 +374,15 @@ impl relm4::component::AsyncComponent for Browser {
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("sending failed");
+                }
+                ArtistViewOut::AppendArtist(drop) => {
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                }
+                ArtistViewOut::InsertAfterCurrentPlayed(drop) => sender
+                    .output(BrowserOut::InsertAfterCurrentInQueue(drop))
+                    .unwrap(),
+                ArtistViewOut::ReplaceQueue(drop) => {
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
                 }
                 ArtistViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))

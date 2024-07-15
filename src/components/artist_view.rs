@@ -6,7 +6,7 @@ use relm4::{
         self, glib,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
-    ComponentController,
+    {ComponentController, RelmWidgetExt},
 };
 
 use super::{
@@ -39,6 +39,9 @@ pub enum ArtistViewIn {
 #[derive(Debug)]
 pub enum ArtistViewOut {
     AlbumClicked(AlbumElementInit),
+    AppendArtist(Droppable),
+    InsertAfterCurrentPlayed(Droppable),
+    ReplaceQueue(Droppable),
     DisplayToast(String),
     FavoriteAlbumClicked(String, bool),
     FavoriteArtistClicked(String, bool),
@@ -177,6 +180,54 @@ impl relm4::Component for ArtistView {
                             set_single_line_mode: false,
                             set_lines: -1,
                             set_wrap: true,
+                        },
+                        gtk::Box {
+                            set_spacing: 15,
+
+                            gtk::Box {
+                                gtk::Button {
+                                    gtk::Box {
+                                        gtk::Image {
+                                            set_icon_name: Some("list-add-symbolic"),
+                                        },
+                                        gtk::Label {
+                                            set_label: "Append",
+                                        },
+                                    },
+                                    set_tooltip: "Append Artist to end of queue",
+                                    connect_clicked[sender, init] => move |_btn| {
+                                        sender.output(ArtistViewOut::AppendArtist(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                    }
+                                }
+                            },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("list-add-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Play next"
+                                    }
+                                },
+                                set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    sender.output(ArtistViewOut::InsertAfterCurrentPlayed(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                }
+                            },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Replace queue",
+                                    }
+                                },
+                                set_tooltip_text: Some("Replaces current queue with this album"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    sender.output(ArtistViewOut::ReplaceQueue(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                }
+                            }
                         }
                     }
                 }
