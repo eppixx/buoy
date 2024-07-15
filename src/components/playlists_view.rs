@@ -2,7 +2,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::gtk::glib::prelude::ToValue;
 use relm4::gtk::{
     self,
-    prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt, ListModelExt},
+    prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
 };
 use relm4::{Component, ComponentController};
 
@@ -351,7 +351,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                     //set tracks
                     self.tracks.clear();
                     for track in list.entry {
-                        self.tracks.append(PlaylistTracksRow::new(&self.subsonic, track));
+                        self.tracks
+                            .append(PlaylistTracksRow::new(&self.subsonic, track));
                     }
                     self.index_shown = Some(index);
                 }
@@ -425,23 +426,30 @@ impl relm4::SimpleComponent for PlaylistsView {
                 use relm4::typed_view::TypedListItem;
 
                 let len = self.tracks.view.columns().n_items();
-                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).filter_map(|i| self.tracks.get(i)).collect();
+                let tracks: Vec<TypedListItem<PlaylistTracksRow>> =
+                    (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
                     let track_id = track.borrow().item.id.clone();
                     if track_id == id {
                         match state {
                             true => {
-                                track.borrow_mut().fav.set_value(String::from("starred-symbolic"));
-                                track.borrow_mut().item.starred = Some(chrono::offset::Local::now().into());
+                                track
+                                    .borrow_mut()
+                                    .fav
+                                    .set_value(String::from("starred-symbolic"));
+                                track.borrow_mut().item.starred =
+                                    Some(chrono::offset::Local::now().into());
                             }
                             false => {
-                                track.borrow_mut().fav.set_value(String::from("non-starred-symbolic"));
+                                track
+                                    .borrow_mut()
+                                    .fav
+                                    .set_value(String::from("non-starred-symbolic"));
                                 track.borrow_mut().item.starred = None;
                             }
                         }
                     }
                 }
-
             }
         }
     }

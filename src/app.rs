@@ -754,7 +754,7 @@ impl relm4::component::AsyncComponent for App {
                     let scrobble = Settings::get().lock().unwrap().scrobble;
                     if scrobble {
                         match client.scrobble(vec![(&child.id, None)], Some(true)).await {
-                        Ok(_) => println!("successful scrobble"),
+                            Ok(_) => println!("successful scrobble"),
                             Err(e) => {
                                 sender.input(AppIn::DisplayToast(format!(
                                     "could not find song streaming url: {e:?}"

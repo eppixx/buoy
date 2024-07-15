@@ -1,9 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use relm4::{gtk::{
-    self,
-    prelude::{BoxExt, ToValue, WidgetExt},
-}, RelmObjectExt};
+use relm4::{
+    gtk::{
+        self,
+        prelude::{BoxExt, ToValue, WidgetExt},
+    },
+    RelmObjectExt,
+};
 
 use crate::{common::convert_for_label, subsonic::Subsonic, types::Droppable};
 

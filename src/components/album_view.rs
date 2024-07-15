@@ -2,7 +2,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt, ListModelExt}
+        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, ToValue, WidgetExt},
     },
     ComponentController,
 };
@@ -287,17 +287,25 @@ impl relm4::Component for AlbumView {
                 use relm4::typed_view::TypedListItem;
 
                 let len = self.tracks.view.columns().n_items();
-                let tracks: Vec<TypedListItem<PlaylistTracksRow>> = (0..len).filter_map(|i| self.tracks.get(i)).collect();
+                let tracks: Vec<TypedListItem<PlaylistTracksRow>> =
+                    (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
                     let track_id = track.borrow().item.id.clone();
                     if track_id == id {
                         match state {
                             true => {
-                                track.borrow_mut().fav.set_value(String::from("starred-symbolic"));
-                                track.borrow_mut().item.starred = Some(chrono::offset::Local::now().into());
+                                track
+                                    .borrow_mut()
+                                    .fav
+                                    .set_value(String::from("starred-symbolic"));
+                                track.borrow_mut().item.starred =
+                                    Some(chrono::offset::Local::now().into());
                             }
                             false => {
-                                track.borrow_mut().fav.set_value(String::from("non-starred-symbolic"));
+                                track
+                                    .borrow_mut()
+                                    .fav
+                                    .set_value(String::from("non-starred-symbolic"));
                                 track.borrow_mut().item.starred = None;
                             }
                         }
@@ -322,7 +330,8 @@ impl relm4::Component for AlbumView {
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 //load tracks
                 for track in &album.song {
-                    self.tracks.append(PlaylistTracksRow::new(&self.subsonic, track.clone()));
+                    self.tracks
+                        .append(PlaylistTracksRow::new(&self.subsonic, track.clone()));
                 }
 
                 // update dragSource
