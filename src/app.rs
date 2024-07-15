@@ -575,23 +575,18 @@ impl relm4::component::AsyncComponent for App {
                                                 gtk::CenterBox {
                                                     #[wrap(Some)]
                                                     set_start_widget = &gtk::Label {
-                                                        set_text: "Scrobble threshold",
+                                                        set_text: "Scrobble to server",
                                                     },
                                                     #[wrap(Some)]
-                                                    set_end_widget = &gtk::SpinButton {
-                                                        set_numeric: true,
-                                                        set_range: (0.0, 1.0),
-                                                        set_increments: (0.1, 0.1),
-                                                        set_digits: 1,
-                                                        set_value: 0.8f64,
-                                                        set_width_request: 85,
-                                                        set_tooltip: "When the threshold while playing is passed, the play count is increased",
+                                                    set_end_widget = &gtk::Switch {
+                                                        set_state: Settings::get().lock().unwrap().scrobble,
+                                                        set_tooltip: "Updates play count, played timestamp and the now playing page in the web app",
 
-                                                        connect_value_changed => move |spin| {
-
-                                                            Settings::get().lock().unwrap().scrobble_threshold = spin.value();
+                                                        connect_state_set => move |_switch, value| {
+                                                            Settings::get().lock().unwrap().scrobble = value;
+                                                            gtk::glib::signal::Propagation::Proceed
                                                         }
-                                                    }
+                                                    },
                                                 },
                                                 gtk::Separator {},
                                                 gtk::Box {
@@ -754,6 +749,20 @@ impl relm4::component::AsyncComponent for App {
                     }
 
                     sender.input(AppIn::DesktopNotification);
+
+                    //scrobble
+                    let settings = Settings::get().lock().unwrap();
+                    if settings.scrobble {
+                        match client.scrobble(vec![(&child.id, None)], Some(true)).await {
+                        Ok(_) => println!("successful scrobble"),
+                            Err(e) => {
+                                sender.input(AppIn::DisplayToast(format!(
+                                    "could not find song streaming url: {e:?}"
+                                )));
+                                return;
+                            }
+                        }
+                    }
 
                     // update seekbar
                     if let Some(length) = child.duration {
