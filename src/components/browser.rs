@@ -516,7 +516,7 @@ impl relm4::component::AsyncComponent for Browser {
             BrowserIn::FavoriteAlbum(id, state) => {
                 //notify all views with albums in them
                 for view in &self.dashboards {
-                    view.emit(DashboardIn::Favorited(id.clone(), state));
+                    view.emit(DashboardIn::FavoritedAlbum(id.clone(), state));
                 }
                 for view in &self.albumss {
                     view.emit(AlbumsViewIn::Favorited(id.clone(), state));

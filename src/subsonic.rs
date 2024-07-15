@@ -208,6 +208,30 @@ impl Subsonic {
         self.save().expect("saving failed");
     }
 
+    pub fn favorite_album(&mut self, id: impl AsRef<str>, state: bool) {
+        for album in &mut self.album_list {
+            if album.id == id.as_ref() {
+                match state {
+                    true => album.starred = Some(chrono::offset::Local::now().into()),
+                    false => album.starred = None,
+                }
+            }
+        }
+        self.save().expect("saving failed");
+    }
+
+    pub fn favorite_artist(&mut self, id: impl AsRef<str>, state: bool) {
+        for artist in &mut self.artists {
+            if artist.id == id.as_ref() {
+                match state {
+                    true => artist.starred = Some(chrono::offset::Local::now().into()),
+                    false => artist.starred = None,
+                }
+            }
+        }
+        self.save().expect("saving failed");
+    }
+
     pub fn playlists(&self) -> &Vec<submarine::data::PlaylistWithSongs> {
         &self.playlists
     }

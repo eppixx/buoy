@@ -52,7 +52,7 @@ pub enum DashboardIn {
     SearchChanged(String),
     AlbumElement(AlbumElementOut),
     ClickedRandomize,
-    Favorited(String, bool),
+    FavoritedAlbum(String, bool),
 }
 
 #[derive(Debug)]
@@ -494,7 +494,9 @@ impl relm4::Component for Dashboard {
                     })
                     .for_each(|album| self.random_album.append(album.widget()));
             }
-            DashboardIn::Favorited(_id, _state) => {}
+            DashboardIn::FavoritedAlbum(_id, _state) => {
+                //
+            }
         }
     }
 
