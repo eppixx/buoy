@@ -1,3 +1,4 @@
+use fuzzy_matcher::FuzzyMatcher;
 use rand::prelude::SliceRandom;
 use relm4::gtk::{
     self,
@@ -11,6 +12,8 @@ use std::rc::Rc;
 use crate::client::Client;
 use crate::components::album_element::{AlbumElement, AlbumElementInit, AlbumElementOut};
 use crate::subsonic::Subsonic;
+
+use super::album_element::AlbumElementIn;
 
 enum Scrolling {
     RecentlyAddedLeft,
@@ -29,15 +32,19 @@ pub struct Dashboard {
 
     recently_added: gtk::Box,
     recently_added_scroll: gtk::ScrolledWindow,
-    // recently_added_list: Vec<submarine::data::Child>,
+    recently_added_list: Vec<relm4::Controller<AlbumElement>>,
+
     recently_played: gtk::Box,
     recently_played_scroll: gtk::ScrolledWindow,
+    recently_played_list: Vec<relm4::Controller<AlbumElement>>,
 
     random_album: gtk::Box,
     random_album_scroll: gtk::ScrolledWindow,
+    random_album_list: Vec<relm4::Controller<AlbumElement>>,
 
     most_played: gtk::Box,
     most_played_scroll: gtk::ScrolledWindow,
+    most_played_list: Vec<relm4::Controller<AlbumElement>>,
 }
 
 #[derive(Debug)]
@@ -72,40 +79,43 @@ impl relm4::Component for Dashboard {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Self {
+        let mut model = Self {
             subsonic: subsonic.clone(),
 
             recently_added: gtk::Box::default(),
             recently_added_scroll: gtk::ScrolledWindow::default(),
+            recently_added_list: vec![],
 
             recently_played: gtk::Box::default(),
             recently_played_scroll: gtk::ScrolledWindow::default(),
+            recently_played_list: vec![],
 
             random_album: gtk::Box::default(),
             random_album_scroll: gtk::ScrolledWindow::default(),
+            random_album_list: vec![],
 
             most_played: gtk::Box::default(),
             most_played_scroll: gtk::ScrolledWindow::default(),
+            most_played_list: vec![],
         };
 
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
         albums.sort_by(|a, b| a.created.cmp(&b.created));
-        albums
+        model.recently_added_list = albums
             .iter()
             .take(10)
             .map(|album| {
-                // model.recently_added_list.push(album.clone());
                 AlbumElement::builder()
                     .launch((
                         subsonic.clone(),
                         AlbumElementInit::Child(Box::new(album.clone())),
                     ))
                     .forward(sender.input_sender(), DashboardIn::AlbumElement)
-            })
-            .for_each(|album| {
-                model.recently_added.append(album.widget());
-            });
+            }).collect();
+        for album in &model.recently_added_list {
+            model.recently_added.append(album.widget());
+        }
 
         //load recently played albums
         sender.oneshot_command(async move {
@@ -127,7 +137,7 @@ impl relm4::Component for Dashboard {
 
         //load most played albums
         albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
-        albums
+        model.most_played_list = albums
             .iter()
             .take(10)
             .map(|album| {
@@ -137,10 +147,10 @@ impl relm4::Component for Dashboard {
                         AlbumElementInit::Child(Box::new(album.clone())),
                     ))
                     .forward(sender.input_sender(), DashboardIn::AlbumElement)
-            })
-            .for_each(|album| {
-                model.most_played.append(album.widget());
-            });
+            }).collect();
+        for album in &model.most_played_list {
+            model.most_played.append(album.widget());
+        }
 
         let scrolling = Rc::new(RefCell::new(None));
         let widgets = view_output!();
@@ -462,8 +472,27 @@ impl relm4::Component for Dashboard {
         _root: &Self::Root,
     ) {
         match msg {
-            DashboardIn::SearchChanged(_search) => {
-                // unimplemented!("search in dashboard"); //TODO implement
+            DashboardIn::SearchChanged(search) => {
+                for album in self.recently_added_list.iter().chain(self.recently_played_list.iter()).chain(self.random_album_list.iter()).chain(self.most_played_list.iter()) {
+                    use gtk::glib::object::Cast;
+
+                    // get the Label of the AlbumElement
+                    let overlay = album.widget().first_child().unwrap();
+                    let button = overlay.first_child().unwrap();
+                    let bo = button.first_child().unwrap();
+                    let cover = bo.first_child().unwrap();
+                    let title = cover.next_sibling().unwrap();
+                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+
+                    let artist = title.next_sibling().unwrap();
+                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+                    let title_artist = format!("{} {}", title.text(), artist.text());
+
+                    //actual matching
+                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                    let score = matcher.fuzzy_match(&title_artist, &search);
+                    album.widget().set_visible(score.is_some())
+                }
             }
             DashboardIn::AlbumElement(msg) => match msg {
                 AlbumElementOut::Clicked(clicked) => {
@@ -477,11 +506,12 @@ impl relm4::Component for Dashboard {
                     .expect("sending failed"),
             },
             DashboardIn::ClickedRandomize => {
+                self.random_album_list.clear();
                 self.random_album.remove_all();
                 let mut rng = rand::thread_rng();
                 let mut albums = self.subsonic.borrow().albums().clone();
                 albums.shuffle(&mut rng);
-                albums
+                self.random_album_list = albums
                     .iter()
                     .take(10)
                     .map(|album| {
@@ -491,11 +521,24 @@ impl relm4::Component for Dashboard {
                                 AlbumElementInit::Child(Box::new(album.clone())),
                             ))
                             .forward(sender.input_sender(), DashboardIn::AlbumElement)
-                    })
-                    .for_each(|album| self.random_album.append(album.widget()));
+                    }).collect();
+                for album in &self.random_album_list {
+                    self.random_album.append(album.widget());
+                }
             }
-            DashboardIn::FavoritedAlbum(_id, _state) => {
-                //
+            DashboardIn::FavoritedAlbum(id, state) => {
+                for album in &self.recently_added_list {
+                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
+                for album in &self.recently_played_list {
+                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
+                for album in &self.random_album_list {
+                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
+                for album in &self.most_played_list {
+                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
             }
         }
     }
@@ -509,7 +552,8 @@ impl relm4::Component for Dashboard {
         match msg {
             DashboardCmd::LoadedRecentlyPlayed(Err(_e)) => {}
             DashboardCmd::LoadedRecentlyPlayed(Ok(list)) => {
-                list.iter()
+                self.recently_played_list = list
+                    .iter()
                     .map(|album| {
                         AlbumElement::builder()
                             .launch((
@@ -517,10 +561,10 @@ impl relm4::Component for Dashboard {
                                 AlbumElementInit::Child(Box::new(album.clone())),
                             ))
                             .forward(sender.input_sender(), DashboardIn::AlbumElement)
-                    })
-                    .for_each(|album| {
-                        self.recently_played.append(album.widget());
-                    });
+                    }).collect();
+                for album in &self.recently_played_list {
+                    self.recently_played.append(album.widget());
+                }
             }
         }
     }
