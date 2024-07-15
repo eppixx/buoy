@@ -28,7 +28,8 @@ pub enum PlaybackOut {
 }
 
 impl Playback {
-    pub fn new(sender: &async_channel::Sender<PlaybackOut>) -> anyhow::Result<Self> {
+    pub fn new() -> anyhow::Result<(Self, async_channel::Receiver<PlaybackOut>)> {
+        let (sender, receiver) = async_channel::unbounded();
         gst::init()?;
 
         // Create the empty pipeline
@@ -140,7 +141,7 @@ impl Playback {
 
         play.sync_equalizer();
         play.sync_volume();
-        Ok(play)
+        Ok((play, receiver))
     }
 
     pub fn set_track(&mut self, uri: impl AsRef<str>) -> anyhow::Result<()> {

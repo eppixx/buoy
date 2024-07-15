@@ -173,8 +173,7 @@ impl relm4::component::AsyncComponent for App {
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
-        let (playback_sender, receiver) = async_channel::unbounded();
-        let mut playback = Playback::new(&playback_sender).unwrap();
+        let (mut playback, receiver) = Playback::new().unwrap();
 
         // decide if dark or white style; also watch if style changes
         let gtk_settings = gtk::Settings::default().expect("Unable to get the GtkSettings object");
@@ -278,8 +277,7 @@ impl relm4::component::AsyncComponent for App {
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
 
-        let (mpris_sender, mpris_receiver) = async_channel::unbounded();
-        let mpris = crate::mpris::Mpris::new(&mpris_sender).await.unwrap();
+        let (mpris, mpris_receiver) = crate::mpris::Mpris::new().await.unwrap();
 
         let mut model = App {
             playback,

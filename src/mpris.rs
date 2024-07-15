@@ -47,7 +47,8 @@ enum DataChanged {
 }
 
 impl Mpris {
-    pub async fn new(sender: &async_channel::Sender<MprisOut>) -> anyhow::Result<Mpris> {
+    pub async fn new() -> anyhow::Result<(Mpris, async_channel::Receiver<MprisOut>)> {
+        let (sender, receiver) = async_channel::unbounded();
         let info = Arc::new(Mutex::new(Info::default()));
         let root = Root {
             sender: sender.clone(),
@@ -68,11 +69,11 @@ impl Mpris {
             .interface::<_, Player>("/org/mpris/MediaPlayer2")
             .await?;
 
-        let (sender, receiver) = async_channel::unbounded();
+        let (sender, rec) = async_channel::unbounded();
         relm4::gtk::glib::spawn_future_local(async move {
             let interface_ref = interface.get().await;
             let ctx = interface.signal_context();
-            while let Ok(msg) = receiver.recv().await {
+            while let Ok(msg) = rec.recv().await {
                 let result = match msg {
                     DataChanged::Metadata => interface_ref.metadata_changed(ctx).await,
                     DataChanged::Playback => interface_ref.playback_status_changed(ctx).await,
@@ -90,7 +91,7 @@ impl Mpris {
             }
         });
 
-        Ok(Mpris { info, sender })
+        Ok((Mpris { info, sender }, receiver))
     }
 
     pub fn can_play_next(&mut self, state: bool) {
