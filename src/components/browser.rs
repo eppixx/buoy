@@ -344,6 +344,9 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::InsertAfterCurrentPLayed(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
+                AlbumViewOut::ReplaceQueue(drop) => {
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
+                }
                 AlbumViewOut::DisplayToast(title) => sender
                     .output(BrowserOut::DisplayToast(title))
                     .expect("sending failed"),

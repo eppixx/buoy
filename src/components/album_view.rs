@@ -41,6 +41,7 @@ pub enum AlbumViewInit {
 pub enum AlbumViewOut {
     AppendAlbum(Droppable),
     InsertAfterCurrentPLayed(Droppable),
+    ReplaceQueue(Droppable),
     FavoriteClicked(String, bool),
     DisplayToast(String),
 }
@@ -220,7 +221,27 @@ impl relm4::Component for AlbumView {
                                         }
                                     }
                                 }
-
+                            },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Replace queue",
+                                    }
+                                },
+                                set_tooltip_text: Some("Replaces current queue with this album"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    match &init {
+                                        AlbumViewInit::Child(child) => {
+                                            sender.output(AlbumViewOut::ReplaceQueue(Droppable::AlbumChild(child.clone()))).unwrap();
+                                        }
+                                        AlbumViewInit::AlbumId3(album) => {
+                                            sender.output(AlbumViewOut::ReplaceQueue(Droppable::Album(album.clone()))).unwrap();
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
