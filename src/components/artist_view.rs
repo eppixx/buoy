@@ -100,6 +100,11 @@ impl relm4::Component for ArtistView {
             .emit(CoverIn::LoadArtist(Box::new(init.clone())));
         model.cover.model().add_css_class_image("size100");
 
+        // set favorite icon
+        if init.starred.is_some() {
+            model.favorite.set_icon_name("starred-symbolic");
+        }
+
         // load albums
         let id = init.id.clone();
         sender.oneshot_command(async move {
