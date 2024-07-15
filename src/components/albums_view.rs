@@ -305,7 +305,8 @@ impl relm4::component::Component for AlbumsView {
 
 fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) {
     use glib::object::Cast;
-    let button = element.first_child().unwrap();
+    let overlay = element.first_child().unwrap();
+    let button = overlay.first_child().unwrap();
     let bo = button.first_child().unwrap();
     let cover = bo.first_child().unwrap();
     let title = cover.next_sibling().unwrap();
