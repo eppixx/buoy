@@ -227,6 +227,12 @@ contents > box {
   padding: 5px 7px;
 }
 
+.album-view-tracks-row > listview > row {
+  border-radius: 8px;
+  margin: 1px 0px;
+  padding: 5px 7px;
+}
+
 .playlist-view-info {
   margin: 5px;
 }

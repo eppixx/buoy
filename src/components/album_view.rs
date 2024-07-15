@@ -232,6 +232,7 @@ impl relm4::Component for AlbumView {
                 set_vexpand: true,
 
                 model.tracks.view.clone() {
+                    add_css_class: "album-view-tracks-row",
                     set_vexpand: true,
                 }
             },
