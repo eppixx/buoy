@@ -48,10 +48,6 @@ pub struct Queue {
 }
 
 impl Queue {
-    fn update_clear_btn_sensitivity(&mut self) {
-        self.clear_items.set_sensitive(!self.songs.is_empty());
-    }
-
     pub fn songs(&self) -> Vec<submarine::data::Child> {
         self.songs.iter().map(|c| c.info().clone()).collect()
     }
@@ -241,7 +237,7 @@ impl relm4::Component for Queue {
                 .emit(SequenceButtonIn::SetTo(settings.repeat.clone()));
         }
 
-        model.update_clear_btn_sensitivity();
+        model.clear_items.set_sensitive(!model.songs.is_empty());
 
         ComponentParts { model, widgets }
     }
@@ -479,7 +475,7 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
-                self.update_clear_btn_sensitivity();
+                self.clear_items.set_sensitive(!self.songs.is_empty());
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs: Vec<submarine::data::Child> = match drop {
@@ -563,12 +559,13 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
-                self.update_clear_btn_sensitivity();
+                self.clear_items.set_sensitive(!self.songs.is_empty());
             }
             QueueIn::Clear => {
                 self.songs.guard().clear();
-                self.update_clear_btn_sensitivity();
+                self.clear_items.set_sensitive(!self.songs.is_empty());
                 self.last_selected = None;
+                self.playing_index = None;
                 sender.output(QueueOut::QueueEmpty).unwrap();
             }
             QueueIn::Remove => {
@@ -601,7 +598,7 @@ impl relm4::Component for Queue {
                     sender.output(QueueOut::QueueEmpty).unwrap();
                 }
 
-                self.update_clear_btn_sensitivity();
+                self.clear_items.set_sensitive(!self.songs.is_empty());
             }
             QueueIn::NewState(state) => {
                 if self.songs.is_empty() {
@@ -829,7 +826,6 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
-                self.update_clear_btn_sensitivity();
             }
             QueueCmd::FetchedInsertItems(children) => {
                 for (i, child) in children.iter().enumerate() {
@@ -846,7 +842,6 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
-                self.update_clear_btn_sensitivity();
             }
         }
     }
