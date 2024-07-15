@@ -138,6 +138,13 @@ impl relm4::SimpleComponent for AlbumElement {
         });
         model.cover.widget().add_controller(drag_src);
 
+        // set favorite icon
+        match &init {
+            AlbumElementInit::AlbumId3(id3) if id3.starred.is_some() => model.favorite.set_icon_name("starred-symbolic"),
+            AlbumElementInit::Child(child) if child.starred.is_some() => model.favorite.set_icon_name("starred-symbolic"),
+            _ => {}
+        }
+
         relm4::ComponentParts { model, widgets }
     }
 

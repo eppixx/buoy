@@ -82,6 +82,11 @@ impl relm4::SimpleComponent for ArtistElement {
             }
         });
 
+        //setup favorite button
+        if init.starred.is_some() {
+            model.favorite.set_icon_name("starred-symbolic");
+        }
+
         model.cover.widget().add_controller(drag_src);
 
         relm4::ComponentParts { model, widgets }
