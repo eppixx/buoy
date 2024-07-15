@@ -50,7 +50,7 @@ pub struct Queue {
 impl Queue {
     fn update_clear_btn_sensitivity(&mut self) {
         self.clear_items
-            .set_sensitive(!self.songs.guard().is_empty());
+            .set_sensitive(!self.songs.is_empty());
     }
 
     pub fn songs(&self) -> Vec<submarine::data::Child> {
@@ -473,6 +473,7 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
+                self.update_clear_btn_sensitivity();
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs: Vec<submarine::data::Child> = match drop {
@@ -550,6 +551,7 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
+                self.update_clear_btn_sensitivity();
             }
             QueueIn::Clear => {
                 self.songs.guard().clear();
@@ -817,6 +819,7 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
+                self.update_clear_btn_sensitivity();
             }
             QueueCmd::FetchedInsertItems(Err(e)) => {
                 sender
@@ -840,6 +843,7 @@ impl relm4::Component for Queue {
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
+                self.update_clear_btn_sensitivity();
             }
         }
     }
