@@ -186,7 +186,7 @@ impl relm4::Component for Queue {
                 SequenceButtonOut::Clicked(repeat) => QueueIn::RepeatClicked(repeat),
             });
 
-        let mut model = Queue {
+        let model = Queue {
             subsonic,
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
