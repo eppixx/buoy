@@ -140,8 +140,12 @@ impl relm4::SimpleComponent for AlbumElement {
 
         // set favorite icon
         match &init {
-            AlbumElementInit::AlbumId3(id3) if id3.starred.is_some() => model.favorite.set_icon_name("starred-symbolic"),
-            AlbumElementInit::Child(child) if child.starred.is_some() => model.favorite.set_icon_name("starred-symbolic"),
+            AlbumElementInit::AlbumId3(id3) if id3.starred.is_some() => {
+                model.favorite.set_icon_name("starred-symbolic")
+            }
+            AlbumElementInit::Child(child) if child.starred.is_some() => {
+                model.favorite.set_icon_name("starred-symbolic")
+            }
             _ => {}
         }
 

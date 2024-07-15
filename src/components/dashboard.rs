@@ -112,7 +112,8 @@ impl relm4::Component for Dashboard {
                         AlbumElementInit::Child(Box::new(album.clone())),
                     ))
                     .forward(sender.input_sender(), DashboardIn::AlbumElement)
-            }).collect();
+            })
+            .collect();
         for album in &model.recently_added_list {
             model.recently_added.append(album.widget());
         }
@@ -147,7 +148,8 @@ impl relm4::Component for Dashboard {
                         AlbumElementInit::Child(Box::new(album.clone())),
                     ))
                     .forward(sender.input_sender(), DashboardIn::AlbumElement)
-            }).collect();
+            })
+            .collect();
         for album in &model.most_played_list {
             model.most_played.append(album.widget());
         }
@@ -473,7 +475,13 @@ impl relm4::Component for Dashboard {
     ) {
         match msg {
             DashboardIn::SearchChanged(search) => {
-                for album in self.recently_added_list.iter().chain(self.recently_played_list.iter()).chain(self.random_album_list.iter()).chain(self.most_played_list.iter()) {
+                for album in self
+                    .recently_added_list
+                    .iter()
+                    .chain(self.recently_played_list.iter())
+                    .chain(self.random_album_list.iter())
+                    .chain(self.most_played_list.iter())
+                {
                     use gtk::glib::object::Cast;
 
                     // get the Label of the AlbumElement
@@ -521,7 +529,8 @@ impl relm4::Component for Dashboard {
                                 AlbumElementInit::Child(Box::new(album.clone())),
                             ))
                             .forward(sender.input_sender(), DashboardIn::AlbumElement)
-                    }).collect();
+                    })
+                    .collect();
                 for album in &self.random_album_list {
                     self.random_album.append(album.widget());
                 }
@@ -561,7 +570,8 @@ impl relm4::Component for Dashboard {
                                 AlbumElementInit::Child(Box::new(album.clone())),
                             ))
                             .forward(sender.input_sender(), DashboardIn::AlbumElement)
-                    }).collect();
+                    })
+                    .collect();
                 for album in &self.recently_played_list {
                     self.recently_played.append(album.widget());
                 }

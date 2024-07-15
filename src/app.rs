@@ -1076,7 +1076,9 @@ impl relm4::component::AsyncComponent for App {
                     }
                     Ok(_info) => {
                         // change subsonic
-                        self.subsonic.borrow_mut().favorite_artist(id.clone(), state);
+                        self.subsonic
+                            .borrow_mut()
+                            .favorite_artist(id.clone(), state);
 
                         //update view
                         self.browser.emit(BrowserIn::FavoriteArtist(id, state));

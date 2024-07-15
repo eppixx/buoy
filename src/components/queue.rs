@@ -49,8 +49,7 @@ pub struct Queue {
 
 impl Queue {
     fn update_clear_btn_sensitivity(&mut self) {
-        self.clear_items
-            .set_sensitive(!self.songs.is_empty());
+        self.clear_items.set_sensitive(!self.songs.is_empty());
     }
 
     pub fn songs(&self) -> Vec<submarine::data::Child> {
@@ -157,8 +156,9 @@ pub enum QueueOut {
 
 #[derive(Debug)]
 pub enum QueueCmd {
-    FetchedAppendItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
-    FetchedInsertItems(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
+    Error(String, submarine::SubsonicError),
+    FetchedAppendItems(Vec<submarine::data::Child>),
+    FetchedInsertItems(Vec<submarine::data::Child>),
 }
 
 #[relm4::component(pub)]
@@ -414,7 +414,9 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             let artist_with_albums = match client.get_artist(artist.id).await {
-                                Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
+                                Err(e) => {
+                                    return QueueCmd::Error(String::from("Could not append"), e)
+                                }
                                 Ok(artist) => artist,
                             };
 
@@ -422,10 +424,12 @@ impl relm4::Component for Queue {
                             for album in artist_with_albums.album {
                                 match client.get_album(album.id).await {
                                     Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
+                                    Err(e) => {
+                                        return QueueCmd::Error(String::from("could not append"), e)
+                                    }
                                 }
                             }
-                            QueueCmd::FetchedAppendItems(Ok(result))
+                            QueueCmd::FetchedAppendItems(result)
                         });
                         return;
                     }
@@ -436,10 +440,12 @@ impl relm4::Component for Queue {
                             for album in artist.album {
                                 match client.get_album(album.id).await {
                                     Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => return QueueCmd::FetchedAppendItems(Err(e)),
+                                    Err(e) => {
+                                        return QueueCmd::Error(String::from("could not append"), e)
+                                    }
                                 }
                             }
-                            QueueCmd::FetchedAppendItems(Ok(result))
+                            QueueCmd::FetchedAppendItems(result)
                         });
                         return;
                     }
@@ -448,8 +454,8 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             match client.get_album(child.id).await {
-                                Err(e) => QueueCmd::FetchedAppendItems(Err(e)),
-                                Ok(album) => QueueCmd::FetchedAppendItems(Ok(album.song)),
+                                Err(e) => QueueCmd::Error(String::from("could not append"), e),
+                                Ok(album) => QueueCmd::FetchedAppendItems(album.song),
                             }
                         });
                         return;
@@ -458,8 +464,8 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             match client.get_album(album.id).await {
-                                Err(e) => QueueCmd::FetchedAppendItems(Err(e)),
-                                Ok(album) => QueueCmd::FetchedAppendItems(Ok(album.song)),
+                                Err(e) => QueueCmd::Error(String::from("could not append"), e),
+                                Ok(album) => QueueCmd::FetchedAppendItems(album.song),
                             }
                         });
                         return;
@@ -484,7 +490,9 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             let artist_with_albums = match client.get_artist(artist.id).await {
-                                Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
+                                Err(e) => {
+                                    return QueueCmd::Error(String::from("could not insert"), e)
+                                }
                                 Ok(artist) => artist,
                             };
 
@@ -492,10 +500,12 @@ impl relm4::Component for Queue {
                             for album in artist_with_albums.album {
                                 match client.get_album(album.id).await {
                                     Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
+                                    Err(e) => {
+                                        return QueueCmd::Error(String::from("could not insert"), e)
+                                    }
                                 }
                             }
-                            QueueCmd::FetchedInsertItems(Ok(result))
+                            QueueCmd::FetchedInsertItems(result)
                         });
                         return;
                     }
@@ -506,10 +516,12 @@ impl relm4::Component for Queue {
                             for album in artist.album {
                                 match client.get_album(album.id).await {
                                     Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => return QueueCmd::FetchedInsertItems(Err(e)),
+                                    Err(e) => {
+                                        return QueueCmd::Error(String::from("could not insert"), e)
+                                    }
                                 }
                             }
-                            QueueCmd::FetchedInsertItems(Ok(result))
+                            QueueCmd::FetchedInsertItems(result)
                         });
                         return;
                     }
@@ -518,8 +530,8 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             match client.get_album(child.id).await {
-                                Err(e) => QueueCmd::FetchedInsertItems(Err(e)),
-                                Ok(album) => QueueCmd::FetchedInsertItems(Ok(album.song)),
+                                Err(e) => QueueCmd::Error(String::from("could not insert"), e),
+                                Ok(album) => QueueCmd::FetchedInsertItems(album.song),
                             }
                         });
                         return;
@@ -528,8 +540,8 @@ impl relm4::Component for Queue {
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             match client.get_album(album.id).await {
-                                Err(e) => QueueCmd::FetchedInsertItems(Err(e)),
-                                Ok(album) => QueueCmd::FetchedInsertItems(Ok(album.song)),
+                                Err(e) => QueueCmd::Error(String::from("could not insert"), e),
+                                Ok(album) => QueueCmd::FetchedInsertItems(album.song),
                             }
                         });
                         return;
@@ -803,14 +815,12 @@ impl relm4::Component for Queue {
         _root: &Self::Root,
     ) {
         match message {
-            QueueCmd::FetchedAppendItems(Err(e)) => {
+            QueueCmd::Error(msg, e) => {
                 sender
-                    .output(QueueOut::DisplayToast(format!(
-                        "Could not append items: {e:?}",
-                    )))
+                    .output(QueueOut::DisplayToast(format!("{msg}: {e:?}")))
                     .expect("sending failed");
             }
-            QueueCmd::FetchedAppendItems(Ok(children)) => {
+            QueueCmd::FetchedAppendItems(children) => {
                 for child in children {
                     self.songs.guard().push_back((self.subsonic.clone(), child));
                 }
@@ -821,14 +831,7 @@ impl relm4::Component for Queue {
                 }
                 self.update_clear_btn_sensitivity();
             }
-            QueueCmd::FetchedInsertItems(Err(e)) => {
-                sender
-                    .output(QueueOut::DisplayToast(format!(
-                        "Could not insert items: {e:?}",
-                    )))
-                    .expect("sending failed");
-            }
-            QueueCmd::FetchedInsertItems(Ok(children)) => {
+            QueueCmd::FetchedInsertItems(children) => {
                 for (i, child) in children.iter().enumerate() {
                     let current = match &self.playing_index {
                         None => 0,
