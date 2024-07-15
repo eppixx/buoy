@@ -77,7 +77,7 @@ impl relm4::Component for Dashboard {
 
             recently_added: gtk::Box::default(),
             recently_added_scroll: gtk::ScrolledWindow::default(),
-            // recently_added_list: vec![],
+
             recently_played: gtk::Box::default(),
             recently_played_scroll: gtk::ScrolledWindow::default(),
 
@@ -494,9 +494,7 @@ impl relm4::Component for Dashboard {
                     })
                     .for_each(|album| self.random_album.append(album.widget()));
             }
-            DashboardIn::Favorited(_id, state) => {
-                tracing::error!("implement favorite dashboard");
-            }
+            DashboardIn::Favorited(_id, _state) => {}
         }
     }
 
