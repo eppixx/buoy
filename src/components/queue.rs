@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use rand::seq::IteratorRandom;
+use rand::prelude::SliceRandom;
 use relm4::{
     factory::FactoryVecDeque,
     gtk::gdk,
@@ -39,6 +39,7 @@ pub struct Queue {
     subsonic: Rc<RefCell<Subsonic>>,
     scrolled: gtk::ScrolledWindow,
     songs: FactoryVecDeque<QueueSong>,
+    randomized_indices: Vec<usize>,
     loading_queue: bool,
     playing_index: Option<DynamicIndex>,
     remove_items: gtk::Button,
@@ -137,6 +138,7 @@ pub enum QueueIn {
     DisplayToast(String),
     Favorite(String, bool),
     JumpToCurrent,
+    Rerandomize,
 }
 
 #[derive(Debug)]
@@ -194,6 +196,7 @@ impl relm4::Component for Queue {
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), QueueIn::QueueSong),
+            randomized_indices: vec![],
             loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),
@@ -481,6 +484,7 @@ impl relm4::Component for Queue {
                 for song in songs {
                     self.songs.guard().push_back((self.subsonic.clone(), song));
                 }
+                sender.input(QueueIn::Rerandomize);
 
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
@@ -565,6 +569,7 @@ impl relm4::Component for Queue {
                         self.songs.guard().push_back((self.subsonic.clone(), song));
                     }
                 }
+                sender.input(QueueIn::Rerandomize);
 
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
@@ -573,6 +578,7 @@ impl relm4::Component for Queue {
             }
             QueueIn::Clear => {
                 self.songs.guard().clear();
+                self.randomized_indices.clear();
                 self.clear_items.set_sensitive(!self.songs.is_empty());
                 self.last_selected = None;
                 self.playing_index = None;
@@ -595,6 +601,7 @@ impl relm4::Component for Queue {
                     let mut guard = self.songs.guard();
                     guard.remove(*index);
                 }
+                sender.input(QueueIn::Rerandomize);
 
                 //set new state when deleting played index
                 if let Some(current) = &self.playing_index {
@@ -663,13 +670,22 @@ impl relm4::Component for Queue {
                                 self.songs.get(i).unwrap().activate();
                             }
                             // at end of queue with repeat queue
-                            i if i + 1 == self.songs.len() && repeat == Repeat::All => {
+                            i if i + 1 == self.songs.len()
+                                && shuffle != Shuffle::Shuffle
+                                && repeat == Repeat::All =>
+                            {
                                 self.songs.get(0).unwrap().activate();
                             }
-                            // repeat has priority over shuffle
-                            _i if shuffle == Shuffle::Shuffle => {
-                                let mut rng = rand::thread_rng();
-                                self.songs.iter().choose(&mut rng).unwrap().activate();
+                            // shuffle ignores repeat all
+                            i if shuffle == Shuffle::Shuffle => {
+                                let idx = self
+                                    .randomized_indices
+                                    .iter()
+                                    .position(|idx| &i == idx)
+                                    .unwrap();
+                                let idx =
+                                    self.randomized_indices.iter().cycle().nth(idx + 1).unwrap();
+                                self.songs.get(*idx).unwrap().activate();
                             }
                             // at end of queue
                             i if i + 1 == self.songs.len() => {
@@ -700,10 +716,20 @@ impl relm4::Component for Queue {
                         0 if repeat == Repeat::All => {
                             self.songs.get(self.songs.len() - 1).unwrap().activate();
                         }
-                        // repeat has priority over shuffle
-                        _i if shuffle == Shuffle::Shuffle => {
-                            let mut rng = rand::thread_rng();
-                            self.songs.iter().choose(&mut rng).unwrap().activate();
+                        // shuffle ignores repeat all
+                        i if shuffle == Shuffle::Shuffle => {
+                            let idx = self
+                                .randomized_indices
+                                .iter()
+                                .position(|idx| &i == idx)
+                                .unwrap();
+                            if idx == 0 {
+                                let idx = self.randomized_indices.last().unwrap();
+                                self.songs.get(*idx).unwrap().activate();
+                            } else {
+                                let idx = self.randomized_indices.get(idx - 1).unwrap();
+                                self.songs.get(*idx).unwrap().activate();
+                            }
                         }
                         // at start of queue
                         0 => self.songs.get(0).unwrap().activate(),
@@ -749,6 +775,7 @@ impl relm4::Component for Queue {
                             (self.subsonic.clone(), child.clone()),
                         );
                     }
+                    sender.input(QueueIn::Rerandomize);
                 }
                 QueueSongOut::DropBelow { src, dest } => {
                     let mut guard = self.songs.guard();
@@ -758,6 +785,7 @@ impl relm4::Component for Queue {
                             (self.subsonic.clone(), child.clone()),
                         );
                     }
+                    sender.input(QueueIn::Rerandomize);
                 }
                 QueueSongOut::MoveAbove { src, dest } => {
                     let mut guard = self.songs.guard();
@@ -825,6 +853,11 @@ impl relm4::Component for Queue {
                     self.scrolled.set_vadjustment(Some(&adj));
                 }
             }
+            QueueIn::Rerandomize => {
+                self.randomized_indices = (0..self.songs.len()).collect();
+                let mut rng = rand::thread_rng();
+                self.randomized_indices.shuffle(&mut rng);
+            }
         }
     }
 
@@ -845,6 +878,7 @@ impl relm4::Component for Queue {
                     self.songs.guard().push_back((self.subsonic.clone(), child));
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
+                sender.input(QueueIn::Rerandomize);
 
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
@@ -861,6 +895,7 @@ impl relm4::Component for Queue {
                         .insert(current + i + 1, (self.subsonic.clone(), child.clone()));
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
+                sender.input(QueueIn::Rerandomize);
 
                 if !self.songs.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
