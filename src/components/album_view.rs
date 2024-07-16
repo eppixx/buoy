@@ -343,11 +343,13 @@ impl relm4::Component for AlbumView {
                 }
             }
             AlbumViewIn::HoverCover(false) => {
+                self.favorite.remove_css_class("cover-favorite");
                 if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
                     self.favorite.set_visible(false);
                 }
             }
             AlbumViewIn::HoverCover(true) => {
+                self.favorite.add_css_class("cover-favorite");
                 self.favorite.set_visible(true);
             }
         }

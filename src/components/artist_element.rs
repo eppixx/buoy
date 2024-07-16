@@ -160,11 +160,13 @@ impl relm4::SimpleComponent for ArtistElement {
                 }
             }
             ArtistElementIn::Hover(false) => {
+                self.favorite.remove_css_class("cover-favorite");
                 if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
                     self.favorite.set_visible(false);
                 }
             }
             ArtistElementIn::Hover(true) => {
+                self.favorite.add_css_class("cover-favorite");
                 self.favorite.set_visible(true);
             }
         }

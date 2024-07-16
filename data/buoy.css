@@ -236,3 +236,7 @@ contents > box {
 .playlist-view-info {
   margin: 5px;
 }
+
+.cover-favorite {
+    background-color: rgb(75, 75, 75);
+}
