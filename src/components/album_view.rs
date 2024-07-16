@@ -53,6 +53,7 @@ pub enum AlbumViewIn {
     FavoritedAlbum(String, bool),
     FavoritedSong(String, bool),
     SearchChanged(String),
+    HoverCover(bool),
 }
 
 #[derive(Debug)]
@@ -151,7 +152,14 @@ impl relm4::Component for AlbumView {
                             };
                             sender.output(AlbumViewOut::FavoriteClicked(id, state)).expect("sending failed");
                         }
-                    }
+                    },
+
+                    add_controller = gtk::EventControllerMotion {
+                        connect_enter[sender] => move |_event, _x, _y| {
+                            sender.input(AlbumViewIn::HoverCover(true));
+                        },
+                        connect_leave => AlbumViewIn::HoverCover(false),
+                    },
                 },
 
                 gtk::WindowHandle {
@@ -334,6 +342,14 @@ impl relm4::Component for AlbumView {
                     }
                 }
             }
+            AlbumViewIn::HoverCover(false) => {
+                if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
+                    self.favorite.set_visible(false);
+                }
+            }
+            AlbumViewIn::HoverCover(true) => {
+                self.favorite.set_visible(true);
+            }
         }
     }
 
@@ -380,8 +396,10 @@ impl relm4::Component for AlbumView {
                     .emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
                 self.title = album.base.name;
                 self.artist = album.base.artist;
+                self.favorite.set_visible(false);
                 if album.base.starred.is_some() {
                     self.favorite.set_icon_name("starred-symbolic");
+                    self.favorite.set_visible(true);
                 }
             }
         }

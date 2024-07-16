@@ -34,6 +34,7 @@ pub enum ArtistViewIn {
     SearchChanged(String),
     FavoritedArtist(String, bool),
     FavoritedAlbum(String, bool),
+    HoverCover(bool),
 }
 
 #[derive(Debug)]
@@ -157,6 +158,13 @@ impl relm4::Component for ArtistView {
                     set_child = &gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
                         model.cover.widget().clone() -> gtk::Box {},
+                    },
+
+                    add_controller = gtk::EventControllerMotion {
+                        connect_enter[sender] => move |_event, _x, _y| {
+                            sender.input(ArtistViewIn::HoverCover(true));
+                        },
+                        connect_leave => ArtistViewIn::HoverCover(false),
                     },
                 },
 
@@ -296,6 +304,14 @@ impl relm4::Component for ArtistView {
                 for album in &self.album_elements {
                     album.emit(AlbumElementIn::Favorited(id.clone(), state));
                 }
+            }
+            ArtistViewIn::HoverCover(false) => {
+                if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
+                    self.favorite.set_visible(false);
+                }
+            }
+            ArtistViewIn::HoverCover(true) => {
+                self.favorite.set_visible(true);
             }
         }
     }

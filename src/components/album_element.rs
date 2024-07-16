@@ -33,6 +33,7 @@ impl AlbumElement {
 pub enum AlbumElementIn {
     DescriptiveCover(DescriptiveCoverOut),
     Favorited(String, bool),
+    Hover(bool),
 }
 
 #[derive(Debug)]
@@ -139,11 +140,14 @@ impl relm4::SimpleComponent for AlbumElement {
         model.cover.widget().add_controller(drag_src);
 
         // set favorite icon
+        model.favorite.set_visible(false);
         match &init {
             AlbumElementInit::AlbumId3(id3) if id3.starred.is_some() => {
+                model.favorite.set_visible(true);
                 model.favorite.set_icon_name("starred-symbolic")
             }
             AlbumElementInit::Child(child) if child.starred.is_some() => {
+                model.favorite.set_visible(true);
                 model.favorite.set_icon_name("starred-symbolic")
             }
             _ => {}
@@ -155,6 +159,13 @@ impl relm4::SimpleComponent for AlbumElement {
     view! {
         gtk::FlowBoxChild {
             add_css_class: "album-element",
+
+            add_controller = gtk::EventControllerMotion {
+                connect_enter[sender] => move |_event, _x, _y| {
+                    sender.input(AlbumElementIn::Hover(true));
+                },
+                connect_leave => AlbumElementIn::Hover(false),
+            },
 
             gtk::Overlay {
                 add_overlay = &gtk::Box {
@@ -218,6 +229,14 @@ impl relm4::SimpleComponent for AlbumElement {
                         false => self.favorite.set_icon_name("non-starred-symbolic"),
                     }
                 }
+            }
+            AlbumElementIn::Hover(false) => {
+                if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
+                    self.favorite.set_visible(false);
+                }
+            }
+            AlbumElementIn::Hover(true) => {
+                self.favorite.set_visible(true);
             }
         }
     }

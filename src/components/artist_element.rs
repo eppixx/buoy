@@ -33,6 +33,7 @@ impl ArtistElement {
 pub enum ArtistElementIn {
     DescriptiveCover(DescriptiveCoverOut),
     Favorited(String, bool),
+    Hover(bool),
 }
 
 #[derive(Debug)]
@@ -83,8 +84,10 @@ impl relm4::SimpleComponent for ArtistElement {
         });
 
         //setup favorite button
+        model.favorite.set_visible(false);
         if init.starred.is_some() {
             model.favorite.set_icon_name("starred-symbolic");
+            model.favorite.set_visible(true);
         }
 
         model.cover.widget().add_controller(drag_src);
@@ -95,6 +98,13 @@ impl relm4::SimpleComponent for ArtistElement {
     view! {
         gtk::Box {
             add_css_class: "artist-element",
+
+            add_controller = gtk::EventControllerMotion {
+                connect_enter[sender] => move |_event, _x, _y| {
+                    sender.input(ArtistElementIn::Hover(true));
+                },
+                connect_leave => ArtistElementIn::Hover(false),
+            },
 
             gtk::Overlay {
                 add_overlay = &gtk::Box {
@@ -148,6 +158,14 @@ impl relm4::SimpleComponent for ArtistElement {
                         false => self.favorite.set_icon_name("non-starred-symbolic"),
                     }
                 }
+            }
+            ArtistElementIn::Hover(false) => {
+                if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
+                    self.favorite.set_visible(false);
+                }
+            }
+            ArtistElementIn::Hover(true) => {
+                self.favorite.set_visible(true);
             }
         }
     }
