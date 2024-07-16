@@ -37,6 +37,7 @@ pub enum ScrollMotion {
 #[derive(Debug)]
 pub struct Queue {
     subsonic: Rc<RefCell<Subsonic>>,
+    scrolled: gtk::ScrolledWindow,
     songs: FactoryVecDeque<QueueSong>,
     loading_queue: bool,
     playing_index: Option<DynamicIndex>,
@@ -135,6 +136,7 @@ pub enum QueueIn {
     Replace(Droppable),
     DisplayToast(String),
     Favorite(String, bool),
+    JumpToCurrent,
 }
 
 #[derive(Debug)]
@@ -188,6 +190,7 @@ impl relm4::Component for Queue {
 
         let model = Queue {
             subsonic,
+            scrolled: gtk::ScrolledWindow::default(),
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), QueueIn::QueueSong),
@@ -205,7 +208,7 @@ impl relm4::Component for Queue {
         sender.input(QueueIn::SetCurrent(index));
 
         let songs = model.songs.widget().clone();
-        let scrolled = gtk::ScrolledWindow::default();
+        let scrolled = model.scrolled.clone();
         let motion = Rc::new(RefCell::new(None));
         let widgets = view_output!();
 
@@ -247,7 +250,7 @@ impl relm4::Component for Queue {
             add_css_class: "queue",
             set_orientation: gtk::Orientation::Vertical,
 
-            scrolled.clone() -> gtk::ScrolledWindow {
+            model.scrolled.clone() -> gtk::ScrolledWindow {
                 set_vexpand: true,
 
                 if model.loading_queue {
@@ -376,6 +379,13 @@ impl relm4::Component for Queue {
                     set_focus_on_click: false,
                     connect_clicked => QueueIn::Clear,
                 },
+
+                pack_end = &gtk::Button {
+                    set_icon_name: "view-continuous-symbolic",
+                    set_tooltip: "Jump to played track in queue",
+                    set_focus_on_click: false,
+                    connect_clicked => QueueIn::JumpToCurrent,
+                }
             }
         }
     }
@@ -801,6 +811,19 @@ impl relm4::Component for Queue {
                 .expect("sending failed"),
             QueueIn::Favorite(id, state) => {
                 self.songs.broadcast(QueueSongIn::FavoriteSong(id, state));
+            }
+            QueueIn::JumpToCurrent => {
+                // where the current song in the window will up end from start
+                const CURRENT_POSITION: f64 = 0.4;
+                if let Some(current) = &self.playing_index {
+                    let height = self.songs.widget().height();
+                    let adj = self.scrolled.vadjustment();
+                    let scroll_y = height as f64 / self.songs.len() as f64
+                        * current.current_index() as f64
+                        - self.scrolled.height() as f64 * CURRENT_POSITION;
+                    adj.set_value(scroll_y);
+                    self.scrolled.set_vadjustment(Some(&adj));
+                }
             }
         }
     }
