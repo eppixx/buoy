@@ -64,6 +64,7 @@ pub enum DashboardIn {
 
 #[derive(Debug)]
 pub enum DashboardCmd {
+    Error(String),
     LoadedRecentlyPlayed(Result<Vec<submarine::data::Child>, submarine::SubsonicError>),
 }
 
@@ -120,7 +121,10 @@ impl relm4::Component for Dashboard {
 
         //load recently played albums
         sender.oneshot_command(async move {
-            let client = Client::get().unwrap();
+            let client = match Client::get() {
+                None => return DashboardCmd::Error(String::from("no client found")),
+                Some(client) => client,
+            };
             DashboardCmd::LoadedRecentlyPlayed(
                 client
                     .get_album_list2(
@@ -559,6 +563,7 @@ impl relm4::Component for Dashboard {
         _root: &Self::Root,
     ) {
         match msg {
+            DashboardCmd::Error(msg) => sender.output(DashboardOut::DisplayToast(msg)).unwrap(),
             DashboardCmd::LoadedRecentlyPlayed(Err(_e)) => {}
             DashboardCmd::LoadedRecentlyPlayed(Ok(list)) => {
                 self.recently_played_list = list

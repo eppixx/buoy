@@ -1,10 +1,11 @@
 use app::App;
-use relm4::RelmApp;
+use relm4::{gtk, RelmApp};
 
 mod app;
 pub mod client;
 pub mod common;
 pub mod components;
+pub mod config;
 pub mod css;
 mod factory;
 pub mod gtk_helper;
@@ -32,11 +33,19 @@ fn main() -> anyhow::Result<()> {
     };
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
-    //load css file
-    let data = std::fs::read_to_string("data/buoy.css").expect("css file not found");
     let app = RelmApp::new("com.github.eppixx.buoy");
-    app.set_global_css(&data);
+    load_css();
     app.run_async::<App>(());
 
     Ok(())
+}
+
+fn load_css() {
+    use gtk::gdk;
+    let display = gdk::Display::default().expect("Could not get default display.");
+    let provider = gtk::CssProvider::new();
+    let priority = gtk::STYLE_PROVIDER_PRIORITY_APPLICATION;
+
+    provider.load_from_data(include_str!("../data/buoy.css"));
+    gtk::StyleContext::add_provider_for_display(&display, &provider, priority);
 }

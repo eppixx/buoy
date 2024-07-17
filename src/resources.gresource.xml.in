@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix=@SLASHED_APP_ID@>
+    <file alias="buoy.svg" preprocess="xml-stripblanks">../data/icons/symbolic.svg</file>
+    <file compressed="true">../data/buoy.css</file>
+  </gresource>
+</gresources>
