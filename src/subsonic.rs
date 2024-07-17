@@ -1,6 +1,5 @@
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 use std::{collections::HashMap, io::Read};
 
@@ -9,13 +8,7 @@ use crate::{client::Client, subsonic_cover, subsonic_cover::SubsonicCovers};
 const PREFIX: &str = "Buoy";
 const MUSIC_INFOS: &str = "Music-Infos";
 
-#[derive(Error, Debug)]
-enum Error {
-    #[error("Settings does not exists yet")]
-    NoClient,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Subsonic {
     scan_status: Option<i64>,
     artists: Vec<submarine::data::ArtistId3>,
@@ -29,7 +22,13 @@ impl Subsonic {
     // this is the main way to create a Subsonic object
     pub async fn load_or_create() -> anyhow::Result<Self> {
         let current_scan_status = {
-            let client = Client::get().ok_or(Error::NoClient)?;
+            let client = match Client::get() {
+                None => {
+                    tracing::warn!("no client found");
+                    return Ok(Self::default());
+                }
+                Some(client) => client,
+            };
             client.get_scan_status().await?
         };
 
