@@ -4,3 +4,4 @@
 /repo
 /cargo-sources.json
 /src/config.rs
+flatpak-cargo-generator.py

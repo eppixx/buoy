@@ -4,6 +4,10 @@
 
 ---
 
+## Screenshot
+
+![Screenshot of buoy](Screenshot.png)
+
 ## Install the needed depencies
 
 ```bash
@@ -15,37 +19,40 @@ it is assumed, that rust is already installed.
 
 ## Building, running and installing with meson and ninja
 
+Build with the following
 ```bash
 meson setup build
 cd build
 ninja
 ```
 
-run with
+Run with
 ```bash
 ./src/debug/buoy
 ```
 
-install with the following command
+It can be installed with the following command
 ```bash
 ninja install
 ```
 
 ## Building with flatpak
 
-install dependencies
+Install dependencies
 ```bash
 sudo apt install python3-aiohttp python3-toml
 wget https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
 ```
 
-building the project
-
+Building the project
 ```bash
-python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo.sources.json
-flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/7.3
+python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
+flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/7.3 io.elementary.Sdk/x86_64/7.3
+io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/8
 ```
 
-## Screenshot
+It should now be able to run with a program launcher or from command line with
+```bash
+flatpak run com.github.eppixx.buoy
+```
 
-![Screenshot of buoy](Screenshot.png)
