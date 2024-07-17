@@ -47,5 +47,5 @@ fn load_css() {
     let priority = gtk::STYLE_PROVIDER_PRIORITY_APPLICATION;
 
     provider.load_from_data(include_str!("../data/buoy.css"));
-    gtk::StyleContext::add_provider_for_display(&display, &provider, priority);
+    gtk::style_context_add_provider_for_display(&display, &provider, priority);
 }
