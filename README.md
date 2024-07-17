@@ -47,8 +47,7 @@ wget https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/carg
 Building the project
 ```bash
 python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
-flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/7.3 io.elementary.Sdk/x86_64/7.3
-io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/8
+flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/8
 ```
 
 It should now be able to run with a program launcher or from command line with
