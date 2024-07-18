@@ -15,9 +15,6 @@ const COVER_CACHE: &str = "cover-cache";
 pub struct SubsonicCovers {
     /// the raw buffers that are send from server
     buffers: HashMap<String, Option<Vec<u8>>>,
-    /// converted from buffers, can be copied
-    #[serde(skip)]
-    covers: HashMap<String, Option<gdk::Texture>>,
 }
 
 #[derive(Default, Debug)]
@@ -71,37 +68,21 @@ impl SubsonicCovers {
     }
 
     pub fn cover(&mut self, id: &str) -> Response {
-        match self.covers.get(id) {
-            Some(Some(cover)) => {
-                //return cached cover
-                Response::Loaded(cover.clone())
-            }
-            Some(None) => Response::Empty,
-            None => {
-                match self.buffers.get(id) {
-                    Some(Some(buffer)) => {
-                        // converting buffer to image
-                        let bytes = gtk::glib::Bytes::from(buffer);
-                        match gdk::Texture::from_bytes(&bytes) {
-                            Ok(texture) => {
-                                self.covers.insert(id.into(), Some(texture.clone()));
-                                Response::Loaded(texture)
-                            }
-                            Err(e) => {
-                                // could not convert to image
-                                tracing::warn!("converting buffer to Pixbuf: {e} for {id}");
-                                self.covers.insert(id.into(), None);
-                                Response::Empty
-                            }
-                        }
-                    }
-                    // id is missing or there is no buffer for id
-                    _ => {
-                        self.covers.insert(id.into(), None);
+        match self.buffers.get(id) {
+            Some(Some(buffer)) => {
+                // converting buffer to image
+                let bytes = gtk::glib::Bytes::from(buffer);
+                match gdk::Texture::from_bytes(&bytes) {
+                    Ok(texture) => Response::Loaded(texture),
+                    Err(e) => {
+                        // could not convert to image
+                        tracing::warn!("converting buffer to Pixbuf: {e} for {id}");
                         Response::Empty
                     }
                 }
             }
+            // id is missing or there is no buffer for id
+            _ => Response::Empty,
         }
     }
 
@@ -161,27 +142,8 @@ impl SubsonicCovers {
         tracing::info!("loaded subsonic cover cache");
         let result = postcard::from_bytes::<Self>(&content)?;
 
-        //convert buffers to textures
-        for (id, buffer) in &result.buffers {
-            match buffer {
-                None => _ = self.covers.insert(id.into(), None),
-                Some(buffer) => {
-                    let bytes = gtk::glib::Bytes::from(buffer);
-                    match gdk::Texture::from_bytes(&bytes) {
-                        Ok(tex) => {
-                            _ = self.covers.insert(id.into(), Some(tex));
-                        }
-                        Err(e) => {
-                            tracing::warn!("error while converting buffer from cache: {e}");
-                            self.covers.insert(id.into(), None);
-                        }
-                    }
-                }
-            }
-        }
-        println!("size of covers {}", self.covers.len());
-
         self.buffers = result.buffers;
+        tracing::info!("count of loaded covers {}", self.buffers.len());
         Ok(())
     }
 
