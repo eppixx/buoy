@@ -665,6 +665,7 @@ impl relm4::component::AsyncComponent for App {
                 PlayControlOut::Previous => sender.input(AppIn::Player(Command::Previous)),
                 PlayControlOut::Play => sender.input(AppIn::Player(Command::Play)),
                 PlayControlOut::Pause => sender.input(AppIn::Player(Command::Pause)),
+                PlayControlOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
             },
             AppIn::Seekbar(msg) => match msg {
                 SeekbarOut::SeekDragged(seek_in_ms) => {
@@ -1029,11 +1030,9 @@ impl relm4::component::AsyncComponent for App {
                 }
                 Command::Repeat(repeat) => {
                     self.mpris.set_loop_status(repeat.clone());
-                    self.queue.emit(QueueIn::SetRepeat(repeat));
                 }
                 Command::Shuffle(shuffle) => {
                     self.mpris.set_shuffle(shuffle.clone());
-                    self.queue.emit(QueueIn::SetShuffle(shuffle));
                 }
             },
             AppIn::FavoriteAlbumClicked(id, state) => {

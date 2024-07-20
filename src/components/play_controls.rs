@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use relm4::{
     component,
     gtk::{
@@ -7,13 +9,18 @@ use relm4::{
     ComponentParts, ComponentSender, SimpleComponent,
 };
 
-use crate::play_state::PlayState;
+use crate::{components::{sequence_button::Sequence, sequence_button_impl::repeat::Repeat}, play_state::PlayState, settings::Settings};
+use crate::player::Command;
+
+use super::sequence_button_impl::shuffle::Shuffle;
 
 #[derive(Debug, Default)]
 pub struct PlayControl {
     prev_btn: gtk::Button,
     play_btn: gtk::Button,
     next_btn: gtk::Button,
+    random_btn: gtk::Button,
+    repeat_btn: gtk::Button,
 }
 
 #[derive(Debug)]
@@ -31,6 +38,7 @@ pub enum PlayControlOut {
     Next,
     Play,
     Pause,
+    Player(Command),
 }
 
 #[component(pub)]
@@ -50,6 +58,12 @@ impl SimpleComponent for PlayControl {
         //init buttons
         sender.input(PlayControlIn::NewState(state));
 
+        // random and shuffle buttons
+        let settings = Settings::get().lock().unwrap();
+        model.random_btn.set_icon_name(settings.shuffle.current());
+        model.repeat_btn.set_icon_name(settings.repeat.current());
+        drop(settings);
+
         ComponentParts { model, widgets }
     }
 
@@ -59,6 +73,25 @@ impl SimpleComponent for PlayControl {
             add_css_class: "play-control",
             set_halign: gtk::Align::Center,
             set_spacing: 20,
+
+            append = &gtk::Box {
+                set_valign: gtk::Align::End,
+
+                model.random_btn.clone() -> gtk::Button {
+                    set_focus_on_click: false,
+                    set_margin_end: 10,
+
+                    connect_clicked[sender] => move |btn| {
+                        let mut shuffle = Shuffle::from_str(&btn.icon_name().unwrap()).unwrap();
+                        shuffle.next();
+                        btn.set_icon_name(shuffle.current());
+                        let mut settings = Settings::get().lock().unwrap();
+                        settings.shuffle = shuffle.clone();
+                        drop(settings);
+                        sender.output(PlayControlOut::Player(Command::Shuffle(shuffle))).unwrap();
+                    }
+                }
+            },
 
             append = &model.prev_btn.clone() {
                 add_css_class: "play-control-previous",
@@ -96,6 +129,24 @@ impl SimpleComponent for PlayControl {
                 connect_clicked[sender] => move |_| {
                     _ = sender.output(PlayControlOut::Next);
                 },
+            },
+
+            append = &gtk::Box {
+                set_valign: gtk::Align::End,
+                set_margin_start: 10,
+
+                model.repeat_btn.clone() {
+                    set_focus_on_click: false,
+
+                    connect_clicked[sender] => move |btn| {
+                        let mut repeat = Repeat::from_str(&btn.icon_name().unwrap()).unwrap();
+                        repeat.next();
+                        btn.set_icon_name(repeat.current());
+                        let mut settings = Settings::get().lock().unwrap();
+                        settings.repeat = repeat.clone();
+                        sender.output(PlayControlOut::Player(Command::Repeat(repeat))).unwrap();
+                    }
+                }
             },
         }
     }

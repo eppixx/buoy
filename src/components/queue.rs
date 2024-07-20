@@ -45,8 +45,6 @@ pub struct Queue {
     remove_items: gtk::Button,
     clear_items: gtk::Button,
     last_selected: Option<DynamicIndex>,
-    shuffle: relm4::Controller<SequenceButton<Shuffle>>,
-    repeat: relm4::Controller<SequenceButton<Repeat>>,
 }
 
 impl Queue {
@@ -67,13 +65,15 @@ impl Queue {
             return false;
         }
 
-        if self.repeat.model().current() != &Repeat::Normal {
+        let settings = Settings::get().lock().unwrap();
+        if settings.repeat != Repeat::Normal {
             return true;
         }
 
-        if self.shuffle.model().current() == &Shuffle::Shuffle {
+        if settings.shuffle == Shuffle::Shuffle {
             return true; //TODO might change later
         }
+        drop(settings);
 
         if let Some(index) = &self.playing_index {
             if index.current_index() + 1 == self.songs.len() {
@@ -89,13 +89,15 @@ impl Queue {
             return false;
         }
 
-        if self.repeat.model().current() != &Repeat::Normal {
+        let settings = Settings::get().lock().unwrap();
+        if settings.repeat != Repeat::Normal {
             return true;
         }
 
-        if self.shuffle.model().current() == &Shuffle::Shuffle {
+        if settings.shuffle == Shuffle::Shuffle {
             return true;
         }
+        drop(settings);
 
         if let Some(index) = &self.playing_index {
             if index.current_index() == 0 {
@@ -126,9 +128,6 @@ pub enum QueueIn {
     NewState(PlayState),
     SomeIsSelected(bool),
     ToggleShuffle(Shuffle),
-    RepeatClicked(Repeat),
-    SetRepeat(Repeat),
-    SetShuffle(Shuffle),
     PlayNext,
     PlayPrevious,
     Append(Droppable),
@@ -178,18 +177,6 @@ impl relm4::Component for Queue {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let shuffle: relm4::Controller<SequenceButton<Shuffle>> =
-            SequenceButton::<Shuffle>::builder()
-                .launch(Shuffle::Sequential)
-                .forward(sender.input_sender(), |msg| match msg {
-                    SequenceButtonOut::Clicked(shuffle) => QueueIn::ToggleShuffle(shuffle),
-                });
-        let repeat: relm4::Controller<SequenceButton<Repeat>> = SequenceButton::<Repeat>::builder()
-            .launch(Repeat::Normal)
-            .forward(sender.input_sender(), |msg| match msg {
-                SequenceButtonOut::Clicked(repeat) => QueueIn::RepeatClicked(repeat),
-            });
-
         let model = Queue {
             subsonic,
             scrolled: gtk::ScrolledWindow::default(),
@@ -202,8 +189,6 @@ impl relm4::Component for Queue {
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
             last_selected: None,
-            shuffle,
-            repeat,
         };
 
         //init queue
@@ -232,16 +217,6 @@ impl relm4::Component for Queue {
             }
             gtk::glib::ControlFlow::Continue
         });
-
-        {
-            let settings = Settings::get().lock().unwrap();
-            model
-                .shuffle
-                .emit(SequenceButtonIn::SetTo(settings.shuffle.clone()));
-            model
-                .repeat
-                .emit(SequenceButtonIn::SetTo(settings.repeat.clone()));
-        }
 
         model.clear_items.set_sensitive(!model.songs.is_empty());
 
@@ -347,8 +322,32 @@ impl relm4::Component for Queue {
             },
 
             gtk::ActionBar {
-                pack_start = &model.shuffle.widget().clone() {},
-                pack_start = &model.repeat.widget().clone() {},
+                pack_start = &gtk::Box {
+                    model.remove_items.clone() {
+                        set_icon_name: "list-remove-symbolic",
+                        set_tooltip: "Remove selected songs from queue",
+                        set_sensitive: false,
+                        set_focus_on_click: false,
+                        connect_clicked => QueueIn::Remove,
+                    },
+
+                    model.clear_items.clone() {
+                        set_margin_start: 15,
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip: "Clear queue",
+                        set_sensitive: false,
+                        set_focus_on_click: false,
+                        connect_clicked => QueueIn::Clear,
+                    },
+                },
+
+                #[wrap(Some)]
+                set_center_widget = &gtk::Button {
+                        set_icon_name: "view-continuous-symbolic",
+                        set_tooltip: "Jump to played track in queue",
+                        set_focus_on_click: false,
+                        connect_clicked => QueueIn::JumpToCurrent,
+                },
 
                 pack_end = &gtk::Button {
                     set_icon_name: "document-new-symbolic",
@@ -358,37 +357,6 @@ impl relm4::Component for Queue {
                         sender.output(QueueOut::CreatePlaylist).expect("sending failed");
                     },
                 },
-
-                pack_end = &gtk::Label {
-                    add_css_class: "destructive-button-spacer",
-                },
-
-                pack_end = &model.remove_items.clone() {
-                    set_icon_name: "list-remove-symbolic",
-                    set_tooltip: "remove song from queue",
-                    set_sensitive: false,
-                    set_focus_on_click: false,
-                    connect_clicked => QueueIn::Remove,
-                },
-
-                pack_end = &gtk::Label {
-                    add_css_class: "destructive-button-spacer",
-                },
-
-                pack_end = &model.clear_items.clone() {
-                    set_icon_name: "user-trash-symbolic",
-                    set_tooltip: "clear queue",
-                    set_sensitive: false,
-                    set_focus_on_click: false,
-                    connect_clicked => QueueIn::Clear,
-                },
-
-                pack_end = &gtk::Button {
-                    set_icon_name: "view-continuous-symbolic",
-                    set_tooltip: "Jump to played track in queue",
-                    set_focus_on_click: false,
-                    connect_clicked => QueueIn::JumpToCurrent,
-                }
             }
         }
     }
@@ -638,28 +606,15 @@ impl relm4::Component for Queue {
                     .output(QueueOut::Player(Command::Shuffle(shuffle)))
                     .expect("sending failed");
             }
-            QueueIn::RepeatClicked(repeat) => {
-                {
-                    let mut settings = Settings::get().lock().unwrap();
-                    settings.repeat = repeat.clone();
-                }
-                sender
-                    .output(QueueOut::Player(Command::Repeat(repeat)))
-                    .expect("sending failed");
-            }
-            QueueIn::SetRepeat(repeat) => {
-                self.repeat.emit(SequenceButtonIn::SetTo(repeat));
-            }
-            QueueIn::SetShuffle(shuffle) => {
-                self.shuffle.emit(SequenceButtonIn::SetTo(shuffle));
-            }
             QueueIn::PlayNext => {
                 if self.songs.is_empty() {
                     return;
                 }
 
-                let repeat = self.repeat.model().current().clone();
-                let shuffle = self.shuffle.model().current().clone();
+                let settings = Settings::get().lock().unwrap();
+                let repeat = settings.repeat.clone();
+                let shuffle = settings.shuffle.clone();
+                drop(settings);
 
                 match &self.playing_index {
                     None => self.songs.front().unwrap().activate(),
@@ -703,8 +658,10 @@ impl relm4::Component for Queue {
                     return;
                 }
 
-                let repeat = self.repeat.model().current().clone();
-                let shuffle = self.shuffle.model().current().clone();
+                let settings = Settings::get().lock().unwrap();
+                let repeat = settings.repeat.clone();
+                let shuffle = settings.shuffle.clone();
+                drop(settings);
 
                 if let Some(index) = &self.playing_index {
                     match index.current_index() {

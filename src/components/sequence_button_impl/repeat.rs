@@ -10,11 +10,24 @@ pub enum Repeat {
     All,
 }
 
+impl std::str::FromStr for Repeat {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "media-playlist-no-repeat-symbolic" => Ok(Repeat::Normal),
+            "media-playlist-repeat-symbolic" => Ok(Repeat::All),
+            "media-playlist-repeat-song-symbolic" => Ok(Repeat::One),
+            _ => Err(())
+        }
+    }
+}
+
 impl Sequence for Repeat {
     fn current(&self) -> &str {
         match self {
             Self::Normal => "media-playlist-no-repeat-symbolic",
-            Self::One => "media-playlist-repeat-song",
+            Self::One => "media-playlist-repeat-song-symbolic",
             Self::All => "media-playlist-repeat-symbolic",
         }
     }

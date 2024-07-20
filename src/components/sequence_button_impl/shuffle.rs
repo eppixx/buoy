@@ -9,6 +9,18 @@ pub enum Shuffle {
     Shuffle,
 }
 
+impl std::str::FromStr for Shuffle {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "media-playlist-consecutive-symbolic" => Ok(Shuffle::Sequential),
+            "media-playlist-shuffle-symbolic" => Ok(Shuffle::Shuffle),
+            _ => Err(())
+        }
+    }
+}
+
 impl Sequence for Shuffle {
     fn current(&self) -> &str {
         match self {
