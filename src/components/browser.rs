@@ -10,7 +10,7 @@ use relm4::{
     Component, ComponentController,
 };
 
-use super::{
+use crate::components::{
     album_element::AlbumElementInit,
     album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
     albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},

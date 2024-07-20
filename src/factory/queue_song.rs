@@ -8,8 +8,7 @@ use relm4::{
             ToValue, WidgetExt,
         },
     },
-    prelude::{DynamicIndex, FactoryComponent},
-    Component, ComponentController, FactorySender, RelmWidgetExt,
+    Component, ComponentController, RelmWidgetExt,
 };
 
 use crate::{
@@ -24,7 +23,7 @@ use crate::{
 
 #[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
 #[boxed_type(name = "QueueSongIndex")]
-pub struct Index(DynamicIndex);
+pub struct Index(relm4::factory::DynamicIndex);
 
 #[derive(Debug, Clone)]
 pub enum QueueSongIn {
@@ -41,25 +40,25 @@ pub enum QueueSongIn {
 
 #[derive(Debug)]
 pub enum QueueSongOut {
-    Activated(DynamicIndex, Box<submarine::data::Child>),
-    Clicked(DynamicIndex),
-    ShiftClicked(DynamicIndex),
+    Activated(relm4::factory::DynamicIndex, Box<submarine::data::Child>),
+    Clicked(relm4::factory::DynamicIndex),
+    ShiftClicked(relm4::factory::DynamicIndex),
     Remove,
     MoveAbove {
-        src: DynamicIndex,
-        dest: DynamicIndex,
+        src: relm4::factory::DynamicIndex,
+        dest: relm4::factory::DynamicIndex,
     },
     MoveBelow {
-        src: DynamicIndex,
-        dest: DynamicIndex,
+        src: relm4::factory::DynamicIndex,
+        dest: relm4::factory::DynamicIndex,
     },
     DropAbove {
         src: Vec<submarine::data::Child>,
-        dest: DynamicIndex,
+        dest: relm4::factory::DynamicIndex,
     },
     DropBelow {
         src: Vec<submarine::data::Child>,
-        dest: DynamicIndex,
+        dest: relm4::factory::DynamicIndex,
     },
     DisplayToast(String),
     FavoriteClicked(String, bool),
@@ -72,13 +71,16 @@ pub struct QueueSong {
     cover: relm4::Controller<Cover>,
     playing: PlayState,
     favorited: gtk::Button,
-    index: DynamicIndex,
-    sender: FactorySender<Self>,
+    index: relm4::factory::DynamicIndex,
+    sender: relm4::FactorySender<Self>,
     drag_src: gtk::DragSource,
 }
 
 impl QueueSong {
-    pub fn new_play_state(&self, state: &PlayState) -> (Option<DynamicIndex>, Option<Id>) {
+    pub fn new_play_state(
+        &self,
+        state: &PlayState,
+    ) -> (Option<relm4::factory::DynamicIndex>, Option<Id>) {
         self.sender.input(QueueSongIn::NewState(state.clone()));
         match state {
             PlayState::Play => (
@@ -102,7 +104,7 @@ impl QueueSong {
         &self.info
     }
 
-    pub fn index(&self) -> &DynamicIndex {
+    pub fn index(&self) -> &relm4::factory::DynamicIndex {
         &self.index
     }
 }
@@ -110,15 +112,21 @@ impl QueueSong {
 #[derive(Debug)]
 pub enum QueueSongCmd {
     InsertChildrenAbove(
-        Result<(DynamicIndex, Vec<submarine::data::Child>), submarine::SubsonicError>,
+        Result<
+            (relm4::factory::DynamicIndex, Vec<submarine::data::Child>),
+            submarine::SubsonicError,
+        >,
     ),
     InsertChildrenBelow(
-        Result<(DynamicIndex, Vec<submarine::data::Child>), submarine::SubsonicError>,
+        Result<
+            (relm4::factory::DynamicIndex, Vec<submarine::data::Child>),
+            submarine::SubsonicError,
+        >,
     ),
 }
 
 #[relm4::factory(pub)]
-impl FactoryComponent for QueueSong {
+impl relm4::factory::FactoryComponent for QueueSong {
     type Init = (Rc<RefCell<Subsonic>>, submarine::data::Child);
     type Input = QueueSongIn;
     type Output = QueueSongOut;
@@ -128,8 +136,8 @@ impl FactoryComponent for QueueSong {
 
     fn init_model(
         (subsonic, init): Self::Init,
-        index: &DynamicIndex,
-        sender: FactorySender<Self>,
+        index: &relm4::factory::DynamicIndex,
+        sender: relm4::factory::FactorySender<Self>,
     ) -> Self {
         let cover = Cover::builder()
             .launch((subsonic.clone(), init.cover_art.clone()))
@@ -303,7 +311,7 @@ impl FactoryComponent for QueueSong {
         }
     }
 
-    fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: relm4::FactorySender<Self>) {
         match message {
             QueueSongIn::Activated => {
                 self.new_play_state(&PlayState::Play);

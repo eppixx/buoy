@@ -1,13 +1,14 @@
-use zbus::interface;
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::client::Client;
-use crate::components::sequence_button_impl::repeat::Repeat;
-use crate::components::sequence_button_impl::shuffle::Shuffle;
-use crate::play_state::PlayState;
-use crate::player::Command;
+use zbus::interface;
+
+use crate::{
+    client::Client,
+    components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+    play_state::PlayState,
+    player::Command,
+};
 
 pub trait MprisString {
     fn to_mpris_string(&self) -> String;

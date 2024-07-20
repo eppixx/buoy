@@ -4,8 +4,7 @@ use relm4::gtk::{
     prelude::{BoxExt, ButtonExt, WidgetExt},
 };
 
-use super::filter_row::{Category, Filter, FilterRowIn, FilterRowOut};
-use crate::components::filter_row::FilterRow;
+use crate::components::filter_row::{Category, Filter, FilterRow, FilterRowIn, FilterRowOut};
 
 #[derive(Debug)]
 pub struct FilterBox {

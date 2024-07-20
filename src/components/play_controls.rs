@@ -6,17 +6,17 @@ use relm4::{
         self,
         prelude::{BoxExt, ButtonExt, WidgetExt},
     },
-    ComponentParts, ComponentSender, SimpleComponent,
 };
 
-use crate::player::Command;
 use crate::{
-    components::{sequence_button::Sequence, sequence_button_impl::repeat::Repeat},
+    components::{
+        sequence_button::Sequence,
+        sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+    },
     play_state::PlayState,
+    player::Command,
     settings::Settings,
 };
-
-use super::sequence_button_impl::shuffle::Shuffle;
 
 #[derive(Debug, Default)]
 pub struct PlayControl {
@@ -42,7 +42,7 @@ pub enum PlayControlOut {
 }
 
 #[component(pub)]
-impl SimpleComponent for PlayControl {
+impl relm4::SimpleComponent for PlayControl {
     type Init = PlayState;
     type Input = PlayControlIn;
     type Output = PlayControlOut;
@@ -64,7 +64,7 @@ impl SimpleComponent for PlayControl {
         model.repeat_btn.set_icon_name(settings.repeat.current());
         drop(settings);
 
-        ComponentParts { model, widgets }
+        relm4::ComponentParts { model, widgets }
     }
 
     view! {
@@ -151,7 +151,7 @@ impl SimpleComponent for PlayControl {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match msg {
             PlayControlIn::NewState(PlayState::Play) => {
                 self.play_btn.set_icon_name("media-playback-pause-symbolic");

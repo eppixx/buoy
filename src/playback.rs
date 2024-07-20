@@ -1,21 +1,19 @@
-use gstreamer as gst;
-use gstreamer::prelude::*;
-use relm4::gtk;
-
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::play_state::PlayState;
-use crate::settings::Settings;
+use gstreamer::{self as gst, prelude::*};
+use relm4::gtk;
+
+use crate::{play_state::PlayState, settings::Settings};
 
 #[derive(Debug)]
 pub struct Playback {
-    pipeline: gstreamer::Pipeline,
-    source: gstreamer::Element,
-    volume: gstreamer::Element,
-    equalizer: gstreamer::Element,
+    pipeline: gst::Pipeline,
+    source: gst::Element,
+    volume: gst::Element,
+    equalizer: gst::Element,
     track_set: Arc<AtomicBool>,
 }
 
@@ -156,30 +154,30 @@ impl Playback {
     }
 
     pub fn play(&mut self) -> anyhow::Result<()> {
-        self.pipeline.set_state(gstreamer::State::Playing)?;
+        self.pipeline.set_state(gst::State::Playing)?;
         Ok(())
     }
     pub fn pause(&mut self) -> anyhow::Result<()> {
-        self.pipeline.set_state(gstreamer::State::Paused)?;
+        self.pipeline.set_state(gst::State::Paused)?;
         Ok(())
     }
 
     pub fn is_playing(&self) -> PlayState {
         match self.pipeline.state(None) {
-            (_, gstreamer::State::Playing, _) => PlayState::Play,
-            (_, gstreamer::State::Paused, _) => PlayState::Pause,
+            (_, gst::State::Playing, _) => PlayState::Play,
+            (_, gst::State::Paused, _) => PlayState::Pause,
             _ => PlayState::Stop,
         }
     }
 
     pub fn stop(&mut self) -> anyhow::Result<()> {
         self.track_set.store(false, Ordering::Relaxed);
-        self.pipeline.set_state(gstreamer::State::Ready)?;
+        self.pipeline.set_state(gst::State::Ready)?;
         Ok(())
     }
 
     pub fn shutdown(&mut self) -> anyhow::Result<()> {
-        self.pipeline.set_state(gstreamer::State::Null)?;
+        self.pipeline.set_state(gst::State::Null)?;
         Ok(())
     }
 

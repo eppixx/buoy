@@ -15,11 +15,12 @@ use relm4::{
 use crate::{
     client::Client,
     gtk_helper::stack::StackExt,
-    mpris::MprisOut,
+    mpris::{Mpris, MprisOut},
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
     player::Command,
     settings::Settings,
+    subsonic::Subsonic,
 };
 use crate::{
     components::{
@@ -33,7 +34,6 @@ use crate::{
     },
     window_state::{NavigationMode, WindowState},
 };
-use crate::{mpris::Mpris, subsonic::Subsonic};
 
 #[derive(Debug)]
 pub struct App {

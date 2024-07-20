@@ -8,7 +8,7 @@ use relm4::{
     Component, ComponentController,
 };
 
-use super::cover::{Cover, CoverOut};
+use crate::components::cover::{Cover, CoverOut};
 use crate::subsonic::Subsonic;
 
 #[derive(Debug, Default, Clone)]

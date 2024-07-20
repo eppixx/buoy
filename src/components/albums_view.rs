@@ -10,10 +10,9 @@ use relm4::{
     ComponentController,
 };
 
-use super::album_element::{AlbumElementIn, AlbumElementOut};
 use crate::{
     components::{
-        album_element::{AlbumElement, AlbumElementInit},
+        album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
         filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
         filter_row::{Category, Filter},
     },

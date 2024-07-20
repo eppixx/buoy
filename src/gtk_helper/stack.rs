@@ -1,6 +1,6 @@
-use relm4::gtk::{self, glib};
-
 use std::fmt::Display;
+
+use relm4::gtk::{self, glib};
 
 pub trait StackExt {
     fn add_enumed<T: Display + TryFrom<String>>(

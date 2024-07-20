@@ -3,9 +3,8 @@ use std::{cell::RefCell, rc::Rc};
 use rand::prelude::SliceRandom;
 use relm4::{
     factory::FactoryVecDeque,
-    gtk::gdk,
     gtk::{
-        self,
+        self, gdk,
         prelude::{AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
     },
     prelude::DynamicIndex,

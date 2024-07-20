@@ -9,12 +9,10 @@ use relm4::{
 };
 
 use crate::{
-    components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
+    components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit, DescriptiveCoverOut},
     subsonic::Subsonic,
     types::Droppable,
 };
-
-use super::descriptive_cover::DescriptiveCoverOut;
 
 #[derive(Debug)]
 pub struct ArtistElement {

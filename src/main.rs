@@ -1,5 +1,6 @@
-use app::App;
 use relm4::{gtk, RelmApp};
+
+use app::App;
 
 mod app;
 pub mod client;

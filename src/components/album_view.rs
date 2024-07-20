@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
@@ -7,15 +9,15 @@ use relm4::{
     ComponentController,
 };
 
-use std::{cell::RefCell, rc::Rc};
-
-use super::cover::{Cover, CoverOut};
 use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
     TitleColumn,
 };
 use crate::{
-    client::Client, common::convert_for_label, components::cover::CoverIn, subsonic::Subsonic,
+    client::Client,
+    common::convert_for_label,
+    components::cover::{Cover, CoverIn, CoverOut},
+    subsonic::Subsonic,
     types::Droppable,
 };
 

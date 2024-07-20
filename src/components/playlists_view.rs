@@ -1,23 +1,26 @@
-use fuzzy_matcher::FuzzyMatcher;
-use relm4::gtk::glib::prelude::ToValue;
-use relm4::gtk::{
-    self,
-    prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
-};
-use relm4::{Component, ComponentController};
-
 use std::{cell::RefCell, rc::Rc};
 
-use super::cover::{Cover, CoverIn, CoverOut};
-use super::playlist_element::PlaylistElementOut;
-use crate::common::convert_for_label;
+use fuzzy_matcher::FuzzyMatcher;
+use relm4::gtk::glib::prelude::ToValue;
+use relm4::{
+    gtk::{
+        self,
+        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
+    },
+    Component, ComponentController,
+};
+
 use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
-use crate::types::Droppable;
 use crate::{
-    components::playlist_element::{PlaylistElement, State},
+    common::convert_for_label,
+    components::{
+        cover::{Cover, CoverIn, CoverOut},
+        playlist_element::{PlaylistElement, PlaylistElementOut, State},
+    },
     subsonic::Subsonic,
+    types::Droppable,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,9 +1,9 @@
+use std::cmp::Ordering;
+
 use relm4::gtk::{
     self, gio, glib,
     prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt},
 };
-
-use std::cmp::Ordering;
 
 use crate::gtk_helper::stack::StackExt;
 

@@ -11,8 +11,10 @@ use relm4::{
     view, Component, ComponentController,
 };
 
-use super::artist_element::{ArtistElementIn, ArtistElementOut};
-use crate::{components::artist_element::ArtistElement, subsonic::Subsonic};
+use crate::{
+    components::artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut},
+    subsonic::Subsonic,
+};
 
 #[derive(Debug)]
 pub struct ArtistsView {

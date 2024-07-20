@@ -1,19 +1,20 @@
-use fuzzy_matcher::FuzzyMatcher;
-use rand::prelude::SliceRandom;
-use relm4::gtk::{
-    self,
-    prelude::{AdjustmentExt, BoxExt, ButtonExt, OrientableExt, WidgetExt},
-};
-use relm4::{ComponentController, RelmRemoveAllExt, RelmWidgetExt};
-
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::client::Client;
-use crate::components::album_element::{AlbumElement, AlbumElementInit, AlbumElementOut};
-use crate::subsonic::Subsonic;
+use fuzzy_matcher::FuzzyMatcher;
+use rand::prelude::SliceRandom;
+use relm4::{
+    gtk::{
+        self,
+        prelude::{AdjustmentExt, BoxExt, ButtonExt, OrientableExt, WidgetExt},
+    },
+    ComponentController, RelmRemoveAllExt, RelmWidgetExt,
+};
 
-use super::album_element::AlbumElementIn;
+use crate::components::album_element::{
+    AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
+};
+use crate::{client::Client, subsonic::Subsonic};
 
 enum Scrolling {
     RecentlyAddedLeft,

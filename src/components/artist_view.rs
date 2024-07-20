@@ -6,10 +6,10 @@ use relm4::{
         self, glib,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
-    {ComponentController, RelmWidgetExt},
+    ComponentController, RelmWidgetExt,
 };
 
-use super::{
+use crate::components::{
     album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
     cover::{Cover, CoverIn, CoverOut},
 };

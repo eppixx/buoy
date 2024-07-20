@@ -1,7 +1,7 @@
+use std::{collections::HashMap, io::Read};
+
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-
-use std::{collections::HashMap, io::Read};
 
 use crate::{client::Client, subsonic_cover, subsonic_cover::SubsonicCovers};
 

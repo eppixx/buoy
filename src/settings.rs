@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
-
 use std::{
     io::Read,
     sync::{Mutex, OnceLock},
 };
+
+use serde::{Deserialize, Serialize};
 
 use crate::client::Client;
 use crate::components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle};

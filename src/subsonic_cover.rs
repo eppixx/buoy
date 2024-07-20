@@ -1,8 +1,8 @@
+use std::{collections::HashMap, io::Cursor};
+
 use futures::StreamExt;
 use relm4::gtk::{self, gdk};
 use serde::{Deserialize, Serialize};
-
-use std::{collections::HashMap, io::Cursor};
 
 use crate::client::Client;
 
