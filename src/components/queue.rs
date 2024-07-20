@@ -9,15 +9,12 @@ use relm4::{
         prelude::{AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
     },
     prelude::DynamicIndex,
-    ComponentController, ComponentParts, ComponentSender, RelmWidgetExt,
+    ComponentParts, ComponentSender, RelmWidgetExt,
 };
 
 use crate::{
     client::Client,
-    components::{
-        sequence_button::{SequenceButton, SequenceButtonOut},
-        sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
-    },
+    components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     factory::queue_song::{QueueSong, QueueSongIn, QueueSongOut},
     play_state::PlayState,
     player::Command,
@@ -25,8 +22,6 @@ use crate::{
     subsonic::Subsonic,
     types::Droppable,
 };
-
-use super::sequence_button::SequenceButtonIn;
 
 #[derive(Debug)]
 pub enum ScrollMotion {

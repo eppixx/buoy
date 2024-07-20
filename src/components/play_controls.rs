@@ -9,8 +9,12 @@ use relm4::{
     ComponentParts, ComponentSender, SimpleComponent,
 };
 
-use crate::{components::{sequence_button::Sequence, sequence_button_impl::repeat::Repeat}, play_state::PlayState, settings::Settings};
 use crate::player::Command;
+use crate::{
+    components::{sequence_button::Sequence, sequence_button_impl::repeat::Repeat},
+    play_state::PlayState,
+    settings::Settings,
+};
 
 use super::sequence_button_impl::shuffle::Shuffle;
 
@@ -34,10 +38,6 @@ pub enum PlayControlIn {
 
 #[derive(Debug)]
 pub enum PlayControlOut {
-    Previous,
-    Next,
-    Play,
-    Pause,
     Player(Command),
 }
 
@@ -99,7 +99,7 @@ impl SimpleComponent for PlayControl {
                 set_icon_name: "media-skip-backward-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
-                    _ = sender.output(PlayControlOut::Previous);
+                    sender.output(PlayControlOut::Player(Command::Previous)).unwrap();
                 },
             },
 
@@ -111,10 +111,10 @@ impl SimpleComponent for PlayControl {
                 connect_clicked[sender] => move |btn| {
                     match btn.icon_name().unwrap().as_str() {
                         "media-playback-start-symbolic" => {
-                            sender.output(PlayControlOut::Play).expect("sending failed");
+                            sender.output(PlayControlOut::Player(Command::Play)).unwrap();
                         }
                         "media-playback-pause-symbolic" => {
-                            sender.output(PlayControlOut::Pause).expect("sending failed");
+                            sender.output(PlayControlOut::Player(Command::Pause)).unwrap();
                         }
                         _ => unreachable!("unkonwn icon name"),
                     }
@@ -127,7 +127,7 @@ impl SimpleComponent for PlayControl {
                 set_icon_name: "media-skip-forward-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
-                    _ = sender.output(PlayControlOut::Next);
+                    _ = sender.output(PlayControlOut::Player(Command::Next));
                 },
             },
 

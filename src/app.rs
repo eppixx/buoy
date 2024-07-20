@@ -661,10 +661,6 @@ impl relm4::component::AsyncComponent for App {
     ) {
         match msg {
             AppIn::PlayControlOutput(input) => match input {
-                PlayControlOut::Next => sender.input(AppIn::Player(Command::Next)),
-                PlayControlOut::Previous => sender.input(AppIn::Player(Command::Previous)),
-                PlayControlOut::Play => sender.input(AppIn::Player(Command::Play)),
-                PlayControlOut::Pause => sender.input(AppIn::Player(Command::Pause)),
                 PlayControlOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
             },
             AppIn::Seekbar(msg) => match msg {

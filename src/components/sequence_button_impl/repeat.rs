@@ -18,7 +18,7 @@ impl std::str::FromStr for Repeat {
             "media-playlist-no-repeat-symbolic" => Ok(Repeat::Normal),
             "media-playlist-repeat-symbolic" => Ok(Repeat::All),
             "media-playlist-repeat-song-symbolic" => Ok(Repeat::One),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }

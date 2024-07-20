@@ -16,7 +16,7 @@ impl std::str::FromStr for Shuffle {
         match s {
             "media-playlist-consecutive-symbolic" => Ok(Shuffle::Sequential),
             "media-playlist-shuffle-symbolic" => Ok(Shuffle::Shuffle),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
