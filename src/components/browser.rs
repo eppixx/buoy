@@ -52,9 +52,9 @@ pub struct Browser {
     history_widget: Vec<Views>,
     content: gtk::Viewport,
 
-    dashboards: Vec<relm4::Controller<Dashboard>>,
-    artistss: Vec<relm4::component::AsyncController<ArtistsView>>,
-    albumss: Vec<relm4::component::Controller<AlbumsView>>,
+    dashboard: relm4::Controller<Dashboard>,
+    artists: relm4::component::AsyncController<ArtistsView>,
+    albums: relm4::component::Controller<AlbumsView>,
     album_views: Vec<relm4::Controller<AlbumView>>,
     artist_views: Vec<relm4::Controller<ArtistView>>,
     playlists_views: Vec<relm4::Controller<PlaylistsView>>,
@@ -107,13 +107,19 @@ impl relm4::component::AsyncComponent for Browser {
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
         let model = Self {
-            subsonic: init,
+            subsonic: init.clone(),
             history_widget: vec![],
             content: gtk::Viewport::default(),
 
-            dashboards: vec![],
-            artistss: vec![],
-            albumss: vec![],
+            dashboard: Dashboard::builder()
+                .launch(init.clone())
+                .forward(sender.input_sender(), BrowserIn::Dashboard),
+            artists: ArtistsView::builder()
+                .launch(init.clone())
+                .forward(sender.input_sender(), BrowserIn::ArtistsView),
+            albums: AlbumsView::builder()
+                .launch(init.clone())
+                .forward(sender.input_sender(), BrowserIn::AlbumsView),
             album_views: vec![],
             artist_views: vec![],
             playlists_views: vec![],
@@ -145,15 +151,12 @@ impl relm4::component::AsyncComponent for Browser {
     ) {
         match msg {
             BrowserIn::SearchChanged(search) => {
-                for view in &self.dashboards {
-                    view.emit(DashboardIn::SearchChanged(search.clone()));
-                }
-                for view in &self.artistss {
-                    view.emit(ArtistsViewIn::SearchChanged(search.clone()));
-                }
-                for view in &self.albumss {
-                    view.emit(AlbumsViewIn::SearchChanged(search.clone()));
-                }
+                self.dashboard
+                    .emit(DashboardIn::SearchChanged(search.clone()));
+                self.artists
+                    .emit(ArtistsViewIn::SearchChanged(search.clone()));
+                self.albums
+                    .emit(AlbumsViewIn::SearchChanged(search.clone()));
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::SearchChanged(search.clone()));
                 }
@@ -171,10 +174,10 @@ impl relm4::component::AsyncComponent for Browser {
                     match self.history_widget.pop() {
                         None => {}
                         Some(view) => match view {
-                            Views::Dashboard(_) => _ = self.dashboards.pop(),
-                            Views::Artists(_) => _ = self.artistss.pop(),
+                            Views::Dashboard(_) => {}
+                            Views::Artists(_) => {}
                             Views::Artist(_) => _ = self.artist_views.pop(),
-                            Views::Albums(_) => _ = self.albumss.pop(),
+                            Views::Albums(_) => {}
                             Views::Album(_) => _ = self.album_views.pop(),
                             Views::Tracks(_) => todo!(),
                             Views::Playlists(_) => _ = self.playlists_views.pop(),
@@ -199,12 +202,8 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
-                let dashboard: relm4::Controller<Dashboard> = Dashboard::builder()
-                    .launch(self.subsonic.clone())
-                    .forward(sender.input_sender(), BrowserIn::Dashboard);
                 self.history_widget
-                    .push(Views::Dashboard(dashboard.widget().clone()));
-                self.dashboards.push(dashboard);
+                    .push(Views::Dashboard(self.dashboard.widget().clone()));
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
@@ -216,13 +215,8 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
-                let artists: relm4::component::AsyncController<ArtistsView> =
-                    ArtistsView::builder()
-                        .launch(self.subsonic.clone())
-                        .forward(sender.input_sender(), BrowserIn::ArtistsView);
                 self.history_widget
-                    .push(Views::Artists(artists.widget().clone()));
-                self.artistss.push(artists);
+                    .push(Views::Artists(self.artists.widget().clone()));
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
@@ -234,12 +228,8 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
-                let albums: relm4::component::Controller<AlbumsView> = AlbumsView::builder()
-                    .launch(self.subsonic.clone())
-                    .forward(sender.input_sender(), BrowserIn::AlbumsView);
                 self.history_widget
-                    .push(Views::Albums(albums.widget().clone()));
-                self.albumss.push(albums);
+                    .push(Views::Albums(self.albums.widget().clone()));
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
@@ -527,12 +517,9 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::FavoriteAlbum(id, state) => {
                 //notify all views with albums in them
-                for view in &self.dashboards {
-                    view.emit(DashboardIn::FavoritedAlbum(id.clone(), state));
-                }
-                for view in &self.albumss {
-                    view.emit(AlbumsViewIn::Favorited(id.clone(), state));
-                }
+                self.dashboard
+                    .emit(DashboardIn::FavoritedAlbum(id.clone(), state));
+                self.albums.emit(AlbumsViewIn::Favorited(id.clone(), state));
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::FavoritedAlbum(id.clone(), state));
                 }
@@ -545,9 +532,7 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.artist_views {
                     view.emit(ArtistViewIn::FavoritedArtist(id.clone(), state));
                 }
-                for view in &self.artistss {
-                    view.emit(ArtistsViewIn::Favorited(id.clone(), state));
-                }
+                self.artists.emit(ArtistsViewIn::Favorited(id, state));
             }
         }
     }
