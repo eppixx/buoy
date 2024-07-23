@@ -103,7 +103,7 @@ impl relm4::Component for Dashboard {
 
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
-        albums.sort_by(|a, b| a.created.cmp(&b.created));
+        albums.sort_by(|a, b| b.created.cmp(&a.created));
         model.recently_added_list = albums
             .iter()
             .take(10)
