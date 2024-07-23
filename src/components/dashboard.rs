@@ -16,7 +16,9 @@ use crate::components::album_element::{
 };
 use crate::{client::Client, subsonic::Subsonic};
 
+#[derive(Debug, Clone)]
 enum Scrolling {
+    None,
     RecentlyAddedLeft,
     RecentlyAddedRight,
     RecentlyPlayedLeft,
@@ -159,7 +161,7 @@ impl relm4::Component for Dashboard {
             model.most_played.append(album.widget());
         }
 
-        let scrolling = Rc::new(RefCell::new(None));
+        let (scroll_sender, receiver) = async_channel::unbounded::<Scrolling>();
         let widgets = view_output!();
 
         //update scrolling of boxes
@@ -167,52 +169,75 @@ impl relm4::Component for Dashboard {
         let recently_played_scroll = model.recently_played_scroll.clone();
         let random_album_scroll = model.random_album_scroll.clone();
         let most_played_scroll = model.most_played_scroll.clone();
-        gtk::glib::source::timeout_add_local(core::time::Duration::from_millis(15), move || {
-            const SCROLL_MOVE: f64 = 5f64;
-            match *scrolling.borrow() {
-                None => {}
-                Some(Scrolling::RecentlyAddedLeft) => {
-                    let vadj = recently_added_scroll.hadjustment();
-                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                    recently_added_scroll.set_hadjustment(Some(&vadj));
+
+        gtk::glib::spawn_future_local(async move {
+            let scrollings = Rc::new(RefCell::new(Scrolling::None));
+
+            while let Ok(msg) = receiver.recv().await {
+                scrollings.replace(msg.clone());
+
+                match msg {
+                    Scrolling::None => {},
+                    _ => {
+                        let scrolling = scrollings.clone();
+                        let recently_added_scroll = recently_added_scroll.clone();
+                        let recently_played_scroll = recently_played_scroll.clone();
+                        let random_album_scroll = random_album_scroll.clone();
+                        let most_played_scroll = most_played_scroll.clone();
+
+                        //scroll the albums when arrow is hovered
+                        gtk::glib::source::timeout_add_local(core::time::Duration::from_millis(15), move || {
+                            const SCROLL_MOVE: f64 = 5f64;
+                            match *scrolling.borrow() {
+                                // when no scrolling end closure
+                                Scrolling::None => return gtk::glib::ControlFlow::Break,
+                                Scrolling::RecentlyAddedLeft => {
+                                    let vadj = recently_added_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    recently_added_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::RecentlyAddedRight => {
+                                    let vadj = recently_added_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    recently_added_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::RecentlyPlayedLeft => {
+                                    let vadj = recently_played_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    recently_played_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::RecentlyPlayedRight => {
+                                    let vadj = recently_played_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    recently_played_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::RandomAlbumLeft => {
+                                    let vadj = random_album_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    random_album_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::RandomAlbumRight => {
+                                    let vadj = random_album_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    random_album_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::MostPlayedLeft => {
+                                    let vadj = most_played_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    most_played_scroll.set_hadjustment(Some(&vadj));
+                                }
+                                Scrolling::MostPlayedRight => {
+                                    let vadj = most_played_scroll.hadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    most_played_scroll.set_hadjustment(Some(&vadj));
+                                }
+                            }
+                            gtk::glib::ControlFlow::Continue
+                        });
+                    }
                 }
-                Some(Scrolling::RecentlyAddedRight) => {
-                    let vadj = recently_added_scroll.hadjustment();
-                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                    recently_added_scroll.set_hadjustment(Some(&vadj));
-                }
-                Some(Scrolling::RecentlyPlayedLeft) => {
-                    let vadj = recently_played_scroll.hadjustment();
-                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                    recently_played_scroll.set_hadjustment(Some(&vadj));
-                }
-                Some(Scrolling::RecentlyPlayedRight) => {
-                    let vadj = recently_played_scroll.hadjustment();
-                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                    recently_played_scroll.set_hadjustment(Some(&vadj));
-                }
-                Some(Scrolling::RandomAlbumLeft) => {
-                    let vadj = random_album_scroll.hadjustment();
-                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                    random_album_scroll.set_hadjustment(Some(&vadj));
-                }
-                Some(Scrolling::RandomAlbumRight) => {
-                    let vadj = random_album_scroll.hadjustment();
-                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                    random_album_scroll.set_hadjustment(Some(&vadj));
-                }
-                Some(Scrolling::MostPlayedLeft) => {
-                    let vadj = most_played_scroll.hadjustment();
-                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                    most_played_scroll.set_hadjustment(Some(&vadj));
-                }
-                Some(Scrolling::MostPlayedRight) => {
-                    let vadj = most_played_scroll.hadjustment();
-                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                    most_played_scroll.set_hadjustment(Some(&vadj));
-                }
+
             }
-            gtk::glib::ControlFlow::Continue
         });
 
         relm4::ComponentParts { model, widgets }
@@ -258,11 +283,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
 
                                     add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scrolling] => move |_controller, _x, _y| {
-                                            scrolling.replace(Some(Scrolling::RecentlyAddedLeft));
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::RecentlyAddedLeft).unwrap();
                                         },
-                                        connect_leave[scrolling] => move |_controller| {
-                                            scrolling.replace(None);
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
                                 },
@@ -288,11 +313,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
                                 },
                                 add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scrolling] => move |_controller, _x, _y| {
-                                        scrolling.replace(Some(Scrolling::RecentlyAddedRight));
+                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                        scroll_sender.try_send(Scrolling::RecentlyAddedRight).unwrap();
                                     },
-                                    connect_leave[scrolling] => move |_controller| {
-                                        scrolling.replace(None);
+                                    connect_leave[scroll_sender] => move |_controller| {
+                                        scroll_sender.try_send(Scrolling::None).unwrap();
                                     }
                                 }
                             }
@@ -315,11 +340,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
 
                                     add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scrolling] => move |_controller, _x, _y| {
-                                            scrolling.replace(Some(Scrolling::RecentlyPlayedLeft));
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::RecentlyPlayedLeft).unwrap();
                                         },
-                                        connect_leave[scrolling] => move |_controller| {
-                                            scrolling.replace(None);
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
                                 },
@@ -344,11 +369,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
                                 },
                                 add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scrolling] => move |_controller, _x, _y| {
-                                        scrolling.replace(Some(Scrolling::RecentlyPlayedRight));
+                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                        scroll_sender.try_send(Scrolling::RecentlyPlayedRight).unwrap();
                                     },
-                                    connect_leave[scrolling] => move |_controller| {
-                                        scrolling.replace(None);
+                                    connect_leave[scroll_sender] => move |_controller| {
+                                        scroll_sender.try_send(Scrolling::None).unwrap();
                                     }
                                 }
                             }
@@ -379,11 +404,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
 
                                     add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scrolling] => move |_controller, _x, _y| {
-                                            scrolling.replace(Some(Scrolling::RandomAlbumLeft));
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::RandomAlbumLeft).unwrap();
                                         },
-                                        connect_leave[scrolling] => move |_controller| {
-                                            scrolling.replace(None);
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
                                 },
@@ -412,11 +437,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
                                 },
                                 add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scrolling] => move |_controller, _x, _y| {
-                                        scrolling.replace(Some(Scrolling::RandomAlbumRight));
+                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                        scroll_sender.try_send(Scrolling::RandomAlbumRight).unwrap();
                                     },
-                                    connect_leave[scrolling] => move |_controller| {
-                                        scrolling.replace(None);
+                                    connect_leave[scroll_sender] => move |_controller| {
+                                        scroll_sender.try_send(Scrolling::None).unwrap();
                                     }
                                 }
                             }
@@ -439,11 +464,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
 
                                     add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scrolling] => move |_controller, _x, _y| {
-                                            scrolling.replace(Some(Scrolling::MostPlayedLeft));
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::MostPlayedLeft).unwrap();
                                         },
-                                        connect_leave[scrolling] => move |_controller| {
-                                            scrolling.replace(None);
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
                                 },
@@ -472,11 +497,11 @@ impl relm4::Component for Dashboard {
                                     set_size_request: (50, 50),
                                 },
                                 add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scrolling] => move |_controller, _x, _y| {
-                                        scrolling.replace(Some(Scrolling::MostPlayedRight));
+                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                        scroll_sender.try_send(Scrolling::MostPlayedRight).unwrap();
                                     },
-                                    connect_leave[scrolling] => move |_controller| {
-                                        scrolling.replace(None);
+                                    connect_leave[scroll_sender] => move |_controller| {
+                                        scroll_sender.try_send(Scrolling::None).unwrap();
                                     }
                                 }
                             }
