@@ -22,8 +22,9 @@ use crate::{
     types::Droppable,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScrollMotion {
+    None,
     Down,
     Up,
 }
@@ -191,25 +192,42 @@ impl relm4::Component for Queue {
 
         let songs = model.songs.widget().clone();
         let scrolled = model.scrolled.clone();
-        let motion = Rc::new(RefCell::new(None));
+        let scrolling = Rc::new(RefCell::new(ScrollMotion::None));
+        let (scroll_sender, receiver) = async_channel::unbounded::<ScrollMotion>();
         let widgets = view_output!();
 
-        gtk::glib::source::timeout_add_local(core::time::Duration::from_millis(15), move || {
-            const SCROLL_MOVE: f64 = 5f64;
-            match *motion.borrow() {
-                None => {}
-                Some(ScrollMotion::Up) => {
-                    let vadj = scrolled.vadjustment();
-                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                    scrolled.set_vadjustment(Some(&vadj));
-                }
-                Some(ScrollMotion::Down) => {
-                    let vadj = scrolled.vadjustment();
-                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                    scrolled.set_vadjustment(Some(&vadj));
+        gtk::glib::spawn_future_local(async move {
+            let scrolling = scrolling.clone();
+
+            while let Ok(msg) = receiver.recv().await {
+                scrolling.replace(msg.clone());
+
+                match msg {
+                    ScrollMotion::None => {},
+                    _ => {
+                        let scrolled = scrolled.clone();
+                        let scrolling = scrolling.clone();
+
+                        gtk::glib::source::timeout_add_local(core::time::Duration::from_millis(15), move || {
+                            const SCROLL_MOVE: f64 = 5f64;
+                            match *scrolling.borrow() {
+                                ScrollMotion::None => return gtk::glib::ControlFlow::Break,
+                                ScrollMotion::Up => {
+                                    let vadj = scrolled.vadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    scrolled.set_vadjustment(Some(&vadj));
+                                }
+                                ScrollMotion::Down => {
+                                    let vadj = scrolled.vadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    scrolled.set_vadjustment(Some(&vadj));
+                                }
+                            }
+                            gtk::glib::ControlFlow::Continue
+                        });
+                    }
                 }
             }
-            gtk::glib::ControlFlow::Continue
         });
 
         model.clear_items.set_sensitive(!model.songs.is_empty());
@@ -249,27 +267,35 @@ impl relm4::Component for Queue {
                         },
 
                         add_controller = gtk::DropControllerMotion {
-                            connect_motion[motion, scrolled] => move |_self, x, y| {
+                            connect_motion[scrolled, scrolling, scroll_sender] => move |_self, x, y| {
+                                if *scrolling.borrow() != ScrollMotion::None {
+                                    return;
+                                }
+
                                 const SCROLL_ZONE: f32 = 60f32;
 
                                 let point = gtk::graphene::Point::new(x as f32, y as f32);
                                 let computed = songs.compute_point(&scrolled, &point).unwrap();
-                                if computed.y() < SCROLL_ZONE {
-                                    motion.replace(Some(ScrollMotion::Up));
-                                } else if computed.y() > scrolled.height() as f32 - SCROLL_ZONE {
-                                    motion.replace(Some(ScrollMotion::Down));
+                                if computed.y() >= 0f32 && computed.y() <= SCROLL_ZONE {
+                                    println!("up");
+                                    scroll_sender.try_send(ScrollMotion::Up).unwrap();
+                                } else if computed.y() >= scrolled.height() as f32 - SCROLL_ZONE && computed.y() <= scrolled.height() as f32 {
+                                    println!("down");
+                                    scroll_sender.try_send(ScrollMotion::Down).unwrap();
                                 } else {
-                                    motion.replace(None);
+                                    println!("none");
+                                    scroll_sender.try_send(ScrollMotion::None).unwrap();
                                 }
                             },
 
                             //TODO fix continued scrolling when droping while scrolling
-                            connect_leave[motion] => move |_self| {
-                                motion.replace(None);
+                            connect_leave[scroll_sender] => move |_self| {
+                                scroll_sender.try_send(ScrollMotion::None).unwrap();
                             },
 
-                            connect_drop_notify[motion] => move |_self| {
-                                motion.replace(None);
+                            connect_drop_notify[scroll_sender, scrolling] => move |_self| {
+                                scroll_sender.try_send(ScrollMotion::None).unwrap();
+                                scrolling.replace(ScrollMotion::None);
                             }
                         },
 
@@ -290,9 +316,7 @@ impl relm4::Component for Queue {
                             add_controller = gtk::DropTarget {
                                 set_actions: gdk::DragAction::MOVE,
                                 set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
-                                connect_drop[sender, motion] => move |_target, value, _x, _y| {
-                                    println!("drop in drag");
-                                    motion.replace(None);
+                                connect_drop[sender] => move |_target, value, _x, _y| {
                                     if let Ok(drop) = value.get::<Droppable>() {
                                         sender.input(QueueIn::Append(drop));
                                     }
