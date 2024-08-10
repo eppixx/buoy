@@ -177,7 +177,7 @@ impl relm4::Component for Dashboard {
                 scrollings.replace(msg.clone());
 
                 match msg {
-                    Scrolling::None => {},
+                    Scrolling::None => {}
                     _ => {
                         let scrolling = scrollings.clone();
                         let recently_added_scroll = recently_added_scroll.clone();
@@ -186,57 +186,59 @@ impl relm4::Component for Dashboard {
                         let most_played_scroll = most_played_scroll.clone();
 
                         //scroll the albums when arrow is hovered
-                        gtk::glib::source::timeout_add_local(core::time::Duration::from_millis(15), move || {
-                            const SCROLL_MOVE: f64 = 5f64;
-                            match *scrolling.borrow() {
-                                // when no scrolling end closure
-                                Scrolling::None => return gtk::glib::ControlFlow::Break,
-                                Scrolling::RecentlyAddedLeft => {
-                                    let vadj = recently_added_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                    recently_added_scroll.set_hadjustment(Some(&vadj));
+                        gtk::glib::source::timeout_add_local(
+                            core::time::Duration::from_millis(15),
+                            move || {
+                                const SCROLL_MOVE: f64 = 5f64;
+                                match *scrolling.borrow() {
+                                    // when no scrolling end closure
+                                    Scrolling::None => return gtk::glib::ControlFlow::Break,
+                                    Scrolling::RecentlyAddedLeft => {
+                                        let vadj = recently_added_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                        recently_added_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::RecentlyAddedRight => {
+                                        let vadj = recently_added_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                        recently_added_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::RecentlyPlayedLeft => {
+                                        let vadj = recently_played_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                        recently_played_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::RecentlyPlayedRight => {
+                                        let vadj = recently_played_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                        recently_played_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::RandomAlbumLeft => {
+                                        let vadj = random_album_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                        random_album_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::RandomAlbumRight => {
+                                        let vadj = random_album_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                        random_album_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::MostPlayedLeft => {
+                                        let vadj = most_played_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                        most_played_scroll.set_hadjustment(Some(&vadj));
+                                    }
+                                    Scrolling::MostPlayedRight => {
+                                        let vadj = most_played_scroll.hadjustment();
+                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                        most_played_scroll.set_hadjustment(Some(&vadj));
+                                    }
                                 }
-                                Scrolling::RecentlyAddedRight => {
-                                    let vadj = recently_added_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                    recently_added_scroll.set_hadjustment(Some(&vadj));
-                                }
-                                Scrolling::RecentlyPlayedLeft => {
-                                    let vadj = recently_played_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                    recently_played_scroll.set_hadjustment(Some(&vadj));
-                                }
-                                Scrolling::RecentlyPlayedRight => {
-                                    let vadj = recently_played_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                    recently_played_scroll.set_hadjustment(Some(&vadj));
-                                }
-                                Scrolling::RandomAlbumLeft => {
-                                    let vadj = random_album_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                    random_album_scroll.set_hadjustment(Some(&vadj));
-                                }
-                                Scrolling::RandomAlbumRight => {
-                                    let vadj = random_album_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                    random_album_scroll.set_hadjustment(Some(&vadj));
-                                }
-                                Scrolling::MostPlayedLeft => {
-                                    let vadj = most_played_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                    most_played_scroll.set_hadjustment(Some(&vadj));
-                                }
-                                Scrolling::MostPlayedRight => {
-                                    let vadj = most_played_scroll.hadjustment();
-                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                    most_played_scroll.set_hadjustment(Some(&vadj));
-                                }
-                            }
-                            gtk::glib::ControlFlow::Continue
-                        });
+                                gtk::glib::ControlFlow::Continue
+                            },
+                        );
                     }
                 }
-
             }
         });
 

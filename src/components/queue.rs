@@ -203,28 +203,31 @@ impl relm4::Component for Queue {
                 scrolling.replace(msg.clone());
 
                 match msg {
-                    ScrollMotion::None => {},
+                    ScrollMotion::None => {}
                     _ => {
                         let scrolled = scrolled.clone();
                         let scrolling = scrolling.clone();
 
-                        gtk::glib::source::timeout_add_local(core::time::Duration::from_millis(15), move || {
-                            const SCROLL_MOVE: f64 = 5f64;
-                            match *scrolling.borrow() {
-                                ScrollMotion::None => return gtk::glib::ControlFlow::Break,
-                                ScrollMotion::Up => {
-                                    let vadj = scrolled.vadjustment();
-                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                    scrolled.set_vadjustment(Some(&vadj));
+                        gtk::glib::source::timeout_add_local(
+                            core::time::Duration::from_millis(15),
+                            move || {
+                                const SCROLL_MOVE: f64 = 5f64;
+                                match *scrolling.borrow() {
+                                    ScrollMotion::None => return gtk::glib::ControlFlow::Break,
+                                    ScrollMotion::Up => {
+                                        let vadj = scrolled.vadjustment();
+                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                        scrolled.set_vadjustment(Some(&vadj));
+                                    }
+                                    ScrollMotion::Down => {
+                                        let vadj = scrolled.vadjustment();
+                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                        scrolled.set_vadjustment(Some(&vadj));
+                                    }
                                 }
-                                ScrollMotion::Down => {
-                                    let vadj = scrolled.vadjustment();
-                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                    scrolled.set_vadjustment(Some(&vadj));
-                                }
-                            }
-                            gtk::glib::ControlFlow::Continue
-                        });
+                                gtk::glib::ControlFlow::Continue
+                            },
+                        );
                     }
                 }
             }
