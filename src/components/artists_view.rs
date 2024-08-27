@@ -12,8 +12,7 @@ use relm4::{
 };
 
 use crate::{
-    components::artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut},
-    subsonic::Subsonic,
+    components::artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut}, settings::Settings, subsonic::Subsonic
 };
 
 #[derive(Debug)]
@@ -160,10 +159,14 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 self.artists.set_filter_func(move |element| {
                     let title = get_title_of_flowboxchild(element);
 
-                    //fuzzy matching
-                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let score = matcher.fuzzy_match(&title.text(), &search);
-                    score.is_some()
+                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+                    if fuzzy_search {
+                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                        let score = matcher.fuzzy_match(&title.text(), &search);
+                        score.is_some()
+                    } else {
+                        title.text().contains(&search)
+                    }
                 });
             }
             ArtistsViewIn::ShowStarred(false) => {

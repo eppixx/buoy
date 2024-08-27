@@ -15,8 +15,7 @@ use crate::{
         album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
         filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
         filter_row::{Category, Filter},
-    },
-    subsonic::Subsonic,
+    }, settings::Settings, subsonic::Subsonic
 };
 
 #[derive(Debug)]
@@ -166,24 +165,19 @@ impl relm4::component::Component for AlbumsView {
             },
             AlbumsViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
-                    use glib::object::Cast;
-
-                    // get the Label of the FlowBoxChild
-                    let overlay = element.first_child().unwrap();
-                    let button = overlay.first_child().unwrap();
-                    let bo = button.first_child().unwrap();
-                    let cover = bo.first_child().unwrap();
-                    let title = cover.next_sibling().unwrap();
-                    let title = title.downcast::<gtk::Label>().expect("unepected element");
-
-                    let artist = title.next_sibling().unwrap();
-                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+                    let (title, artist) = get_info_of_flowboxchild(element);
                     let title_artist = format!("{} {}", title.text(), artist.text());
 
                     //actual matching
-                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let score = matcher.fuzzy_match(&title_artist, &search);
-                    score.is_some()
+                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+                    if fuzzy_search {
+                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                        let score = matcher.fuzzy_match(&title_artist, &search);
+                        score.is_some()
+                    } else {
+                        title_artist.contains(&search)
+                    }
+
                 });
             }
             AlbumsViewIn::ShowStarred(false) => {
@@ -303,7 +297,7 @@ impl relm4::component::Component for AlbumsView {
     }
 }
 
-fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) {
+pub fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) {
     use glib::object::Cast;
     let overlay = element.first_child().unwrap();
     let button = overlay.first_child().unwrap();

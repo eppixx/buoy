@@ -11,9 +11,9 @@ use relm4::{
     ComponentController, RelmRemoveAllExt, RelmWidgetExt,
 };
 
-use crate::components::album_element::{
+use crate::{components::album_element::{
     AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
-};
+}, settings::Settings};
 use crate::{client::Client, subsonic::Subsonic};
 
 #[derive(Debug, Clone)]
@@ -529,24 +529,18 @@ impl relm4::Component for Dashboard {
                     .chain(self.random_album_list.iter())
                     .chain(self.most_played_list.iter())
                 {
-                    use gtk::glib::object::Cast;
-
-                    // get the Label of the AlbumElement
-                    let overlay = album.widget().first_child().unwrap();
-                    let button = overlay.first_child().unwrap();
-                    let bo = button.first_child().unwrap();
-                    let cover = bo.first_child().unwrap();
-                    let title = cover.next_sibling().unwrap();
-                    let title = title.downcast::<gtk::Label>().expect("unepected element");
-
-                    let artist = title.next_sibling().unwrap();
-                    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+                    let (title, artist) = crate::components::albums_view::get_info_of_flowboxchild(album.widget());
                     let title_artist = format!("{} {}", title.text(), artist.text());
 
                     //actual matching
-                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let score = matcher.fuzzy_match(&title_artist, &search);
-                    album.widget().set_visible(score.is_some())
+                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+                    if fuzzy_search {
+                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                        let score = matcher.fuzzy_match(&title_artist, &search);
+                        album.widget().set_visible(score.is_some())
+                    } else {
+                        album.widget().set_visible(title_artist.contains(&search))
+                    }
                 }
             }
             DashboardIn::AlbumElement(msg) => match msg {

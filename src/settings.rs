@@ -57,6 +57,9 @@ pub struct Settings {
     pub equalizer_enabled: bool,
     #[serde(default)] //defaults to [0.0f64; 10]
     pub equalizer_bands: [f64; 10],
+
+    #[serde(default)]
+    pub fuzzy_search: bool,
 }
 
 fn default_window_width() -> i32 {

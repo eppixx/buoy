@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use granite::prelude::{SettingsExt, ToastExt};
-use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
+use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     actions::AccelsPlus,
     component::{AsyncComponentController, AsyncController},
@@ -455,6 +455,7 @@ impl relm4::component::AsyncComponent for App {
                                     set_hexpand: true,
                                     set_halign: gtk::Align::Center,
                                     set_spacing: 15,
+                                    set_margin_start: 130,
 
                                     model.search_btn.clone() -> gtk::ToggleButton {
                                         add_css_class: "browser-navigation-button",
@@ -511,10 +512,24 @@ impl relm4::component::AsyncComponent for App {
                                                 }
                                             },
                                         },
-                                        add_enumed[NavigationMode::Search] = &model.search.clone() -> gtk::SearchEntry {
-                                            set_placeholder_text: Some("Search..."),
-                                            connect_search_changed[browser_sender] => move |w| {
-                                                browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
+                                        add_enumed[NavigationMode::Search] = &gtk::Box {
+                                            set_spacing: 10,
+
+                                            model.search.clone() -> gtk::SearchEntry {
+                                                set_placeholder_text: Some("Search..."),
+                                                connect_search_changed[browser_sender] => move |w| {
+                                                    browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
+                                                }
+                                            },
+
+                                            gtk::CheckButton {
+                                                set_label: Some("Use fuzzy search"),
+                                                set_tooltip: "Shows close search results if activated",
+                                                set_active: Settings::get().lock().unwrap().fuzzy_search,
+
+                                                connect_toggled => |btn| {
+                                                    Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
+                                                }
                                             }
                                         },
                                     }
