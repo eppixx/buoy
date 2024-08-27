@@ -132,6 +132,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 #[wrap(Some)]
                 set_child = &model.artists.clone() -> gtk::FlowBox {
                     set_valign: gtk::Align::Start,
+                    set_row_spacing: 20,
                 }
             }
         }

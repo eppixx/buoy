@@ -78,7 +78,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
         if model.subtitle.is_none() {
             model.subtitle_label.set_visible(false);
         }
-        model.cover.model().add_css_class_image("size100");
+        model.cover.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }
     }

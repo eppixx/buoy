@@ -171,8 +171,8 @@ impl relm4::SimpleComponent for AlbumElement {
                 add_overlay = &gtk::Box {
                     set_halign: gtk::Align::Center,
                     set_valign: gtk::Align::Start,
-                    set_margin_top: 85,
-                    set_margin_start: 75,
+                    set_margin_top: 135,
+                    set_margin_start: 125,
 
                     model.favorite.clone() -> gtk::Button {
                         set_width_request: 24,
