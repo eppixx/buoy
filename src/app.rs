@@ -105,13 +105,11 @@ impl relm4::WidgetTemplate for LoadingState {
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 10,
 
-                #[name = "label"]
-                gtk::Label {
+                append: label = &gtk::Label {
                     add_css_class: granite::STYLE_CLASS_H3_LABEL,
                     set_text: "loading subsonic information from server",
                 },
-                #[name = "spinner"]
-                gtk::Spinner {
+                append: spinner = &gtk::Spinner {
                     start: (),
                     set_halign: gtk::Align::Center,
                 }
@@ -381,8 +379,7 @@ impl relm4::component::AsyncComponent for App {
                     add_css_class: "main-box",
                     set_orientation: gtk::Orientation::Vertical,
 
-                    #[name = "paned"]
-                    gtk::Paned {
+                    append: paned = &gtk::Paned {
                         add_css_class: "main-paned",
                         set_position: Settings::get().lock().unwrap().paned_position,
                         set_shrink_start_child: false,
@@ -428,8 +425,7 @@ impl relm4::component::AsyncComponent for App {
                                 set_halign: gtk::Align::Fill,
 
                                 pack_start = &gtk::Box {
-                                    #[name = "back_btn"]
-                                    gtk::Button {
+                                    append: back_btn = &gtk::Button {
                                         set_icon_name: "go-previous-symbolic",
                                         add_css_class: "destructive-button-spacer",
 
@@ -447,8 +443,7 @@ impl relm4::component::AsyncComponent for App {
                                     set_spacing: 15,
                                     set_margin_start: 130,
 
-                                    #[name = "search_btn"]
-                                    gtk::ToggleButton {
+                                    append: search_btn = &gtk::ToggleButton {
                                         add_css_class: "browser-navigation-button",
                                         set_icon_name: "system-search-symbolic",
 
@@ -460,8 +455,7 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
 
-                                    #[name = "search_stack"]
-                                    gtk::Stack {
+                                    append: search_stack = &gtk::Stack {
                                         add_enumed[NavigationMode::Normal] = &gtk::Box {
                                             gtk::Button {
                                                 add_css_class: "browser-navigation-button",
@@ -507,8 +501,7 @@ impl relm4::component::AsyncComponent for App {
                                         add_enumed[NavigationMode::Search] = &gtk::Box {
                                             set_spacing: 10,
 
-                                            #[name = "search"]
-                                            gtk::SearchEntry {
+                                            append: search = &gtk::SearchEntry {
                                                 set_placeholder_text: Some("Search..."),
                                                 connect_search_changed[browser_sender] => move |w| {
                                                     browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
@@ -542,8 +535,7 @@ impl relm4::component::AsyncComponent for App {
                                         },
                                     },
 
-                                    #[name = "volume_btn"]
-                                    gtk::VolumeButton {
+                                    append: volume_btn = &gtk::VolumeButton {
                                         set_focus_on_click: false,
                                         connect_value_changed[sender] => move |_scale, value| {
                                             sender.input(AppIn::Player(Command::Volume(value)));
@@ -623,8 +615,7 @@ impl relm4::component::AsyncComponent for App {
 
                             gtk::Overlay {
                                 set_child: Some(model.browser.widget()),
-                                #[name = "toasts"]
-                                add_overlay = &granite::Toast,
+                                add_overlay: toasts = &granite::Toast,
                             }
                         }
                     }
