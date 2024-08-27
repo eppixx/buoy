@@ -1,7 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
 use granite::prelude::{SettingsExt, ToastExt};
-use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt};
+use gtk::prelude::{
+    BoxExt, ButtonExt, CheckButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt,
+};
 use relm4::{
     actions::AccelsPlus,
     component::{AsyncComponentController, AsyncController},
@@ -48,14 +50,6 @@ pub struct App {
     play_info: Controller<PlayInfo>,
     browser: AsyncController<Browser>,
     equalizer: Controller<Equalizer>,
-
-    main_stack: gtk::Stack,
-    back_btn: gtk::Button,
-    search_btn: gtk::ToggleButton,
-    search_stack: gtk::Stack,
-    search: gtk::SearchEntry,
-    volume_btn: gtk::VolumeButton,
-    toasts: granite::Toast,
 }
 
 impl App {
@@ -289,14 +283,6 @@ impl relm4::component::AsyncComponent for App {
             play_info,
             browser,
             equalizer,
-
-            main_stack: gtk::Stack::default(),
-            back_btn: gtk::Button::default(),
-            search_btn: gtk::ToggleButton::default(),
-            search_stack: gtk::Stack::default(),
-            search: gtk::SearchEntry::default(),
-            volume_btn: gtk::VolumeButton::default(),
-            toasts: granite::Toast::default(),
         };
 
         let browser_sender = model.browser.sender().clone();
@@ -314,7 +300,7 @@ impl relm4::component::AsyncComponent for App {
                 app.quit();
             });
         application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
-        let search_btn = model.search_btn.clone();
+        let search_btn = widgets.search_btn.clone();
         let activate_search_action: relm4::actions::RelmAction<ActivateSearchAction> =
             relm4::actions::RelmAction::new_stateless(move |_| {
                 tracing::info!("activate search called");
@@ -329,7 +315,7 @@ impl relm4::component::AsyncComponent for App {
         //init widgets
         {
             let settings = Settings::get().lock().unwrap();
-            model.volume_btn.set_value(settings.volume);
+            widgets.volume_btn.set_value(settings.volume);
             model.mpris.set_volume(settings.volume);
 
             // playcontrol
@@ -356,8 +342,10 @@ impl relm4::component::AsyncComponent for App {
             let client = Client::get_mut().lock().unwrap();
 
             match &client.inner {
-                Some(_client) => model.main_stack.set_visible_child_enum(&WindowState::Main),
-                None => model
+                Some(_client) => widgets
+                    .main_stack
+                    .set_visible_child_enum(&WindowState::Main),
+                None => widgets
                     .main_stack
                     .set_visible_child_enum(&WindowState::LoginForm),
             }
@@ -383,7 +371,8 @@ impl relm4::component::AsyncComponent for App {
                 set_visible: false,
             },
 
-            model.main_stack.clone() -> gtk::Stack {
+            #[name = "main_stack"]
+            gtk::Stack {
                 add_css_class: "main-box",
                 set_transition_type: gtk::StackTransitionType::Crossfade,
                 set_transition_duration: 200,
@@ -439,7 +428,8 @@ impl relm4::component::AsyncComponent for App {
                                 set_halign: gtk::Align::Fill,
 
                                 pack_start = &gtk::Box {
-                                    model.back_btn.clone() {
+                                    #[name = "back_btn"]
+                                    gtk::Button {
                                         set_icon_name: "go-previous-symbolic",
                                         add_css_class: "destructive-button-spacer",
 
@@ -457,7 +447,8 @@ impl relm4::component::AsyncComponent for App {
                                     set_spacing: 15,
                                     set_margin_start: 130,
 
-                                    model.search_btn.clone() -> gtk::ToggleButton {
+                                    #[name = "search_btn"]
+                                    gtk::ToggleButton {
                                         add_css_class: "browser-navigation-button",
                                         set_icon_name: "system-search-symbolic",
 
@@ -469,7 +460,8 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
 
-                                    model.search_stack.clone() -> gtk::Stack {
+                                    #[name = "search_stack"]
+                                    gtk::Stack {
                                         add_enumed[NavigationMode::Normal] = &gtk::Box {
                                             gtk::Button {
                                                 add_css_class: "browser-navigation-button",
@@ -515,7 +507,8 @@ impl relm4::component::AsyncComponent for App {
                                         add_enumed[NavigationMode::Search] = &gtk::Box {
                                             set_spacing: 10,
 
-                                            model.search.clone() -> gtk::SearchEntry {
+                                            #[name = "search"]
+                                            gtk::SearchEntry {
                                                 set_placeholder_text: Some("Search..."),
                                                 connect_search_changed[browser_sender] => move |w| {
                                                     browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
@@ -549,7 +542,8 @@ impl relm4::component::AsyncComponent for App {
                                         },
                                     },
 
-                                    model.volume_btn.clone() {
+                                    #[name = "volume_btn"]
+                                    gtk::VolumeButton {
                                         set_focus_on_click: false,
                                         connect_value_changed[sender] => move |_scale, value| {
                                             sender.input(AppIn::Player(Command::Volume(value)));
@@ -629,7 +623,8 @@ impl relm4::component::AsyncComponent for App {
 
                             gtk::Overlay {
                                 set_child: Some(model.browser.widget()),
-                                add_overlay: &model.toasts.clone(),
+                                #[name = "toasts"]
+                                add_overlay = &granite::Toast,
                             }
                         }
                     }
@@ -668,8 +663,9 @@ impl relm4::component::AsyncComponent for App {
         }
     }
 
-    async fn update(
+    async fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::Input,
         sender: relm4::AsyncComponentSender<Self>,
         _root: &Self::Root,
@@ -693,7 +689,8 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::LoginForm(client) => match client {
                 LoginFormOut::LoggedIn => {
-                    self.main_stack
+                    widgets
+                        .main_stack
                         .set_visible_child_enum(&WindowState::Loading);
                 }
             },
@@ -703,7 +700,8 @@ impl relm4::component::AsyncComponent for App {
             AppIn::ResetLogin => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
-                self.main_stack
+                widgets
+                    .main_stack
                     .set_visible_child_enum(&WindowState::LoginForm);
                 sender.input(AppIn::DeleteCache);
             }
@@ -717,7 +715,8 @@ impl relm4::component::AsyncComponent for App {
                         "Deleted cache\nPlease restart to reload the cache",
                     )));
                 }
-                self.main_stack
+                widgets
+                    .main_stack
                     .set_visible_child_enum(&WindowState::Loading);
             }
             AppIn::Queue(msg) => match *msg {
@@ -862,12 +861,13 @@ impl relm4::component::AsyncComponent for App {
                 BrowserOut::InsertAfterCurrentInQueue(drop) => {
                     self.queue.emit(QueueIn::InsertAfterCurrentlyPlayed(drop));
                 }
-                BrowserOut::BackButtonSensitivity(status) => self.back_btn.set_sensitive(status),
+                BrowserOut::BackButtonSensitivity(status) => widgets.back_btn.set_sensitive(status),
                 BrowserOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 BrowserOut::ChangedView => {
                     self.browser.emit(BrowserIn::SearchChanged(String::new()));
-                    self.search_btn.set_active(false);
-                    self.search_stack
+                    widgets.search_btn.set_active(false);
+                    widgets
+                        .search_stack
                         .set_visible_child_enum(&NavigationMode::Normal);
                 }
                 BrowserOut::FavoriteAlbumClicked(id, state) => {
@@ -885,8 +885,8 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::DisplayToast(title) => {
                 tracing::error!(title);
-                self.toasts.set_title(&title);
-                self.toasts.send_notification();
+                widgets.toasts.set_title(&title);
+                widgets.toasts.send_notification();
             }
             AppIn::DesktopNotification => {
                 if !Settings::get().lock().unwrap().send_notifications {
@@ -951,17 +951,19 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::Navigation(NavigationMode::Normal) => {
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
-                self.search_stack
+                widgets
+                    .search_stack
                     .set_visible_child_enum(&NavigationMode::Normal);
-                self.back_btn.set_visible(true);
+                widgets.back_btn.set_visible(true);
             }
             AppIn::Navigation(NavigationMode::Search) => {
                 self.browser
-                    .emit(BrowserIn::SearchChanged(self.search.text().to_string()));
-                self.search_stack
+                    .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+                widgets
+                    .search_stack
                     .set_visible_child_enum(&NavigationMode::Search);
-                self.search.grab_focus();
-                self.back_btn.set_visible(false);
+                widgets.search.grab_focus();
+                widgets.back_btn.set_visible(false);
             }
             AppIn::Mpris(msg) => match msg {
                 MprisOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
@@ -1033,7 +1035,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 Command::Volume(volume) => {
                     self.playback.set_volume(volume);
-                    self.volume_btn.set_value(volume);
+                    widgets.volume_btn.set_value(volume);
                     self.mpris.set_volume(volume);
                     let mut settings = Settings::get().lock().unwrap();
                     settings.volume = volume;
