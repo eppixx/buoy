@@ -307,7 +307,8 @@ fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) 
     use glib::object::Cast;
     let overlay = element.first_child().unwrap();
     let button = overlay.first_child().unwrap();
-    let bo = button.first_child().unwrap();
+    let overlay = button.first_child().unwrap();
+    let bo = overlay.first_child().unwrap();
     let cover = bo.first_child().unwrap();
     let title = cover.next_sibling().unwrap();
     let title = title.downcast::<gtk::Label>().expect("unepected element");

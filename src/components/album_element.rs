@@ -21,6 +21,7 @@ pub struct AlbumElement {
     cover: relm4::Controller<DescriptiveCover>,
     init: AlbumElementInit,
     favorite: gtk::Button,
+    favorite_ribbon: gtk::Box,
 }
 
 impl AlbumElement {
@@ -87,6 +88,7 @@ impl relm4::SimpleComponent for AlbumElement {
             cover,
             init: init.clone(),
             favorite: gtk::Button::default(),
+            favorite_ribbon: gtk::Box::default(),
         };
 
         // tooltip string
@@ -141,14 +143,15 @@ impl relm4::SimpleComponent for AlbumElement {
 
         // set favorite icon
         model.favorite.set_visible(false);
+        model.favorite_ribbon.set_visible(false);
         match &init {
             AlbumElementInit::AlbumId3(id3) if id3.starred.is_some() => {
-                model.favorite.set_visible(true);
-                model.favorite.set_icon_name("starred-symbolic")
+                model.favorite.set_icon_name("starred-symbolic");
+                model.favorite_ribbon.set_visible(true);
             }
             AlbumElementInit::Child(child) if child.starred.is_some() => {
-                model.favorite.set_visible(true);
-                model.favorite.set_icon_name("starred-symbolic")
+                model.favorite.set_icon_name("starred-symbolic");
+                model.favorite_ribbon.set_visible(true);
             }
             _ => {}
         }
@@ -159,6 +162,7 @@ impl relm4::SimpleComponent for AlbumElement {
     view! {
         gtk::FlowBoxChild {
             add_css_class: "album-element",
+            set_halign: gtk::Align::Center,
 
             add_controller = gtk::EventControllerMotion {
                 connect_enter[sender] => move |_event, _x, _y| {
@@ -175,6 +179,7 @@ impl relm4::SimpleComponent for AlbumElement {
                     set_margin_start: 125,
 
                     model.favorite.clone() -> gtk::Button {
+                        add_css_class: "cover-favorite",
                         set_width_request: 24,
                         set_height_request: 24,
                         set_icon_name: "non-starred-symbolic",
@@ -203,8 +208,21 @@ impl relm4::SimpleComponent for AlbumElement {
                     },
 
                     #[wrap(Some)]
-                    set_child = &model.cover.widget().clone() {
-                        set_tooltip_text: Some(&tooltip),
+                    set_child = &gtk::Overlay {
+                        add_overlay = &model.favorite_ribbon.clone() {
+                            add_css_class: "cover-favorite-ribbon",
+                            set_halign: gtk::Align::End,
+                            set_valign: gtk::Align::End,
+                            set_height_request: 35,
+                            set_width_request: 35,
+                            set_margin_bottom: 45,
+                            set_margin_end: 5,
+                        },
+
+                        #[wrap(Some)]
+                        set_child = &model.cover.widget().clone() {
+                            set_tooltip_text: Some(&tooltip),
+                        }
                     }
                 }
             },
@@ -225,19 +243,21 @@ impl relm4::SimpleComponent for AlbumElement {
                 };
                 if local_id == id {
                     match state {
-                        true => self.favorite.set_icon_name("starred-symbolic"),
-                        false => self.favorite.set_icon_name("non-starred-symbolic"),
+                        true => {
+                            self.favorite.set_icon_name("starred-symbolic");
+                            self.favorite_ribbon.set_visible(true);
+                        }
+                        false => {
+                            self.favorite.set_icon_name("non-starred-symbolic");
+                            self.favorite_ribbon.set_visible(false);
+                        }
                     }
                 }
             }
             AlbumElementIn::Hover(false) => {
-                self.favorite.remove_css_class("cover-favorite");
-                if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
-                    self.favorite.set_visible(false);
-                }
+                self.favorite.set_visible(false);
             }
             AlbumElementIn::Hover(true) => {
-                self.favorite.add_css_class("cover-favorite");
                 self.favorite.set_visible(true);
             }
         }
