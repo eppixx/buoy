@@ -199,11 +199,12 @@ impl relm4::component::AsyncComponent for ArtistsView {
 
 fn get_title_of_flowboxchild(element: &FlowBoxChild) -> gtk::Label {
     use glib::object::Cast;
-    let overlay = element.first_child().unwrap();
+    let bo = element.first_child().unwrap();
+    let overlay = bo.first_child().unwrap();
+    let button = overlay.first_child().unwrap();
+    let overlay = button.first_child().unwrap();
     let bo = overlay.first_child().unwrap();
-    let button = bo.first_child().unwrap();
-    let bo = button.first_child().unwrap();
-    let cover = bo.first_child().unwrap();
-    let title = cover.next_sibling().unwrap();
+    let bo = bo.first_child().unwrap();
+    let title = bo.next_sibling().unwrap();
     title.downcast::<gtk::Label>().expect("unepected element")
 }

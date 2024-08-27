@@ -133,6 +133,11 @@ contents > box {
   min-height: 100px;
 }
 
+.size200 {
+    min-width: 200px;
+    min-height: 200px;
+}
+
 .cover {
   border-radius: 3px;
   border-top: 1px solid LightGray;  /* TODO change for dark theme */
@@ -239,4 +244,8 @@ contents > box {
 
 .cover-favorite {
     background-color: rgb(75, 75, 75);
+}
+
+.cover-favorite-ribbon {
+    background-image: linear-gradient(-45deg, @accent_color, @accent_color 50% ,alpha(@accent_color, 0) 50%);
 }
