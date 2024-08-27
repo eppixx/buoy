@@ -10,13 +10,7 @@ use relm4::{
 use crate::settings::Settings;
 
 #[derive(Debug, Default, Clone)]
-pub struct LoginForm {
-    uri: gtk::Entry,
-    user: gtk::Entry,
-    password: gtk::PasswordEntry,
-    login_btn: gtk::Button,
-    toasts: granite::Toast,
-}
+pub struct LoginForm {}
 
 #[derive(Debug)]
 pub enum LoginFormIn {
@@ -50,10 +44,10 @@ impl relm4::component::AsyncComponent for LoginForm {
         {
             let settings = Settings::get().lock().unwrap();
             if let Some(uri) = &settings.login_uri {
-                model.uri.set_text(uri);
+                widgets.uri.set_text(uri);
             }
             if let Some(user) = &settings.login_username {
-                model.user.set_text(user);
+                widgets.user.set_text(user);
             }
         }
 
@@ -73,7 +67,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_label: "Login to a Subsonic server",
                     set_halign: gtk::Align::Center,
                 },
-                add_overlay: &model.toasts.clone(),
+                add_overlay: toasts = &granite::Toast,
             },
 
             gtk::Grid {
@@ -84,7 +78,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_label: "Server address",
                     set_halign: gtk::Align::End,
                 },
-                attach[1, 0, 1, 1] = &model.uri.clone() {
+                attach[1, 0, 1, 1]: uri = &gtk::Entry {
                     set_hexpand: true,
                     set_placeholder_text: Some("http(s)://..."),
                     connect_changed => LoginFormIn::UriChanged,
@@ -94,14 +88,14 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_label: "User name",
                     set_halign: gtk::Align::End,
                 },
-                attach[1, 1, 1, 1] = &model.user.clone() {
+                attach[1, 1, 1, 1]: user = &gtk::Entry {
                     connect_changed => LoginFormIn::FormChanged,
                 },
                 attach[0, 2, 1, 1] = &gtk::Label {
                     set_label: "Password",
                     set_halign: gtk::Align::End,
                 },
-                attach[1, 2, 1, 1] = &model.password.clone() {
+                attach[1, 2, 1, 1]: password = &gtk::PasswordEntry {
                     connect_changed => LoginFormIn::FormChanged,
                 },
             },
@@ -118,7 +112,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_orientation: gtk::Orientation::Horizontal,
                     set_spacing: 5,
 
-                    model.login_btn.clone() -> gtk::Button {
+                    append: login_btn = &gtk::Button {
                         set_label: "Login",
                         set_sensitive: false,
                         connect_clicked => LoginFormIn::AuthClicked,
@@ -128,26 +122,27 @@ impl relm4::component::AsyncComponent for LoginForm {
         }
     }
 
-    async fn update(
+    async fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::Input,
         sender: relm4::AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
             LoginFormIn::AuthClicked => {
-                let auth = submarine::auth::AuthBuilder::new(self.user.text(), "0.16.1")
+                let auth = submarine::auth::AuthBuilder::new(widgets.user.text(), "0.16.1")
                     .client_name("Bouy")
-                    .hashed(&self.password.text());
+                    .hashed(&widgets.password.text());
                 let hash = auth.hash.clone();
                 let salt = auth.salt.clone();
-                let client = submarine::Client::new(&self.uri.text(), auth);
+                let client = submarine::Client::new(&widgets.uri.text(), auth);
                 match client.ping().await {
                     Ok(_) => {
                         {
                             let mut settings = Settings::get().lock().unwrap();
-                            settings.login_uri = Some(self.uri.text().to_string());
-                            settings.login_username = Some(self.user.text().to_string());
+                            settings.login_uri = Some(widgets.uri.text().to_string());
+                            settings.login_username = Some(widgets.user.text().to_string());
                             settings.login_hash = Some(hash);
                             settings.login_salt = Some(salt);
                             settings.save();
@@ -166,15 +161,15 @@ impl relm4::component::AsyncComponent for LoginForm {
                             SubsonicError::Server(_) => "Username or password is wrong",
                             _ => "Login error",
                         };
-                        self.toasts.set_title(error_str);
-                        self.toasts.send_notification();
+                        widgets.toasts.set_title(error_str);
+                        widgets.toasts.send_notification();
                     }
                 }
             }
             LoginFormIn::ResetClicked => {
-                self.uri.set_text("");
-                self.user.set_text("");
-                self.password.set_text("");
+                widgets.uri.set_text("");
+                widgets.user.set_text("");
+                widgets.password.set_text("");
 
                 let mut settings = Settings::get().lock().unwrap();
                 settings.login_uri = None;
@@ -182,12 +177,12 @@ impl relm4::component::AsyncComponent for LoginForm {
                 settings.login_hash = None;
                 settings.save();
             }
-            LoginFormIn::UriChanged => match url::Url::parse(&self.uri.text()) {
+            LoginFormIn::UriChanged => match url::Url::parse(&widgets.uri.text()) {
                 Ok(_) => {
-                    self.uri.set_secondary_icon_name(None);
+                    widgets.uri.set_secondary_icon_name(None);
                 }
                 Err(e) => {
-                    self.uri.set_secondary_icon_name(Some("dialog-error"));
+                    widgets.uri.set_secondary_icon_name(Some("dialog-error"));
                     let error_str = match e {
                         url::ParseError::EmptyHost => "Address is empty",
                         url::ParseError::InvalidPort => "Port is invalid",
@@ -198,15 +193,15 @@ impl relm4::component::AsyncComponent for LoginForm {
                         }
                         _ => "Address is invalid",
                     };
-                    self.uri.set_secondary_icon_tooltip_text(Some(error_str));
+                    widgets.uri.set_secondary_icon_tooltip_text(Some(error_str));
                 }
             },
             LoginFormIn::FormChanged => {
                 //check form if input text is ok
-                let sensitive = !self.user.text().is_empty()
-                    && !self.password.text().is_empty()
-                    && url::Url::parse(&self.uri.text()).is_ok();
-                self.login_btn.set_sensitive(sensitive);
+                let sensitive = !widgets.user.text().is_empty()
+                    && !widgets.password.text().is_empty()
+                    && url::Url::parse(&widgets.uri.text()).is_ok();
+                widgets.login_btn.set_sensitive(sensitive);
             }
         }
     }
