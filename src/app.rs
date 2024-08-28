@@ -22,7 +22,7 @@ use crate::{
     playback::{Playback, PlaybackOut},
     player::Command,
     settings::Settings,
-    subsonic::Subsonic,
+    subsonic::Subsonic, window_state::WindowState,
 };
 use crate::{
     components::{
@@ -34,7 +34,6 @@ use crate::{
         queue::{Queue, QueueIn, QueueOut},
         seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
     },
-    window_state::{NavigationMode, WindowState},
 };
 
 #[derive(Debug)]
@@ -79,12 +78,12 @@ pub enum AppIn {
     PlayInfo(PlayInfoOut),
     DisplayToast(String),
     DesktopNotification,
-    Navigation(NavigationMode),
     Mpris(MprisOut),
     Player(Command),
     FavoriteAlbumClicked(String, bool),
     FavoriteArtistClicked(String, bool),
     FavoriteSongClicked(String, bool),
+    SearchActivate(bool),
 }
 
 #[relm4::widget_template(pub)]
@@ -299,10 +298,12 @@ impl relm4::component::AsyncComponent for App {
             });
         application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
         let search_btn = widgets.search_btn.clone();
+        let senderc = sender.clone();
         let activate_search_action: relm4::actions::RelmAction<ActivateSearchAction> =
             relm4::actions::RelmAction::new_stateless(move |_| {
                 tracing::info!("activate search called");
                 search_btn.set_active(true);
+                senderc.input(AppIn::SearchActivate(true));
             });
 
         let mut group = relm4::actions::RelmActionGroup::<WindowActionGroup>::new();
@@ -441,7 +442,6 @@ impl relm4::component::AsyncComponent for App {
                                     set_hexpand: true,
                                     set_halign: gtk::Align::Center,
                                     set_spacing: 15,
-                                    set_margin_start: 130,
 
                                     append: search_btn = &gtk::ToggleButton {
                                         add_css_class: "browser-navigation-button",
@@ -449,73 +449,51 @@ impl relm4::component::AsyncComponent for App {
 
                                         connect_toggled[sender] => move |button| {
                                             match button.is_active() {
-                                                true => sender.input(AppIn::Navigation(NavigationMode::Search)),
-                                                false => sender.input(AppIn::Navigation(NavigationMode::Normal)),
+                                                true => sender.input(AppIn::SearchActivate(true)),
+                                                false => sender.input(AppIn::SearchActivate(false)),
                                             }
                                         }
                                     },
 
-                                    append: search_stack = &gtk::Stack {
-                                        add_enumed[NavigationMode::Normal] = &gtk::Box {
-                                            gtk::Button {
-                                                add_css_class: "browser-navigation-button",
-                                                set_icon_name: "go-home-symbolic",
-                                                set_tooltip: "Go to dashboard",
-                                                connect_clicked[browser_sender] => move |_| {
-                                                    browser_sender.emit(BrowserIn::DashboardClicked);
-                                                }
-                                            },
-                                            gtk::Button {
-                                                add_css_class: "browser-navigation-button",
-                                                set_icon_name: "avatar-default-symbolic",
-                                                set_tooltip: "Show Artists",
-                                                connect_clicked[browser_sender] => move |_| {
-                                                    browser_sender.emit(BrowserIn::ArtistsClicked);
-                                                }
-                                            },
-                                            gtk::Button {
-                                                add_css_class: "browser-navigation-button",
-                                                set_icon_name: "media-optical-cd-audio-symbolic",
-                                                set_tooltip: "Show Albums",
-                                                connect_clicked[browser_sender] => move |_| {
-                                                    browser_sender.emit(BrowserIn::AlbumsClicked);
-                                                }
-                                            },
-                                            gtk::Button {
-                                                add_css_class: "browser-navigation-button",
-                                                set_icon_name: "audio-x-generic-symbolic",
-                                                set_tooltip: "Show Tracks",
-                                                connect_clicked[browser_sender] => move |_| {
-                                                    browser_sender.emit(BrowserIn::TracksClicked);
-                                                }
-                                            },
-                                            gtk::Button {
-                                                add_css_class: "browser-navigation-button",
-                                                set_icon_name: "playlist-symbolic",
-                                                set_tooltip: "Show playlists",
-                                                connect_clicked[browser_sender] => move|_| {
-                                                    browser_sender.emit(BrowserIn::PlaylistsClicked);
-                                                }
-                                            },
+                                    gtk::Box {
+                                        gtk::Button {
+                                            add_css_class: "browser-navigation-button",
+                                            set_icon_name: "go-home-symbolic",
+                                            set_tooltip: "Go to dashboard",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::DashboardClicked);
+                                            }
                                         },
-                                        add_enumed[NavigationMode::Search] = &gtk::Box {
-                                            set_spacing: 10,
-
-                                            append: search = &gtk::SearchEntry {
-                                                set_placeholder_text: Some("Search..."),
-                                                connect_search_changed[browser_sender] => move |w| {
-                                                    browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
-                                                }
-                                            },
-
-                                            gtk::CheckButton {
-                                                set_label: Some("Use fuzzy search"),
-                                                set_tooltip: "Shows close search results if activated",
-                                                set_active: Settings::get().lock().unwrap().fuzzy_search,
-
-                                                connect_toggled => |btn| {
-                                                    Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
-                                                }
+                                        gtk::Button {
+                                            add_css_class: "browser-navigation-button",
+                                            set_icon_name: "avatar-default-symbolic",
+                                            set_tooltip: "Show Artists",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::ArtistsClicked);
+                                            }
+                                        },
+                                        gtk::Button {
+                                            add_css_class: "browser-navigation-button",
+                                            set_icon_name: "media-optical-cd-audio-symbolic",
+                                            set_tooltip: "Show Albums",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::AlbumsClicked);
+                                            }
+                                        },
+                                        gtk::Button {
+                                            add_css_class: "browser-navigation-button",
+                                            set_icon_name: "audio-x-generic-symbolic",
+                                            set_tooltip: "Show Tracks",
+                                            connect_clicked[browser_sender] => move |_| {
+                                                browser_sender.emit(BrowserIn::TracksClicked);
+                                            }
+                                        },
+                                        gtk::Button {
+                                            add_css_class: "browser-navigation-button",
+                                            set_icon_name: "playlist-symbolic",
+                                            set_tooltip: "Show playlists",
+                                            connect_clicked[browser_sender] => move|_| {
+                                                browser_sender.emit(BrowserIn::PlaylistsClicked);
                                             }
                                         },
                                     }
@@ -614,7 +592,48 @@ impl relm4::component::AsyncComponent for App {
                             },
 
                             gtk::Overlay {
-                                set_child: Some(model.browser.widget()),
+                                #[wrap(Some)]
+                                set_child = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+
+                                    append: search_bar = &gtk::Revealer {
+                                        set_transition_duration: 200,
+                                        set_transition_type: gtk::RevealerTransitionType::SlideUp,
+
+                                        gtk::Box {
+                                            set_spacing: 10,
+                                            set_halign: gtk::Align::Center,
+                                            set_margin_vertical: 2,
+
+                                            append: search = &gtk::SearchEntry {
+                                                set_placeholder_text: Some("Search..."),
+                                                connect_search_changed[browser_sender] => move |w| {
+                                                    browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
+                                                }
+                                            },
+                                            gtk::CheckButton {
+                                                set_label: Some("Use fuzzy search"),
+                                                set_tooltip: "Shows close and similar search results if activated",
+                                                set_active: Settings::get().lock().unwrap().fuzzy_search,
+
+                                                connect_toggled => |btn| {
+                                                    Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
+                                                }
+                                            },
+                                            gtk::CheckButton {
+                                                set_label: Some("Is case sensitive"),
+                                                set_tooltip: "Ignores case sensitivity in search and results",
+                                                // set_active: true // TODO
+
+                                                connect_toggled => |btn| {
+                                                    println!("TODO");
+                                                }
+                                            }
+                                        }
+                                    },
+
+                                    model.browser.widget(),
+                                },
                                 add_overlay: toasts = &granite::Toast,
                             }
                         }
@@ -854,13 +873,6 @@ impl relm4::component::AsyncComponent for App {
                 }
                 BrowserOut::BackButtonSensitivity(status) => widgets.back_btn.set_sensitive(status),
                 BrowserOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
-                BrowserOut::ChangedView => {
-                    self.browser.emit(BrowserIn::SearchChanged(String::new()));
-                    widgets.search_btn.set_active(false);
-                    widgets
-                        .search_stack
-                        .set_visible_child_enum(&NavigationMode::Normal);
-                }
                 BrowserOut::FavoriteAlbumClicked(id, state) => {
                     sender.input(AppIn::FavoriteAlbumClicked(id, state))
                 }
@@ -939,22 +951,6 @@ impl relm4::component::AsyncComponent for App {
                         }
                     }
                 }
-            }
-            AppIn::Navigation(NavigationMode::Normal) => {
-                self.browser.emit(BrowserIn::SearchChanged(String::new()));
-                widgets
-                    .search_stack
-                    .set_visible_child_enum(&NavigationMode::Normal);
-                widgets.back_btn.set_visible(true);
-            }
-            AppIn::Navigation(NavigationMode::Search) => {
-                self.browser
-                    .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
-                widgets
-                    .search_stack
-                    .set_visible_child_enum(&NavigationMode::Search);
-                widgets.search.grab_focus();
-                widgets.back_btn.set_visible(false);
             }
             AppIn::Mpris(msg) => match msg {
                 MprisOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
@@ -1102,6 +1098,14 @@ impl relm4::component::AsyncComponent for App {
                         self.browser.emit(BrowserIn::FavoriteSong(id, state));
                     }
                 }
+            }
+            AppIn::SearchActivate(true) => {
+                widgets.search_bar.set_reveal_child(true);
+                self.browser.emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+            }
+            AppIn::SearchActivate(false) => {
+                widgets.search_bar.set_reveal_child(false);
+                self.browser.emit(BrowserIn::SearchChanged(String::new()));
             }
         }
     }

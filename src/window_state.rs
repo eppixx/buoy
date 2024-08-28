@@ -28,33 +28,6 @@ impl TryFrom<String> for WindowState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum NavigationMode {
-    Normal,
-    Search,
-}
-
-impl std::fmt::Display for NavigationMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Normal => write!(f, "Normal"),
-            Self::Search => write!(f, "Search"),
-        }
-    }
-}
-
-impl TryFrom<String> for NavigationMode {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_ref() {
-            "Normal" => Ok(Self::Normal),
-            "Search" => Ok(Self::Search),
-            e => Err(format!("\"{e}\" is not a Mode")),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -65,11 +38,5 @@ mod tests {
         test_self(WindowState::Loading);
         test_self(WindowState::LoginForm);
         test_self(WindowState::Main);
-    }
-
-    #[test]
-    fn navigation_mode_conversion() {
-        test_self(NavigationMode::Normal);
-        test_self(NavigationMode::Search);
     }
 }
