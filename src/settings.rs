@@ -60,6 +60,8 @@ pub struct Settings {
 
     #[serde(default)]
     pub fuzzy_search: bool,
+    #[serde(default)]
+    pub case_sensitive: bool,
 }
 
 fn default_window_width() -> i32 {

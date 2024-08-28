@@ -84,6 +84,7 @@ pub enum AppIn {
     FavoriteArtistClicked(String, bool),
     FavoriteSongClicked(String, bool),
     SearchActivate(bool),
+    SearchChanged,
 }
 
 #[relm4::widget_template(pub)]
@@ -607,26 +608,27 @@ impl relm4::component::AsyncComponent for App {
 
                                             append: search = &gtk::SearchEntry {
                                                 set_placeholder_text: Some("Search..."),
-                                                connect_search_changed[browser_sender] => move |w| {
-                                                    browser_sender.emit(BrowserIn::SearchChanged(w.text().to_string()));
-                                                }
+                                                connect_search_changed => AppIn::SearchChanged,
                                             },
                                             gtk::CheckButton {
                                                 set_label: Some("Use fuzzy search"),
                                                 set_tooltip: "Shows close and similar search results if activated",
                                                 set_active: Settings::get().lock().unwrap().fuzzy_search,
 
-                                                connect_toggled => |btn| {
+                                                connect_toggled[sender] => move |btn| {
                                                     Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
+                                                    sender.input(AppIn::SearchChanged);
                                                 }
                                             },
                                             gtk::CheckButton {
-                                                set_label: Some("Is case sensitive"),
-                                                set_tooltip: "Ignores case sensitivity in search and results",
-                                                // set_active: true // TODO
+                                                set_label: Some("Use case sensitivity"),
+                                                set_tooltip: "Ignores case sensitivity in search term and results",
+                                                set_active: Settings::get().lock().unwrap().case_sensitive,
 
-                                                connect_toggled => |btn| {
-                                                    println!("TODO");
+                                                connect_toggled[sender] => move |btn| {
+                                                    Settings::get().lock().unwrap().case_sensitive = btn.is_active();
+                                                    sender.input(AppIn::SearchChanged);
+
                                                 }
                                             }
                                         }
@@ -1102,10 +1104,14 @@ impl relm4::component::AsyncComponent for App {
             AppIn::SearchActivate(true) => {
                 widgets.search_bar.set_reveal_child(true);
                 self.browser.emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+                widgets.search.grab_focus();
             }
             AppIn::SearchActivate(false) => {
                 widgets.search_bar.set_reveal_child(false);
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
+            }
+            AppIn::SearchChanged => {
+                self.browser.emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
             }
         }
     }

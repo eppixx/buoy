@@ -157,15 +157,23 @@ impl relm4::component::AsyncComponent for ArtistsView {
             },
             ArtistsViewIn::SearchChanged(search) => {
                 self.artists.set_filter_func(move |element| {
-                    let title = get_title_of_flowboxchild(element);
+                    let mut search = search.clone();
+                    let mut title = get_title_of_flowboxchild(element).text().to_string();
 
+                    //check for case sensitivity
+                    if !Settings::get().lock().unwrap().case_sensitive {
+                        title = title.to_lowercase();
+                        search = search.to_lowercase();
+                    }
+
+                    //actual matching
                     let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
                     if fuzzy_search {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                        let score = matcher.fuzzy_match(&title.text(), &search);
+                        let score = matcher.fuzzy_match(&title, &search);
                         score.is_some()
                     } else {
-                        title.text().contains(&search)
+                        title.contains(&search)
                     }
                 });
             }

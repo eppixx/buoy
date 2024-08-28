@@ -13,6 +13,7 @@ use relm4::{
 use crate::factory::playlist_tracks_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
 };
+use crate::settings::Settings;
 use crate::{
     common::convert_for_label,
     components::{
@@ -302,15 +303,29 @@ impl relm4::SimpleComponent for PlaylistsView {
             PlaylistsViewIn::SearchChanged(search) => {
                 self.tracks.clear_filters();
                 self.tracks.add_filter(move |row| {
-                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let test = format!(
+                    let mut search = search.clone();
+                    let mut test = format!(
                         "{} {} {}",
                         row.item.title,
                         row.item.artist.as_deref().unwrap_or_default(),
                         row.item.album.as_deref().unwrap_or_default()
                     );
-                    let score = matcher.fuzzy_match(&test, &search);
-                    score.is_some()
+
+                    //check for case sensitivity
+                    if !Settings::get().lock().unwrap().case_sensitive {
+                        test = test.to_lowercase();
+                        search = search.to_lowercase();
+                    }
+
+                    //actual matching
+                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+                    if fuzzy_search {
+                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                        let score = matcher.fuzzy_match(&test, &search);
+                        score.is_some()
+                    } else {
+                        test.contains(&search)
+                    }
                 });
             }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {

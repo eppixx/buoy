@@ -521,7 +521,7 @@ impl relm4::Component for Dashboard {
         _root: &Self::Root,
     ) {
         match msg {
-            DashboardIn::SearchChanged(search) => {
+            DashboardIn::SearchChanged(mut search) => {
                 for album in self
                     .recently_added_list
                     .iter()
@@ -530,7 +530,13 @@ impl relm4::Component for Dashboard {
                     .chain(self.most_played_list.iter())
                 {
                     let (title, artist) = crate::components::albums_view::get_info_of_flowboxchild(album.widget());
-                    let title_artist = format!("{} {}", title.text(), artist.text());
+                    let mut title_artist = format!("{} {}", title.text(), artist.text());
+
+                    //check for case sensitivity
+                    if !Settings::get().lock().unwrap().case_sensitive {
+                        title_artist = title_artist.to_lowercase();
+                        search = search.to_lowercase();
+                    }
 
                     //actual matching
                     let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;

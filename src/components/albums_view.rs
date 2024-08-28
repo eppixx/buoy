@@ -165,8 +165,15 @@ impl relm4::component::Component for AlbumsView {
             },
             AlbumsViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
+                    let mut search = search.clone();
                     let (title, artist) = get_info_of_flowboxchild(element);
-                    let title_artist = format!("{} {}", title.text(), artist.text());
+                    let mut title_artist = format!("{} {}", title.text(), artist.text());
+
+                    //check for case sensitivity
+                    if !Settings::get().lock().unwrap().case_sensitive {
+                        title_artist = title_artist.to_lowercase();
+                        search = search.to_lowercase();
+                    }
 
                     //actual matching
                     let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;

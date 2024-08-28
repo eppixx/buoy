@@ -9,16 +9,19 @@ use relm4::{
     ComponentController,
 };
 
-use crate::factory::playlist_tracks_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
-    TitleColumn,
-};
 use crate::{
     client::Client,
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
     subsonic::Subsonic,
     types::Droppable,
+};
+use crate::{
+    factory::playlist_tracks_row::{
+        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
+        TitleColumn,
+    },
+    settings::Settings,
 };
 
 #[derive(Debug)]
@@ -286,15 +289,31 @@ impl relm4::Component for AlbumView {
             AlbumViewIn::SearchChanged(search) => {
                 self.tracks.clear_filters();
                 self.tracks.add_filter(move |row| {
-                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let test = format!(
+                    let mut search = search.clone();
+                    let mut test = format!(
                         "{} {} {}",
                         row.item.title,
                         row.item.artist.as_deref().unwrap_or_default(),
                         row.item.album.as_deref().unwrap_or_default()
                     );
-                    let score = matcher.fuzzy_match(&test, &search);
-                    score.is_some()
+
+                    //check for case sensitivity
+                    if !Settings::get().lock().unwrap().case_sensitive {
+                        test = test.to_lowercase();
+                        search = search.to_lowercase();
+                    }
+
+                    println!("search for {search} in {test}");
+
+                    //actual matching
+                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+                    if fuzzy_search {
+                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                        let score = matcher.fuzzy_match(&test, &search);
+                        score.is_some()
+                    } else {
+                        test.contains(&search)
+                    }
                 });
             }
             AlbumViewIn::FavoritedAlbum(id, state) => match &self.init {
