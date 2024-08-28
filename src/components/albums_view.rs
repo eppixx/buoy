@@ -15,7 +15,9 @@ use crate::{
         album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
         filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
         filter_row::{Category, Filter},
-    }, settings::Settings, subsonic::Subsonic
+    },
+    settings::Settings,
+    subsonic::Subsonic,
 };
 
 #[derive(Debug)]
@@ -184,7 +186,6 @@ impl relm4::component::Component for AlbumsView {
                     } else {
                         title_artist.contains(&search)
                     }
-
                 });
             }
             AlbumsViewIn::ShowStarred(false) => {

@@ -11,10 +11,11 @@ use relm4::{
     ComponentController, RelmRemoveAllExt, RelmWidgetExt,
 };
 
-use crate::{components::album_element::{
-    AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
-}, settings::Settings};
 use crate::{client::Client, subsonic::Subsonic};
+use crate::{
+    components::album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
+    settings::Settings,
+};
 
 #[derive(Debug, Clone)]
 enum Scrolling {
@@ -529,7 +530,8 @@ impl relm4::Component for Dashboard {
                     .chain(self.random_album_list.iter())
                     .chain(self.most_played_list.iter())
                 {
-                    let (title, artist) = crate::components::albums_view::get_info_of_flowboxchild(album.widget());
+                    let (title, artist) =
+                        crate::components::albums_view::get_info_of_flowboxchild(album.widget());
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
 
                     //check for case sensitivity

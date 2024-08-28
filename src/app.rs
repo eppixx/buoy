@@ -14,6 +14,15 @@ use relm4::{
     Component, ComponentController, Controller, RelmWidgetExt,
 };
 
+use crate::components::{
+    browser::{Browser, BrowserIn, BrowserOut},
+    equalizer::{Equalizer, EqualizerOut},
+    login_form::{LoginForm, LoginFormOut},
+    play_controls::{PlayControl, PlayControlIn, PlayControlOut},
+    play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
+    queue::{Queue, QueueIn, QueueOut},
+    seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
+};
 use crate::{
     client::Client,
     gtk_helper::stack::StackExt,
@@ -22,18 +31,8 @@ use crate::{
     playback::{Playback, PlaybackOut},
     player::Command,
     settings::Settings,
-    subsonic::Subsonic, window_state::WindowState,
-};
-use crate::{
-    components::{
-        browser::{Browser, BrowserIn, BrowserOut},
-        equalizer::{Equalizer, EqualizerOut},
-        login_form::{LoginForm, LoginFormOut},
-        play_controls::{PlayControl, PlayControlIn, PlayControlOut},
-        play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
-        queue::{Queue, QueueIn, QueueOut},
-        seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-    },
+    subsonic::Subsonic,
+    window_state::WindowState,
 };
 
 #[derive(Debug)]
@@ -1103,7 +1102,8 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::SearchActivate(true) => {
                 widgets.search_bar.set_reveal_child(true);
-                self.browser.emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+                self.browser
+                    .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
                 widgets.search.grab_focus();
             }
             AppIn::SearchActivate(false) => {
@@ -1111,7 +1111,8 @@ impl relm4::component::AsyncComponent for App {
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
             }
             AppIn::SearchChanged => {
-                self.browser.emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+                self.browser
+                    .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
             }
         }
     }

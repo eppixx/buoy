@@ -12,7 +12,9 @@ use relm4::{
 };
 
 use crate::{
-    components::artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut}, settings::Settings, subsonic::Subsonic
+    components::artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut},
+    settings::Settings,
+    subsonic::Subsonic,
 };
 
 #[derive(Debug)]
