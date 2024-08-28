@@ -303,8 +303,6 @@ impl relm4::Component for AlbumView {
                         search = search.to_lowercase();
                     }
 
-                    println!("search for {search} in {test}");
-
                     //actual matching
                     let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
                     if fuzzy_search {
