@@ -131,10 +131,6 @@ impl relm4::SimpleComponent for PlaylistsView {
 
         let track_stack = &model.track_stack.clone();
         let column = &model.tracks.view;
-        column.connect_activate(|_column_view, i| {
-            //TODO play next or append to queue
-            println!("activated index {i}");
-        });
         let info_cover = model.info_cover.widget().clone();
         let info_title = model.info_title.clone();
         let info_details = model.info_details.clone();
