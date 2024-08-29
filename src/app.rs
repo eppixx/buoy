@@ -322,6 +322,7 @@ impl relm4::component::AsyncComponent for App {
             if model.queue.model().songs().is_empty() {
                 model.play_controls.emit(PlayControlIn::Disable);
             }
+            sender.input(AppIn::CoverSizeChanged);
         }
 
         //setup mpris
@@ -573,7 +574,7 @@ impl relm4::component::AsyncComponent for App {
                                                     set_end_widget = &gtk::Scale {
                                                         set_width_request: 200,
                                                         set_range: (100f64, 200f64),
-                                                        set_value: 150f64,
+                                                        set_value: Settings::get().lock().unwrap().cover_size as f64,
                                                         set_increments: (25f64, 25f64),
                                                         set_slider_size_fixed: true,
                                                         connect_change_value[sender] => move |_scale, _, value| {
