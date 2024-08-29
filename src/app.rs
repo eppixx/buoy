@@ -607,6 +607,7 @@ impl relm4::component::AsyncComponent for App {
 
                                             append: search = &gtk::SearchEntry {
                                                 set_placeholder_text: Some("Search..."),
+                                                set_text: &Settings::get().lock().unwrap().search_text,
                                                 connect_search_changed => AppIn::SearchChanged,
                                             },
                                             gtk::CheckButton {
