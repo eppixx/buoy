@@ -38,10 +38,9 @@ pub enum AlbumsViewOut {
 #[derive(Debug)]
 pub enum AlbumsViewIn {
     AlbumElement(AlbumElementOut),
-    SearchChanged(String),
+    FilterChanged,
     FilterBox(FilterBoxOut),
     ClearFilters,
-    ShowStarred(bool),
     Favorited(String, bool),
 }
 
@@ -103,14 +102,7 @@ impl relm4::component::Component for AlbumsView {
                         append: favorite = &gtk::ToggleButton {
                             set_icon_name: "non-starred-symbolic",
                             set_width_request: 50,
-                            connect_clicked[sender] => move |btn| {
-                                if btn.is_active() {
-                                    btn.set_icon_name("starred-symbolic");
-                                } else {
-                                    btn.set_icon_name("non-starred-symbolic");
-                                }
-                                sender.input(Self::Input::ShowStarred(btn.is_active()));
-                            },
+                            connect_clicked => Self::Input::FilterChanged,
                             set_tooltip_text: Some("Toggle showing favortited albums"),
                         },
 
@@ -168,11 +160,17 @@ impl relm4::component::Component for AlbumsView {
                     .output(AlbumsViewOut::FavoriteClicked(id, state))
                     .expect("sending failed"),
             },
-            AlbumsViewIn::SearchChanged(search) => {
+            AlbumsViewIn::FilterChanged => {
+                // update icon of favorite ToggleButton
+                match widgets.favorite.is_active() {
+                    false => widgets.favorite.set_icon_name("non-starred-symbolic"),
+                    true => widgets.favorite.set_icon_name("starred-symbolic"),
+                }
+
                 let subsonic = self.subsonic.clone();
                 let favorite = widgets.favorite.clone();
                 self.albums.set_filter_func(move |element| {
-                    let mut search = search.clone();
+                    let mut search = Settings::get().lock().unwrap().search_text.clone();
                     let (title, artist) = get_info_of_flowboxchild(element);
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
 
@@ -193,6 +191,11 @@ impl relm4::component::Component for AlbumsView {
                         }
                     }
 
+                    // when search bar is hidden every element will be shown
+                    if !Settings::get().lock().unwrap().search_active {
+                        return true;
+                    }
+
                     //check for case sensitivity
                     if !Settings::get().lock().unwrap().case_sensitive {
                         title_artist = title_artist.to_lowercase();
@@ -208,39 +211,6 @@ impl relm4::component::Component for AlbumsView {
                     } else {
                         title_artist.contains(&search)
                     }
-                });
-            }
-            AlbumsViewIn::ShowStarred(false) => {
-                self.albums.set_filter_func(move |_element| true);
-            }
-            AlbumsViewIn::ShowStarred(true) => {
-                let albums: Vec<_> = self
-                    .album_list
-                    .iter()
-                    .map(|controller| controller.model().info().clone())
-                    .collect();
-                self.albums.set_filter_func(move |element| {
-                    let (title, artist) = get_info_of_flowboxchild(element);
-
-                    for album in &albums {
-                        match album {
-                            AlbumElementInit::Child(child) => {
-                                if child.title == title.text()
-                                    && child.artist == Some(artist.text().into())
-                                {
-                                    return child.starred.is_some();
-                                }
-                            }
-                            AlbumElementInit::AlbumId3(album) => {
-                                if album.name == title.text()
-                                    && album.artist == Some(artist.text().into())
-                                {
-                                    return album.starred.is_some();
-                                }
-                            }
-                        }
-                    }
-                    true
                 });
             }
             AlbumsViewIn::FilterBox(FilterBoxOut::FiltersChanged) => {

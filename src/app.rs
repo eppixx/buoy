@@ -1101,16 +1101,19 @@ impl relm4::component::AsyncComponent for App {
                 }
             }
             AppIn::SearchActivate(true) => {
+                Settings::get().lock().unwrap().search_active = true;
                 widgets.search_bar.set_reveal_child(true);
                 self.browser
                     .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
                 widgets.search.grab_focus();
             }
             AppIn::SearchActivate(false) => {
+                Settings::get().lock().unwrap().search_active = false;
                 widgets.search_bar.set_reveal_child(false);
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
             }
             AppIn::SearchChanged => {
+                Settings::get().lock().unwrap().search_text = widgets.search.text().to_string();
                 self.browser
                     .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
             }

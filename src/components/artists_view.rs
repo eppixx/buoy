@@ -34,8 +34,7 @@ pub enum ArtistsViewOut {
 #[derive(Debug)]
 pub enum ArtistsViewIn {
     ArtistElement(ArtistElementOut),
-    SearchChanged(String),
-    ShowStarred(bool),
+    FilterChanged,
     Favorited(String, bool),
 }
 
@@ -114,14 +113,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
                         append: favorite = &gtk::ToggleButton {
                             set_icon_name: "non-starred-symbolic",
                             set_width_request: 50,
-                            connect_clicked[sender] => move |btn| {
-                                if btn.is_active() {
-                                    btn.set_icon_name("starred-symbolic");
-                                } else {
-                                    btn.set_icon_name("non-starred-symbolic");
-                                }
-                                sender.input(Self::Input::ShowStarred(btn.is_active()));
-                            },
+                            connect_clicked => Self::Input::FilterChanged,
                             set_tooltip_text: Some("Toggle showing favortited albums"),
                         },
                     }
@@ -160,11 +152,17 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     .output(ArtistsViewOut::FavoriteClicked(id, state))
                     .expect("sending failed"),
             },
-            ArtistsViewIn::SearchChanged(search) => {
+            ArtistsViewIn::FilterChanged => {
+                // update icon of favorite ToggleButton
+                match widgets.favorite.is_active() {
+                    false => widgets.favorite.set_icon_name("non-starred-symbolic"),
+                    true => widgets.favorite.set_icon_name("starred-symbolic"),
+                }
+
                 let subsonic = self.subsonic.clone();
                 let favorite = widgets.favorite.clone();
                 self.artists.set_filter_func(move |element| {
-                    let mut search = search.clone();
+                    let mut search = Settings::get().lock().unwrap().search_text.clone();
                     let mut title = get_title_of_flowboxchild(element).text().to_string();
 
                     // respect favorite filter pressed
@@ -179,6 +177,11 @@ impl relm4::component::AsyncComponent for ArtistsView {
                         if artist.starred.is_none() {
                             return false;
                         }
+                    }
+
+                    // when search bar is hidden every element will be shown
+                    if !Settings::get().lock().unwrap().search_active {
+                        return true;
                     }
 
                     //check for case sensitivity
@@ -196,28 +199,6 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     } else {
                         title.contains(&search)
                     }
-                });
-            }
-            ArtistsViewIn::ShowStarred(false) => {
-                self.artists.set_filter_func(move |_element| true);
-            }
-            ArtistsViewIn::ShowStarred(true) => {
-                //TODO find a better way to match which element is starred
-                //gather artists
-                let artists: Vec<_> = self
-                    .artist_list
-                    .iter()
-                    .map(|controller| controller.model().info().clone())
-                    .collect();
-                self.artists.set_filter_func(move |element| {
-                    let title = get_title_of_flowboxchild(element);
-                    for artist in &artists {
-                        // if artist matches text check starred
-                        if artist.name == title.text() {
-                            return artist.starred.is_some();
-                        }
-                    }
-                    true
                 });
             }
             ArtistsViewIn::Favorited(id, state) => {
