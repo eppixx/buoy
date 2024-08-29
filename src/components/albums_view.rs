@@ -22,6 +22,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct AlbumsView {
+    subsonic: Rc<RefCell<Subsonic>>,
     albums: gtk::FlowBox,
     album_list: Vec<relm4::Controller<AlbumElement>>,
     filters: relm4::Controller<FilterBox>,
@@ -57,6 +58,7 @@ impl relm4::component::Component for AlbumsView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::component::ComponentParts<Self> {
         let mut model = Self {
+            subsonic: init.clone(),
             albums: gtk::FlowBox::default(),
             album_list: vec![],
             filters: FilterBox::builder()
@@ -98,7 +100,7 @@ impl relm4::component::Component for AlbumsView {
                     set_end_widget = &gtk::Box {
                         set_spacing: 10,
 
-                        gtk::ToggleButton {
+                        append: favorite = &gtk::ToggleButton {
                             set_icon_name: "non-starred-symbolic",
                             set_width_request: 50,
                             connect_clicked[sender] => move |btn| {
@@ -147,8 +149,9 @@ impl relm4::component::Component for AlbumsView {
         }
     }
 
-    fn update(
+    fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::Input,
         sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
@@ -166,10 +169,29 @@ impl relm4::component::Component for AlbumsView {
                     .expect("sending failed"),
             },
             AlbumsViewIn::SearchChanged(search) => {
+                let subsonic = self.subsonic.clone();
+                let favorite = widgets.favorite.clone();
                 self.albums.set_filter_func(move |element| {
                     let mut search = search.clone();
                     let (title, artist) = get_info_of_flowboxchild(element);
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
+
+                    // respect favorite filter pressed
+                    if favorite.is_active() {
+                        let album = subsonic
+                            .borrow()
+                            .albums()
+                            .iter()
+                            .find(|album| {
+                                album.title == title.text()
+                                    && album.artist.as_deref() == Some(&artist.text())
+                            })
+                            .unwrap()
+                            .clone();
+                        if album.starred.is_none() {
+                            return false;
+                        }
+                    }
 
                     //check for case sensitivity
                     if !Settings::get().lock().unwrap().case_sensitive {

@@ -19,6 +19,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct ArtistsView {
+    subsonic: Rc<RefCell<Subsonic>>,
     artists: gtk::FlowBox,
     artist_list: Vec<relm4::Controller<ArtistElement>>,
 }
@@ -76,6 +77,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
         let mut model = Self {
+            subsonic: init.clone(),
             artists: gtk::FlowBox::default(),
             artist_list: vec![],
         };
@@ -109,7 +111,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
 
                     #[wrap(Some)]
                     set_end_widget = &gtk::Box {
-                        gtk::ToggleButton {
+                        append: favorite = &gtk::ToggleButton {
                             set_icon_name: "non-starred-symbolic",
                             set_width_request: 50,
                             connect_clicked[sender] => move |btn| {
@@ -139,8 +141,9 @@ impl relm4::component::AsyncComponent for ArtistsView {
         }
     }
 
-    async fn update(
+    async fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::Input,
         sender: relm4::AsyncComponentSender<Self>,
         _root: &Self::Root,
@@ -158,9 +161,25 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     .expect("sending failed"),
             },
             ArtistsViewIn::SearchChanged(search) => {
+                let subsonic = self.subsonic.clone();
+                let favorite = widgets.favorite.clone();
                 self.artists.set_filter_func(move |element| {
                     let mut search = search.clone();
                     let mut title = get_title_of_flowboxchild(element).text().to_string();
+
+                    // respect favorite filter pressed
+                    if favorite.is_active() {
+                        let artist = subsonic
+                            .borrow()
+                            .artists()
+                            .iter()
+                            .find(|artist| artist.name == title)
+                            .unwrap()
+                            .clone();
+                        if artist.starred.is_none() {
+                            return false;
+                        }
+                    }
 
                     //check for case sensitivity
                     if !Settings::get().lock().unwrap().case_sensitive {
