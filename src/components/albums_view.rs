@@ -282,7 +282,9 @@ impl relm4::component::Component for AlbumsView {
                                     }
                                 }
                             }
-                            AlbumElementInit::AlbumId3(album) => {}
+                            AlbumElementInit::AlbumId3(_album) => {
+                                unreachable!("albums view is never initialized from albumId3");
+                            }
                         }
                     }
                     visible
