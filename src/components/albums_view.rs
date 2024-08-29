@@ -42,6 +42,7 @@ pub enum AlbumsViewIn {
     FilterBox(FilterBoxOut),
     ClearFilters,
     Favorited(String, bool),
+    CoverSizeChanged,
 }
 
 #[relm4::component(pub)]
@@ -291,6 +292,12 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::Favorited(id, state) => {
                 for album in &self.album_list {
                     album.emit(AlbumElementIn::Favorited(id.clone(), state));
+                }
+            }
+            AlbumsViewIn::CoverSizeChanged => {
+                let size = Settings::get().lock().unwrap().cover_size;
+                for element in &self.album_list {
+                    element.model().change_size(size);
                 }
             }
         }

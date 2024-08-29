@@ -43,8 +43,17 @@ pub enum DescriptiveCoverIn {
 pub struct DescriptiveCover {
     cover: relm4::Controller<Cover>,
     title: String,
+    title_label: gtk::Label,
     subtitle: Option<String>,
     subtitle_label: gtk::Label,
+}
+
+impl DescriptiveCover {
+    pub fn change_size(&self, size: i32) {
+        self.cover.model().change_size(size);
+        self.title_label.set_width_request(size);
+        self.subtitle_label.set_width_request(size);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +78,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
                 .launch((subsonic, init.cover_id))
                 .forward(sender.input_sender(), DescriptiveCoverIn::Cover),
             title: init.title,
+            title_label: gtk::Label::default(),
             subtitle: init.subtitle,
             subtitle_label: gtk::Label::default(),
         };
@@ -78,7 +88,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
         if model.subtitle.is_none() {
             model.subtitle_label.set_visible(false);
         }
-        model.cover.model().add_css_class_image("size150");
+        model.change_size(150);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -95,13 +105,12 @@ impl relm4::SimpleComponent for DescriptiveCover {
                 model.cover.widget().clone(),
             },
 
-            gtk::Label {
+            model.title_label.clone() -> gtk::Label {
                 set_halign: gtk::Align::Center,
                 set_ellipsize: pango::EllipsizeMode::End,
                 set_max_width_chars: 15,
                 set_size_request: (150, -1),
 
-                #[watch]
                 set_label: &model.title,
             },
 
@@ -111,9 +120,8 @@ impl relm4::SimpleComponent for DescriptiveCover {
                 set_max_width_chars: 15,
                 set_size_request: (150, -1),
 
-                #[watch]
                 set_label: &model.subtitle.clone().unwrap_or_default(),
-            },
+            }
         }
     }
 

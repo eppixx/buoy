@@ -17,6 +17,11 @@ impl Cover {
     pub fn add_css_class_image(&self, class: &str) {
         self.stack.add_css_class(class);
     }
+
+    pub fn change_size(&self, size: i32) {
+        self.cover.set_width_request(size);
+        self.cover.set_height_request(size);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

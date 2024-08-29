@@ -66,6 +66,9 @@ pub struct Settings {
     pub fuzzy_search: bool,
     #[serde(default)]
     pub case_sensitive: bool,
+
+    #[serde(default = "default_cover_size")]
+    pub cover_size: i32,
 }
 
 fn default_window_width() -> i32 {
@@ -82,6 +85,10 @@ fn default_paned_position() -> i32 {
 
 fn default_volume() -> f64 {
     0.75
+}
+
+fn default_cover_size() -> i32 {
+    150
 }
 
 // used singleton from https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton

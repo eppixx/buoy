@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use granite::prelude::{SettingsExt, ToastExt};
 use gtk::prelude::{
-    BoxExt, ButtonExt, CheckButtonExt, GtkWindowExt, OrientableExt, ScaleButtonExt,
+    BoxExt, ButtonExt, CheckButtonExt, GtkWindowExt, OrientableExt, RangeExt, ScaleButtonExt,
 };
 use relm4::{
     actions::AccelsPlus,
@@ -84,6 +84,7 @@ pub enum AppIn {
     FavoriteSongClicked(String, bool),
     SearchActivate(bool),
     SearchChanged,
+    CoverSizeChanged,
 }
 
 #[relm4::widget_template(pub)]
@@ -562,6 +563,25 @@ impl relm4::component::AsyncComponent for App {
                                                             gtk::glib::signal::Propagation::Proceed
                                                         }
                                                     },
+                                                },
+                                                gtk::CenterBox {
+                                                    #[wrap(Some)]
+                                                    set_start_widget = &gtk::Label {
+                                                        set_text: "Cover size",
+                                                    },
+                                                    #[wrap(Some)]
+                                                    set_end_widget = &gtk::Scale {
+                                                        set_width_request: 200,
+                                                        set_range: (100f64, 200f64),
+                                                        set_value: 150f64,
+                                                        set_increments: (25f64, 25f64),
+                                                        set_slider_size_fixed: true,
+                                                        connect_change_value[sender] => move |_scale, _, value| {
+                                                            Settings::get().lock().unwrap().cover_size = value as i32;
+                                                            sender.input(AppIn::CoverSizeChanged);
+                                                            gtk::glib::Propagation::Proceed
+                                                        },
+                                                    }
                                                 },
                                                 gtk::Separator {},
                                                 gtk::Box {
@@ -1117,6 +1137,9 @@ impl relm4::component::AsyncComponent for App {
                 Settings::get().lock().unwrap().search_text = widgets.search.text().to_string();
                 self.browser
                     .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+            }
+            AppIn::CoverSizeChanged => {
+                self.browser.emit(BrowserIn::CoverSizeChanged);
             }
         }
     }

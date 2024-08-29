@@ -26,6 +26,10 @@ impl ArtistElement {
     pub fn info(&self) -> &submarine::data::ArtistId3 {
         &self.init
     }
+
+    pub fn change_size(&self, size: i32) {
+        self.cover.model().change_size(size);
+    }
 }
 
 #[derive(Debug)]

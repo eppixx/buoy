@@ -36,6 +36,7 @@ pub enum ArtistsViewIn {
     ArtistElement(ArtistElementOut),
     FilterChanged,
     Favorited(String, bool),
+    CoverSizeChanged,
 }
 
 #[relm4::component(async, pub)]
@@ -204,6 +205,12 @@ impl relm4::component::AsyncComponent for ArtistsView {
             ArtistsViewIn::Favorited(id, state) => {
                 for artist in &self.artist_list {
                     artist.emit(ArtistElementIn::Favorited(id.clone(), state));
+                }
+            }
+            ArtistsViewIn::CoverSizeChanged => {
+                let size = Settings::get().lock().unwrap().cover_size;
+                for element in &self.artist_list {
+                    element.model().change_size(size);
                 }
             }
         }

@@ -28,6 +28,10 @@ impl AlbumElement {
     pub fn info(&self) -> &AlbumElementInit {
         &self.init
     }
+
+    pub fn change_size(&self, size: i32) {
+        self.cover.model().change_size(size);
+    }
 }
 
 #[derive(Debug, Clone)]
