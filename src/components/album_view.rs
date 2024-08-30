@@ -314,22 +314,15 @@ impl relm4::Component for AlbumView {
                     }
                 });
             }
-            AlbumViewIn::FavoritedAlbum(id, state) => match &self.init {
-                AlbumViewInit::Child(child) => {
-                    if child.id == id {
-                        match state {
-                            true => self.favorite.set_icon_name("starred-symbolic"),
-                            false => self.favorite.set_icon_name("non-starred-symbolic"),
-                        }
-                    }
-                }
-                AlbumViewInit::AlbumId3(album) => {
-                    if album.id == id {
-                        match state {
-                            true => self.favorite.set_icon_name("starred-symbolic"),
-                            false => self.favorite.set_icon_name("non-starred-symbolic"),
-                        }
-                    }
+            AlbumViewIn::FavoritedAlbum(id, state) => {
+                let matched = match &self.init {
+                    AlbumViewInit::AlbumId3(album) => album.id == id,
+                    AlbumViewInit::Child(child) => child.id == id,
+                };
+                match state {
+                    true if matched => self.favorite.set_icon_name("starred-symbolic"),
+                    false if matched => self.favorite.set_icon_name("non-starred-symbolic"),
+                    _ => {}
                 }
             },
             AlbumViewIn::FavoritedSong(id, state) => {
