@@ -1136,8 +1136,10 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::SearchChanged => {
                 Settings::get().lock().unwrap().search_text = widgets.search.text().to_string();
-                self.browser
-                    .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+                if Settings::get().lock().unwrap().search_active {
+                    self.browser
+                        .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
+                }
             }
             AppIn::CoverSizeChanged => {
                 self.browser.emit(BrowserIn::CoverSizeChanged);
