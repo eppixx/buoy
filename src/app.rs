@@ -431,6 +431,7 @@ impl relm4::component::AsyncComponent for App {
                                     append: back_btn = &gtk::Button {
                                         set_icon_name: "go-previous-symbolic",
                                         add_css_class: "destructive-button-spacer",
+                                        set_tooltip: "Go back to previous page",
 
                                         connect_clicked[browser_sender] => move |_| {
                                             browser_sender.emit(BrowserIn::BackClicked);
@@ -448,6 +449,7 @@ impl relm4::component::AsyncComponent for App {
                                     append: search_btn = &gtk::ToggleButton {
                                         add_css_class: "browser-navigation-button",
                                         set_icon_name: "system-search-symbolic",
+                                        set_tooltip: "Open search bar",
 
                                         connect_toggled[sender] => move |button| {
                                             match button.is_active() {
@@ -509,6 +511,7 @@ impl relm4::component::AsyncComponent for App {
                                     gtk::MenuButton {
                                         set_icon_name: "media-eq-symbolic",
                                         set_focus_on_click: false,
+                                        set_tooltip: "Open Equalizer",
                                         #[wrap(Some)]
                                         set_popover = &gtk::Popover {
                                             model.equalizer.widget(),
@@ -525,6 +528,7 @@ impl relm4::component::AsyncComponent for App {
                                     gtk::MenuButton {
                                         set_icon_name: "open-menu-symbolic",
                                         set_focus_on_click: false,
+                                        set_tooltip: "Open settings",
 
                                         #[wrap(Some)]
                                         set_popover = &gtk::Popover {
@@ -542,6 +546,7 @@ impl relm4::component::AsyncComponent for App {
                                                     },
                                                     #[wrap(Some)]
                                                     set_end_widget = &gtk::Switch {
+                                                        set_tooltip: "Wether or not send desktop notifications",
                                                         set_state: Settings::get().lock().unwrap().send_notifications,
                                                         connect_state_set => move |_switch, value| {
                                                             Settings::get().lock().unwrap().send_notifications = value;
@@ -557,7 +562,7 @@ impl relm4::component::AsyncComponent for App {
                                                     #[wrap(Some)]
                                                     set_end_widget = &gtk::Switch {
                                                         set_state: Settings::get().lock().unwrap().scrobble,
-                                                        set_tooltip: "Updates play count, played timestamp and the now playing page in the web app",
+                                                        set_tooltip: "Updates play count, played timestamp on server and the now playing page in the web app",
 
                                                         connect_state_set => move |_switch, value| {
                                                             Settings::get().lock().unwrap().scrobble = value;
@@ -577,6 +582,7 @@ impl relm4::component::AsyncComponent for App {
                                                         set_value: Settings::get().lock().unwrap().cover_size as f64,
                                                         set_increments: (25f64, 25f64),
                                                         set_slider_size_fixed: true,
+                                                        set_tooltip: "Changes cover sizes on Dashboard, Artists and Albums pages",
                                                         connect_change_value[sender] => move |_scale, _, value| {
                                                             Settings::get().lock().unwrap().cover_size = value as i32;
                                                             sender.input(AppIn::CoverSizeChanged);
@@ -590,6 +596,7 @@ impl relm4::component::AsyncComponent for App {
                                                     gtk::Button {
                                                         add_css_class: "destructive-action",
                                                         set_label: "Delete cache",
+                                                        set_tooltip: "Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start",
                                                         connect_clicked => AppIn::DeleteCache,
                                                     }
                                                 },
@@ -598,6 +605,7 @@ impl relm4::component::AsyncComponent for App {
                                                     gtk::Button {
                                                         add_css_class: "destructive-action",
                                                         set_label: "Logout from Server",
+                                                        set_tooltip: "Logging out will delete the cache and also require to login again to listen to music",
                                                         connect_clicked => AppIn::ResetLogin,
                                                     },
 
@@ -629,6 +637,7 @@ impl relm4::component::AsyncComponent for App {
                                             append: search = &gtk::SearchEntry {
                                                 set_placeholder_text: Some("Search..."),
                                                 set_text: &Settings::get().lock().unwrap().search_text,
+                                                set_tooltip: "Enter your search here",
                                                 connect_search_changed => AppIn::SearchChanged,
                                             },
                                             gtk::CheckButton {
