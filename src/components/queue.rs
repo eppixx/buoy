@@ -138,7 +138,6 @@ pub enum QueueIn {
 #[derive(Debug)]
 pub enum QueueOut {
     Play(Box<submarine::data::Child>),
-    Stop,
     QueueEmpty,
     QueueNotEmpty,
     Player(Command),
@@ -595,7 +594,7 @@ impl relm4::Component for Queue {
                 //set new state when deleting played index
                 if let Some(current) = &self.playing_index {
                     if selected_indices.contains(&current.current_index()) {
-                        sender.output(QueueOut::Stop).expect("sending failed");
+                        sender.output(QueueOut::Player(Command::Stop)).expect("sending failed");
                         sender.input(QueueIn::SetCurrent(None));
                     }
                 }
@@ -665,10 +664,11 @@ impl relm4::Component for Queue {
                             }
                             // at end of queue
                             i if i + 1 == self.songs.len() => {
-                                sender.output(QueueOut::Stop).unwrap();
                                 self.songs.get(i).unwrap().new_play_state(&PlayState::Stop);
                                 self.playing_index = None;
+                                sender.output(QueueOut::Player(Command::Stop)).unwrap();
                             }
+                            // play next song
                             i => self.songs.get(i + 1).unwrap().activate(),
                         }
                     }

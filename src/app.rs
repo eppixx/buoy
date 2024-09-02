@@ -825,18 +825,6 @@ impl relm4::component::AsyncComponent for App {
                     self.recalculate_mpris_next_prev();
                     self.mpris.set_state(PlayState::Play);
                 }
-                QueueOut::Stop => {
-                    if let Err(e) = self.playback.stop() {
-                        sender.input(AppIn::DisplayToast(format!(
-                            "error while stopping playback: {e}"
-                        )));
-                    }
-                    self.play_info.emit(PlayInfoIn::NewState(Box::new(None)));
-                    self.mpris.set_song(None).await;
-                    self.play_controls
-                        .emit(PlayControlIn::NewState(PlayState::Stop));
-                    self.seekbar.emit(SeekbarIn::Disable);
-                }
                 QueueOut::QueueEmpty => {
                     self.play_controls.emit(PlayControlIn::Disable);
                     self.mpris.can_play(false);
@@ -991,6 +979,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::Player(cmd) => match cmd {
                 Command::Next => {
                     if !self.queue.model().can_play_next() {
+                        sender.input(AppIn::Player(Command::Stop));
                         return;
                     }
                     self.queue.emit(QueueIn::PlayNext);
@@ -1041,9 +1030,11 @@ impl relm4::component::AsyncComponent for App {
                             "could not stop playback: {e:?}"
                         )));
                     }
+                    self.play_info.emit(PlayInfoIn::NewState(Box::new(None)));
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.queue.emit(QueueIn::NewState(PlayState::Stop));
+                    self.seekbar.emit(SeekbarIn::Disable);
                     self.mpris.set_state(PlayState::Stop);
                 }
                 Command::SetSongPosition(pos_ms) => {
