@@ -466,9 +466,11 @@ impl relm4::factory::FactoryComponent for QueueSong {
                 _ => {}
             },
             QueueSongIn::FavoriteSong(id, true) if id == self.info.id => {
+                self.info.starred = Some(chrono::Utc::now().into());
                 self.favorited.set_icon_name("starred-symbolic")
             }
             QueueSongIn::FavoriteSong(id, false) if id == self.info.id => {
+                self.info.starred = None;
                 self.favorited.set_icon_name("non-starred-symbolic")
             }
             QueueSongIn::FavoriteSong(_, _) => {}
