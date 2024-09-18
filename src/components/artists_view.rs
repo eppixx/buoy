@@ -115,7 +115,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
                             set_icon_name: "non-starred-symbolic",
                             set_width_request: 50,
                             connect_clicked => Self::Input::FilterChanged,
-                            set_tooltip_text: Some("Toggle showing favortited albums"),
+                            set_tooltip_text: Some("Toggle showing favortited artists"),
                         },
                     }
                 },

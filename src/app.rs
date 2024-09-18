@@ -471,7 +471,7 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::Button {
                                             add_css_class: "browser-navigation-button",
                                             set_icon_name: "avatar-default-symbolic",
-                                            set_tooltip: "Show Artists",
+                                            set_tooltip: "Show artists",
                                             connect_clicked[browser_sender] => move |_| {
                                                 browser_sender.emit(BrowserIn::ArtistsClicked);
                                             }
@@ -479,7 +479,7 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::Button {
                                             add_css_class: "browser-navigation-button",
                                             set_icon_name: "media-optical-cd-audio-symbolic",
-                                            set_tooltip: "Show Albums",
+                                            set_tooltip: "Show albums",
                                             connect_clicked[browser_sender] => move |_| {
                                                 browser_sender.emit(BrowserIn::AlbumsClicked);
                                             }
@@ -487,7 +487,7 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::Button {
                                             add_css_class: "browser-navigation-button",
                                             set_icon_name: "audio-x-generic-symbolic",
-                                            set_tooltip: "Show Tracks",
+                                            set_tooltip: "Show tracks",
                                             connect_clicked[browser_sender] => move |_| {
                                                 browser_sender.emit(BrowserIn::TracksClicked);
                                             }

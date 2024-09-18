@@ -371,7 +371,7 @@ impl relm4::Component for Queue {
 
                 pack_end = &gtk::Button {
                     set_icon_name: "document-new-symbolic",
-                    set_tooltip: "Add queue to playlists",
+                    set_tooltip: "Create new playlist from queue",
                     set_focus_on_click: false,
                     connect_clicked[sender] => move |_btn| {
                         sender.output(QueueOut::CreatePlaylist).expect("sending failed");
