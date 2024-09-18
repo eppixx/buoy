@@ -146,12 +146,12 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 ArtistElementOut::Clicked(id) => {
                     sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap();
                 }
-                ArtistElementOut::DisplayToast(msg) => sender
-                    .output(ArtistsViewOut::DisplayToast(msg))
-                    .expect("sending failed"),
+                ArtistElementOut::DisplayToast(msg) => {
+                    sender.output(ArtistsViewOut::DisplayToast(msg)).unwrap()
+                }
                 ArtistElementOut::FavoriteClicked(id, state) => sender
                     .output(ArtistsViewOut::FavoriteClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             ArtistsViewIn::FilterChanged => {
                 // update icon of favorite ToggleButton

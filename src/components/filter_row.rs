@@ -525,7 +525,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
         match msg {
             Self::Input::RemoveFilter => sender
                 .output(FilterRowOut::RemoveFilter(self.index.clone()))
-                .expect("sending failed"),
+                .unwrap(),
             Self::Input::SetTo(category) => {
                 self.stack.set_visible_child_enum(&category);
             }
@@ -649,9 +649,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                 }
-                sender
-                    .output(Self::Output::ParameterChanged)
-                    .expect("sending failed");
+                sender.output(Self::Output::ParameterChanged).unwrap();
             }
         }
     }

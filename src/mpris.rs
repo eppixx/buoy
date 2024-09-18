@@ -98,65 +98,47 @@ impl Mpris {
 
     pub fn can_play_next(&mut self, state: bool) {
         self.info.lock().unwrap().can_next = state;
-        self.sender
-            .try_send(DataChanged::CanPlayNext)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::CanPlayNext).unwrap();
     }
 
     pub fn can_play_previous(&mut self, state: bool) {
         self.info.lock().unwrap().can_previous = state;
-        self.sender
-            .try_send(DataChanged::CanPlayPrev)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::CanPlayPrev).unwrap();
     }
 
     pub fn can_play(&mut self, state: bool) {
         self.info.lock().unwrap().can_play = state;
-        self.sender
-            .try_send(DataChanged::CanPlay)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::CanPlay).unwrap();
     }
 
     pub fn set_volume(&mut self, volume: f64) {
         self.info.lock().unwrap().volume = volume;
-        self.sender
-            .try_send(DataChanged::Volume)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::Volume).unwrap();
     }
 
     pub fn set_state(&mut self, state: PlayState) {
         self.info.lock().unwrap().state = state;
-        self.sender
-            .try_send(DataChanged::Playback)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::Playback).unwrap();
     }
 
     pub async fn set_song(&mut self, song: Option<submarine::data::Child>) {
         self.info.lock().unwrap().song = song;
-        self.sender
-            .try_send(DataChanged::Metadata)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::Metadata).unwrap();
     }
 
     pub fn set_loop_status(&mut self, repeat: Repeat) {
         self.info.lock().unwrap().loop_status = repeat;
-        self.sender
-            .try_send(DataChanged::Repeat)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::Repeat).unwrap();
     }
 
     pub fn set_shuffle(&mut self, shuffle: Shuffle) {
         self.info.lock().unwrap().shuffle = shuffle;
-        self.sender
-            .try_send(DataChanged::Shuffle)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::Shuffle).unwrap();
     }
 
     pub fn set_position(&mut self, position: i64) {
         self.info.lock().unwrap().song_position = position;
-        self.sender
-            .try_send(DataChanged::SongPosition)
-            .expect("sending failed");
+        self.sender.try_send(DataChanged::SongPosition).unwrap();
     }
 }
 
@@ -266,7 +248,7 @@ impl Player {
             .try_send(MprisOut::Player(Command::SetSongPosition(
                 self.info.lock().unwrap().song_position,
             )))
-            .expect("sending failed");
+            .unwrap();
     }
 
     /// * `index` - Index id of the track to set to
@@ -276,7 +258,7 @@ impl Player {
         self.info.lock().unwrap().song_position = pos;
         self.sender
             .try_send(MprisOut::Player(Command::SetSongPosition(pos)))
-            .expect("sending failed");
+            .unwrap();
     }
 
     fn open_uri(&self, _uri: &str) {}
@@ -298,7 +280,7 @@ impl Player {
         self.info.lock().unwrap().loop_status = repeat.clone();
         self.sender
             .try_send(MprisOut::Player(Command::Repeat(repeat)))
-            .expect("sending failed");
+            .unwrap();
     }
 
     //playback speed; 1.0 is normal speed, 0.5 is half speed
@@ -326,7 +308,7 @@ impl Player {
         self.info.lock().unwrap().shuffle = shuffle.clone();
         self.sender
             .try_send(MprisOut::Player(Command::Shuffle(shuffle)))
-            .expect("sending failed");
+            .unwrap();
     }
 
     /// specifications: https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/

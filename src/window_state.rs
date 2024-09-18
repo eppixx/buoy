@@ -23,7 +23,7 @@ impl TryFrom<String> for WindowState {
             "Loading" => Ok(Self::Loading),
             "Login Form" => Ok(Self::LoginForm),
             "Main" => Ok(Self::Main),
-            e => Err(format!("\"{e}\" is not a State")),
+            e => Err(format!("\"{e}\" is not a valid State")),
         }
     }
 }

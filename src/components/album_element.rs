@@ -194,8 +194,8 @@ impl relm4::SimpleComponent for AlbumElement {
                                 AlbumElementInit::Child(child) => child.id.clone(),
                             };
                             match btn.icon_name().as_deref() {
-                                Some("starred-symbolic") => sender.output(AlbumElementOut::FavoriteClicked(id, false)).expect("sending failed"),
-                                Some("non-starred-symbolic") => sender.output(AlbumElementOut::FavoriteClicked(id, true)).expect("sending failed"),
+                                Some("starred-symbolic") => sender.output(AlbumElementOut::FavoriteClicked(id, false)).unwrap(),
+                                Some("non-starred-symbolic") => sender.output(AlbumElementOut::FavoriteClicked(id, true)).unwrap(),
                                 _ => {}
                             }
                         }
@@ -236,9 +236,9 @@ impl relm4::SimpleComponent for AlbumElement {
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             AlbumElementIn::DescriptiveCover(msg) => match msg {
-                DescriptiveCoverOut::DisplayToast(title) => sender
-                    .output(AlbumElementOut::DisplayToast(title))
-                    .expect("sending failed"),
+                DescriptiveCoverOut::DisplayToast(title) => {
+                    sender.output(AlbumElementOut::DisplayToast(title)).unwrap()
+                }
             },
             AlbumElementIn::Favorited(id, state) => {
                 let local_id = match &self.init {

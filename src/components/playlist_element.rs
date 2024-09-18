@@ -291,12 +291,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         self.index.clone(),
                         self.playlist.clone(),
                     ))
-                    .expect("sending failed");
+                    .unwrap();
             }
             PlaylistElementIn::DeletePressed => {
                 sender
                     .output(PlaylistElementOut::Delete(self.index.clone()))
-                    .expect("sending failed");
+                    .unwrap();
             }
             PlaylistElementIn::ChangeState(state) => self.main_stack.set_visible_child_enum(&state),
             PlaylistElementIn::ConfirmRename => {

@@ -150,7 +150,7 @@ impl relm4::Component for ArtistView {
                                 Some("starred-symbolic") => false,
                                 _ => true,
                             };
-                            sender.output(ArtistViewOut::FavoriteArtistClicked(init.id.clone(), state)).expect("sending failed");
+                            sender.output(ArtistViewOut::FavoriteArtistClicked(init.id.clone(), state)).unwrap();
                         }
                     },
 
@@ -262,17 +262,17 @@ impl relm4::Component for ArtistView {
                 AlbumElementOut::Clicked(id) => {
                     sender.output(ArtistViewOut::AlbumClicked(id)).unwrap();
                 }
-                AlbumElementOut::DisplayToast(title) => sender
-                    .output(ArtistViewOut::DisplayToast(title))
-                    .expect("sending failed"),
+                AlbumElementOut::DisplayToast(title) => {
+                    sender.output(ArtistViewOut::DisplayToast(title)).unwrap()
+                }
                 AlbumElementOut::FavoriteClicked(id, state) => sender
                     .output(ArtistViewOut::FavoriteAlbumClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             ArtistViewIn::Cover(msg) => match msg {
-                CoverOut::DisplayToast(title) => sender
-                    .output(ArtistViewOut::DisplayToast(title))
-                    .expect("sending failed"),
+                CoverOut::DisplayToast(title) => {
+                    sender.output(ArtistViewOut::DisplayToast(title)).unwrap()
+                }
             },
             ArtistViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
@@ -329,7 +329,7 @@ impl relm4::Component for ArtistView {
                 .output(ArtistViewOut::DisplayToast(format!(
                     "error loading artist: {e}"
                 )))
-                .expect("sending error"),
+                .unwrap(),
             ArtistViewCmd::LoadedArtist(Ok(artist)) => {
                 if let Some(bio) = artist.base.biography {
                     self.bio = bio;

@@ -374,7 +374,7 @@ impl relm4::Component for Queue {
                     set_tooltip: "Create new playlist from queue",
                     set_focus_on_click: false,
                     connect_clicked[sender] => move |_btn| {
-                        sender.output(QueueOut::CreatePlaylist).expect("sending failed");
+                        sender.output(QueueOut::CreatePlaylist).unwrap();
                     },
                 },
             }
@@ -594,7 +594,7 @@ impl relm4::Component for Queue {
                 //set new state when deleting played index
                 if let Some(current) = &self.playing_index {
                     if selected_indices.contains(&current.current_index()) {
-                        sender.output(QueueOut::Player(Command::Stop)).expect("sending failed");
+                        sender.output(QueueOut::Player(Command::Stop)).unwrap();
                         sender.input(QueueIn::SetCurrent(None));
                     }
                 }
@@ -624,7 +624,7 @@ impl relm4::Component for Queue {
                 }
                 sender
                     .output(QueueOut::Player(Command::Shuffle(shuffle)))
-                    .expect("sending failed");
+                    .unwrap();
             }
             QueueIn::PlayNext => {
                 if self.songs.is_empty() {
@@ -742,9 +742,9 @@ impl relm4::Component for Queue {
                     }
                     self.last_selected = Some(index.clone());
                 }
-                QueueSongOut::DisplayToast(msg) => sender
-                    .output(QueueOut::DisplayToast(msg))
-                    .expect("sending failded"),
+                QueueSongOut::DisplayToast(msg) => {
+                    sender.output(QueueOut::DisplayToast(msg)).unwrap()
+                }
                 QueueSongOut::DropAbove { src, dest } => {
                     let mut guard = self.songs.guard();
                     for (i, child) in src.iter().enumerate() {
@@ -808,13 +808,11 @@ impl relm4::Component for Queue {
                         self.last_selected = Some(target);
                     }
                 }
-                QueueSongOut::FavoriteClicked(id, state) => sender
-                    .output(QueueOut::FavoriteClicked(id, state))
-                    .expect("sending failed"),
+                QueueSongOut::FavoriteClicked(id, state) => {
+                    sender.output(QueueOut::FavoriteClicked(id, state)).unwrap()
+                }
             },
-            QueueIn::DisplayToast(title) => sender
-                .output(QueueOut::DisplayToast(title))
-                .expect("sending failed"),
+            QueueIn::DisplayToast(title) => sender.output(QueueOut::DisplayToast(title)).unwrap(),
             QueueIn::Favorite(id, state) => {
                 self.songs.broadcast(QueueSongIn::FavoriteSong(id, state));
             }
@@ -849,7 +847,7 @@ impl relm4::Component for Queue {
             QueueCmd::Error(msg, e) => {
                 sender
                     .output(QueueOut::DisplayToast(format!("{msg}: {e:?}")))
-                    .expect("sending failed");
+                    .unwrap();
             }
             QueueCmd::FetchedAppendItems(children) => {
                 for child in children {

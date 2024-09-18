@@ -88,12 +88,10 @@ impl Playback {
                 match msg.view() {
                     MessageView::Eos(..) => {
                         track.store(false, Ordering::Relaxed);
-                        send.try_send(PlaybackOut::TrackEnd)
-                            .expect("sending failed");
+                        send.try_send(PlaybackOut::TrackEnd).unwrap();
                     }
                     MessageView::StreamStart(..) => {
-                        send.try_send(PlaybackOut::SongPosition(0))
-                            .expect("sending failed");
+                        send.try_send(PlaybackOut::SongPosition(0)).unwrap();
                     }
                     _ => {}
                 }
@@ -122,7 +120,7 @@ impl Playback {
                     None => 0,
                 };
                 send.try_send(PlaybackOut::SongPosition(seconds * 1000))
-                    .expect("sending failed");
+                    .unwrap();
                 stamp.replace(current);
             }
 

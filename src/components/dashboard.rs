@@ -556,12 +556,12 @@ impl relm4::Component for Dashboard {
                 AlbumElementOut::Clicked(clicked) => {
                     sender.output(DashboardOut::ClickedAlbum(clicked)).unwrap();
                 }
-                AlbumElementOut::DisplayToast(title) => sender
-                    .output(DashboardOut::DisplayToast(title))
-                    .expect("sending failed"),
+                AlbumElementOut::DisplayToast(title) => {
+                    sender.output(DashboardOut::DisplayToast(title)).unwrap()
+                }
                 AlbumElementOut::FavoriteClicked(id, state) => sender
                     .output(DashboardOut::FavoriteClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             DashboardIn::ClickedRandomize => {
                 self.random_album_list.clear();

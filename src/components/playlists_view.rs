@@ -186,7 +186,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                             },
 
                             connect_clicked[sender] => move |_btn| {
-                                sender.output(PlaylistsViewOut::CreatePlaylist).expect("sending failed");
+                                sender.output(PlaylistsViewOut::CreatePlaylist).unwrap();
                             }
                         }
                     }
@@ -370,9 +370,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                     }
                     self.index_shown = Some(index);
                 }
-                PlaylistElementOut::DisplayToast(msg) => sender
-                    .output(PlaylistsViewOut::DisplayToast(msg))
-                    .expect("sending failed"),
+                PlaylistElementOut::DisplayToast(msg) => {
+                    sender.output(PlaylistsViewOut::DisplayToast(msg)).unwrap()
+                }
                 PlaylistElementOut::Delete(index) => {
                     let list = match self.playlists.get(index.current_index()) {
                         None => {
@@ -380,7 +380,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                                 .output(PlaylistsViewOut::DisplayToast(String::from(
                                     "index does not point to a playlist",
                                 )))
-                                .expect("sending failed");
+                                .unwrap();
                             return;
                         }
                         Some(list) => list,
@@ -390,22 +390,20 @@ impl relm4::SimpleComponent for PlaylistsView {
                             index,
                             list.get_list().clone(),
                         ))
-                        .expect("sending failed");
+                        .unwrap();
                 }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
                     .output(PlaylistsViewOut::DisplayToast(title))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             PlaylistsViewIn::ReplaceQueue => {
                 if let Some(index) = &self.index_shown {
                     let list = self.playlists.guard()[index.current_index()]
                         .get_list()
                         .clone();
-                    sender
-                        .output(PlaylistsViewOut::ReplaceQueue(list))
-                        .expect("sending failed");
+                    sender.output(PlaylistsViewOut::ReplaceQueue(list)).unwrap();
                 }
             }
             PlaylistsViewIn::AddToQueue => {
@@ -413,9 +411,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                     let list = self.playlists.guard()[index.current_index()]
                         .get_list()
                         .clone();
-                    sender
-                        .output(PlaylistsViewOut::AddToQueue(list))
-                        .expect("sending failed");
+                    sender.output(PlaylistsViewOut::AddToQueue(list)).unwrap();
                 }
             }
             PlaylistsViewIn::AppendToQueue => {
@@ -425,7 +421,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .clone();
                     sender
                         .output(PlaylistsViewOut::AppendToQueue(list))
-                        .expect("sending failed");
+                        .unwrap();
                 }
             }
             PlaylistsViewIn::NewPlaylist(list) => {

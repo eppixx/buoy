@@ -127,8 +127,8 @@ impl relm4::SimpleComponent for ArtistElement {
 
                         connect_clicked[sender, init] => move |btn| {
                             match btn.icon_name().as_deref() {
-                                Some("starred-symbolic") => sender.output(ArtistElementOut::FavoriteClicked(init.id.clone(), false)).expect("sending failed"),
-                                Some("non-starred-symbolic") => sender.output(ArtistElementOut::FavoriteClicked(init.id.clone(), true)).expect("sending failed"),
+                                Some("starred-symbolic") => sender.output(ArtistElementOut::FavoriteClicked(init.id.clone(), false)).unwrap(),
+                                Some("non-starred-symbolic") => sender.output(ArtistElementOut::FavoriteClicked(init.id.clone(), true)).unwrap(),
                                 _ => {}
                             }
                         }
@@ -167,9 +167,9 @@ impl relm4::SimpleComponent for ArtistElement {
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             ArtistElementIn::DescriptiveCover(msg) => match msg {
-                DescriptiveCoverOut::DisplayToast(msg) => sender
-                    .output(ArtistElementOut::DisplayToast(msg))
-                    .expect("sending failed"),
+                DescriptiveCoverOut::DisplayToast(msg) => {
+                    sender.output(ArtistElementOut::DisplayToast(msg)).unwrap()
+                }
             },
             ArtistElementIn::Favorited(id, state) => {
                 if self.init.id == id {

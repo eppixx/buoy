@@ -154,12 +154,12 @@ impl relm4::component::Component for AlbumsView {
                 AlbumElementOut::Clicked(clicked) => {
                     sender.output(AlbumsViewOut::Clicked(clicked)).unwrap();
                 }
-                AlbumElementOut::DisplayToast(title) => sender
-                    .output(AlbumsViewOut::DisplayToast(title))
-                    .expect("sending failed"),
+                AlbumElementOut::DisplayToast(title) => {
+                    sender.output(AlbumsViewOut::DisplayToast(title)).unwrap()
+                }
                 AlbumElementOut::FavoriteClicked(id, state) => sender
                     .output(AlbumsViewOut::FavoriteClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             AlbumsViewIn::FilterChanged => {
                 // update icon of favorite ToggleButton

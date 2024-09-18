@@ -155,7 +155,7 @@ impl relm4::Component for AlbumView {
                                 Some("starred-symbolic") => false,
                                 _ => true,
                             };
-                            sender.output(AlbumViewOut::FavoriteClicked(id, state)).expect("sending failed");
+                            sender.output(AlbumViewOut::FavoriteClicked(id, state)).unwrap();
                         }
                     },
 
@@ -282,9 +282,9 @@ impl relm4::Component for AlbumView {
         match msg {
             AlbumViewIn::AlbumTracks => {} //do nothing
             AlbumViewIn::Cover(msg) => match msg {
-                CoverOut::DisplayToast(title) => sender
-                    .output(AlbumViewOut::DisplayToast(title))
-                    .expect("sending failed"),
+                CoverOut::DisplayToast(title) => {
+                    sender.output(AlbumViewOut::DisplayToast(title)).unwrap()
+                }
             },
             AlbumViewIn::SearchChanged(search) => {
                 self.tracks.clear_filters();
@@ -324,7 +324,7 @@ impl relm4::Component for AlbumView {
                     false if matched => self.favorite.set_icon_name("non-starred-symbolic"),
                     _ => {}
                 }
-            },
+            }
             AlbumViewIn::FavoritedSong(id, state) => {
                 use relm4::typed_view::TypedListItem;
 
@@ -377,7 +377,7 @@ impl relm4::Component for AlbumView {
             AlbumViewCmd::LoadedAlbum(Err(e)) => {
                 sender
                     .output(AlbumViewOut::DisplayToast(format!("could not load: {e:?}")))
-                    .expect("sending failed");
+                    .unwrap();
             }
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 //load tracks

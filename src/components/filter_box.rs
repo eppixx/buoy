@@ -136,14 +136,10 @@ impl relm4::SimpleComponent for FilterBox {
         match msg {
             Self::Input::ClearFilters => {
                 self.filters.guard().clear();
-                sender
-                    .output(Self::Output::FiltersChanged)
-                    .expect("sending failed");
+                sender.output(Self::Output::FiltersChanged).unwrap();
             }
             Self::Input::Favorited => {
-                sender
-                    .output(Self::Output::FiltersChanged)
-                    .expect("sending failed");
+                sender.output(Self::Output::FiltersChanged).unwrap();
             }
             Self::Input::AddNewFilter => {
                 use glib::object::Cast;
@@ -156,22 +152,16 @@ impl relm4::SimpleComponent for FilterBox {
                 let index = self.filters.guard().push_back(category.clone());
                 self.filters
                     .send(index.current_index(), FilterRowIn::SetTo(category.clone()));
-                sender
-                    .output(Self::Output::FiltersChanged)
-                    .expect("sending failed");
+                sender.output(Self::Output::FiltersChanged).unwrap();
             }
             Self::Input::FilterRow(msg) => match msg {
                 FilterRowOut::RemoveFilter(index) => {
                     self.filters.guard().remove(index.current_index());
                     println!("current filters {:?}", self.get_filters());
-                    sender
-                        .output(Self::Output::FiltersChanged)
-                        .expect("sending failed");
+                    sender.output(Self::Output::FiltersChanged).unwrap();
                 }
                 FilterRowOut::ParameterChanged => {
-                    sender
-                        .output(FilterBoxOut::FiltersChanged)
-                        .expect("sending failed");
+                    sender.output(FilterBoxOut::FiltersChanged).unwrap();
                     println!("current filters {:?}", self.get_filters());
                 }
             },

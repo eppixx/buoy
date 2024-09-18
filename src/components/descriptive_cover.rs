@@ -139,7 +139,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
             DescriptiveCoverIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
                     .output(DescriptiveCoverOut::DisplayToast(title))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
         }
     }

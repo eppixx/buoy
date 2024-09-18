@@ -104,9 +104,9 @@ impl relm4::SimpleComponent for PlayInfo {
                 }
             },
             PlayInfoIn::Cover(msg) => match msg {
-                CoverOut::DisplayToast(title) => sender
-                    .output(PlayInfoOut::DisplayToast(title))
-                    .expect("sending failed"),
+                CoverOut::DisplayToast(title) => {
+                    sender.output(PlayInfoOut::DisplayToast(title)).unwrap()
+                }
             },
         }
     }

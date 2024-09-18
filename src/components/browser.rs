@@ -258,12 +258,12 @@ impl relm4::component::AsyncComponent for Browser {
                 DashboardOut::ClickedAlbum(id) => {
                     sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id)))
                 }
-                DashboardOut::DisplayToast(title) => sender
-                    .output(BrowserOut::DisplayToast(title))
-                    .expect("sending failed"),
+                DashboardOut::DisplayToast(title) => {
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                }
                 DashboardOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::Clicked(id) => {
@@ -286,12 +286,12 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
-                AlbumsViewOut::DisplayToast(title) => sender
-                    .output(BrowserOut::DisplayToast(title))
-                    .expect("sending failed"),
+                AlbumsViewOut::DisplayToast(title) => {
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                }
                 AlbumsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
@@ -310,12 +310,12 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
-                ArtistsViewOut::DisplayToast(msg) => sender
-                    .output(BrowserOut::DisplayToast(msg))
-                    .expect("sending failed"),
+                ArtistsViewOut::DisplayToast(msg) => {
+                    sender.output(BrowserOut::DisplayToast(msg)).unwrap()
+                }
                 ArtistsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteArtistClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             BrowserIn::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(drop) => {
@@ -327,12 +327,12 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::ReplaceQueue(drop) => {
                     sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
                 }
-                AlbumViewOut::DisplayToast(title) => sender
-                    .output(BrowserOut::DisplayToast(title))
-                    .expect("sending failed"),
+                AlbumViewOut::DisplayToast(title) => {
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                }
                 AlbumViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
@@ -353,7 +353,7 @@ impl relm4::component::AsyncComponent for Browser {
                         .set_child(Some(self.history_widget.last().unwrap().widget()));
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
-                        .expect("sending failed");
+                        .unwrap();
                 }
                 ArtistViewOut::AppendArtist(drop) => {
                     sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
@@ -364,37 +364,33 @@ impl relm4::component::AsyncComponent for Browser {
                 ArtistViewOut::ReplaceQueue(drop) => {
                     sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
                 }
-                ArtistViewOut::DisplayToast(title) => sender
-                    .output(BrowserOut::DisplayToast(title))
-                    .expect("sending failed"),
+                ArtistViewOut::DisplayToast(title) => {
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                }
                 ArtistViewOut::FavoriteAlbumClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
                 ArtistViewOut::FavoriteArtistClicked(id, state) => sender
                     .output(BrowserOut::FavoriteArtistClicked(id, state))
-                    .expect("sending failed"),
+                    .unwrap(),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
-                PlaylistsViewOut::DisplayToast(title) => sender
-                    .output(BrowserOut::DisplayToast(title))
-                    .expect("sending failed"),
+                PlaylistsViewOut::DisplayToast(title) => {
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                }
                 PlaylistsViewOut::AppendToQueue(list) => {
                     let drop = Droppable::Playlist(Box::new(list));
-                    sender
-                        .output(BrowserOut::AppendToQueue(drop))
-                        .expect("sending failed");
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap();
                 }
                 PlaylistsViewOut::AddToQueue(list) => {
                     let drop = Droppable::Playlist(Box::new(list));
                     sender
                         .output(BrowserOut::InsertAfterCurrentInQueue(drop))
-                        .expect("sending failed");
+                        .unwrap();
                 }
                 PlaylistsViewOut::ReplaceQueue(list) => {
                     let drop = Droppable::Playlist(Box::new(list));
-                    sender
-                        .output(BrowserOut::ReplaceQueue(drop))
-                        .expect("sending failed");
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap();
                 }
                 PlaylistsViewOut::DeletePlaylist(index, list) => {
                     //delete playlist from server
@@ -404,7 +400,7 @@ impl relm4::component::AsyncComponent for Browser {
                             .output(BrowserOut::DisplayToast(format!(
                                 "could not delete playlist from server: {e:?}"
                             )))
-                            .expect("sending failed");
+                            .unwrap();
                         return;
                     }
 
@@ -433,7 +429,7 @@ impl relm4::component::AsyncComponent for Browser {
                                 .output(BrowserOut::DisplayToast(format!(
                                     "could not create playlist on server: {e:?}"
                                 )))
-                                .expect("sending failed");
+                                .unwrap();
                             return;
                         }
                         Ok(list) => list,
@@ -447,7 +443,7 @@ impl relm4::component::AsyncComponent for Browser {
                                 .output(BrowserOut::DisplayToast(format!(
                                     "could not create playlist on server: {e:?}"
                                 )))
-                                .expect("sending failed");
+                                .unwrap();
                             return;
                         }
                         Ok(list) => list,
@@ -470,7 +466,7 @@ impl relm4::component::AsyncComponent for Browser {
                                 .output(BrowserOut::DisplayToast(format!(
                                     "could not update playlist on server: {e:?}"
                                 )))
-                                .expect("sending failed");
+                                .unwrap();
                             break;
                         }
 

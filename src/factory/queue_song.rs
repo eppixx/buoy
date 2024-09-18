@@ -287,10 +287,10 @@ impl relm4::factory::FactoryComponent for QueueSong {
                         if !(state.contains(gdk::ModifierType::SHIFT_MASK)
                              || state.contains(gdk::ModifierType::CONTROL_MASK) ) {
                             // normal click
-                            sender.output(QueueSongOut::Clicked(index.clone())).expect("sending failed");
+                            sender.output(QueueSongOut::Clicked(index.clone())).unwrap();
                         } else if state.contains(gdk::ModifierType::SHIFT_MASK) {
                             // shift click
-                            sender.output(QueueSongOut::ShiftClicked(index.clone())).expect("sending failed");
+                            sender.output(QueueSongOut::ShiftClicked(index.clone())).unwrap();
                         }
                     }
                     else if n == 2 {
@@ -303,7 +303,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
             add_controller = gtk::EventControllerKey {
                 connect_key_pressed[sender] => move |_widget, key, _code, _state| {
                     if key == gtk::gdk::Key::Delete {
-                        sender.output(QueueSongOut::Remove).expect("sending failed");
+                        sender.output(QueueSongOut::Remove).unwrap();
                     }
                     gtk::glib::Propagation::Stop
                 }
@@ -320,7 +320,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
                         self.index.clone(),
                         Box::new(self.info.clone()),
                     ))
-                    .expect("sending failed");
+                    .unwrap();
             }
             QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
@@ -421,14 +421,14 @@ impl relm4::factory::FactoryComponent for QueueSong {
                             src: songs,
                             dest: self.index.clone(),
                         })
-                        .expect("sending failed");
+                        .unwrap();
                 } else {
                     sender
                         .output(QueueSongOut::DropBelow {
                             src: songs,
                             dest: self.index.clone(),
                         })
-                        .expect("sending failed");
+                        .unwrap();
                 }
             }
             QueueSongIn::MoveSong { index, y } => {
@@ -441,28 +441,28 @@ impl relm4::factory::FactoryComponent for QueueSong {
                             src: index.0.clone(),
                             dest: self.index.clone(),
                         })
-                        .expect("sending failed");
+                        .unwrap();
                 } else {
                     sender
                         .output(QueueSongOut::MoveBelow {
                             src: index.0.clone(),
                             dest: self.index.clone(),
                         })
-                        .expect("sending failed");
+                        .unwrap();
                 }
             }
             QueueSongIn::Cover(msg) => match msg {
-                CoverOut::DisplayToast(title) => sender
-                    .output(QueueSongOut::DisplayToast(title))
-                    .expect("sending failed"),
+                CoverOut::DisplayToast(title) => {
+                    sender.output(QueueSongOut::DisplayToast(title)).unwrap()
+                }
             },
             QueueSongIn::FavoriteClicked => match self.favorited.icon_name().as_deref() {
                 Some("starred-symbolic") => sender
                     .output(QueueSongOut::FavoriteClicked(self.info.id.clone(), false))
-                    .expect("sending failed"),
+                    .unwrap(),
                 Some("non-starred-symbolic") => sender
                     .output(QueueSongOut::FavoriteClicked(self.info.id.clone(), true))
-                    .expect("sending failed"),
+                    .unwrap(),
                 _ => {}
             },
             QueueSongIn::FavoriteSong(id, true) if id == self.info.id => {
@@ -484,14 +484,14 @@ impl relm4::factory::FactoryComponent for QueueSong {
                 .output(QueueSongOut::DisplayToast(format!(
                     "moving song failed: {e}",
                 )))
-                .expect("sending failed"),
+                .unwrap(),
             QueueSongCmd::InsertChildrenAbove(Ok((index, songs))) => {
                 sender
                     .output(QueueSongOut::DropAbove {
                         src: songs,
                         dest: index,
                     })
-                    .expect("sending failed");
+                    .unwrap();
             }
             QueueSongCmd::InsertChildrenBelow(Ok((index, songs))) => {
                 sender
@@ -499,7 +499,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
                         src: songs,
                         dest: index,
                     })
-                    .expect("sending failed");
+                    .unwrap();
             }
         }
     }

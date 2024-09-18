@@ -496,7 +496,7 @@ impl relm4::component::AsyncComponent for App {
                                             add_css_class: "browser-navigation-button",
                                             set_icon_name: "playlist-symbolic",
                                             set_tooltip: "Show playlists",
-                                            connect_clicked[browser_sender] => move|_| {
+                                            connect_clicked[browser_sender] => move |_| {
                                                 browser_sender.emit(BrowserIn::PlaylistsClicked);
                                             }
                                         },
