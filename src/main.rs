@@ -20,6 +20,8 @@ pub mod subsonic_cover;
 pub mod types;
 pub mod window_state;
 
+const LOG_PARA: &str = "info,bouy:trace,submarine:info";
+
 fn main() -> anyhow::Result<()> {
     //enable logging
     // use filters from RUST_LOG variable when given, otherwise use default filters
@@ -28,9 +30,7 @@ fn main() -> anyhow::Result<()> {
         .try_from_env()
     {
         Ok(filter) => filter,
-        Err(_) => {
-            tracing_subscriber::EnvFilter::builder().parse("info,buoy:trace,submarine:info")?
-        }
+        Err(_) => tracing_subscriber::EnvFilter::builder().parse(LOG_PARA)?,
     };
     tracing_subscriber::fmt().with_env_filter(filter).init();
 

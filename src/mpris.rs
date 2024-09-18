@@ -10,6 +10,7 @@ use crate::{
     player::Command,
 };
 
+/// converts the internally used values to the mpris used ones and vice versa
 pub trait MprisString {
     fn to_mpris_string(&self) -> String;
     /// on unusable input it defaults to Normal
