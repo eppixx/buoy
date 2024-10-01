@@ -102,18 +102,28 @@ impl relm4::component::Component for AlbumsView {
                     #[wrap(Some)]
                     set_end_widget = &gtk::Box {
                         set_spacing: 10,
+                        //prevent cutoff of "glow" when widget has focus
+                        set_margin_top: 2,
 
-                        append: favorite = &gtk::ToggleButton {
-                            set_icon_name: "non-starred-symbolic",
-                            set_width_request: 50,
-                            connect_clicked => Self::Input::FilterChanged,
-                            set_tooltip_text: Some("Toggle showing favortited albums"),
+                        gtk::Box {
+                            set_spacing: 5,
+
+                            gtk::Label {
+                                set_text: "Show only favorites:",
+                            },
+                            append: favorite = &gtk::Switch {
+                                set_active: false,
+                                connect_state_notify => Self::Input::FilterChanged,
+                                set_tooltip_text: Some("Toggle showing favortited artists"),
+                            }
                         },
 
                         // create new box to disable spacing
                         gtk::Box {
+                            set_spacing: 5,
+
                             gtk::Label {
-                                set_text: "Sort by: ",
+                                set_text: "Sort by:",
                             },
                             gtk::DropDown {
                                 set_model: Some(&sort_by::SortBy::albums_store()),
@@ -145,6 +155,7 @@ impl relm4::component::Component for AlbumsView {
                         },
                         gtk::Button {
                             set_icon_name: "user-trash-symbolic",
+                            set_margin_end: 10,
                             connect_clicked => Self::Input::ClearFilters,
                         }
                     }
@@ -184,12 +195,6 @@ impl relm4::component::Component for AlbumsView {
                     .unwrap(),
             },
             AlbumsViewIn::FilterChanged => {
-                // update icon of favorite ToggleButton
-                match widgets.favorite.is_active() {
-                    false => widgets.favorite.set_icon_name("non-starred-symbolic"),
-                    true => widgets.favorite.set_icon_name("starred-symbolic"),
-                }
-
                 let subsonic = self.subsonic.clone();
                 let favorite = widgets.favorite.clone();
                 self.albums.set_filter_func(move |element| {

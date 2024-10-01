@@ -116,16 +116,30 @@ impl relm4::component::AsyncComponent for ArtistsView {
 
                     #[wrap(Some)]
                     set_end_widget = &gtk::Box {
-                        append: favorite = &gtk::ToggleButton {
-                            set_icon_name: "non-starred-symbolic",
-                            set_width_request: 50,
-                            connect_clicked => Self::Input::FilterChanged,
-                            set_tooltip_text: Some("Toggle showing favortited artists"),
+                        set_spacing: 10,
+                        //prevent cutoff of "glow" when widget has focus
+                        set_margin_top: 2,
+
+                        gtk::Box {
+                            set_spacing: 5,
+
+                            gtk::Label {
+                                set_text: "Show only favorites:",
+                            },
+                            append: favorite = &gtk::Switch {
+                                set_active: false,
+                                connect_state_notify => Self::Input::FilterChanged,
+                                set_tooltip_text: Some("Toggle showing favortited artists"),
+                            }
                         },
 
                         gtk::Box {
+                            set_spacing: 5,
+                            //create space to the end of the window
+                            set_margin_end: 10,
+
                             gtk::Label {
-                                set_text: "Sort by: ",
+                                set_text: "Sort by:",
                             },
                             gtk::DropDown {
                                 set_model: Some(&SortBy::artists_store()),
@@ -177,12 +191,6 @@ impl relm4::component::AsyncComponent for ArtistsView {
                     .unwrap(),
             },
             ArtistsViewIn::FilterChanged => {
-                // update icon of favorite ToggleButton
-                match widgets.favorite.is_active() {
-                    false => widgets.favorite.set_icon_name("non-starred-symbolic"),
-                    true => widgets.favorite.set_icon_name("starred-symbolic"),
-                }
-
                 let subsonic = self.subsonic.clone();
                 let favorite = widgets.favorite.clone();
                 self.artists.set_filter_func(move |element| {
