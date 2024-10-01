@@ -15,6 +15,7 @@ use crate::{
         album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
         filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
         filter_row::{Category, Filter},
+        sort_by::{self, SortBy},
     },
     settings::Settings,
     subsonic::Subsonic,
@@ -43,6 +44,7 @@ pub enum AlbumsViewIn {
     ClearFilters,
     Favorited(String, bool),
     CoverSizeChanged,
+    Sort(SortBy),
 }
 
 #[relm4::component(pub)]
@@ -105,6 +107,25 @@ impl relm4::component::Component for AlbumsView {
                             set_width_request: 50,
                             connect_clicked => Self::Input::FilterChanged,
                             set_tooltip_text: Some("Toggle showing favortited albums"),
+                        },
+
+                        // create new box to disable spacing
+                        gtk::Box {
+                            gtk::Label {
+                                set_text: "Sort by: ",
+                            },
+                            gtk::DropDown {
+                                set_model: Some(&sort_by::SortBy::store()),
+                                set_factory: Some(&sort_by::SortBy::factory()),
+                                set_show_arrow: true,
+                                connect_selected_notify[sender] => move |drop| {
+                                    use glib::object::Cast;
+
+                                    let obj = drop.selected_item().unwrap().downcast::<glib::BoxedAnyObject>().unwrap();
+                                    let sort: std::cell::Ref<SortBy> = obj.borrow();
+                                    sender.input(AlbumsViewIn::Sort(sort.clone()));
+                                },
+                            }
                         },
 
                         gtk::MenuButton {
@@ -302,7 +323,75 @@ impl relm4::component::Component for AlbumsView {
                     element.model().change_size(size);
                 }
             }
+            AlbumsViewIn::Sort(category) => {
+                //TODO fix hacky way of figuring out what element we are iterating over
+                let albums: Vec<_> = self
+                    .album_list
+                    .iter()
+                    .map(|controller| controller.model().info().clone())
+                    .collect();
+                self.albums.set_sort_func(move |a, b| {
+                    let match_fn = |init: &AlbumElementInit,
+                                    title: &gtk::Label,
+                                    artist: &gtk::Label|
+                     -> bool {
+                        match &init {
+                            AlbumElementInit::Child(c) => {
+                                c.title == title.text()
+                                    && c.artist.as_deref() == Some(&artist.text())
+                            }
+                            AlbumElementInit::AlbumId3(c) => {
+                                c.name == title.text()
+                                    && c.artist.as_deref() == Some(&artist.text())
+                            }
+                        }
+                    };
+
+                    let (title, artist) = get_info_of_flowboxchild(a);
+                    let a = albums
+                        .iter()
+                        .find(|a| match_fn(a, &title, &artist))
+                        .expect("album should be in there");
+                    let (title, artist) = get_info_of_flowboxchild(b);
+                    let b = albums
+                        .iter()
+                        .find(|a| match_fn(a, &title, &artist))
+                        .expect("album should be in there");
+
+                    match (a, b) {
+                        (AlbumElementInit::Child(a), AlbumElementInit::Child(b)) => {
+                            match category {
+                                SortBy::Alphabetical => sort_fn(&a.title, &b.title),
+                                SortBy::AlphabeticalRev => sort_fn(&b.title, &a.title),
+                                SortBy::RecentlyAdded => sort_fn(&a.created, &b.created),
+                                SortBy::RecentlyAddedRev => sort_fn(&b.created, &a.created),
+                                SortBy::Release => sort_fn(&a.year, &b.year),
+                                SortBy::ReleaseRev => sort_fn(&b.year, &a.year),
+                            }
+                        }
+                        (AlbumElementInit::AlbumId3(a), AlbumElementInit::AlbumId3(b)) => {
+                            match category {
+                                SortBy::Alphabetical => sort_fn(&a.name, &b.name),
+                                SortBy::AlphabeticalRev => sort_fn(&b.name, &a.name),
+                                SortBy::RecentlyAdded => sort_fn(&a.created, &b.created),
+                                SortBy::RecentlyAddedRev => sort_fn(&b.created, &a.created),
+                                SortBy::Release => sort_fn(&a.year, &b.year),
+                                SortBy::ReleaseRev => sort_fn(&b.year, &a.year),
+                            }
+                        }
+                        (_, _) => unreachable!(),
+                    }
+                });
+            }
         }
+    }
+}
+
+fn sort_fn<T: PartialOrd>(a: &T, b: &T) -> relm4::gtk::Ordering {
+    if a <= b {
+        relm4::gtk::Ordering::Smaller
+    } else {
+        relm4::gtk::Ordering::Larger
     }
 }
 
