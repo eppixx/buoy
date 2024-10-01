@@ -8,7 +8,6 @@ use crate::components::filter_row::{Category, Filter, FilterRow, FilterRowIn, Fi
 
 #[derive(Debug)]
 pub struct FilterBox {
-    // possible_categories: Vec<Category>,
     category_selection: gtk::DropDown,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
     favorite_switch: gtk::Switch,
@@ -45,7 +44,7 @@ pub enum FilterBoxOut {
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for FilterBox {
-    type Init = Vec<Category>;
+    type Init = gtk::gio::ListStore;
     type Input = FilterBoxIn;
     type Output = FilterBoxOut;
 
@@ -55,7 +54,6 @@ impl relm4::SimpleComponent for FilterBox {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
-            // possible_categories: init,
             category_selection: gtk::DropDown::default(),
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
@@ -121,7 +119,7 @@ impl relm4::SimpleComponent for FilterBox {
                     set_text: "Select filter",
                 },
                 model.category_selection.clone() {
-                    set_model: Some(&Category::store(possible_categories.clone())),
+                    set_model: Some(&possible_categories),
                     set_factory: Some(&Category::factory()),
                 },
                 gtk::Button {

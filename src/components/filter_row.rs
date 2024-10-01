@@ -5,7 +5,7 @@ use relm4::gtk::{
     prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt},
 };
 
-use crate::gtk_helper::stack::StackExt;
+use crate::{common::store_from_category, gtk_helper::stack::StackExt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Category {
@@ -56,8 +56,8 @@ impl TryFrom<String> for Category {
 }
 
 impl Category {
-    pub fn all() -> Vec<Self> {
-        vec![
+    pub fn all() -> gio::ListStore {
+        let categories = [
             Self::Title,
             Self::Year,
             Self::Cd,
@@ -67,26 +67,20 @@ impl Category {
             Self::Genre,
             Self::Duration,
             Self::BitRate,
-        ]
+        ];
+        store_from_category(&categories)
     }
 
-    pub fn albums_view() -> Vec<Self> {
-        vec![
+    pub fn albums_view() -> gio::ListStore {
+        let categories = [
             Self::Album,
             Self::Artist,
             Self::Year,
             Self::Cd,
             Self::Genre,
             Self::Duration,
-        ]
-    }
-
-    pub fn store(categories: Vec<Self>) -> gio::ListStore {
-        let store = gio::ListStore::new::<glib::BoxedAnyObject>();
-        for category in categories.iter() {
-            store.append(&glib::BoxedAnyObject::new(category.clone()));
-        }
-        store
+        ];
+        store_from_category(&categories)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {
@@ -161,11 +155,7 @@ impl OrderRow {
                 label: String::from("less than"),
             },
         ];
-        let store = gtk::gio::ListStore::new::<glib::BoxedAnyObject>();
-        for d in data {
-            store.append(&glib::BoxedAnyObject::new(d));
-        }
-        store
+        store_from_category(&data)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {
