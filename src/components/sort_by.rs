@@ -10,6 +10,8 @@ pub enum SortBy {
     ReleaseRev,
     RecentlyAdded,
     RecentlyAddedRev,
+    MostAlbums,
+    MostAlbumsRev,
 }
 
 impl std::fmt::Display for SortBy {
@@ -21,6 +23,8 @@ impl std::fmt::Display for SortBy {
             Self::ReleaseRev => write!(f, "Oldest Release"),
             Self::RecentlyAdded => write!(f, "Recently added"),
             Self::RecentlyAddedRev => write!(f, "Longest available"),
+            Self::MostAlbums => write!(f, "Most Albums"),
+            Self::MostAlbumsRev => write!(f, "Least Albums"),
         }
     }
 }
@@ -36,13 +40,25 @@ impl TryFrom<String> for SortBy {
             "Oldest Release" => Ok(Self::ReleaseRev),
             "Recently added" => Ok(Self::RecentlyAdded),
             "Longest available" => Ok(Self::RecentlyAddedRev),
+            "Most Albums" => Ok(Self::MostAlbums),
+            "Least Albums" => Ok(Self::MostAlbumsRev),
             e => Err(format!("\"{e}\" is not a SortBy")),
         }
     }
 }
 
 impl SortBy {
-    pub fn store() -> gio::ListStore {
+    pub fn artists_store() -> gio::ListStore {
+        let categories = [
+            Self::Alphabetical,
+            Self::AlphabeticalRev,
+            Self::MostAlbums,
+            Self::MostAlbumsRev,
+        ];
+        store_from_category(&categories)
+    }
+
+    pub fn albums_store() -> gio::ListStore {
         let categories = [
             Self::Alphabetical,
             Self::AlphabeticalRev,
@@ -104,5 +120,7 @@ mod tests {
         test_self(SortBy::ReleaseRev);
         test_self(SortBy::RecentlyAdded);
         test_self(SortBy::RecentlyAddedRev);
+        test_self(SortBy::MostAlbums);
+        test_self(SortBy::MostAlbumsRev);
     }
 }

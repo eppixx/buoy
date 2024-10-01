@@ -11,6 +11,7 @@ use relm4::{
 };
 
 use crate::{
+    common,
     components::{
         album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
         filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
@@ -115,7 +116,7 @@ impl relm4::component::Component for AlbumsView {
                                 set_text: "Sort by: ",
                             },
                             gtk::DropDown {
-                                set_model: Some(&sort_by::SortBy::store()),
+                                set_model: Some(&sort_by::SortBy::albums_store()),
                                 set_factory: Some(&sort_by::SortBy::factory()),
                                 set_show_arrow: true,
                                 connect_selected_notify[sender] => move |drop| {
@@ -361,22 +362,24 @@ impl relm4::component::Component for AlbumsView {
                     match (a, b) {
                         (AlbumElementInit::Child(a), AlbumElementInit::Child(b)) => {
                             match category {
-                                SortBy::Alphabetical => sort_fn(&a.title, &b.title),
-                                SortBy::AlphabeticalRev => sort_fn(&b.title, &a.title),
-                                SortBy::RecentlyAdded => sort_fn(&a.created, &b.created),
-                                SortBy::RecentlyAddedRev => sort_fn(&b.created, &a.created),
-                                SortBy::Release => sort_fn(&a.year, &b.year),
-                                SortBy::ReleaseRev => sort_fn(&b.year, &a.year),
+                                SortBy::Alphabetical => common::sort_fn(&a.title, &b.title),
+                                SortBy::AlphabeticalRev => common::sort_fn(&b.title, &a.title),
+                                SortBy::RecentlyAdded => common::sort_fn(&a.created, &b.created),
+                                SortBy::RecentlyAddedRev => common::sort_fn(&b.created, &a.created),
+                                SortBy::Release => common::sort_fn(&a.year, &b.year),
+                                SortBy::ReleaseRev => common::sort_fn(&b.year, &a.year),
+                                _ => unimplemented!("category not implemented"),
                             }
                         }
                         (AlbumElementInit::AlbumId3(a), AlbumElementInit::AlbumId3(b)) => {
                             match category {
-                                SortBy::Alphabetical => sort_fn(&a.name, &b.name),
-                                SortBy::AlphabeticalRev => sort_fn(&b.name, &a.name),
-                                SortBy::RecentlyAdded => sort_fn(&a.created, &b.created),
-                                SortBy::RecentlyAddedRev => sort_fn(&b.created, &a.created),
-                                SortBy::Release => sort_fn(&a.year, &b.year),
-                                SortBy::ReleaseRev => sort_fn(&b.year, &a.year),
+                                SortBy::Alphabetical => common::sort_fn(&a.name, &b.name),
+                                SortBy::AlphabeticalRev => common::sort_fn(&b.name, &a.name),
+                                SortBy::RecentlyAdded => common::sort_fn(&a.created, &b.created),
+                                SortBy::RecentlyAddedRev => common::sort_fn(&b.created, &a.created),
+                                SortBy::Release => common::sort_fn(&a.year, &b.year),
+                                SortBy::ReleaseRev => common::sort_fn(&b.year, &a.year),
+                                _ => unimplemented!("category not implemented"),
                             }
                         }
                         (_, _) => unreachable!(),
@@ -384,14 +387,6 @@ impl relm4::component::Component for AlbumsView {
                 });
             }
         }
-    }
-}
-
-fn sort_fn<T: PartialOrd>(a: &T, b: &T) -> relm4::gtk::Ordering {
-    if a <= b {
-        relm4::gtk::Ordering::Smaller
-    } else {
-        relm4::gtk::Ordering::Larger
     }
 }
 

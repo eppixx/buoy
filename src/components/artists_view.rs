@@ -12,7 +12,11 @@ use relm4::{
 };
 
 use crate::{
-    components::artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut},
+    common,
+    components::{
+        artist_element::{ArtistElement, ArtistElementIn, ArtistElementOut},
+        sort_by::SortBy,
+    },
     settings::Settings,
     subsonic::Subsonic,
 };
@@ -37,6 +41,7 @@ pub enum ArtistsViewIn {
     FilterChanged,
     Favorited(String, bool),
     CoverSizeChanged,
+    Sort(SortBy),
 }
 
 #[relm4::component(async, pub)]
@@ -116,6 +121,24 @@ impl relm4::component::AsyncComponent for ArtistsView {
                             set_width_request: 50,
                             connect_clicked => Self::Input::FilterChanged,
                             set_tooltip_text: Some("Toggle showing favortited artists"),
+                        },
+
+                        gtk::Box {
+                            gtk::Label {
+                                set_text: "Sort by: ",
+                            },
+                            gtk::DropDown {
+                                set_model: Some(&SortBy::artists_store()),
+                                set_factory: Some(&SortBy::factory()),
+                                set_show_arrow: true,
+                                connect_selected_notify[sender] => move |drop| {
+                                    use glib::object::Cast;
+
+                                    let obj = drop.selected_item().unwrap().downcast::<glib::BoxedAnyObject>().unwrap();
+                                    let sort: std::cell::Ref<SortBy> = obj.borrow();
+                                    sender.input(ArtistsViewIn::Sort(sort.clone()));
+                                },
+                            }
                         },
                     }
                 },
@@ -212,6 +235,33 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 for element in &self.artist_list {
                     element.model().change_size(size);
                 }
+            }
+            ArtistsViewIn::Sort(category) => {
+                let artists: Vec<_> = self
+                    .artist_list
+                    .iter()
+                    .map(|controller| controller.model().info().clone())
+                    .collect();
+                self.artists.set_sort_func(move |a, b| {
+                    let title = get_title_of_flowboxchild(a);
+                    let a = artists
+                        .iter()
+                        .find(|a| a.name == title.text())
+                        .expect("artist should be in there");
+                    let title = get_title_of_flowboxchild(b);
+                    let b = artists
+                        .iter()
+                        .find(|a| a.name == title.text())
+                        .expect("artist should be in there");
+
+                    match category {
+                        SortBy::Alphabetical => common::sort_fn(&a.name, &b.name),
+                        SortBy::AlphabeticalRev => common::sort_fn(&b.name, &a.name),
+                        SortBy::MostAlbums => common::sort_fn(&b.album_count, &a.album_count),
+                        SortBy::MostAlbumsRev => common::sort_fn(&a.album_count, &b.album_count),
+                        _ => unimplemented!("category not implemented"),
+                    }
+                });
             }
         }
     }

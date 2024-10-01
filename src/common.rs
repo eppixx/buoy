@@ -27,6 +27,14 @@ pub fn store_from_category<T: Clone + 'static>(categories: &[T]) -> relm4::gtk::
     store
 }
 
+pub fn sort_fn<T: PartialOrd>(a: &T, b: &T) -> relm4::gtk::Ordering {
+    if a <= b {
+        relm4::gtk::Ordering::Smaller
+    } else {
+        relm4::gtk::Ordering::Larger
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::convert_for_label;
