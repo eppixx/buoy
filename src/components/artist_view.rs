@@ -276,15 +276,7 @@ impl relm4::Component for ArtistView {
             },
             ArtistViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
-                    use glib::object::Cast;
-
-                    // get the Label of the FlowBoxChild
-                    let overlay = element.first_child().unwrap();
-                    let button = overlay.first_child().unwrap();
-                    let bo = button.first_child().unwrap();
-                    let cover = bo.first_child().unwrap();
-                    let title = cover.next_sibling().unwrap();
-                    let title = title.downcast::<gtk::Label>().expect("unepected element");
+                    let (title, _artist) = crate::components::albums_view::get_info_of_flowboxchild(element);
 
                     //actual matching
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
