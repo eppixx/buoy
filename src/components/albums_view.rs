@@ -369,8 +369,8 @@ impl relm4::component::Component for AlbumsView {
                             match category {
                                 SortBy::Alphabetical => common::sort_fn(&a.title, &b.title),
                                 SortBy::AlphabeticalRev => common::sort_fn(&b.title, &a.title),
-                                SortBy::RecentlyAdded => common::sort_fn(&a.created, &b.created),
-                                SortBy::RecentlyAddedRev => common::sort_fn(&b.created, &a.created),
+                                SortBy::RecentlyAdded => common::sort_fn(&b.created, &a.created),
+                                SortBy::RecentlyAddedRev => common::sort_fn(&a.created, &b.created),
                                 SortBy::Release => common::sort_fn(&a.year, &b.year),
                                 SortBy::ReleaseRev => common::sort_fn(&b.year, &a.year),
                                 _ => unimplemented!("category not implemented"),
@@ -380,8 +380,8 @@ impl relm4::component::Component for AlbumsView {
                             match category {
                                 SortBy::Alphabetical => common::sort_fn(&a.name, &b.name),
                                 SortBy::AlphabeticalRev => common::sort_fn(&b.name, &a.name),
-                                SortBy::RecentlyAdded => common::sort_fn(&a.created, &b.created),
-                                SortBy::RecentlyAddedRev => common::sort_fn(&b.created, &a.created),
+                                SortBy::RecentlyAdded => common::sort_fn(&b.created, &a.created),
+                                SortBy::RecentlyAddedRev => common::sort_fn(&a.created, &b.created),
                                 SortBy::Release => common::sort_fn(&a.year, &b.year),
                                 SortBy::ReleaseRev => common::sort_fn(&b.year, &a.year),
                                 _ => unimplemented!("category not implemented"),
