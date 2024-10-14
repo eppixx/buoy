@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use relm4::{gtk, gtk::prelude::WidgetExt};
+use relm4::gtk::{self, gdk, prelude::WidgetExt};
 
 use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
 
@@ -28,6 +28,7 @@ impl Cover {
 enum State {
     Stock,
     Image,
+    Loading,
 }
 
 impl std::fmt::Display for State {
@@ -35,6 +36,7 @@ impl std::fmt::Display for State {
         match self {
             Self::Stock => write!(f, "Stock"),
             Self::Image => write!(f, "Image"),
+            Self::Loading => write!(f, "Loading"),
         }
     }
 }
@@ -46,6 +48,7 @@ impl TryFrom<String> for State {
         match value.as_ref() {
             "Stock" => Ok(Self::Stock),
             "Image" => Ok(Self::Image),
+            "Loading" => Ok(Self::Loading),
             e => Err(format!("\"{e}\" is not a State")),
         }
     }
@@ -78,7 +81,9 @@ pub enum CoverOut {
 }
 
 #[derive(Debug)]
-pub enum CoverCmd {}
+pub enum CoverCmd {
+    CoverLoaded(Option<gdk::Texture>),
+}
 
 #[relm4::component(pub)]
 impl relm4::Component for Cover {
@@ -114,6 +119,13 @@ impl relm4::Component for Cover {
                 add_enumed[State::Image] = &model.cover.clone() -> gtk::Image {
                     add_css_class: "card",
                 },
+                add_enumed[State::Loading] = &gtk::CenterBox {
+                    add_css_class: "card",
+                    #[wrap(Some)]
+                    set_center_widget = &gtk::Spinner {
+                        start: (),
+                    }
+                }
             }
         }
     }
@@ -130,6 +142,15 @@ impl relm4::Component for Cover {
                 subsonic_cover::Response::Loaded(pixbuf) => {
                     self.cover.set_from_paintable(Some(&pixbuf));
                     self.stack.set_visible_child_enum(&State::Image);
+                }
+                subsonic_cover::Response::Processing(receiver) => {
+                    self.stack.set_visible_child_enum(&State::Loading);
+                    sender.oneshot_command(async move {
+                        match receiver.recv().await {
+                            Ok(Some(texture)) => CoverCmd::CoverLoaded(Some(texture)),
+                            _ => CoverCmd::CoverLoaded(None),
+                        }
+                    });
                 }
             },
             CoverIn::LoadId(None) => self.stack.set_visible_child_enum(&State::Stock),
@@ -174,10 +195,18 @@ impl relm4::Component for Cover {
     fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        match message {}
+        match message {
+            CoverCmd::CoverLoaded(None) => sender.input(CoverIn::LoadId(None)),
+            CoverCmd::CoverLoaded(Some(texture)) => {
+                //TODO insert cover to cache
+                sender.input(CoverIn::ChangeImage(subsonic_cover::Response::Loaded(
+                    texture,
+                )));
+            }
+        }
     }
 }
 

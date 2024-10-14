@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Cursor};
+use std::{collections::HashMap, io::Cursor, sync::Arc};
 
 use futures::StreamExt;
 use relm4::gtk::{self, gdk};
@@ -10,6 +10,7 @@ const COVER_SIZE: Option<i32> = Some(200);
 const CONCURRENT_FETCH: usize = 100;
 const PREFIX: &str = "Buoy";
 const COVER_CACHE: &str = "cover-cache";
+static CONCURRENT_COVER_RELOAD: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(50);
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct SubsonicCovers {
@@ -24,6 +25,8 @@ pub enum Response {
     Empty,
     /// downloaded image from server
     Loaded(gdk::Texture),
+    /// in the process of loading from server
+    Processing(async_channel::Receiver<Option<gdk::Texture>>),
 }
 
 impl SubsonicCovers {
@@ -81,8 +84,30 @@ impl SubsonicCovers {
                     }
                 }
             }
-            // id is missing or there is no buffer for id
-            _ => Response::Empty,
+            // there is no buffer for id
+            Some(None) => Response::Empty,
+            // id is missing in cache
+            None => {
+                let client = Client::get().unwrap();
+                let (sender, receiver) = async_channel::unbounded();
+                let id = id.to_owned();
+
+                let _handle = tokio::spawn(async move {
+                    let _ = CONCURRENT_COVER_RELOAD.acquire().await.unwrap();
+                    let buffer = client.get_cover_art(&id, COVER_SIZE).await.unwrap();
+                    let bytes = gtk::glib::Bytes::from(&buffer);
+                    let texture = match gdk::Texture::from_bytes(&bytes) {
+                        Ok(texture) => Some(texture),
+                        Err(e) => {
+                            // could not convert to image
+                            tracing::warn!("converting buffer to Pixbuf: {e} for {id}");
+                            None
+                        }
+                    };
+                    sender.send(texture).await.unwrap();
+                });
+                Response::Processing(receiver)
+            }
         }
     }
 
