@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Cursor, sync::Arc};
+use std::{collections::HashMap, io::Cursor};
 
 use futures::StreamExt;
 use relm4::gtk::{self, gdk};

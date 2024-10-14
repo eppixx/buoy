@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
-        self, glib,
+        self,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
     ComponentController, RelmWidgetExt,
@@ -276,7 +276,8 @@ impl relm4::Component for ArtistView {
             },
             ArtistViewIn::SearchChanged(search) => {
                 self.albums.set_filter_func(move |element| {
-                    let (title, _artist) = crate::components::albums_view::get_info_of_flowboxchild(element);
+                    let (title, _artist) =
+                        crate::components::albums_view::get_info_of_flowboxchild(element);
 
                     //actual matching
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();

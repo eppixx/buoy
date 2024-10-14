@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, ToggleButtonExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, PopoverExt, WidgetExt},
         FlowBoxChild,
     },
     ComponentController,
