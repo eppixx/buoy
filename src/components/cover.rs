@@ -1,6 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
-use relm4::gtk::{self, gdk, prelude::WidgetExt};
+use relm4::gtk::{
+    self,
+    gdk::{self},
+    prelude::WidgetExt,
+};
 
 use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
 
@@ -82,7 +86,7 @@ pub enum CoverOut {
 
 #[derive(Debug)]
 pub enum CoverCmd {
-    CoverLoaded(Option<gdk::Texture>),
+    CoverLoaded(String, Option<gdk::Texture>, Option<Vec<u8>>),
 }
 
 #[relm4::component(pub)]
@@ -147,8 +151,11 @@ impl relm4::Component for Cover {
                     self.stack.set_visible_child_enum(&State::Loading);
                     sender.oneshot_command(async move {
                         match receiver.recv().await {
-                            Ok(Some(texture)) => CoverCmd::CoverLoaded(Some(texture)),
-                            _ => CoverCmd::CoverLoaded(None),
+                            Ok((id, Some(texture), Some(buffer))) => {
+                                CoverCmd::CoverLoaded(id, Some(texture), Some(buffer))
+                            }
+                            Ok((id, _, _)) => CoverCmd::CoverLoaded(id, None, None),
+                            Err(_) => panic!(),
                         }
                     });
                 }
@@ -199,12 +206,17 @@ impl relm4::Component for Cover {
         _root: &Self::Root,
     ) {
         match message {
-            CoverCmd::CoverLoaded(None) => sender.input(CoverIn::LoadId(None)),
-            CoverCmd::CoverLoaded(Some(texture)) => {
+            CoverCmd::CoverLoaded(id, Some(texture), Some(buffer)) => {
                 //TODO insert cover to cache
                 sender.input(CoverIn::ChangeImage(subsonic_cover::Response::Loaded(
                     texture,
                 )));
+
+                self.subsonic.borrow_mut().cover_update(&id, Some(buffer));
+            }
+            CoverCmd::CoverLoaded(id, _, _) => {
+                sender.input(CoverIn::LoadId(None));
+                self.subsonic.borrow_mut().cover_update(&id, None);
             }
         }
     }

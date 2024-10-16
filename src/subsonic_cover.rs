@@ -26,7 +26,7 @@ pub enum Response {
     /// downloaded image from server
     Loaded(gdk::Texture),
     /// in the process of loading from server
-    Processing(async_channel::Receiver<Option<gdk::Texture>>),
+    Processing(async_channel::Receiver<(String, Option<gdk::Texture>, Option<Vec<u8>>)>),
 }
 
 impl SubsonicCovers {
@@ -93,18 +93,19 @@ impl SubsonicCovers {
                 let id = id.to_owned();
 
                 let _handle = tokio::spawn(async move {
-                    let _ = CONCURRENT_COVER_RELOAD.acquire().await.unwrap();
+                    let permit = CONCURRENT_COVER_RELOAD.acquire().await.unwrap();
                     let buffer = client.get_cover_art(&id, COVER_SIZE).await.unwrap();
+                    drop(permit);
                     let bytes = gtk::glib::Bytes::from(&buffer);
-                    let texture = match gdk::Texture::from_bytes(&bytes) {
-                        Ok(texture) => Some(texture),
+                    let (texture, buffer) = match gdk::Texture::from_bytes(&bytes) {
+                        Ok(texture) => (Some(texture), Some(buffer)),
                         Err(e) => {
                             // could not convert to image
                             tracing::warn!("converting buffer to Pixbuf: {e} for {id}");
-                            None
+                            (None, None)
                         }
                     };
-                    sender.send(texture).await.unwrap();
+                    sender.send((id, texture, buffer)).await.unwrap();
                 });
                 Response::Processing(receiver)
             }
@@ -145,6 +146,10 @@ impl SubsonicCovers {
                 }
             },
         }
+    }
+
+    pub fn cover_update(&mut self, id: &str, buffer: Option<Vec<u8>>) {
+        self.buffers.insert(String::from(id), buffer);
     }
 
     pub fn save(&self) -> anyhow::Result<()> {

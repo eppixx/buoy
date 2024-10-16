@@ -32,7 +32,7 @@ impl Subsonic {
             client.get_scan_status().await?
         };
 
-        let mut subsonic = match Self::load().await {
+        let subsonic = match Self::load().await {
             Ok(subsonic) => {
                 if subsonic.scan_status == current_scan_status.count {
                     tracing::info!("scan status is current; load cached info");
@@ -48,7 +48,6 @@ impl Subsonic {
                 Self::new().await?
             }
         };
-        subsonic.work().await?;
         Ok(subsonic)
     }
 
@@ -129,29 +128,10 @@ impl Subsonic {
         Ok(result)
     }
 
-    async fn work(&mut self) -> anyhow::Result<()> {
-        let ids: Vec<String> = self
-            .album_list
-            .iter()
-            .filter_map(|album| album.cover_art.clone())
-            .chain(
-                self.artists
-                    .iter()
-                    .filter_map(|artist| artist.cover_art.clone()),
-            )
-            .chain(
-                self.playlists
-                    .iter()
-                    .filter_map(|list| list.base.cover_art.clone()),
-            )
-            .collect();
-        self.covers.work(ids).await;
-
+    pub fn save(&self) -> anyhow::Result<()> {
+        tracing::info!("saving cover cache");
         self.covers.save()?;
-        Ok(())
-    }
 
-    fn save(&self) -> anyhow::Result<()> {
         tracing::info!("saving subsonic music info");
         let cache = toml::to_string(self).unwrap();
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
@@ -252,6 +232,10 @@ impl Subsonic {
 
     pub fn cover(&mut self, id: &str) -> subsonic_cover::Response {
         self.covers.cover(id)
+    }
+
+    pub fn cover_update(&mut self, id: &str, buffer: Option<Vec<u8>>) {
+        self.covers.cover_update(id, buffer);
     }
 
     pub fn cover_icon(&self, id: &str) -> Option<relm4::gtk::gdk::Texture> {
