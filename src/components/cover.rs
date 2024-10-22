@@ -207,7 +207,6 @@ impl relm4::Component for Cover {
     ) {
         match message {
             CoverCmd::CoverLoaded(id, Some(texture), Some(buffer)) => {
-                //TODO insert cover to cache
                 sender.input(CoverIn::ChangeImage(subsonic_cover::Response::Loaded(
                     texture,
                 )));
