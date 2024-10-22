@@ -1,13 +1,11 @@
 use std::{collections::HashMap, io::Cursor};
 
-use futures::StreamExt;
 use relm4::gtk::{self, gdk};
 use serde::{Deserialize, Serialize};
 
 use crate::client::Client;
 
 const COVER_SIZE: Option<i32> = Some(200);
-const CONCURRENT_FETCH: usize = 100;
 const PREFIX: &str = "Buoy";
 const COVER_CACHE: &str = "cover-cache";
 static CONCURRENT_COVER_RELOAD: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(50);
@@ -30,39 +28,6 @@ pub enum Response {
 }
 
 impl SubsonicCovers {
-    pub async fn work(&mut self, start_requests: Vec<String>) {
-        // try to load covers from cache
-        if self.load().is_ok() {
-            return;
-        }
-
-        //build futures
-        let tasks: Vec<_> = start_requests
-            .iter()
-            .map(|id| async move {
-                let client = Client::get().unwrap();
-                let cover = client.get_cover_art(id, COVER_SIZE).await.unwrap();
-                (id, cover)
-            })
-            .collect();
-        tracing::info!("start fetching {} covers", tasks.len());
-
-        //buffer futures to not overwhelm server and client
-        // based on: https://stackoverflow.com/questions/70871368/limiting-the-number-of-concurrent-futures-in-join-all
-        let stream = futures::stream::iter(tasks)
-            .buffer_unordered(CONCURRENT_FETCH)
-            .collect::<Vec<_>>();
-        let results = stream.await;
-
-        for (id, cover) in results {
-            self.buffers
-                .entry(id.clone())
-                .and_modify(|buf| *buf = Some(cover.clone()))
-                .or_insert(Some(cover.clone()));
-        }
-        tracing::info!("fetched all covers");
-    }
-
     pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
         match self.buffers.get(id) {
             None => None,
@@ -163,7 +128,7 @@ impl SubsonicCovers {
         Ok(())
     }
 
-    fn load(&mut self) -> anyhow::Result<()> {
+    pub fn load(&mut self) -> anyhow::Result<()> {
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
         let cache_path = xdg_dirs
             .place_cache_file(COVER_CACHE)

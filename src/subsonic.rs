@@ -32,7 +32,7 @@ impl Subsonic {
             client.get_scan_status().await?
         };
 
-        let subsonic = match Self::load().await {
+        let mut subsonic = match Self::load().await {
             Ok(subsonic) => {
                 if subsonic.scan_status == current_scan_status.count {
                     tracing::info!("scan status is current; load cached info");
@@ -48,6 +48,8 @@ impl Subsonic {
                 Self::new().await?
             }
         };
+
+        let _ = subsonic.covers.load();
         Ok(subsonic)
     }
 
