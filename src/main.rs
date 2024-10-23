@@ -1,4 +1,5 @@
 use relm4::{gtk, RelmApp};
+use clap::Parser;
 
 use app::App;
 
@@ -22,6 +23,17 @@ pub mod window_state;
 
 const LOG_PARA: &str = "info,bouy:trace,submarine:info";
 
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+pub struct Args {
+    /// starts and closes the application and shows the startup time
+    #[arg(short, long)]
+    time_startup: bool,
+
+    #[arg(short, long)]
+    yd: bool,
+}
+
 fn main() -> anyhow::Result<()> {
     //enable logging
     // use filters from RUST_LOG variable when given, otherwise use default filters
@@ -34,9 +46,12 @@ fn main() -> anyhow::Result<()> {
     };
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
+    let args = Args::parse();
+
     let app = RelmApp::new("com.github.eppixx.buoy");
     load_css();
-    app.run_async::<App>(());
+    // gtk parses arguments and conclicts with clap
+    app.with_args(vec![]).run_async::<App>(args);
 
     Ok(())
 }

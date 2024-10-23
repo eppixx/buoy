@@ -14,7 +14,7 @@ use relm4::{
     Component, ComponentController, Controller, RelmWidgetExt,
 };
 
-use crate::components::{
+use crate::{components::{
     browser::{Browser, BrowserIn, BrowserOut},
     equalizer::{Equalizer, EqualizerOut},
     login_form::{LoginForm, LoginFormOut},
@@ -22,7 +22,7 @@ use crate::components::{
     play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
     queue::{Queue, QueueIn, QueueOut},
     seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-};
+}, Args};
 use crate::{
     client::Client,
     gtk_helper::stack::StackExt,
@@ -124,7 +124,7 @@ relm4::new_stateless_action!(ActivateSearchAction, WindowActionGroup, "activate-
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for App {
-    type Init = ();
+    type Init = Args;
     type Input = AppIn;
     type Output = ();
     type CommandOutput = ();
@@ -161,10 +161,11 @@ impl relm4::component::AsyncComponent for App {
 
     // Initialize the UI.
     async fn init(
-        _init: Self::Init,
+        args: Self::Init,
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
+        let time_startup = std::time::Instant::now();
         let (mut playback, receiver) = Playback::new().unwrap();
 
         // decide if dark or white style; also watch if style changes
@@ -360,6 +361,13 @@ impl relm4::component::AsyncComponent for App {
                     .main_stack
                     .set_visible_child_enum(&WindowState::LoginForm),
             }
+        }
+
+        if args.time_startup {
+            let shutdown = std::time::Instant::now();
+            let duration = shutdown - time_startup;
+            tracing::info!("startup time was {duration:?}");
+            application.quit();
         }
 
         relm4::component::AsyncComponentParts { model, widgets }
