@@ -1,14 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
-use relm4::{
-    gtk::{
-        self, glib,
-        prelude::{BoxExt, OrientableExt, WidgetExt},
-        FlowBoxChild,
-    },
-    loading_widgets::LoadingWidgets,
-    view, Component, ComponentController,
+use relm4::gtk::{
+    self, glib,
+    prelude::{BoxExt, OrientableExt, WidgetExt},
+    FlowBoxChild,
 };
 
 use crate::{
@@ -24,8 +20,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ArtistsView {
     subsonic: Rc<RefCell<Subsonic>>,
-    artists: gtk::FlowBox,
-    artist_list: Vec<relm4::Controller<ArtistElement>>,
+    artist_list: relm4::factory::FactoryVecDeque<ArtistElement>,
 }
 
 #[derive(Debug)]
@@ -44,60 +39,34 @@ pub enum ArtistsViewIn {
     Sort(SortBy),
 }
 
-#[relm4::component(async, pub)]
-impl relm4::component::AsyncComponent for ArtistsView {
+#[relm4::component(pub)]
+impl relm4::component::Component for ArtistsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = ArtistsViewIn;
     type Output = ArtistsViewOut;
     type CommandOutput = ();
 
-    fn init_loading_widgets(root: Self::Root) -> Option<LoadingWidgets> {
-        view! {
-            append = root.clone() -> gtk::Box {
-                add_css_class: "artists-view",
-
-                #[name(loading_box)]
-                gtk::Box {
-                    set_hexpand: true,
-                    set_spacing: 30,
-                    set_halign: gtk::Align::Center,
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::Spinner {
-                        add_css_class: "size100",
-                        set_halign: gtk::Align::Center,
-                        start: (),
-                    }
-                }
-            }
-        }
-
-        // removes widget loading_box when function init finishes
-        Some(LoadingWidgets::new(root, loading_box))
-    }
-
-    async fn init(
+    fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: relm4::AsyncComponentSender<Self>,
-    ) -> relm4::component::AsyncComponentParts<Self> {
+        sender: relm4::ComponentSender<Self>,
+    ) -> relm4::component::ComponentParts<Self> {
         let mut model = Self {
             subsonic: init.clone(),
-            artists: gtk::FlowBox::default(),
-            artist_list: vec![],
+            artist_list: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), ArtistsViewIn::ArtistElement),
         };
         let widgets = view_output!();
 
         // add artists with cover and title
+        let mut guard = model.artist_list.guard();
         for (i, artist) in init.borrow().artists().iter().enumerate() {
-            let cover: relm4::Controller<ArtistElement> = ArtistElement::builder()
-                .launch((init.clone(), artist.clone()))
-                .forward(sender.input_sender(), ArtistsViewIn::ArtistElement);
-            model.artists.insert(cover.widget(), i as i32);
-            model.artist_list.insert(i, cover);
+            guard.insert(i, (init.clone(), artist.clone()));
         }
+        drop(guard);
 
-        relm4::component::AsyncComponentParts { model, widgets }
+        relm4::component::ComponentParts { model, widgets }
     }
 
     view! {
@@ -163,7 +132,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 set_vexpand: true,
 
                 #[wrap(Some)]
-                set_child = &model.artists.clone() -> gtk::FlowBox {
+                set_child = &model.artist_list.widget().clone() -> gtk::FlowBox {
                     set_valign: gtk::Align::Start,
                     set_row_spacing: 20,
                 }
@@ -171,11 +140,11 @@ impl relm4::component::AsyncComponent for ArtistsView {
         }
     }
 
-    async fn update_with_view(
+    fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
         msg: Self::Input,
-        sender: relm4::AsyncComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
@@ -193,7 +162,7 @@ impl relm4::component::AsyncComponent for ArtistsView {
             ArtistsViewIn::FilterChanged => {
                 let subsonic = self.subsonic.clone();
                 let favorite = widgets.favorite.clone();
-                self.artists.set_filter_func(move |element| {
+                self.artist_list.widget().set_filter_func(move |element| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
                     let mut title = get_title_of_flowboxchild(element).text().to_string();
 
@@ -234,23 +203,22 @@ impl relm4::component::AsyncComponent for ArtistsView {
                 });
             }
             ArtistsViewIn::Favorited(id, state) => {
-                for artist in &self.artist_list {
-                    artist.emit(ArtistElementIn::Favorited(id.clone(), state));
-                }
+                self.artist_list
+                    .broadcast(ArtistElementIn::Favorited(id.clone(), state));
             }
             ArtistsViewIn::CoverSizeChanged => {
                 let size = Settings::get().lock().unwrap().cover_size;
-                for element in &self.artist_list {
-                    element.model().change_size(size);
+                for element in self.artist_list.iter() {
+                    element.change_size(size);
                 }
             }
             ArtistsViewIn::Sort(category) => {
                 let artists: Vec<_> = self
                     .artist_list
                     .iter()
-                    .map(|controller| controller.model().info().clone())
+                    .map(|controller| controller.info().clone())
                     .collect();
-                self.artists.set_sort_func(move |a, b| {
+                self.artist_list.widget().set_sort_func(move |a, b| {
                     let title = get_title_of_flowboxchild(a);
                     let a = artists
                         .iter()

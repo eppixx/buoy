@@ -2,7 +2,6 @@ use std::{cell::RefCell, rc::Rc};
 
 use itertools::Itertools;
 use relm4::{
-    component::AsyncComponentController,
     gtk::{
         self,
         prelude::{BoxExt, OrientableExt, WidgetExt},
@@ -53,8 +52,8 @@ pub struct Browser {
     content: gtk::Viewport,
 
     dashboard: relm4::Controller<Dashboard>,
-    artists: relm4::component::AsyncController<ArtistsView>,
-    albums: relm4::component::Controller<AlbumsView>,
+    artists: Option<relm4::component::Controller<ArtistsView>>,
+    albums: Option<relm4::component::Controller<AlbumsView>>,
     album_views: Vec<relm4::Controller<AlbumView>>,
     artist_views: Vec<relm4::Controller<ArtistView>>,
     playlists_views: Vec<relm4::Controller<PlaylistsView>>,
@@ -114,12 +113,8 @@ impl relm4::component::AsyncComponent for Browser {
             dashboard: Dashboard::builder()
                 .launch(init.clone())
                 .forward(sender.input_sender(), BrowserIn::Dashboard),
-            artists: ArtistsView::builder()
-                .launch(init.clone())
-                .forward(sender.input_sender(), BrowserIn::ArtistsView),
-            albums: AlbumsView::builder()
-                .launch(init.clone())
-                .forward(sender.input_sender(), BrowserIn::AlbumsView),
+            artists: None,
+            albums: None,
             album_views: vec![],
             artist_views: vec![],
             playlists_views: vec![],
@@ -153,8 +148,12 @@ impl relm4::component::AsyncComponent for Browser {
             BrowserIn::SearchChanged(search) => {
                 self.dashboard
                     .emit(DashboardIn::SearchChanged(search.clone()));
-                self.artists.emit(ArtistsViewIn::FilterChanged);
-                self.albums.emit(AlbumsViewIn::FilterChanged);
+                if let Some(artists) = &self.artists {
+                    artists.emit(ArtistsViewIn::FilterChanged);
+                }
+                if let Some(albums) = &self.albums {
+                    albums.emit(AlbumsViewIn::FilterChanged);
+                }
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::SearchChanged(search.clone()));
                 }
@@ -213,8 +212,17 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
-                self.history_widget
-                    .push(Views::Artists(self.artists.widget().clone()));
+                if self.artists.is_none() {
+                    self.artists = Some(
+                        ArtistsView::builder()
+                            .launch(self.subsonic.clone())
+                            .forward(sender.input_sender(), BrowserIn::ArtistsView),
+                    );
+                }
+
+                self.history_widget.push(Views::Artists(
+                    self.artists.as_ref().unwrap().widget().clone(),
+                ));
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
@@ -226,8 +234,17 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
-                self.history_widget
-                    .push(Views::Albums(self.albums.widget().clone()));
+                if self.albums.is_none() {
+                    self.albums = Some(
+                        AlbumsView::builder()
+                            .launch(self.subsonic.clone())
+                            .forward(sender.input_sender(), BrowserIn::AlbumsView),
+                    );
+                }
+
+                self.history_widget.push(Views::Albums(
+                    self.albums.as_ref().unwrap().widget().clone(),
+                ));
                 self.content
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
@@ -505,7 +522,9 @@ impl relm4::component::AsyncComponent for Browser {
                 //notify all views with albums in them
                 self.dashboard
                     .emit(DashboardIn::FavoritedAlbum(id.clone(), state));
-                self.albums.emit(AlbumsViewIn::Favorited(id.clone(), state));
+                if let Some(albums) = &self.albums {
+                    albums.emit(AlbumsViewIn::Favorited(id.clone(), state));
+                }
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::FavoritedAlbum(id.clone(), state));
                 }
@@ -518,12 +537,18 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.artist_views {
                     view.emit(ArtistViewIn::FavoritedArtist(id.clone(), state));
                 }
-                self.artists.emit(ArtistsViewIn::Favorited(id, state));
+                if let Some(artists) = &self.artists {
+                    artists.emit(ArtistsViewIn::Favorited(id, state));
+                }
             }
             BrowserIn::CoverSizeChanged => {
                 self.dashboard.emit(DashboardIn::CoverSizeChanged);
-                self.artists.emit(ArtistsViewIn::CoverSizeChanged);
-                self.albums.emit(AlbumsViewIn::CoverSizeChanged);
+                if let Some(artists) = &self.artists {
+                    artists.emit(ArtistsViewIn::CoverSizeChanged);
+                }
+                if let Some(albums) = &self.albums {
+                    albums.emit(AlbumsViewIn::CoverSizeChanged);
+                }
             }
         }
     }
