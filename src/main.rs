@@ -1,5 +1,5 @@
-use relm4::{gtk, RelmApp};
 use clap::Parser;
+use relm4::{gtk, RelmApp};
 
 use app::App;
 

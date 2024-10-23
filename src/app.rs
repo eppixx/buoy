@@ -14,15 +14,6 @@ use relm4::{
     Component, ComponentController, Controller, RelmWidgetExt,
 };
 
-use crate::{components::{
-    browser::{Browser, BrowserIn, BrowserOut},
-    equalizer::{Equalizer, EqualizerOut},
-    login_form::{LoginForm, LoginFormOut},
-    play_controls::{PlayControl, PlayControlIn, PlayControlOut},
-    play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
-    queue::{Queue, QueueIn, QueueOut},
-    seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-}, Args};
 use crate::{
     client::Client,
     gtk_helper::stack::StackExt,
@@ -33,6 +24,18 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
     window_state::WindowState,
+};
+use crate::{
+    components::{
+        browser::{Browser, BrowserIn, BrowserOut},
+        equalizer::{Equalizer, EqualizerOut},
+        login_form::{LoginForm, LoginFormOut},
+        play_controls::{PlayControl, PlayControlIn, PlayControlOut},
+        play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
+        queue::{Queue, QueueIn, QueueOut},
+        seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
+    },
+    Args,
 };
 
 #[derive(Debug)]
