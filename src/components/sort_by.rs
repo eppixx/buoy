@@ -99,7 +99,7 @@ impl SortBy {
                 .expect("is not a Label");
 
             // set label from String
-            let s = format!("{}", boxed.borrow::<Self>());
+            let s = boxed.borrow::<Self>().to_string();
             label.set_label(&s);
         });
 

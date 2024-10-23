@@ -80,7 +80,8 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
         let mut text = String::new();
         if let Some(cd) = item.item.disc_number {
-            text = format!("{cd}.");
+            text.push_str(&cd.to_string());
+            text.push('.');
         }
         if let Some(track) = item.item.track {
             text = format!("{text}{track:02}")

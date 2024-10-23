@@ -98,28 +98,36 @@ impl relm4::SimpleComponent for AlbumElement {
         // tooltip string
         let tooltip = match &init {
             AlbumElementInit::AlbumId3(album) => {
-                let year = match album.year {
-                    Some(year) => format!("Year: {year} • "),
-                    None => String::new(),
-                };
-                format!(
-                    "{year}{} songs • Length: {}",
-                    album.song_count,
-                    convert_for_label(i64::from(album.duration) * 1000)
-                )
+                let mut info = String::new();
+                if let Some(year) = album.year {
+                    info.push_str("Year: ");
+                    info.push_str(&year.to_string());
+                    info.push_str(" • ");
+                }
+                info.push_str(&album.song_count.to_string());
+                info.push_str(" songs • Length: ");
+                info.push_str(&convert_for_label(i64::from(album.duration) * 1000));
+                info
             }
             AlbumElementInit::Child(child) => {
-                let year = match child.year {
-                    Some(year) => format!("Year: {year} • "),
-                    None => String::new(),
-                };
-                let duration = match child.duration {
-                    Some(duration) => {
-                        format!("Length: {}", convert_for_label(i64::from(duration) * 1000))
+                let mut info = String::new();
+                if let Some(year) = child.year {
+                    info.push_str("Year: ");
+                    info.push_str(&year.to_string());
+                }
+                match child.duration {
+                    Some(duration) if !info.is_empty() => {
+                        info.push_str(" • ");
+                        info.push_str("Length: ");
+                        info.push_str(&convert_for_label(i64::from(duration) * 1000));
                     }
-                    None => String::new(),
+                    Some(duration) => {
+                        info.push_str("Length: ");
+                        info.push_str(&convert_for_label(i64::from(duration) * 1000));
+                    }
+                    None => {}
                 };
-                format!("{year}{duration}")
+                info
             }
         };
 

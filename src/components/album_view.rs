@@ -421,22 +421,22 @@ impl relm4::Component for AlbumView {
 }
 
 fn build_info_string(child: &submarine::data::AlbumWithSongsId3) -> String {
-    let songs = format!("Songs: {}", child.song.len());
-    let length = format!(
-        " • Length: {}",
-        convert_for_label(i64::from(child.base.duration) * 1000)
-    );
-    let year = match child.base.year {
-        None => String::new(),
-        Some(year) => format!(" • Release: {year}"),
-    };
-    let played = match child.base.play_count {
-        None => String::new(),
-        Some(count) => format!(" • played {count} times"),
-    };
-    let genre = match &child.base.genre {
-        None => String::new(),
-        Some(genre) => format!(" • Genre: {genre}"),
-    };
-    format!("{songs}{length}{year}{played}{genre}")
+    let mut result = String::from("Songs: ");
+    result.push_str(&child.song.len().to_string());
+    result.push_str(" • Length: ");
+    result.push_str(&convert_for_label(i64::from(child.base.duration) * 1000));
+    if let Some(year) = child.base.year {
+        result.push_str(" • Release: ");
+        result.push_str(&year.to_string());
+    }
+    if let Some(played) = child.base.play_count {
+        result.push_str(" • played ");
+        result.push_str(&played.to_string());
+        result.push_str(" times");
+    }
+    if let Some(genre) = &child.base.genre {
+        result.push_str(" • Genre: ");
+        result.push_str(&genre.to_string());
+    }
+    result
 }
