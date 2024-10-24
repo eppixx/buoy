@@ -23,8 +23,7 @@ pub struct ArtistView {
     favorite: gtk::Button,
     title: String,
     bio: String,
-    albums: gtk::FlowBox,
-    album_elements: Vec<relm4::Controller<AlbumElement>>,
+    albums: relm4::factory::FactoryVecDeque<AlbumElement>,
 }
 
 #[derive(Debug)]
@@ -76,8 +75,9 @@ impl relm4::Component for ArtistView {
             favorite: gtk::Button::default(),
             title: init.name.clone(),
             bio: String::new(),
-            albums: gtk::FlowBox::default(),
-            album_elements: vec![],
+            albums: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), ArtistViewIn::AlbumElement),
         };
         let widgets = view_output!();
 
@@ -244,7 +244,7 @@ impl relm4::Component for ArtistView {
             gtk::ScrolledWindow {
                 set_vexpand: true,
 
-                model.albums.clone() {
+                model.albums.widget().clone() {
                     set_valign: gtk::Align::Start,
                 },
             }
@@ -275,7 +275,7 @@ impl relm4::Component for ArtistView {
                 }
             },
             ArtistViewIn::SearchChanged(search) => {
-                self.albums.set_filter_func(move |element| {
+                self.albums.widget().set_filter_func(move |element| {
                     let (title, _artist) =
                         crate::components::albums_view::get_info_of_flowboxchild(element);
 
@@ -294,9 +294,7 @@ impl relm4::Component for ArtistView {
                 }
             }
             ArtistViewIn::FavoritedAlbum(id, state) => {
-                for album in &self.album_elements {
-                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
-                }
+                self.albums.broadcast(AlbumElementIn::Favorited(id, state));
             }
             ArtistViewIn::HoverCover(false) => {
                 self.favorite.remove_css_class("cover-favorite");
@@ -333,15 +331,12 @@ impl relm4::Component for ArtistView {
                 // TODO do smth with similar artists
             }
             ArtistViewCmd::LoadedAlbums(Ok(artist)) => {
+                let mut guard = self.albums.guard();
                 for album in artist.album {
-                    let element = AlbumElement::builder()
-                        .launch((
-                            self.subsonic.clone(),
-                            AlbumElementInit::AlbumId3(Box::new(album)),
-                        ))
-                        .forward(sender.input_sender(), ArtistViewIn::AlbumElement);
-                    self.albums.append(element.widget());
-                    self.album_elements.push(element);
+                    guard.push_back((
+                        self.subsonic.clone(),
+                        AlbumElementInit::AlbumId3(Box::new(album)),
+                    ));
                 }
             }
         }

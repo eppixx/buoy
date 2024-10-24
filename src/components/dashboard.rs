@@ -8,7 +8,7 @@ use relm4::{
         self,
         prelude::{AdjustmentExt, BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
-    ComponentController, RelmRemoveAllExt, RelmWidgetExt,
+    RelmWidgetExt,
 };
 
 use crate::{client::Client, subsonic::Subsonic};
@@ -16,6 +16,8 @@ use crate::{
     components::album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
     settings::Settings,
 };
+
+use super::albums_view::get_info_of_flowboxchild;
 
 #[derive(Debug, Clone)]
 enum Scrolling {
@@ -34,21 +36,17 @@ enum Scrolling {
 pub struct Dashboard {
     subsonic: Rc<RefCell<Subsonic>>,
 
-    recently_added: gtk::Box,
     recently_added_scroll: gtk::ScrolledWindow,
-    recently_added_list: Vec<relm4::Controller<AlbumElement>>,
+    recently_added_list: relm4::factory::FactoryVecDeque<AlbumElement>,
 
-    recently_played: gtk::Box,
     recently_played_scroll: gtk::ScrolledWindow,
-    recently_played_list: Vec<relm4::Controller<AlbumElement>>,
+    recently_played_list: relm4::factory::FactoryVecDeque<AlbumElement>,
 
-    random_album: gtk::Box,
     random_album_scroll: gtk::ScrolledWindow,
-    random_album_list: Vec<relm4::Controller<AlbumElement>>,
+    random_album_list: relm4::factory::FactoryVecDeque<AlbumElement>,
 
-    most_played: gtk::Box,
     most_played_scroll: gtk::ScrolledWindow,
-    most_played_list: Vec<relm4::Controller<AlbumElement>>,
+    most_played_list: relm4::factory::FactoryVecDeque<AlbumElement>,
 }
 
 #[derive(Debug)]
@@ -60,7 +58,7 @@ pub enum DashboardOut {
 
 #[derive(Debug)]
 pub enum DashboardIn {
-    SearchChanged(String),
+    FilterChanged,
     AlbumElement(AlbumElementOut),
     ClickedRandomize,
     FavoritedAlbum(String, bool),
@@ -88,41 +86,45 @@ impl relm4::Component for Dashboard {
         let mut model = Self {
             subsonic: subsonic.clone(),
 
-            recently_added: gtk::Box::default(),
             recently_added_scroll: gtk::ScrolledWindow::default(),
-            recently_added_list: vec![],
+            recently_added_list: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), DashboardIn::AlbumElement),
 
-            recently_played: gtk::Box::default(),
             recently_played_scroll: gtk::ScrolledWindow::default(),
-            recently_played_list: vec![],
+            recently_played_list: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), DashboardIn::AlbumElement),
 
-            random_album: gtk::Box::default(),
             random_album_scroll: gtk::ScrolledWindow::default(),
-            random_album_list: vec![],
+            random_album_list: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), DashboardIn::AlbumElement),
 
-            most_played: gtk::Box::default(),
             most_played_scroll: gtk::ScrolledWindow::default(),
-            most_played_list: vec![],
+            most_played_list: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), DashboardIn::AlbumElement),
         };
 
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
         albums.sort_by(|a, b| b.created.cmp(&a.created));
-        model.recently_added_list = albums
+        let list: Vec<(Rc<RefCell<Subsonic>>, AlbumElementInit)> = albums
             .iter()
             .take(10)
             .map(|album| {
-                AlbumElement::builder()
-                    .launch((
-                        subsonic.clone(),
-                        AlbumElementInit::Child(Box::new(album.clone())),
-                    ))
-                    .forward(sender.input_sender(), DashboardIn::AlbumElement)
+                (
+                    subsonic.clone(),
+                    AlbumElementInit::Child(Box::new(album.clone())),
+                )
             })
             .collect();
-        for album in &model.recently_added_list {
-            model.recently_added.append(album.widget());
+        let mut guard = model.recently_added_list.guard();
+        for infos in list {
+            guard.push_back(infos);
         }
+        drop(guard);
 
         //load recently played albums
         sender.oneshot_command(async move {
@@ -147,21 +149,16 @@ impl relm4::Component for Dashboard {
 
         //load most played albums
         albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
-        model.most_played_list = albums
+        let list: Vec<AlbumElementInit> = albums
             .iter()
             .take(10)
-            .map(|album| {
-                AlbumElement::builder()
-                    .launch((
-                        subsonic.clone(),
-                        AlbumElementInit::Child(Box::new(album.clone())),
-                    ))
-                    .forward(sender.input_sender(), DashboardIn::AlbumElement)
-            })
+            .map(|album| AlbumElementInit::Child(Box::new(album.clone())))
             .collect();
-        for album in &model.most_played_list {
-            model.most_played.append(album.widget());
+        let mut guard = model.most_played_list.guard();
+        for infos in list {
+            guard.push_back((model.subsonic.clone(), infos));
         }
+        drop(guard);
 
         let (scroll_sender, receiver) = async_channel::unbounded::<Scrolling>();
         let widgets = view_output!();
@@ -267,24 +264,23 @@ impl relm4::Component for Dashboard {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_halign: gtk::Align::Fill,
-                    set_spacing: 50,
+                    set_spacing: 30,
 
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
 
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_halign: gtk::Align::Start,
-                            set_text: "Newly added",
-                        },
                         gtk::CenterBox {
-                            set_hexpand: true,
-
                             #[wrap(Some)]
-                            set_start_widget = &gtk::Box {
+                            set_start_widget = &gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_halign: gtk::Align::Start,
+                                set_text: "Newly added",
+                            },
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
-                                    set_size_request: (50, 50),
+                                    set_size_request: (40, 30),
 
                                     add_controller = gtk::EventControllerMotion {
                                         connect_enter[scroll_sender] => move |_controller, _x, _y| {
@@ -295,53 +291,50 @@ impl relm4::Component for Dashboard {
                                         }
                                     }
                                 },
-                            },
-
-                            #[wrap(Some)]
-                            set_center_widget = &model.recently_added_scroll.clone() -> gtk::ScrolledWindow {
-                                set_vscrollbar_policy: gtk::PolicyType::Never,
-                                set_hscrollbar_policy: gtk::PolicyType::External,
-                                set_hexpand: true,
-
-                                #[wrap(Some)]
-                                set_child = &model.recently_added.clone() {
-                                    set_vexpand: true,
-                                    set_hexpand: true,
-                                },
-                            },
-
-                            #[wrap(Some)]
-                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
-                                    set_size_request: (50, 50),
-                                },
-                                add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
-                                        scroll_sender.try_send(Scrolling::RecentlyAddedRight).unwrap();
-                                    },
-                                    connect_leave[scroll_sender] => move |_controller| {
-                                        scroll_sender.try_send(Scrolling::None).unwrap();
+                                    set_size_request: (40, 30),
+
+                                    add_controller = gtk::EventControllerMotion {
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::RecentlyAddedRight).unwrap();
+                                        },
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
+                                        }
                                     }
-                                }
-                            }
+                                },
+                            },
+                        },
+                        model.recently_added_scroll.clone() -> gtk::ScrolledWindow {
+                            set_vscrollbar_policy: gtk::PolicyType::Never,
+                            set_hscrollbar_policy: gtk::PolicyType::External,
+                            set_hexpand: true,
+
+                            model.recently_added_list.widget().clone() {
+                                set_valign: gtk::Align::Start,
+                                set_vexpand: true,
+                                set_max_children_per_line: 100,
+                                set_min_children_per_line: 20,
+                            },
                         },
                     },
 
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
 
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_halign: gtk::Align::Start,
-                            set_text: "Recently Played",
-                        },
                         gtk::CenterBox {
                             #[wrap(Some)]
-                            set_start_widget = &gtk::Box {
+                            set_start_widget = &gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_halign: gtk::Align::Start,
+                                set_text: "Recently Played",
+                            },
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
-                                    set_size_request: (50, 50),
+                                    set_size_request: (40, 30),
 
                                     add_controller = gtk::EventControllerMotion {
                                         connect_enter[scroll_sender] => move |_controller, _x, _y| {
@@ -352,60 +345,59 @@ impl relm4::Component for Dashboard {
                                         }
                                     }
                                 },
-                            },
-
-                            #[wrap(Some)]
-                            set_center_widget = &model.recently_played_scroll.clone() -> gtk::ScrolledWindow {
-                                set_vscrollbar_policy: gtk::PolicyType::Never,
-                                set_hscrollbar_policy: gtk::PolicyType::External,
-                                set_hexpand: true,
-
-                                model.recently_played.clone() {
-                                    set_halign: gtk::Align::Start,
-                                    set_vexpand: true,
-                                }
-                            },
-
-                            #[wrap(Some)]
-                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
-                                    set_size_request: (50, 50),
-                                },
-                                add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
-                                        scroll_sender.try_send(Scrolling::RecentlyPlayedRight).unwrap();
-                                    },
-                                    connect_leave[scroll_sender] => move |_controller| {
-                                        scroll_sender.try_send(Scrolling::None).unwrap();
+                                    set_size_request: (40, 30),
+
+                                    add_controller = gtk::EventControllerMotion {
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::RecentlyPlayedRight).unwrap();
+                                        },
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
+                                        }
                                     }
-                                }
+                                },
                             }
+                        },
+                        model.recently_played_scroll.clone() -> gtk::ScrolledWindow {
+                            set_vscrollbar_policy: gtk::PolicyType::Never,
+                            set_hscrollbar_policy: gtk::PolicyType::External,
+                            set_hexpand: true,
+
+                            model.recently_played_list.widget().clone() {
+                                set_valign: gtk::Align::Start,
+                                set_vexpand: true,
+                                set_max_children_per_line: 100,
+                                set_min_children_per_line: 20,
+                            },
                         },
                     },
 
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
-                        gtk::Box {
-                            set_spacing: 7,
 
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_halign: gtk::Align::Start,
-                                set_text: "Random"
-                            },
-                            gtk::Button {
-                                set_icon_name: "media-playlist-shuffle-symbolic",
-                                set_tooltip: "Rerandomize albums",
-                                connect_clicked => DashboardIn::ClickedRandomize,
-                            }
-                        },
                         gtk::CenterBox {
                             #[wrap(Some)]
                             set_start_widget = &gtk::Box {
+                                set_spacing: 10,
+
+                                gtk::Label {
+                                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                    set_halign: gtk::Align::Start,
+                                    set_text: "Random"
+                                },
+                                gtk::Button {
+                                    set_icon_name: "media-playlist-shuffle-symbolic",
+                                    set_tooltip: "Rerandomize albums",
+                                    connect_clicked => DashboardIn::ClickedRandomize,
+                                }
+                            },
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
-                                    set_size_request: (50, 50),
+                                    set_size_request: (40, 30),
 
                                     add_controller = gtk::EventControllerMotion {
                                         connect_enter[scroll_sender] => move |_controller, _x, _y| {
@@ -416,38 +408,33 @@ impl relm4::Component for Dashboard {
                                         }
                                     }
                                 },
-                            },
 
-                            #[wrap(Some)]
-                            set_center_widget = &model.random_album_scroll.clone() -> gtk::ScrolledWindow {
-                                set_vscrollbar_policy: gtk::PolicyType::Never,
-                                set_hscrollbar_policy: gtk::PolicyType::External,
-                                set_hexpand: true,
-
-                                gtk::Box {
-                                    set_halign: gtk::Align::Start,
-
-                                    model.random_album.clone() {
-                                        set_halign: gtk::Align::Start,
-                                        set_vexpand: true,
-                                    },
-                                }
-                            },
-
-                            #[wrap(Some)]
-                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
-                                    set_size_request: (50, 50),
-                                },
-                                add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
-                                        scroll_sender.try_send(Scrolling::RandomAlbumRight).unwrap();
-                                    },
-                                    connect_leave[scroll_sender] => move |_controller| {
-                                        scroll_sender.try_send(Scrolling::None).unwrap();
+                                    set_size_request: (40, 30),
+
+                                    add_controller = gtk::EventControllerMotion {
+                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                            scroll_sender.try_send(Scrolling::RandomAlbumRight).unwrap();
+                                        },
+                                        connect_leave[scroll_sender] => move |_controller| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
+                                        }
                                     }
                                 }
+                            },
+                        },
+
+                        model.random_album_scroll.clone() -> gtk::ScrolledWindow {
+                            set_vscrollbar_policy: gtk::PolicyType::Never,
+                            set_hscrollbar_policy: gtk::PolicyType::External,
+                            set_hexpand: true,
+
+                            model.random_album_list.widget().clone() {
+                                set_halign: gtk::Align::Start,
+                                set_vexpand: true,
+                                set_max_children_per_line: 100,
+                                set_min_children_per_line: 20,
                             }
                         },
                     },
@@ -455,17 +442,19 @@ impl relm4::Component for Dashboard {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
 
-                        gtk::Label {
-                            set_halign: gtk::Align::Start,
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_text: "Most Played",
-                        },
                         gtk::CenterBox {
                             #[wrap(Some)]
-                            set_start_widget = &gtk::Box {
+                            set_start_widget = &gtk::Label {
+                                set_halign: gtk::Align::Start,
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_text: "Most Played",
+                            },
+
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
-                                    set_size_request: (50, 50),
+                                    set_size_request: (40, 30),
 
                                     add_controller = gtk::EventControllerMotion {
                                         connect_enter[scroll_sender] => move |_controller, _x, _y| {
@@ -476,29 +465,9 @@ impl relm4::Component for Dashboard {
                                         }
                                     }
                                 },
-                            },
-
-                            #[wrap(Some)]
-                            set_center_widget = &model.most_played_scroll.clone() -> gtk::ScrolledWindow {
-                                set_vscrollbar_policy: gtk::PolicyType::Never,
-                                set_hscrollbar_policy: gtk::PolicyType::External,
-                                set_hexpand: true,
-
-                                gtk::Box {
-                                    set_halign: gtk::Align::Start,
-
-                                    model.most_played.clone() {
-                                        set_halign: gtk::Align::Start,
-                                        set_vexpand: true,
-                                    }
-                                }
-                            },
-
-                            #[wrap(Some)]
-                            set_end_widget = &gtk::Box {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
-                                    set_size_request: (50, 50),
+                                    set_size_request: (40, 30),
                                 },
                                 add_controller = gtk::EventControllerMotion {
                                     connect_enter[scroll_sender] => move |_controller, _x, _y| {
@@ -508,6 +477,18 @@ impl relm4::Component for Dashboard {
                                         scroll_sender.try_send(Scrolling::None).unwrap();
                                     }
                                 }
+                            }
+                        },
+                        model.most_played_scroll.clone() -> gtk::ScrolledWindow {
+                            set_vscrollbar_policy: gtk::PolicyType::Never,
+                            set_hscrollbar_policy: gtk::PolicyType::External,
+                            set_hexpand: true,
+
+                            model.most_played_list.widget().clone() {
+                                set_halign: gtk::Align::Start,
+                                set_vexpand: true,
+                                set_max_children_per_line: 100,
+                                set_min_children_per_line: 20,
                             }
                         },
                     }
@@ -523,17 +504,16 @@ impl relm4::Component for Dashboard {
         _root: &Self::Root,
     ) {
         match msg {
-            DashboardIn::SearchChanged(mut search) => {
-                for album in self
-                    .recently_added_list
-                    .iter()
-                    .chain(self.recently_played_list.iter())
-                    .chain(self.random_album_list.iter())
-                    .chain(self.most_played_list.iter())
-                {
-                    let (title, artist) =
-                        crate::components::albums_view::get_info_of_flowboxchild(album.widget());
+            DashboardIn::FilterChanged => {
+                let search_fn = |element: &gtk::FlowBoxChild| -> bool {
+                    let mut search = Settings::get().lock().unwrap().search_text.clone();
+                    let (title, artist) = get_info_of_flowboxchild(element);
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
+
+                    // when search bar is hidden every element will be shown
+                    if !Settings::get().lock().unwrap().search_active {
+                        return true;
+                    }
 
                     //check for case sensitivity
                     if !Settings::get().lock().unwrap().case_sensitive {
@@ -546,11 +526,18 @@ impl relm4::Component for Dashboard {
                     if fuzzy_search {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                         let score = matcher.fuzzy_match(&title_artist, &search);
-                        album.widget().set_visible(score.is_some())
+                        score.is_some()
                     } else {
-                        album.widget().set_visible(title_artist.contains(&search))
+                        title_artist.contains(&search)
                     }
-                }
+                };
+
+                self.recently_added_list.widget().set_filter_func(search_fn);
+                self.recently_played_list
+                    .widget()
+                    .set_filter_func(search_fn);
+                self.random_album_list.widget().set_filter_func(search_fn);
+                self.most_played_list.widget().set_filter_func(search_fn);
             }
             DashboardIn::AlbumElement(msg) => match msg {
                 AlbumElementOut::Clicked(clicked) => {
@@ -564,54 +551,44 @@ impl relm4::Component for Dashboard {
                     .unwrap(),
             },
             DashboardIn::ClickedRandomize => {
-                self.random_album_list.clear();
-                self.random_album.remove_all();
+                self.random_album_list.guard().clear();
                 let mut rng = rand::thread_rng();
                 let mut albums = self.subsonic.borrow().albums().clone();
                 albums.shuffle(&mut rng);
-                self.random_album_list = albums
+
+                let infos: Vec<AlbumElementInit> = albums
                     .iter()
                     .take(10)
-                    .map(|album| {
-                        AlbumElement::builder()
-                            .launch((
-                                self.subsonic.clone(),
-                                AlbumElementInit::Child(Box::new(album.clone())),
-                            ))
-                            .forward(sender.input_sender(), DashboardIn::AlbumElement)
-                    })
+                    .map(|album| AlbumElementInit::Child(Box::new(album.clone())))
                     .collect();
-                for album in &self.random_album_list {
-                    self.random_album.append(album.widget());
+                let mut guard = self.random_album_list.guard();
+                for info in infos {
+                    guard.push_back((self.subsonic.clone(), info));
                 }
             }
             DashboardIn::FavoritedAlbum(id, state) => {
-                for album in &self.recently_added_list {
-                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
-                }
-                for album in &self.recently_played_list {
-                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
-                }
-                for album in &self.random_album_list {
-                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
-                }
-                for album in &self.most_played_list {
-                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
-                }
+                self.recently_added_list
+                    .broadcast(AlbumElementIn::Favorited(id.clone(), state));
+                self.recently_played_list
+                    .broadcast(AlbumElementIn::Favorited(id.clone(), state));
+                self.random_album_list
+                    .broadcast(AlbumElementIn::Favorited(id.clone(), state));
+                self.most_played_list
+                    .broadcast(AlbumElementIn::Favorited(id, state));
             }
             DashboardIn::CoverSizeChanged => {
                 let size = Settings::get().lock().unwrap().cover_size;
-                for album in &self.recently_added_list {
-                    album.model().change_size(size);
+                for album in self.recently_added_list.iter() {
+                    album.change_size(size);
                 }
-                for album in &self.recently_played_list {
-                    album.model().change_size(size);
+                for album in self.recently_played_list.iter() {
+                    album.change_size(size);
                 }
-                for album in &self.random_album_list {
-                    album.model().change_size(size);
+                for album in self.random_album_list.iter() {
+                    album.change_size(size);
                 }
-                for album in &self.most_played_list {
-                    album.model().change_size(size);
+                for album in self.most_played_list.iter() {
+                    album.change_size(size);
                 }
             }
         }
@@ -627,19 +604,13 @@ impl relm4::Component for Dashboard {
             DashboardCmd::Error(msg) => sender.output(DashboardOut::DisplayToast(msg)).unwrap(),
             DashboardCmd::LoadedRecentlyPlayed(Err(_e)) => {}
             DashboardCmd::LoadedRecentlyPlayed(Ok(list)) => {
-                self.recently_played_list = list
+                let infos: Vec<AlbumElementInit> = list
                     .iter()
-                    .map(|album| {
-                        AlbumElement::builder()
-                            .launch((
-                                self.subsonic.clone(),
-                                AlbumElementInit::Child(Box::new(album.clone())),
-                            ))
-                            .forward(sender.input_sender(), DashboardIn::AlbumElement)
-                    })
+                    .map(|album| AlbumElementInit::Child(Box::new(album.clone())))
                     .collect();
-                for album in &self.recently_played_list {
-                    self.recently_played.append(album.widget());
+                let mut guard = self.recently_played_list.guard();
+                for info in infos {
+                    guard.push_back((self.subsonic.clone(), info));
                 }
             }
         }

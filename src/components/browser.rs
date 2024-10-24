@@ -146,14 +146,14 @@ impl relm4::component::AsyncComponent for Browser {
     ) {
         match msg {
             BrowserIn::SearchChanged(search) => {
-                self.dashboard
-                    .emit(DashboardIn::SearchChanged(search.clone()));
+                self.dashboard.emit(DashboardIn::FilterChanged);
                 if let Some(artists) = &self.artists {
                     artists.emit(ArtistsViewIn::FilterChanged);
                 }
                 if let Some(albums) = &self.albums {
                     albums.emit(AlbumsViewIn::FilterChanged);
                 }
+                //TODO change to filter changed
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::SearchChanged(search.clone()));
                 }

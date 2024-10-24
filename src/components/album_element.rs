@@ -5,7 +5,7 @@ use relm4::{
         self,
         prelude::{ButtonExt, ToValue, WidgetExt},
     },
-    Component, ComponentController,
+    Component, ComponentController, RelmWidgetExt,
 };
 
 use super::descriptive_cover::DescriptiveCoverOut;
@@ -39,6 +39,8 @@ pub enum AlbumElementIn {
     DescriptiveCover(DescriptiveCoverOut),
     Favorited(String, bool),
     Hover(bool),
+    FavoriteClicked,
+    Clicked,
 }
 
 #[derive(Debug)]
@@ -54,17 +56,19 @@ pub enum AlbumElementInit {
     AlbumId3(Box<submarine::data::AlbumId3>),
 }
 
-#[relm4::component(pub)]
-impl relm4::SimpleComponent for AlbumElement {
+#[relm4::factory(pub)]
+impl relm4::factory::FactoryComponent for AlbumElement {
     type Init = (Rc<RefCell<Subsonic>>, AlbumElementInit);
     type Input = AlbumElementIn;
     type Output = AlbumElementOut;
+    type CommandOutput = ();
+    type ParentWidget = gtk::FlowBox;
 
-    fn init(
+    fn init_model(
         (subsonic, init): Self::Init,
-        root: Self::Root,
-        sender: relm4::ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
+        _index: &relm4::factory::DynamicIndex,
+        sender: relm4::factory::FactorySender<Self>,
+    ) -> Self {
         // init cover
         let (builder, drop) = match &init {
             AlbumElementInit::AlbumId3(id3) => {
@@ -130,9 +134,7 @@ impl relm4::SimpleComponent for AlbumElement {
                 info
             }
         };
-
-        let info = init.clone();
-        let widgets = view_output!();
+        model.cover.widget().set_tooltip(&tooltip);
 
         //setup DropSource
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
@@ -168,7 +170,7 @@ impl relm4::SimpleComponent for AlbumElement {
             _ => {}
         }
 
-        relm4::ComponentParts { model, widgets }
+        model
     }
 
     view! {
@@ -190,23 +192,14 @@ impl relm4::SimpleComponent for AlbumElement {
                     set_margin_top: 135,
                     set_margin_start: 125,
 
-                    model.favorite.clone() -> gtk::Button {
+                    #[name = "favorite"]
+                    self.favorite.clone() -> gtk::Button {
                         add_css_class: "cover-favorite",
                         set_width_request: 24,
                         set_height_request: 24,
                         set_icon_name: "non-starred-symbolic",
 
-                        connect_clicked[sender] => move |btn| {
-                            let id = match &info {
-                                AlbumElementInit::AlbumId3(album) => album.id.clone(),
-                                AlbumElementInit::Child(child) => child.id.clone(),
-                            };
-                            match btn.icon_name().as_deref() {
-                                Some("starred-symbolic") => sender.output(AlbumElementOut::FavoriteClicked(id, false)).unwrap(),
-                                Some("non-starred-symbolic") => sender.output(AlbumElementOut::FavoriteClicked(id, true)).unwrap(),
-                                _ => {}
-                            }
-                        }
+                        connect_clicked => AlbumElementIn::Clicked,
                     }
                 },
 
@@ -215,13 +208,11 @@ impl relm4::SimpleComponent for AlbumElement {
                     add_css_class: "flat",
                     set_halign: gtk::Align::Center,
 
-                    connect_clicked[sender, init] => move |_btn| {
-                        sender.output(AlbumElementOut::Clicked(init.clone())).unwrap();
-                    },
+                    connect_clicked => AlbumElementIn::Clicked,
 
                     #[wrap(Some)]
                     set_child = &gtk::Overlay {
-                        add_overlay = &model.favorite_ribbon.clone() {
+                        add_overlay = &self.favorite_ribbon.clone() {
                             add_css_class: "cover-favorite-ribbon",
                             set_halign: gtk::Align::End,
                             set_valign: gtk::Align::End,
@@ -232,16 +223,19 @@ impl relm4::SimpleComponent for AlbumElement {
                         },
 
                         #[wrap(Some)]
-                        set_child = &model.cover.widget().clone() {
-                            set_tooltip_text: Some(&tooltip),
-                        }
+                        set_child = &self.cover.widget().clone() {}
                     }
                 }
             },
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: relm4::FactorySender<Self>,
+    ) {
         match msg {
             AlbumElementIn::DescriptiveCover(msg) => match msg {
                 DescriptiveCoverOut::DisplayToast(title) => {
@@ -271,6 +265,26 @@ impl relm4::SimpleComponent for AlbumElement {
             }
             AlbumElementIn::Hover(true) => {
                 self.favorite.set_visible(true);
+            }
+            AlbumElementIn::FavoriteClicked => {
+                let id = match &self.init {
+                    AlbumElementInit::AlbumId3(album) => album.id.clone(),
+                    AlbumElementInit::Child(child) => child.id.clone(),
+                };
+                match widgets.favorite.icon_name().as_deref() {
+                    Some("starred-symbolic") => sender
+                        .output(AlbumElementOut::FavoriteClicked(id, false))
+                        .unwrap(),
+                    Some("non-starred-symbolic") => sender
+                        .output(AlbumElementOut::FavoriteClicked(id, true))
+                        .unwrap(),
+                    _ => {}
+                }
+            }
+            AlbumElementIn::Clicked => {
+                sender
+                    .output(AlbumElementOut::Clicked(self.init.clone()))
+                    .unwrap();
             }
         }
     }

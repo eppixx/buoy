@@ -25,8 +25,7 @@ use crate::{
 #[derive(Debug)]
 pub struct AlbumsView {
     subsonic: Rc<RefCell<Subsonic>>,
-    albums: gtk::FlowBox,
-    album_list: Vec<relm4::Controller<AlbumElement>>,
+    albums: relm4::factory::FactoryVecDeque<AlbumElement>,
     filters: relm4::Controller<FilterBox>,
 }
 
@@ -62,8 +61,9 @@ impl relm4::component::Component for AlbumsView {
     ) -> relm4::component::ComponentParts<Self> {
         let mut model = Self {
             subsonic: init.clone(),
-            albums: gtk::FlowBox::default(),
-            album_list: vec![],
+            albums: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::FlowBox::default())
+                .forward(sender.input_sender(), Self::Input::AlbumElement),
             filters: FilterBox::builder()
                 .launch(Category::albums_view())
                 .forward(sender.input_sender(), Self::Input::FilterBox),
@@ -71,16 +71,14 @@ impl relm4::component::Component for AlbumsView {
         let widgets = view_output!();
 
         // add albums with cover and title
+        let mut guard = model.albums.guard();
         for album in init.borrow().albums() {
-            let cover: relm4::Controller<AlbumElement> = AlbumElement::builder()
-                .launch((
-                    init.clone(),
-                    AlbumElementInit::Child(Box::new(album.clone())),
-                ))
-                .forward(sender.input_sender(), AlbumsViewIn::AlbumElement);
-            model.albums.append(cover.widget());
-            model.album_list.push(cover);
+            guard.push_back((
+                init.clone(),
+                AlbumElementInit::Child(Box::new(album.clone())),
+            ));
         }
+        drop(guard);
 
         relm4::component::ComponentParts { model, widgets }
     }
@@ -167,7 +165,7 @@ impl relm4::component::Component for AlbumsView {
                 set_vexpand: true,
 
                 #[wrap(Some)]
-                set_child = &model.albums.clone() -> gtk::FlowBox {
+                set_child = &model.albums.widget().clone() -> gtk::FlowBox {
                     set_valign: gtk::Align::Start,
                     set_row_spacing: 20,
                 }
@@ -197,7 +195,7 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::FilterChanged => {
                 let subsonic = self.subsonic.clone();
                 let favorite = widgets.favorite.clone();
-                self.albums.set_filter_func(move |element| {
+                self.albums.widget().set_filter_func(move |element| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
                     let (title, artist) = get_info_of_flowboxchild(element);
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
@@ -244,12 +242,9 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::FilterBox(FilterBoxOut::FiltersChanged) => {
                 let filters = self.filters.model().get_filters();
                 //TODO fix hacky way of figuring out what element we are iterating over
-                let albums: Vec<_> = self
-                    .album_list
-                    .iter()
-                    .map(|controller| controller.model().info().clone())
-                    .collect();
-                self.albums.set_filter_func(move |element| {
+                let albums: Vec<AlbumElementInit> =
+                    self.albums.iter().map(|a| a.info().clone()).collect();
+                self.albums.widget().set_filter_func(move |element| {
                     let (title, artist) = get_info_of_flowboxchild(element);
 
                     let mut visible = true;
@@ -319,24 +314,17 @@ impl relm4::component::Component for AlbumsView {
             }
             AlbumsViewIn::ClearFilters => self.filters.emit(FilterBoxIn::ClearFilters),
             AlbumsViewIn::Favorited(id, state) => {
-                for album in &self.album_list {
-                    album.emit(AlbumElementIn::Favorited(id.clone(), state));
-                }
+                self.albums.broadcast(AlbumElementIn::Favorited(id, state));
             }
             AlbumsViewIn::CoverSizeChanged => {
                 let size = Settings::get().lock().unwrap().cover_size;
-                for element in &self.album_list {
-                    element.model().change_size(size);
-                }
+                self.albums.iter().for_each(|a| a.change_size(size));
             }
             AlbumsViewIn::Sort(category) => {
                 //TODO fix hacky way of figuring out what element we are iterating over
-                let albums: Vec<_> = self
-                    .album_list
-                    .iter()
-                    .map(|controller| controller.model().info().clone())
-                    .collect();
-                self.albums.set_sort_func(move |a, b| {
+                let albums: Vec<AlbumElementInit> =
+                    self.albums.iter().map(|a| a.info().clone()).collect();
+                self.albums.widget().set_sort_func(move |a, b| {
                     let match_fn = |init: &AlbumElementInit,
                                     title: &gtk::Label,
                                     artist: &gtk::Label|
