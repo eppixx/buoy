@@ -282,27 +282,26 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
 
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RecentlyAddedLeft).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
-                                    }
+                                    },
                                 },
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
-
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RecentlyAddedRight).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
-                                    }
+                                    },
                                 },
                             },
                         },
@@ -336,11 +335,11 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
 
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RecentlyPlayedLeft).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
@@ -349,11 +348,11 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
 
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RecentlyPlayedRight).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
@@ -399,11 +398,11 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
 
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RandomAlbumLeft).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
@@ -413,11 +412,11 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
 
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RandomAlbumRight).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
@@ -456,11 +455,11 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
 
-                                    add_controller = gtk::EventControllerMotion {
-                                        connect_enter[scroll_sender] => move |_controller, _x, _y| {
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::MostPlayedLeft).unwrap();
                                         },
-                                        connect_leave[scroll_sender] => move |_controller| {
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::None).unwrap();
                                         }
                                     }
@@ -468,15 +467,16 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
-                                },
-                                add_controller = gtk::EventControllerMotion {
-                                    connect_enter[scroll_sender] => move |_controller, _x, _y| {
-                                        scroll_sender.try_send(Scrolling::MostPlayedRight).unwrap();
-                                    },
-                                    connect_leave[scroll_sender] => move |_controller| {
-                                        scroll_sender.try_send(Scrolling::None).unwrap();
+
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[scroll_sender] => move |_btn, _, _, _| {
+                                            scroll_sender.try_send(Scrolling::MostPlayedRight).unwrap();
+                                        },
+                                        connect_released[scroll_sender] => move |_btn, _, _, _| {
+                                            scroll_sender.try_send(Scrolling::None).unwrap();
+                                        }
                                     }
-                                }
+                                },
                             }
                         },
                         model.most_played_scroll.clone() -> gtk::ScrolledWindow {
