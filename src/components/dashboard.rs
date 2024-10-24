@@ -189,48 +189,44 @@ impl relm4::Component for Dashboard {
                             core::time::Duration::from_millis(15),
                             move || {
                                 const SCROLL_MOVE: f64 = 5f64;
+                                enum Op {
+                                    Add,
+                                    Sub,
+                                }
+                                let adj_fn = |scroll: &gtk::ScrolledWindow, op: Op| {
+                                    let vadj = scroll.hadjustment();
+                                    match op {
+                                        Op::Add => vadj.set_value(vadj.value() + SCROLL_MOVE),
+                                        Op::Sub => vadj.set_value(vadj.value() - SCROLL_MOVE),
+                                    }
+                                    scroll.set_hadjustment(Some(&vadj));
+                                };
                                 match *scrolling.borrow() {
                                     // when no scrolling end closure
                                     Scrolling::None => return gtk::glib::ControlFlow::Break,
                                     Scrolling::RecentlyAddedLeft => {
-                                        let vadj = recently_added_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                        recently_added_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&recently_added_scroll, Op::Sub);
                                     }
                                     Scrolling::RecentlyAddedRight => {
-                                        let vadj = recently_added_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                        recently_added_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&recently_added_scroll, Op::Add);
                                     }
                                     Scrolling::RecentlyPlayedLeft => {
-                                        let vadj = recently_played_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                        recently_played_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&recently_played_scroll, Op::Sub);
                                     }
                                     Scrolling::RecentlyPlayedRight => {
-                                        let vadj = recently_played_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                        recently_played_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&recently_played_scroll, Op::Add);
                                     }
                                     Scrolling::RandomAlbumLeft => {
-                                        let vadj = random_album_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                        random_album_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&random_album_scroll, Op::Sub);
                                     }
                                     Scrolling::RandomAlbumRight => {
-                                        let vadj = random_album_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                        random_album_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&random_album_scroll, Op::Add);
                                     }
                                     Scrolling::MostPlayedLeft => {
-                                        let vadj = most_played_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                        most_played_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&most_played_scroll, Op::Sub);
                                     }
                                     Scrolling::MostPlayedRight => {
-                                        let vadj = most_played_scroll.hadjustment();
-                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                        most_played_scroll.set_hadjustment(Some(&vadj));
+                                        adj_fn(&most_played_scroll, Op::Add);
                                     }
                                 }
                                 gtk::glib::ControlFlow::Continue
