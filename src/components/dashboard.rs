@@ -290,6 +290,8 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_margin_end: 10,
+
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
                                             scroll_sender.try_send(Scrolling::RecentlyAddedRight).unwrap();
@@ -343,6 +345,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_margin_end: 10,
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -407,6 +410,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_margin_end: 10,
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -463,6 +467,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_margin_end: 10,
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
