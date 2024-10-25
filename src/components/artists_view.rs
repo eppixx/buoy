@@ -88,6 +88,7 @@ impl relm4::component::Component for ArtistsView {
                         set_spacing: 10,
                         //prevent cutoff of "glow" when widget has focus
                         set_margin_top: 2,
+                        set_margin_bottom: 2,
 
                         gtk::Box {
                             set_spacing: 5,
