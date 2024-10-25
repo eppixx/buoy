@@ -63,6 +63,7 @@ pub enum DashboardIn {
     ClickedRandomize,
     FavoritedAlbum(String, bool),
     CoverSizeChanged,
+    ScrollOuter(f64),
 }
 
 #[derive(Debug)]
@@ -254,6 +255,7 @@ impl relm4::Component for Dashboard {
                 }
             },
 
+            #[name = "outer_scroll"]
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
@@ -307,6 +309,14 @@ impl relm4::Component for Dashboard {
                             set_vscrollbar_policy: gtk::PolicyType::Never,
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
+
+                            add_controller = gtk::EventControllerScroll {
+                                set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+                                connect_scroll[sender] => move |_event, _x, y| {
+                                    sender.input(DashboardIn::ScrollOuter(y));
+                                    gtk::glib::signal::Propagation::Stop
+                                }
+                            },
 
                             model.recently_added_list.widget().clone() {
                                 set_valign: gtk::Align::Start,
@@ -362,6 +372,14 @@ impl relm4::Component for Dashboard {
                             set_vscrollbar_policy: gtk::PolicyType::Never,
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
+
+                            add_controller = gtk::EventControllerScroll {
+                                set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+                                connect_scroll[sender] => move |_event, _x, y| {
+                                    sender.input(DashboardIn::ScrollOuter(y));
+                                    gtk::glib::signal::Propagation::Stop
+                                }
+                            },
 
                             model.recently_played_list.widget().clone() {
                                 set_valign: gtk::Align::Start,
@@ -429,6 +447,14 @@ impl relm4::Component for Dashboard {
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
 
+                            add_controller = gtk::EventControllerScroll {
+                                set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+                                connect_scroll[sender] => move |_event, _x, y| {
+                                    sender.input(DashboardIn::ScrollOuter(y));
+                                    gtk::glib::signal::Propagation::Stop
+                                }
+                            },
+
                             model.random_album_list.widget().clone() {
                                 set_halign: gtk::Align::Start,
                                 set_vexpand: true,
@@ -485,6 +511,14 @@ impl relm4::Component for Dashboard {
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
 
+                            add_controller = gtk::EventControllerScroll {
+                                set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+                                connect_scroll[sender] => move |_event, _x, y| {
+                                    sender.input(DashboardIn::ScrollOuter(y));
+                                    gtk::glib::signal::Propagation::Stop
+                                }
+                            },
+
                             model.most_played_list.widget().clone() {
                                 set_halign: gtk::Align::Start,
                                 set_vexpand: true,
@@ -498,8 +532,9 @@ impl relm4::Component for Dashboard {
         }
     }
 
-    fn update(
+    fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::Input,
         sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
@@ -590,6 +625,17 @@ impl relm4::Component for Dashboard {
                 }
                 for album in self.most_played_list.iter() {
                     album.change_size(size);
+                }
+            }
+            DashboardIn::ScrollOuter(y) => {
+                if y < 0.0 {
+                    widgets
+                        .outer_scroll
+                        .emit_scroll_child(gtk::ScrollType::StepUp, false);
+                } else {
+                    widgets
+                        .outer_scroll
+                        .emit_scroll_child(gtk::ScrollType::StepDown, false);
                 }
             }
         }
