@@ -30,8 +30,13 @@ pub struct Args {
     #[arg(short, long)]
     time_startup: bool,
 
-    #[arg(short, long)]
-    yd: bool,
+    /// using a alternative id; a debug option
+    #[arg(long, default_value = "com.github.eppixx.buoy")]
+    alternative_id: String,
+
+    /// using a alternative title; a debug option
+    #[arg(long, default_value = "buoy")]
+    alternative_title: String,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -48,7 +53,7 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
-    let app = RelmApp::new("com.github.eppixx.buoy");
+    let app = RelmApp::new(&args.alternative_id);
     load_css();
     // gtk parses arguments and conclicts with clap
     app.with_args(vec![]).run_async::<App>(args);

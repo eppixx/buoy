@@ -271,7 +271,7 @@ impl relm4::component::AsyncComponent for App {
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
 
-        let (mpris, mpris_receiver) = crate::mpris::Mpris::new().await.unwrap();
+        let (mpris, mpris_receiver) = crate::mpris::Mpris::new(&args).await.unwrap();
 
         let mut model = App {
             playback,
