@@ -8,10 +8,15 @@ jobs:
     name: build
     runs-on: ubuntu-24.04
     steps:
+      - name: install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libgstreamer1.0-dev libgranite-7-dev meson ninja-build gettext desktop-file-utils
+
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libgstreamer1.0-dev libgranite-7-dev && cargo build --release
+
+      - name: build project
+        run: meson setup build --buildtype=release && cd build && ninja
+
       - uses: actions/upload-artifact@v3
         with:
           name: buoy
-          path: target/release/buoy
+          path: build/src/buoy

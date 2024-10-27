@@ -127,7 +127,7 @@ fn style_label(title: &str, artist: &str, album: &str) -> String {
     }
     if !album.is_empty() {
         result.push_str(&format!(
-            "\non <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            " on <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(album)
         ));
     } else {
