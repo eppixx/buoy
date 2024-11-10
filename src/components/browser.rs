@@ -435,6 +435,9 @@ impl relm4::component::AsyncComponent for Browser {
                 PlaylistsViewOut::CreatePlaylist => {
                     sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![]))
                 }
+                PlaylistsViewOut::Download(drop) => {
+                    sender.output(BrowserOut::Download(drop)).unwrap()
+                }
             },
             BrowserIn::NewPlaylist(name, list) => {
                 const CHUNKS: usize = 100;

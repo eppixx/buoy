@@ -23,6 +23,10 @@ impl PlaylistElement {
     pub fn change_state(&self, state: &State) {
         self.main_stack.set_visible_child_enum(state);
     }
+
+    pub fn info(&self) -> &submarine::data::PlaylistWithSongs {
+        &self.playlist
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]

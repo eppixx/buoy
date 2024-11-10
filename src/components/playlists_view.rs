@@ -76,6 +76,7 @@ pub enum PlaylistsViewOut {
     ),
     CreatePlaylist,
     DisplayToast(String),
+    Download(Droppable),
 }
 
 #[derive(Debug)]
@@ -89,6 +90,7 @@ pub enum PlaylistsViewIn {
     NewPlaylist(submarine::data::PlaylistWithSongs),
     DeletePlaylist(relm4::factory::DynamicIndex),
     Favorited(String, bool),
+    DownloadClicked,
 }
 
 #[relm4::component(pub)]
@@ -273,6 +275,18 @@ impl relm4::SimpleComponent for PlaylistsView {
                                             },
                                             set_tooltip_text: Some("Replaces current queue with this playlist"),
                                             connect_clicked => PlaylistsViewIn::ReplaceQueue,
+                                        },
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("browser-download-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: "Download Playlist",
+                                                }
+                                            },
+                                            set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                            connect_clicked => PlaylistsViewIn::DownloadClicked,
                                         }
                                     }
                                 }
@@ -459,6 +473,13 @@ impl relm4::SimpleComponent for PlaylistsView {
                             }
                         }
                     }
+                }
+            }
+            PlaylistsViewIn::DownloadClicked => {
+                if let Some(index) = &self.index_shown {
+                    let element = self.playlists.get(index.current_index()).unwrap();
+                    let drop = Droppable::Playlist(Box::new(element.info().clone()));
+                    sender.output(PlaylistsViewOut::Download(drop)).unwrap();
                 }
             }
         }
