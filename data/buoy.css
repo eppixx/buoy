@@ -212,14 +212,22 @@ contents > box {
 .artist-element {
 }
 
-.playlist-view-playlist-list {
+.tracks-view-filter-list {
   min-width: 250px;
 }
 
+.tracks-view-filter-add {
+  padding: 7px;
+}
+
+.playlist-view-playlist-list {
+    min-width: 250px;
+}
+
 .playlist-element {
-  border-radius: 8px;
-  margin: 5px;
-  padding: 5px 7px;
+    border-radius: 8px;
+    margin: 5px;
+    padding: 5px 7px;
 }
 
 .playlist-view-add-playlist {
