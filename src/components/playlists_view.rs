@@ -400,10 +400,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                         Some(list) => list,
                     };
                     sender
-                        .output(PlaylistsViewOut::DeletePlaylist(
-                            index,
-                            list.get_list().clone(),
-                        ))
+                        .output(PlaylistsViewOut::DeletePlaylist(index, list.info().clone()))
                         .unwrap();
                 }
             },
@@ -414,25 +411,19 @@ impl relm4::SimpleComponent for PlaylistsView {
             },
             PlaylistsViewIn::ReplaceQueue => {
                 if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()]
-                        .get_list()
-                        .clone();
+                    let list = self.playlists.guard()[index.current_index()].info().clone();
                     sender.output(PlaylistsViewOut::ReplaceQueue(list)).unwrap();
                 }
             }
             PlaylistsViewIn::AddToQueue => {
                 if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()]
-                        .get_list()
-                        .clone();
+                    let list = self.playlists.guard()[index.current_index()].info().clone();
                     sender.output(PlaylistsViewOut::AddToQueue(list)).unwrap();
                 }
             }
             PlaylistsViewIn::AppendToQueue => {
                 if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()]
-                        .get_list()
-                        .clone();
+                    let list = self.playlists.guard()[index.current_index()].info().clone();
                     sender
                         .output(PlaylistsViewOut::AppendToQueue(list))
                         .unwrap();

@@ -27,6 +27,14 @@ impl PlaylistElement {
     pub fn info(&self) -> &submarine::data::PlaylistWithSongs {
         &self.playlist
     }
+
+    pub fn set_edit_area(&self, status: bool) {
+        if status {
+            self.edit_area.set_visible_child_enum(&EditState::Edit);
+        } else {
+            self.edit_area.set_visible_child_enum(&EditState::Clean);
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -82,20 +90,6 @@ impl TryFrom<String> for EditState {
             "Clean" => Ok(Self::Clean),
             "Edit" => Ok(Self::Edit),
             e => Err(format!("\"{e}\" is not a State")),
-        }
-    }
-}
-
-impl PlaylistElement {
-    pub fn get_list(&self) -> &submarine::data::PlaylistWithSongs {
-        &self.playlist
-    }
-
-    pub fn set_edit_area(&self, status: bool) {
-        if status {
-            self.edit_area.set_visible_child_enum(&EditState::Edit);
-        } else {
-            self.edit_area.set_visible_child_enum(&EditState::Clean);
         }
     }
 }
