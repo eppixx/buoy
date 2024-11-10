@@ -17,6 +17,7 @@ use crate::components::{
     artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
     dashboard::{Dashboard, DashboardIn, DashboardOut},
     playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
+    tracks_view::{TracksView, TracksViewIn, TracksViewOut},
 };
 use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 
@@ -54,6 +55,7 @@ pub struct Browser {
     dashboard: relm4::Controller<Dashboard>,
     artists: Option<relm4::component::Controller<ArtistsView>>,
     albums: Option<relm4::component::Controller<AlbumsView>>,
+    tracks: Option<relm4::component::Controller<TracksView>>,
     album_views: Vec<relm4::Controller<AlbumView>>,
     artist_views: Vec<relm4::Controller<ArtistView>>,
     playlists_views: Vec<relm4::Controller<PlaylistsView>>,
@@ -71,6 +73,7 @@ pub enum BrowserIn {
     Dashboard(DashboardOut),
     AlbumsView(AlbumsViewOut),
     AlbumView(Box<AlbumViewOut>),
+    TracksView(TracksViewOut),
     ArtistsView(ArtistsViewOut),
     ArtistView(Box<ArtistViewOut>),
     PlaylistsView(PlaylistsViewOut),
@@ -116,6 +119,7 @@ impl relm4::component::AsyncComponent for Browser {
                 .forward(sender.input_sender(), BrowserIn::Dashboard),
             artists: None,
             albums: None,
+            tracks: None,
             album_views: vec![],
             artist_views: vec![],
             playlists_views: vec![],
@@ -154,6 +158,9 @@ impl relm4::component::AsyncComponent for Browser {
                 if let Some(albums) = &self.albums {
                     albums.emit(AlbumsViewIn::FilterChanged);
                 }
+                if let Some(tracks) = &self.tracks {
+                    tracks.emit(TracksViewIn::FilterChanged);
+                }
                 //TODO change to filter changed
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::SearchChanged(search.clone()));
@@ -164,7 +171,6 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.playlists_views {
                     view.emit(PlaylistsViewIn::SearchChanged(search.clone()));
                 }
-                //TODO search for tracks
             }
             BrowserIn::BackClicked => {
                 if self.history_widget.len() > 1 {
@@ -253,7 +259,26 @@ impl relm4::component::AsyncComponent for Browser {
                     .expect("main window gone");
             }
             BrowserIn::TracksClicked => {
-                //TODO
+                if let Some(&Views::Tracks(_)) = self.history_widget.last() {
+                    return;
+                }
+
+                if self.tracks.is_none() {
+                    self.tracks = Some(
+                        TracksView::builder()
+                            .launch(self.subsonic.clone())
+                            .forward(sender.input_sender(), BrowserIn::TracksView),
+                    );
+                }
+
+                self.history_widget.push(Views::Tracks(
+                    self.tracks.as_ref().unwrap().widget().clone(),
+                ));
+                self.content
+                    .set_child(Some(self.history_widget.last().unwrap().widget()));
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .expect("main window gone");
             }
             BrowserIn::PlaylistsClicked => {
                 if let Some(&Views::Playlists(_)) = self.history_widget.last() {
@@ -522,7 +547,9 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.playlists_views {
                     view.emit(PlaylistsViewIn::Favorited(id.clone(), state));
                 }
-                //TODO add for track view
+                if let Some(tracks) = &self.tracks {
+                    tracks.emit(TracksViewIn::Favorited(id, state));
+                }
             }
             BrowserIn::FavoriteAlbum(id, state) => {
                 //notify all views with albums in them

@@ -13,6 +13,7 @@ pub struct Subsonic {
     scan_status: Option<i64>,
     artists: Vec<submarine::data::ArtistId3>,
     album_list: Vec<submarine::data::Child>,
+    tracks: Vec<submarine::data::Child>,
     playlists: Vec<submarine::data::PlaylistWithSongs>,
     #[serde(skip)]
     covers: SubsonicCovers,
@@ -104,6 +105,30 @@ impl Subsonic {
             albums
         };
 
+        //fetch tracks
+        tracing::info!("fetching tracks");
+        let tasks: Vec<_> = album_list
+            .iter()
+            .map(|album| async move {
+                let client = Client::get().unwrap();
+                tracing::info!("start loading album {}", album.title);
+                match client.get_album(&album.id).await {
+                    Ok(album) => album.song,
+                    Err(e) => {
+                        tracing::error!("error fetching album {}: {e}", album.title);
+                        vec![]
+                    }
+                }
+            })
+            .collect();
+        //buffer futures to not overwhelm server and client
+        // based on: https://stackoverflow.com/questions/70871368/limiting-the-number-of-concurrent-futures-in-join-all
+        let stream = futures::stream::iter(tasks)
+            .buffer_unordered(50)
+            .collect::<Vec<_>>();
+        let tracks = stream.await;
+        let tracks: Vec<submarine::data::Child> = tracks.into_iter().flatten().collect();
+
         //fetch playlists
         tracing::info!("fetching playlists");
         let playlists = {
@@ -120,6 +145,7 @@ impl Subsonic {
             scan_status: scan_status.count,
             artists,
             album_list,
+            tracks,
             playlists,
             covers: SubsonicCovers::default(),
         };
@@ -173,6 +199,10 @@ impl Subsonic {
         } else {
             None
         }
+    }
+
+    pub fn tracks(&self) -> &Vec<submarine::data::Child> {
+        &self.tracks
     }
 
     pub fn favorite_song(&mut self, id: impl AsRef<str>, state: bool) {
