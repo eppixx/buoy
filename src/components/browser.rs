@@ -392,6 +392,7 @@ impl relm4::component::AsyncComponent for Browser {
                 ArtistViewOut::FavoriteArtistClicked(id, state) => sender
                     .output(BrowserOut::FavoriteArtistClicked(id, state))
                     .unwrap(),
+                ArtistViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {

@@ -45,6 +45,7 @@ pub enum ArtistViewOut {
     DisplayToast(String),
     FavoriteAlbumClicked(String, bool),
     FavoriteArtistClicked(String, bool),
+    Download(Droppable),
 }
 
 #[derive(Debug)]
@@ -234,6 +235,20 @@ impl relm4::Component for ArtistView {
                                 set_tooltip_text: Some("Replaces current queue with this album"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::ReplaceQueue(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                }
+                            },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("browser-download-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Download Artist",
+                                    }
+                                },
+                                set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    sender.output(ArtistViewOut::Download(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }
                             }
                         }
