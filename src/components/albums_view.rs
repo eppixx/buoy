@@ -15,7 +15,8 @@ use crate::{
     components::{
         album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
         filter_box::{FilterBox, FilterBoxIn, FilterBoxOut},
-        filter_row::{Category, Filter},
+        filter_categories::Category,
+        filter_row::Filter,
         sort_by::{self, SortBy},
     },
     settings::Settings,

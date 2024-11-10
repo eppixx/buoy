@@ -1,19 +1,23 @@
 use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
-use relm4::{gtk::{
-    self,
-    prelude::{BoxExt, OrientableExt, WidgetExt, ButtonExt},
-}, ComponentController, RelmWidgetExt};
-
-use crate::{
-    components::filter_row::Category, factory::playlist_tracks_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
-        TitleColumn,
-    }, settings::Settings, subsonic::Subsonic
+use relm4::{
+    gtk::{
+        self,
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+    },
+    RelmWidgetExt,
 };
 
-use crate::components::filter_box::{FilterBox, FilterBoxOut};
+use crate::{
+    components::filter_categories::Category,
+    factory::playlist_tracks_row::{
+        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
+        TitleColumn,
+    },
+    settings::Settings,
+    subsonic::Subsonic,
+};
 
 #[derive(Debug)]
 pub struct TracksView {
@@ -27,7 +31,7 @@ pub enum TracksViewIn {
     FilterChanged,
     FilterSidebar,
     Favorited(String, bool),
-    FilterBox(FilterBoxOut),
+    FilterAdd,
 }
 
 #[derive(Debug)]
@@ -159,6 +163,7 @@ impl relm4::Component for TracksView {
                                     },
 
                                     gtk::Button {
+                                        set_valign: gtk::Align::Center,
                                         set_label: "==",
                                     },
 
@@ -191,7 +196,7 @@ impl relm4::Component for TracksView {
 
                                         gtk::Button {
                                             set_icon_name: "list-add-symbolic",
-                                            // connect_clicked => Self::Input::AddNewFilter,
+                                            connect_clicked => Self::Input::FilterAdd,
                                         }
                                     }
                                 }
@@ -273,10 +278,7 @@ impl relm4::Component for TracksView {
                     sender.input(TracksViewIn::FilterChanged);
                 }
             }
-            TracksViewIn::FilterBox(FilterBoxOut::FiltersChanged) => {
-                // let filters = self.filters.model().get_filters();
-
-            }
+            TracksViewIn::FilterAdd => {}
         }
     }
 }
