@@ -16,6 +16,7 @@ use relm4::{
 
 use crate::{
     client::Client,
+    download::Download,
     gtk_helper::stack::StackExt,
     mpris::{Mpris, MprisOut},
     play_state::PlayState,
@@ -23,6 +24,7 @@ use crate::{
     player::Command,
     settings::Settings,
     subsonic::Subsonic,
+    types::Droppable,
     window_state::WindowState,
 };
 use crate::{
@@ -88,6 +90,7 @@ pub enum AppIn {
     SearchActivate(bool),
     SearchChanged,
     CoverSizeChanged,
+    Download(Droppable),
 }
 
 #[relm4::widget_template(pub)]
@@ -923,6 +926,7 @@ impl relm4::component::AsyncComponent for App {
                 BrowserOut::FavoriteSongClicked(id, state) => {
                     sender.input(AppIn::FavoriteSongClicked(id, state))
                 }
+                BrowserOut::Download(drop) => sender.input(AppIn::Download(drop)),
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
@@ -1164,6 +1168,9 @@ impl relm4::component::AsyncComponent for App {
             }
             AppIn::CoverSizeChanged => {
                 self.browser.emit(BrowserIn::CoverSizeChanged);
+            }
+            AppIn::Download(drop) => {
+                Download::download(sender.clone(), drop);
             }
         }
     }

@@ -9,6 +9,7 @@ pub mod common;
 pub mod components;
 pub mod config;
 pub mod css;
+mod download;
 mod factory;
 pub mod gtk_helper;
 mod mpris;

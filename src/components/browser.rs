@@ -91,6 +91,7 @@ pub enum BrowserOut {
     FavoriteAlbumClicked(String, bool),
     FavoriteArtistClicked(String, bool),
     FavoriteSongClicked(String, bool),
+    Download(Droppable),
 }
 
 #[relm4::component(async, pub)]
@@ -350,6 +351,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
                     .unwrap(),
+                AlbumViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {

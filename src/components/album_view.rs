@@ -49,6 +49,7 @@ pub enum AlbumViewOut {
     ReplaceQueue(Droppable),
     FavoriteClicked(String, bool),
     DisplayToast(String),
+    Download(Droppable),
 }
 
 #[derive(Debug)]
@@ -254,6 +255,24 @@ impl relm4::Component for AlbumView {
                                             sender.output(AlbumViewOut::ReplaceQueue(Droppable::Album(album.clone()))).unwrap();
                                         }
                                     }
+                                }
+                            },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("browser-download-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_label: "Download Album",
+                                    }
+                                },
+                                set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                connect_clicked[sender, init] => move |_btn| {
+                                    let drop = match &init {
+                                        AlbumViewInit::Child(child) => Droppable::Child(child.clone()),
+                                        AlbumViewInit::AlbumId3(id3) => Droppable::Album(id3.clone()),
+                                    };
+                                    sender.output(AlbumViewOut::Download(drop)).unwrap();
                                 }
                             }
                         }
