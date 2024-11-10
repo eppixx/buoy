@@ -75,7 +75,7 @@ impl Mpris {
         let (sender, rec) = async_channel::unbounded();
         relm4::gtk::glib::spawn_future_local(async move {
             let interface_ref = interface.get().await;
-            let ctx = interface.signal_context();
+            let ctx = interface.signal_emitter();
             while let Ok(msg) = rec.recv().await {
                 let result = match msg {
                     DataChanged::Metadata => interface_ref.metadata_changed(ctx).await,
