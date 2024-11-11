@@ -115,7 +115,7 @@ impl OrderRow {
             },
             OrderRow {
                 order: Ordering::Equal,
-                label: String::from("=="),
+                label: String::from("="),
             },
             OrderRow {
                 order: Ordering::Less,
