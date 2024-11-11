@@ -20,9 +20,9 @@ pub enum Filter {
     Year(Ordering, i32),
     Cd(Ordering, i32),
     TrackNumber(Ordering, usize),
-    Artist(String),
-    Album(String),
-    Genre(String),
+    Artist(TextRelation, String),
+    Album(TextRelation, String),
+    Genre(TextRelation, String),
     BitRate(Ordering, usize),
     Duration(Ordering, i32),
 }
@@ -30,7 +30,8 @@ pub enum Filter {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TextRelation {
     Contains,
-    Not,
+    ContainsNot,
+    ExactNot,
     Exact,
 }
 
@@ -42,18 +43,22 @@ struct TextRow {
 
 impl TextRow {
     pub fn store() -> gio::ListStore {
-        let data: [TextRow; 3] = [
+        let data: [TextRow; 4] = [
             TextRow {
                 relation: TextRelation::Contains,
                 label: String::from("Contains"),
             },
             TextRow {
-                relation: TextRelation::Not,
-                label: String::from("Not"),
+                relation: TextRelation::ContainsNot,
+                label: String::from("Contains not"),
+            },
+            TextRow {
+                relation: TextRelation::ExactNot,
+                label: String::from("Matches not"),
             },
             TextRow {
                 relation: TextRelation::Exact,
-                label: String::from("Exact"),
+                label: String::from("Matches"),
             },
         ];
         store_from_category(&data)
@@ -175,8 +180,11 @@ pub struct FilterRow {
     title_entry: gtk::Entry,
     title_dropdown: gtk::DropDown,
     artist_entry: gtk::Entry,
+    artist_dropdown: gtk::DropDown,
     album_entry: gtk::Entry,
+    album_dropdown: gtk::DropDown,
     genre_entry: gtk::Entry,
+    genre_dropdown: gtk::DropDown,
 }
 
 impl FilterRow {
@@ -230,8 +238,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
             title_entry: gtk::Entry::default(),
             title_dropdown: gtk::DropDown::default(),
             artist_entry: gtk::Entry::default(),
+            artist_dropdown: gtk::DropDown::default(),
             album_entry: gtk::Entry::default(),
+            album_dropdown: gtk::DropDown::default(),
             genre_entry: gtk::Entry::default(),
+            genre_dropdown: gtk::DropDown::default(),
         }
     }
 
@@ -409,6 +420,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
+                    self.artist_dropdown.clone() -> gtk::DropDown {
+                        set_model: Some(&TextRow::store()),
+                        set_factory: Some(&TextRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
                     self.artist_entry.clone() -> gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Artist"),
@@ -430,6 +446,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
+                    self.album_dropdown.clone() -> gtk::DropDown {
+                        set_model: Some(&TextRow::store()),
+                        set_factory: Some(&TextRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
                     self.album_entry.clone() -> gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Album"),
@@ -452,6 +473,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
+                    self.genre_dropdown.clone() -> gtk::DropDown {
+                        set_model: Some(&TextRow::store()),
+                        set_factory: Some(&TextRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
                     self.genre_entry.clone() -> gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Genre"),
@@ -490,13 +516,31 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         self.filter = Some(Filter::Title(relation.relation.clone(), self.title_entry.text().into()))
                     }
                     Category::Artist => {
-                        self.filter = Some(Filter::Artist(self.artist_entry.text().into()))
+                        let relation = self.artist_dropdown.selected_item().unwrap();
+                        let relation = relation
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let relation: std::cell::Ref<TextRow> = relation.borrow();
+
+                        self.filter = Some(Filter::Artist(relation.relation.clone(), self.artist_entry.text().into()))
                     }
                     Category::Album => {
-                        self.filter = Some(Filter::Album(self.album_entry.text().into()))
+                        let relation = self.album_dropdown.selected_item().unwrap();
+                        let relation = relation
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let relation: std::cell::Ref<TextRow> = relation.borrow();
+
+                        self.filter = Some(Filter::Album(relation.relation.clone(), self.album_entry.text().into()))
                     }
                     Category::Genre => {
-                        self.filter = Some(Filter::Genre(self.genre_entry.text().into()))
+                        let relation = self.genre_dropdown.selected_item().unwrap();
+                        let relation = relation
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let relation: std::cell::Ref<TextRow> = relation.borrow();
+
+                        self.filter = Some(Filter::Genre(relation.relation.clone(), self.genre_entry.text().into()))
                     }
                     Category::Year => {
                         let order = self.year_dropdown.selected_item().unwrap();

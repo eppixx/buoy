@@ -265,10 +265,12 @@ impl relm4::component::Component for AlbumsView {
                                             }
                                             //TODO Favorite false, true and NONE set
                                             //TODO add matching for regular expressions
-                                            Filter::Album(value) if value != &title.text() => {
+                                            Filter::Album(_, value) if value != &title.text() => {
+                                                //TODO
                                                 visible = false
                                             }
-                                            Filter::Artist(value) if value != &artist.text() => {
+                                            Filter::Artist(_, value) if value != &artist.text() => {
+                                                //TODO
                                                 visible = false
                                             }
                                             Filter::Year(order, value) => {
@@ -289,7 +291,8 @@ impl relm4::component::Component for AlbumsView {
                                                     visible = false;
                                                 }
                                             }
-                                            Filter::Genre(value) if value != &artist.text() => {
+                                            Filter::Genre(_, value) if value != &artist.text() => {
+                                                //TODO
                                                 // TODO fix artist.text()
                                                 visible = false
                                             }

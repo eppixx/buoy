@@ -233,18 +233,55 @@ impl relm4::Component for TracksView {
                             //TODO add matching for regular expressions
                             Filter::Title(_, value) if value.is_empty() => {}
                             Filter::Title(relation, value) => match relation {
-                                TextRelation::Not if value == &track.item.title => return false,
+                                TextRelation::ExactNot if value == &track.item.title => return false,
                                 TextRelation::Exact if value != &track.item.title => return false,
+                                TextRelation::ContainsNot if track.item.title.contains(value) => {
+                                    return false
+                                }
                                 TextRelation::Contains if !track.item.title.contains(value) => {
                                     return false
                                 }
                                 _ => {}
                             },
-                            Filter::Album(value) if value != &title => {
-                                return false;
+                            Filter::Album(_, value) if value.is_empty() => {}
+                            Filter::Album(relation, value) => match relation {
+                                TextRelation::ExactNot if Some(value) == track.item.album.as_ref() => return false,
+                                TextRelation::Exact if Some(value) != track.item.album.as_ref() => return false,
+                                TextRelation::ContainsNot => {
+                                    if let Some(album) = &track.item.album {
+                                        if album.contains(value) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                TextRelation::Contains => {
+                                    if let Some(album) = &track.item.album {
+                                        if !album.contains(value) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                _ => {}
                             }
-                            Filter::Artist(value) if Some(value) != track.item.artist.as_ref() => {
-                                return false;
+                            Filter::Artist(_, value) if value.is_empty() => {}
+                            Filter::Artist(relation, value) => match relation {
+                                TextRelation::ExactNot if Some(value) == track.item.artist.as_ref() => return false,
+                                TextRelation::Exact if Some(value) != track.item.artist.as_ref() => return false,
+                                TextRelation::ContainsNot => {
+                                    if let Some(artist) = &track.item.artist {
+                                        if artist.contains(value) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                TextRelation::Contains => {
+                                    if let Some(artist) = &track.item.artist {
+                                        if !artist.contains(value) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                _ => {}
                             }
                             Filter::Year(order, value) => {
                                 if let Some(year) = &track.item.year {
@@ -264,8 +301,25 @@ impl relm4::Component for TracksView {
                                     return false;
                                 }
                             }
-                            Filter::Genre(value) if Some(value) != track.item.genre.as_ref() => {
-                                return false;
+                            Filter::Genre(_, value) if value.is_empty() => {}
+                            Filter::Genre(relation, value) => match relation {
+                                TextRelation::ExactNot if Some(value) == track.item.genre.as_ref() => return false,
+                                TextRelation::Exact if Some(value) != track.item.genre.as_ref() => return false,
+                                TextRelation::ContainsNot => {
+                                    if let Some(genre) = &track.item.genre {
+                                        if genre.contains(value) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                TextRelation::Contains => {
+                                    if let Some(genre) = &track.item.genre {
+                                        if !genre.contains(value) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                _ => {}
                             }
                             Filter::Duration(order, value) => {
                                 if let Some(duration) = &track.item.duration {
