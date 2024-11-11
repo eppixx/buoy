@@ -28,6 +28,7 @@ pub struct TracksView {
     subsonic: Rc<RefCell<Subsonic>>,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
+    shown_tracks: Rc<RefCell<usize>>,
 }
 
 #[derive(Debug)]
@@ -76,6 +77,7 @@ impl relm4::Component for TracksView {
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), Self::Input::FilterRow),
+            shown_tracks: Rc::new(RefCell::new(0)),
         };
 
         let widgets = view_output!();
@@ -89,6 +91,10 @@ impl relm4::Component for TracksView {
 
             gtk::WindowHandle {
                 gtk::CenterBox {
+                    #[wrap(Some)]
+                    set_start_widget: shown_tracks = &gtk::Label {
+                        set_text: &format!("Shown tracks: {}", model.tracks.len()),
+                    },
                     #[wrap(Some)]
                     set_center_widget = &gtk::Label {
                         add_css_class: "h2",
@@ -215,6 +221,11 @@ impl relm4::Component for TracksView {
                     });
             }
             TracksViewIn::FilterChanged => {
+                *self.shown_tracks.borrow_mut() = 0;
+                let shown_tracks = self.shown_tracks.clone();
+                let shown_tracks_widget = widgets.shown_tracks.clone();
+                shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+
                 self.tracks.pop_filter();
                 let filters: Vec<Filter> = self
                     .filters
@@ -378,6 +389,8 @@ impl relm4::Component for TracksView {
 
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
+                        *shown_tracks.borrow_mut() += 1;
+                        shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
                         return true;
                     }
 
@@ -397,9 +410,19 @@ impl relm4::Component for TracksView {
                     if fuzzy_search {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                         let score = matcher.fuzzy_match(&title_artist_album, &search);
-                        score.is_some()
+                        if score.is_some() {
+                            *shown_tracks.borrow_mut() += 1;
+                            shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                            true
+                        } else {
+                            false
+                        }
+                    } else if title_artist_album.contains(&search) {
+                        *shown_tracks.borrow_mut() += 1;
+                        shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                        true
                     } else {
-                        title_artist_album.contains(&search)
+                        false
                     }
                 });
             }
