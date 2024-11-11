@@ -175,7 +175,7 @@ pub struct FilterRow {
     track_number_dropdown: gtk::DropDown,
     duration_entry: gtk::Entry,
     duration_dropdown: gtk::DropDown,
-    bit_rate_entry: gtk::Entry,
+    bit_rate_entry: gtk::SpinButton,
     bit_rate_dropdown: gtk::DropDown,
     title_entry: gtk::Entry,
     title_dropdown: gtk::DropDown,
@@ -233,7 +233,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
             track_number_dropdown: gtk::DropDown::default(),
             duration_entry: gtk::Entry::default(),
             duration_dropdown: gtk::DropDown::default(),
-            bit_rate_entry: gtk::Entry::default(),
+            bit_rate_entry: gtk::SpinButton::default(),
             bit_rate_dropdown: gtk::DropDown::default(),
             title_entry: gtk::Entry::default(),
             title_dropdown: gtk::DropDown::default(),
@@ -374,8 +374,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    self.bit_rate_entry.clone() -> gtk::Entry {
-                        set_text: "0",
+                    self.bit_rate_entry.clone() -> gtk::SpinButton {
+                        set_digits: 0,
+                        set_value: 128f64,
+                        set_adjustment: &gtk::Adjustment::new(128f64, 0f64, 3000f64, 4f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
@@ -563,7 +565,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         if let Ok(number) = self.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
                             self.year_entry.set_tooltip_text(None);
-                            self.year_entry.remove_css_class("entry-error");
+                        self.year_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
                             self.year_entry.add_css_class("entry-error");
@@ -643,17 +645,13 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = self.bit_rate_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::BitRate(order.order, number));
-                            self.bit_rate_entry.set_secondary_icon_name(None);
                             self.bit_rate_entry.set_tooltip_text(None);
+                            self.bit_rate_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
+                            self.bit_rate_entry.add_css_class("entry-error");
                             self.bit_rate_entry
-                                .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            self.bit_rate_entry.set_secondary_icon_tooltip_text(Some(
-                                "Needs to input a valid number",
-                            ));
-                            self.bit_rate_entry
-                                .set_tooltip_text(Some("Needs to input a valid number"));
+                                .set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
                 }
