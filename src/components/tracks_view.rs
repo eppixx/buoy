@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
@@ -192,8 +192,27 @@ impl relm4::Component for TracksView {
     ) {
         match msg {
             TracksViewIn::Favorited(id, state) => {
-                let model = self.tracks.selection_model.model().unwrap();
-                // println!("{}", model.);
+                let len = self.tracks.view.columns().n_items();
+                (0..len)
+                    .filter_map(|i| self.tracks.get(i))
+                    .filter(|t| t.borrow().item.id == id)
+                    .for_each(|track| match state {
+                        true => {
+                            track
+                                .borrow_mut()
+                                .fav
+                                .set_value(String::from("starred-symbolic"));
+                            track.borrow_mut().item.starred =
+                                Some(chrono::offset::Local::now().into());
+                        }
+                        false => {
+                            track
+                                .borrow_mut()
+                                .fav
+                                .set_value(String::from("non-starred-symbolic"));
+                            track.borrow_mut().item.starred = None;
+                        }
+                    });
             }
             TracksViewIn::FilterChanged => {
                 self.tracks.pop_filter();

@@ -564,7 +564,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         if let Ok(number) = self.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
                             self.year_entry.set_tooltip_text(None);
-                        self.year_entry.remove_css_class("entry-error");
+                            self.year_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
                             self.year_entry.add_css_class("entry-error");
