@@ -376,8 +376,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     self.bit_rate_entry.clone() -> gtk::SpinButton {
                         set_digits: 0,
-                        set_value: 128f64,
-                        set_adjustment: &gtk::Adjustment::new(128f64, 0f64, 3000f64, 4f64, 1f64, 1f64),
+                        set_adjustment: &gtk::Adjustment::new(124f64, 0f64, 3000f64, 4f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
