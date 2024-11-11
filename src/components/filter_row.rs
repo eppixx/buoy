@@ -513,7 +513,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .expect("Needs to be ListItem");
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
-                        self.filter = Some(Filter::Title(relation.relation.clone(), self.title_entry.text().into()))
+                        self.filter = Some(Filter::Title(
+                            relation.relation.clone(),
+                            self.title_entry.text().into(),
+                        ))
                     }
                     Category::Artist => {
                         let relation = self.artist_dropdown.selected_item().unwrap();
@@ -522,7 +525,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .expect("Needs to be ListItem");
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
-                        self.filter = Some(Filter::Artist(relation.relation.clone(), self.artist_entry.text().into()))
+                        self.filter = Some(Filter::Artist(
+                            relation.relation.clone(),
+                            self.artist_entry.text().into(),
+                        ))
                     }
                     Category::Album => {
                         let relation = self.album_dropdown.selected_item().unwrap();
@@ -531,7 +537,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .expect("Needs to be ListItem");
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
-                        self.filter = Some(Filter::Album(relation.relation.clone(), self.album_entry.text().into()))
+                        self.filter = Some(Filter::Album(
+                            relation.relation.clone(),
+                            self.album_entry.text().into(),
+                        ))
                     }
                     Category::Genre => {
                         let relation = self.genre_dropdown.selected_item().unwrap();
@@ -540,7 +549,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .expect("Needs to be ListItem");
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
-                        self.filter = Some(Filter::Genre(relation.relation.clone(), self.genre_entry.text().into()))
+                        self.filter = Some(Filter::Genre(
+                            relation.relation.clone(),
+                            self.genre_entry.text().into(),
+                        ))
                     }
                     Category::Year => {
                         let order = self.year_dropdown.selected_item().unwrap();
