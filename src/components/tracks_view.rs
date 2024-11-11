@@ -124,6 +124,7 @@ impl relm4::Component for TracksView {
                 append: sidebar = &gtk::Box {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
+                        set_size_request: (400, -1),
 
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
