@@ -273,8 +273,9 @@ impl relm4::typed_view::column::RelmColumn for BitRateColumn {
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        let length = convert_for_label(i64::from(item.item.bit_rate.unwrap_or(0)) * 1000);
-        label.set_label(&length);
+        let bitrate = item.item.bit_rate;
+        let bitrate = bitrate.map(|n| n.to_string());
+        label.set_label(&bitrate.unwrap_or(String::from("-")));
         b.add_controller(item.get_drag_src());
     }
 
