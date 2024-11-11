@@ -253,6 +253,36 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
     }
 }
 
+pub struct BitRateColumn;
+
+impl relm4::typed_view::column::RelmColumn for BitRateColumn {
+    type Root = gtk::Box;
+    type Item = PlaylistTracksRow;
+    type Widgets = gtk::Label;
+
+    const COLUMN_NAME: &'static str = "Bitrate";
+    const ENABLE_RESIZE: bool = false;
+    const ENABLE_EXPAND: bool = false;
+
+    fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
+        let b = gtk::Box::default();
+        let label = gtk::Label::default();
+        b.set_hexpand(true);
+        b.append(&label);
+        (b, (label))
+    }
+
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+        let length = convert_for_label(i64::from(item.item.bit_rate.unwrap_or(0)) * 1000);
+        label.set_label(&length);
+        b.add_controller(item.get_drag_src());
+    }
+
+    fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
+        Some(Box::new(|a, b| a.item.bit_rate.cmp(&b.item.bit_rate)))
+    }
+}
+
 pub struct FavColumn;
 
 impl relm4::typed_view::column::RelmColumn for FavColumn {

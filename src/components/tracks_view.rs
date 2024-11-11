@@ -11,7 +11,7 @@ use relm4::{
 
 use crate::{
     components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
-    factory::playlist_tracks_row::GenreColumn,
+    factory::playlist_tracks_row::{BitRateColumn, GenreColumn},
 };
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
@@ -63,6 +63,7 @@ impl relm4::Component for TracksView {
         tracks.append_column::<AlbumColumn>();
         tracks.append_column::<GenreColumn>();
         tracks.append_column::<LengthColumn>();
+        tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
         for track in subsonic.borrow().tracks() {
@@ -331,6 +332,15 @@ impl relm4::Component for TracksView {
                             Filter::Duration(order, value) => {
                                 if let Some(duration) = &track.item.duration {
                                     if duration.cmp(value) != *order {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                            Filter::BitRate(order, value) => {
+                                if let Some(bitrate) = &track.item.bit_rate {
+                                    if bitrate.cmp(&(*value as i32)) != *order {
                                         return false;
                                     }
                                 } else {
