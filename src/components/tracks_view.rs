@@ -30,7 +30,6 @@ pub struct TracksView {
 #[derive(Debug)]
 pub enum TracksViewIn {
     FilterChanged,
-    FilterSidebar,
     Favorited(String, bool),
     FilterAdd,
     FilterRow(FilterRowOut),
@@ -93,28 +92,6 @@ impl relm4::Component for TracksView {
                     },
 
                     #[wrap(Some)]
-                    set_start_widget = &gtk::Box {
-                        set_spacing: 10,
-                        set_margin_start: 10,
-                        //prevent cutoff of "glow" when widget has focus
-                        set_margin_top: 2,
-                        set_margin_bottom: 2,
-
-                        gtk::Box {
-                            set_spacing: 5,
-
-                            gtk::Label {
-                                set_label: "Filter",
-                            },
-                            append: filter = &gtk::Switch {
-                                set_active: false,
-                                connect_state_notify => Self::Input::FilterSidebar,
-                                set_tooltip: "Activate the sidebar to set filters",
-                            }
-                        }
-                    },
-
-                    #[wrap(Some)]
                     set_end_widget = &gtk::Box {
                         set_spacing: 10,
                         set_margin_end: 10,
@@ -139,9 +116,7 @@ impl relm4::Component for TracksView {
             },
 
             gtk::Box {
-                append: sidebar = &gtk::Revealer {
-                    set_transition_type: gtk::RevealerTransitionType::SlideRight,
-
+                append: sidebar = &gtk::Box {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
 
@@ -393,15 +368,6 @@ impl relm4::Component for TracksView {
                         title_artist_album.contains(&search)
                     }
                 });
-            }
-            TracksViewIn::FilterSidebar => {
-                if widgets.sidebar.reveals_child() {
-                    widgets.sidebar.set_reveal_child(false);
-                    sender.input(TracksViewIn::FilterChanged);
-                } else {
-                    widgets.sidebar.set_reveal_child(true);
-                    sender.input(TracksViewIn::FilterChanged);
-                }
             }
             TracksViewIn::FilterAdd => {
                 use glib::object::Cast;
