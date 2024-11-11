@@ -19,8 +19,7 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
 };
-
-use super::filter_row::{Filter, FilterRow, FilterRowOut};
+use crate::components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation};
 
 #[derive(Debug)]
 pub struct TracksView {
@@ -233,9 +232,19 @@ impl relm4::Component for TracksView {
                     for filter in &filters {
                         match filter {
                             //TODO add matching for regular expressions
-                            Filter::Title(value) if value.is_empty() => {}
-                            Filter::Title(value) => {
+                            Filter::Title(_, value) if value.is_empty() => {}
+                            Filter::Title(TextRelation::Exact, value) => {
                                 if value != &track.item.title {
+                                    return false;
+                                }
+                            }
+                            Filter::Title(TextRelation::Not, value) => {
+                                if value == &track.item.title {
+                                    return false;
+                                }
+                            }
+                            Filter::Title(TextRelation::Contains, value) => {
+                                if !track.item.title.contains(value) {
                                     return false;
                                 }
                             }

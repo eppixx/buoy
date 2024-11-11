@@ -16,7 +16,7 @@ use crate::{common::store_from_category, gtk_helper::stack::StackExt};
 #[derive(Debug, Clone)]
 pub enum Filter {
     Favorite(bool),
-    Title(String),
+    Title(TextRelation, String),
     Year(Ordering, i32),
     Cd(Ordering, i32),
     TrackNumber(Ordering, usize),
@@ -25,6 +25,73 @@ pub enum Filter {
     Genre(String),
     BitRate(Ordering, usize),
     Duration(Ordering, i32),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TextRelation {
+    Not,
+    Exact,
+    Contains,
+}
+
+#[derive(Debug, Clone)]
+struct TextRow {
+    relation: TextRelation,
+    label: String,
+}
+
+impl TextRow {
+     pub fn store() -> gio::ListStore {
+        let data: [TextRow; 3] = [
+            TextRow {
+                relation: TextRelation::Not,
+                label: String::from("Not"),
+            },
+            TextRow {
+                relation: TextRelation::Exact,
+                label: String::from("Exact"),
+            },
+            TextRow {
+                relation: TextRelation::Contains,
+                label: String::from("Contains"),
+            },
+        ];
+        store_from_category(&data)
+    }
+
+    pub fn factory() -> gtk::SignalListItemFactory {
+        use glib::object::Cast;
+        use granite::prelude::CastNone;
+
+        let factory = gtk::SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            let label = gtk::Label::new(Some("Selection"));
+            list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .set_child(Some(&label));
+        });
+        factory.connect_bind(move |_, list_item| {
+            // get BoxedAnyObject from ListItem
+            let boxed = list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("ist not a ListItem")
+                .item()
+                .and_downcast::<glib::BoxedAnyObject>()
+                .expect("item is not a BoxedAnyObject");
+            // get label from ListItem
+            let label = list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .child()
+                .and_downcast::<gtk::Label>()
+                .expect("is not a Label");
+            // set label from OrderRow
+            label.set_label(&boxed.borrow::<TextRow>().label);
+        });
+
+        factory
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -106,6 +173,7 @@ pub struct FilterRow {
     bit_rate_entry: gtk::Entry,
     bit_rate_dropdown: gtk::DropDown,
     title_entry: gtk::Entry,
+    title_dropdown: gtk::DropDown,
     artist_entry: gtk::Entry,
     album_entry: gtk::Entry,
     genre_entry: gtk::Entry,
@@ -160,6 +228,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
             bit_rate_entry: gtk::Entry::default(),
             bit_rate_dropdown: gtk::DropDown::default(),
             title_entry: gtk::Entry::default(),
+            title_dropdown: gtk::DropDown::default(),
             artist_entry: gtk::Entry::default(),
             album_entry: gtk::Entry::default(),
             genre_entry: gtk::Entry::default(),
@@ -314,6 +383,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         },
                     },
 
+                    self.title_dropdown.clone() -> gtk::DropDown {
+                        set_model: Some(&TextRow::store()),
+                        set_factory: Some(&TextRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
                     self.title_entry.clone() -> gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Title"),
@@ -407,7 +481,13 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 // update local filter
                 match &self.category {
                     Category::Title => {
-                        self.filter = Some(Filter::Title(self.title_entry.text().into()))
+                        let relation = self.title_dropdown.selected_item().unwrap();
+                        let relation = relation
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let relation: std::cell::Ref<TextRow> = relation.borrow();
+
+                        self.filter = Some(Filter::Title(relation.relation.clone(), self.title_entry.text().into()))
                     }
                     Category::Artist => {
                         self.filter = Some(Filter::Artist(self.artist_entry.text().into()))
