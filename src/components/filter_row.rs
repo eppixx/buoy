@@ -1,8 +1,13 @@
 use std::cmp::Ordering;
 
-use relm4::gtk::{
-    self, gio, glib,
-    prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt},
+use relm4::{
+    gtk::{
+        self, gio, glib,
+        prelude::{
+            BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt,
+        },
+    },
+    RelmWidgetExt,
 };
 
 use crate::components::filter_categories::Category;
@@ -34,15 +39,15 @@ impl OrderRow {
         let data: [OrderRow; 3] = [
             OrderRow {
                 order: Ordering::Greater,
-                label: String::from("greater than"),
+                label: String::from(">"),
             },
             OrderRow {
                 order: Ordering::Equal,
-                label: String::from("equal to"),
+                label: String::from("=="),
             },
             OrderRow {
                 order: Ordering::Less,
-                label: String::from("less than"),
+                label: String::from("<"),
             },
         ];
         store_from_category(&data)
@@ -165,236 +170,223 @@ impl relm4::factory::FactoryComponent for FilterRow {
         gtk::ListBoxRow {
             set_selectable: false,
             set_activatable: false,
-            set_margin_top: 10,
-            set_margin_bottom: 10,
+            set_margin_all: 10,
 
             self.stack.clone() {
-                add_enumed[Category::Year] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By year",
+                add_enumed[Category::Year] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By year",
+                        },
                     },
-                    #[wrap(Some)]
-                    set_center_widget = &self.year_dropdown.clone() -> gtk::DropDown {
-                        set_focus_on_click: false,
-                        set_margin_start: 15,
-                        set_margin_end: 15,
+
+                    self.year_dropdown.clone() -> gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.year_entry.clone() -> gtk::SpinButton {
-                            set_digits: 0,
-                            set_value: 2010f64,
-                            set_adjustment: &gtk::Adjustment::new(2010f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
-                            set_hexpand: true,
-                            set_focus_on_click: false,
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
-                        }
+
+                    self.year_entry.clone() -> gtk::SpinButton {
+                        set_digits: 0,
+                        set_value: 2010f64,
+                        set_adjustment: &gtk::Adjustment::new(2010f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Cd] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By cd number",
+                add_enumed[Category::Cd] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By cd number",
+                        },
                     },
-                    #[wrap(Some)]
-                    set_center_widget = &self.cd_dropdown.clone() -> gtk::DropDown {
-                        set_focus_on_click: false,
-                        set_margin_start: 15,
-                        set_margin_end: 15,
+
+                    self.cd_dropdown.clone() -> gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.cd_entry.clone() -> gtk::Entry {
-                            set_focus_on_click: false,
-                            set_text: "0",
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
-                        }
+
+                    self.cd_entry.clone() -> gtk::Entry {
+                        set_text: "0",
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::TrackNumber] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By track number",
+                add_enumed[Category::TrackNumber] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By track number",
+                        }
                     },
-                    #[wrap(Some)]
-                    set_center_widget = &self.track_number_dropdown.clone() -> gtk::DropDown {
-                        set_focus_on_click: false,
-                        set_margin_start: 15,
-                        set_margin_end: 15,
+
+                    self.track_number_dropdown.clone() -> gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.track_number_entry.clone() -> gtk::Entry {
-                            set_focus_on_click: false,
-                            set_text: "0",
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
-                        }
+
+                    self.track_number_entry.clone() -> gtk::Entry {
+                        set_text: "0",
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Duration] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By duration",
+                add_enumed[Category::Duration] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By duration",
+                        },
                     },
-                    #[wrap(Some)]
-                    set_center_widget = &self.duration_dropdown.clone() -> gtk::DropDown {
-                        set_focus_on_click: false,
-                        set_margin_start: 15,
-                        set_margin_end: 15,
+
+                    self.duration_dropdown.clone() -> gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.duration_entry.clone() -> gtk::Entry {
-                            set_focus_on_click: false,
-                            set_text: "0",
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
-                        }
+
+                    self.duration_entry.clone() -> gtk::Entry {
+                        set_text: "0",
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::BitRate] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By bit rate",
+                add_enumed[Category::BitRate] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By bit rate",
+                        },
                     },
-                    #[wrap(Some)]
-                    set_center_widget = &self.bit_rate_dropdown.clone() -> gtk::DropDown {
-                        set_focus_on_click: false,
-                        set_margin_start: 15,
-                        set_margin_end: 15,
+
+                    self.bit_rate_dropdown.clone() -> gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.bit_rate_entry.clone() -> gtk::Entry {
-                            set_focus_on_click: false,
-                            set_text: "0",
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
-                        }
+                    self.bit_rate_entry.clone() -> gtk::Entry {
+                        set_text: "0",
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Title] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By title name",
-                    },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.title_entry.clone() -> gtk::Entry {
-                            set_text: "",
-                            set_placeholder_text: Some("Title"),
-                            connect_text_notify => Self::Input::ParameterChanged,
+                add_enumed[Category::Title] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By title name",
                         },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
-                        }
+                    },
+
+                    self.title_entry.clone() -> gtk::Entry {
+                        set_text: "",
+                        set_placeholder_text: Some("Title"),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Artist] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By artist name",
-                    },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.artist_entry.clone() -> gtk::Entry {
-                            set_text: "",
-                            set_placeholder_text: Some("Artist"),
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
+                add_enumed[Category::Artist] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By artist name",
                         }
+                    },
+
+                    self.artist_entry.clone() -> gtk::Entry {
+                        set_text: "",
+                        set_placeholder_text: Some("Artist"),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Album] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By album name",
-                    },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.album_entry.clone() -> gtk::Entry {
-                            set_text: "",
-                            set_placeholder_text: Some("Album"),
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
+                add_enumed[Category::Album] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By album name",
                         }
+                    },
+
+                    self.album_entry.clone() -> gtk::Entry {
+                        set_text: "",
+                        set_placeholder_text: Some("Album"),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Genre] = &gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget = &gtk::Label {
-                        set_text: "By genre",
-                    },
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 5,
-                        self.genre_entry.clone() -> gtk::Entry {
-                            set_text: "",
-                            set_placeholder_text: Some("Genre"),
-                            connect_text_notify => Self::Input::ParameterChanged,
-                        },
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            set_tooltip_text: Some("remove this filter"),
-                            connect_clicked => Self::Input::RemoveFilter,
+                add_enumed[Category::Genre] = &gtk::Box {
+                    set_spacing: 10,
+
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By genre",
                         }
+                    },
+
+                    self.genre_entry.clone() -> gtk::Entry {
+                        set_text: "",
+                        set_placeholder_text: Some("Genre"),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
             }

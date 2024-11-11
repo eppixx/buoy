@@ -290,6 +290,7 @@ impl relm4::component::Component for AlbumsView {
                                                 }
                                             }
                                             Filter::Genre(value) if value != &artist.text() => {
+                                                // TODO fix artist.text()
                                                 visible = false
                                             }
                                             Filter::Duration(order, value) => {

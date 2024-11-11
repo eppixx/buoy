@@ -4,13 +4,14 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self,
+        glib,
         prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
 
 use crate::{
-    components::filter_categories::Category,
+    components::{filter_categories::Category, filter_row::FilterRowIn},
     factory::playlist_tracks_row::{
         AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
         TitleColumn,
@@ -19,11 +20,13 @@ use crate::{
     subsonic::Subsonic,
 };
 
+use super::filter_row::{Filter, FilterRow, FilterRowOut};
+
 #[derive(Debug)]
 pub struct TracksView {
     subsonic: Rc<RefCell<Subsonic>>,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
-    filter_add: gtk::DropDown,
+    filters: relm4::factory::FactoryVecDeque<FilterRow>,
 }
 
 #[derive(Debug)]
@@ -32,6 +35,7 @@ pub enum TracksViewIn {
     FilterSidebar,
     Favorited(String, bool),
     FilterAdd,
+    FilterRow(FilterRowOut),
 }
 
 #[derive(Debug)]
@@ -67,7 +71,9 @@ impl relm4::Component for TracksView {
         let model = Self {
             subsonic,
             tracks,
-            filter_add: gtk::DropDown::default(),
+            filters: relm4::factory::FactoryVecDeque::builder()
+                .launch(gtk::ListBox::default())
+                .forward(sender.input_sender(), Self::Input::FilterRow),
         };
 
         let widgets = view_output!();
@@ -146,35 +152,14 @@ impl relm4::Component for TracksView {
                             set_text: "Active Filters",
                         },
 
+                        model.filters.widget().clone() -> gtk::ListBox {},
+
                         gtk::ListBox {
                             add_css_class: "tracks-view-filter-list",
                             add_css_class: granite::STYLE_CLASS_FRAME,
                             add_css_class: granite::STYLE_CLASS_RICH_LIST,
                             set_vexpand: true,
                             set_selection_mode: gtk::SelectionMode::None,
-
-                            gtk::ListBoxRow {
-                                add_css_class: "tracks.view-filter-add",
-                                gtk::Box {
-                                    set_spacing: 15,
-
-                                    gtk::Label {
-                                        set_text: "Field Album",
-                                    },
-
-                                    gtk::Button {
-                                        set_valign: gtk::Align::Center,
-                                        set_label: "==",
-                                    },
-
-                                    gtk::Entry {
-                                    },
-
-                                    gtk::Button {
-                                        set_icon_name: "user-trash-symbolic",
-                                    }
-                                }
-                            },
 
                             gtk::ListBoxRow {
                                 gtk::Box {
@@ -189,7 +174,8 @@ impl relm4::Component for TracksView {
 
                                         gtk::Separator {},
 
-                                        model.filter_add.clone() {
+                                        #[name = "new_filter"]
+                                        gtk::DropDown {
                                             set_model: Some(&Category::all()),
                                             set_factory: Some(&Category::factory()),
                                         },
@@ -227,15 +213,71 @@ impl relm4::Component for TracksView {
     ) {
         match msg {
             TracksViewIn::Favorited(id, state) => {
-                todo!();
+                let model = self.tracks.selection_model.model().unwrap();
+                // println!("{}", model.);
             }
             TracksViewIn::FilterChanged => {
                 self.tracks.pop_filter();
+                let filters: Vec<Filter> = self
+                    .filters
+                    .iter()
+                    .filter_map(|row| row.filter().as_ref())
+                    .cloned()
+                    .collect();
 
                 let favorite = widgets.favorite.clone();
                 self.tracks.add_filter(move |track| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
                     let title = track.item.title.clone();
+
+                    for filter in &filters {
+                        match filter {
+                            //TODO add matching for regular expressions
+                            Filter::Title(value) if value.is_empty() => {}
+                            Filter::Title(value) => {
+                                if value != &track.item.title {
+                                    return false;
+                                }
+                            }
+                            Filter::Album(value) if value != &title => {
+                                return false;
+                            }
+                            Filter::Artist(value) if Some(value) != track.item.artist.as_ref() => {
+                                return false;
+                            }
+                            Filter::Year(order, value) => {
+                                if let Some(year) = &track.item.year {
+                                    if year.cmp(value) != *order {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                            Filter::Cd(order, value) => {
+                                if let Some(disc) = &track.item.disc_number {
+                                    if disc.cmp(value) != *order {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                            Filter::Genre(value) if Some(value) != track.item.genre.as_ref() => {
+                                return false;
+                            }
+                            Filter::Duration(order, value) => {
+                                if let Some(duration) = &track.item.duration {
+                                    if duration.cmp(value) != *order {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                            _ => unreachable!("there are filters that shouldnt be"),
+                        }
+                    }
 
                     // respect favorite filter pressed
                     if favorite.is_active() && track.item.starred.is_none() {
@@ -278,7 +320,27 @@ impl relm4::Component for TracksView {
                     sender.input(TracksViewIn::FilterChanged);
                 }
             }
-            TracksViewIn::FilterAdd => {}
+            TracksViewIn::FilterAdd => {
+                use glib::object::Cast;
+
+                let list_item = widgets.new_filter.selected_item().unwrap();
+                let boxed = list_item
+                    .downcast_ref::<glib::BoxedAnyObject>()
+                    .expect("is not a BoxedAnyObject");
+                let category: std::cell::Ref<Category> = boxed.borrow();
+
+                let index = self.filters.guard().push_back(category.clone());
+                self.filters
+                    .send(index.current_index(), FilterRowIn::SetTo(category.clone()));
+                sender.input(TracksViewIn::FilterChanged);
+            }
+            TracksViewIn::FilterRow(msg) => match msg {
+                FilterRowOut::RemoveFilter(index) => {
+                    self.filters.guard().remove(index.current_index());
+                    sender.input(TracksViewIn::FilterChanged);
+                }
+                FilterRowOut::ParameterChanged => sender.input(TracksViewIn::FilterChanged),
+            }
         }
     }
 }
