@@ -267,6 +267,8 @@ impl relm4::Component for TracksView {
                                         if !album.contains(value) {
                                             return false;
                                         }
+                                    } else {
+                                        return false;
                                     }
                                 }
                                 _ => {}
@@ -295,6 +297,8 @@ impl relm4::Component for TracksView {
                                         if !artist.contains(value) {
                                             return false;
                                         }
+                                    } else {
+                                        return false;
                                     }
                                 }
                                 _ => {}
@@ -339,6 +343,8 @@ impl relm4::Component for TracksView {
                                         if !genre.contains(value) {
                                             return false;
                                         }
+                                    } else {
+                                        return false;
                                     }
                                 }
                                 _ => {}
