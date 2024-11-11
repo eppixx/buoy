@@ -3,13 +3,13 @@ use std::{cell::RefCell, rc::Rc};
 use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
-        self,
-        glib,
+        self, glib,
         prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
 
+use crate::components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation};
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
     factory::playlist_tracks_row::{
@@ -19,7 +19,6 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
 };
-use crate::components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation};
 
 #[derive(Debug)]
 pub struct TracksView {
@@ -233,21 +232,14 @@ impl relm4::Component for TracksView {
                         match filter {
                             //TODO add matching for regular expressions
                             Filter::Title(_, value) if value.is_empty() => {}
-                            Filter::Title(TextRelation::Exact, value) => {
-                                if value != &track.item.title {
-                                    return false;
+                            Filter::Title(relation, value) => match relation {
+                                TextRelation::Not if value == &track.item.title => return false,
+                                TextRelation::Exact if value != &track.item.title => return false,
+                                TextRelation::Contains if !track.item.title.contains(value) => {
+                                    return false
                                 }
-                            }
-                            Filter::Title(TextRelation::Not, value) => {
-                                if value == &track.item.title {
-                                    return false;
-                                }
-                            }
-                            Filter::Title(TextRelation::Contains, value) => {
-                                if !track.item.title.contains(value) {
-                                    return false;
-                                }
-                            }
+                                _ => {}
+                            },
                             Filter::Album(value) if value != &title => {
                                 return false;
                             }
@@ -349,7 +341,7 @@ impl relm4::Component for TracksView {
                     sender.input(TracksViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(TracksViewIn::FilterChanged),
-            }
+            },
         }
     }
 }

@@ -29,9 +29,9 @@ pub enum Filter {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TextRelation {
+    Contains,
     Not,
     Exact,
-    Contains,
 }
 
 #[derive(Debug, Clone)]
@@ -41,8 +41,12 @@ struct TextRow {
 }
 
 impl TextRow {
-     pub fn store() -> gio::ListStore {
+    pub fn store() -> gio::ListStore {
         let data: [TextRow; 3] = [
+            TextRow {
+                relation: TextRelation::Contains,
+                label: String::from("Contains"),
+            },
             TextRow {
                 relation: TextRelation::Not,
                 label: String::from("Not"),
@@ -50,10 +54,6 @@ impl TextRow {
             TextRow {
                 relation: TextRelation::Exact,
                 label: String::from("Exact"),
-            },
-            TextRow {
-                relation: TextRelation::Contains,
-                label: String::from("Contains"),
             },
         ];
         store_from_category(&data)
