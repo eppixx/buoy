@@ -9,7 +9,10 @@ use relm4::{
     RelmWidgetExt,
 };
 
-use crate::components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation};
+use crate::{
+    components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
+    factory::playlist_tracks_row::GenreColumn,
+};
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
     factory::playlist_tracks_row::{
@@ -58,6 +61,7 @@ impl relm4::Component for TracksView {
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
         tracks.append_column::<AlbumColumn>();
+        tracks.append_column::<GenreColumn>();
         tracks.append_column::<LengthColumn>();
         tracks.append_column::<FavColumn>();
 

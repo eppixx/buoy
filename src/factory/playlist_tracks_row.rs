@@ -191,6 +191,38 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     }
 }
 
+pub struct GenreColumn;
+
+impl relm4::typed_view::column::RelmColumn for GenreColumn {
+    type Root = gtk::Box;
+    type Item = PlaylistTracksRow;
+    type Widgets = gtk::Label;
+
+    const COLUMN_NAME: &'static str = "Genre";
+    const ENABLE_RESIZE: bool = true;
+    const ENABLE_EXPAND: bool = true;
+
+    fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
+        let b = gtk::Box::default();
+        let label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        b.set_hexpand(true);
+        b.append(&label);
+        (b, (label))
+    }
+
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+        label.set_label(item.item.genre.as_deref().unwrap_or("No genre given"));
+        b.add_controller(item.get_drag_src());
+    }
+
+    fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
+        Some(Box::new(|a, b| a.item.genre.cmp(&b.item.genre)))
+    }
+}
+
 pub struct LengthColumn;
 
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
