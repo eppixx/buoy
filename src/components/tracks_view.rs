@@ -189,11 +189,11 @@ impl relm4::Component for TracksView {
                 },
 
                 // info
-                gtk::WindowHandle {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_spacing: 8,
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 8,
 
+                    gtk::WindowHandle {
                         gtk::Box {
                             set_spacing: 15,
 
@@ -271,18 +271,17 @@ impl relm4::Component for TracksView {
                                 }
                             }
                         }
+                    },
+                    gtk::ScrolledWindow {
+                        set_hexpand: true,
+                        set_vexpand: true,
+
+                        model.tracks.view.clone() {
+                            add_css_class: "album-view-tracks-row",
+                            set_vexpand: true,
+                        }
                     }
                 },
-
-                gtk::ScrolledWindow {
-                    set_hexpand: true,
-                    set_vexpand: true,
-
-                    model.tracks.view.clone() {
-                        add_css_class: "album-view-tracks-row",
-                        set_vexpand: true,
-                    }
-                }
             }
         }
     }
