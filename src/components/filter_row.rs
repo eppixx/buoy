@@ -1,8 +1,13 @@
 use std::cmp::Ordering;
 
-use relm4::gtk::{
-    self, gio, glib,
-    prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt},
+use relm4::{
+    gtk::{
+        self, gio, glib,
+        prelude::{
+            BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt,
+        },
+    },
+    RelmWidgetExt,
 };
 
 use crate::components::filter_categories::Category;
@@ -233,7 +238,6 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     #[name = "year_entry"]
                     gtk::SpinButton {
                         set_digits: 0,
-                        set_value: 2010f64,
                         set_adjustment: &gtk::Adjustment::new(2010f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -261,9 +265,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
 
                     #[name = "cd_entry"]
-                    //TODO change to spinbutton
-                    gtk::Entry {
-                        set_text: "0",
+                    gtk::SpinButton {
+                        set_digits: 0,
+                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
@@ -290,9 +294,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
 
                     #[name = "track_number_entry"]
-                    //TODO change to spinbutton
-                    gtk::Entry {
-                        set_text: "0",
+                    gtk::SpinButton {
+                        set_digits: 0,
+                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
@@ -319,9 +323,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
 
                     #[name = "duration_entry"]
-                    //TODO change to spinbutton
-                    gtk::Entry {
-                        set_text: "0",
+                    gtk::SpinButton {
+                        set_digits: 0,
+                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
@@ -475,9 +479,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
         }
     }
 
-    fn update_with_view(&mut self,
-                        widgets: &mut Self::Widgets,
-                        msg: Self::Input, sender: relm4::FactorySender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: relm4::FactorySender<Self>,
+    ) {
         match msg {
             Self::Input::RemoveFilter => sender
                 .output(FilterRowOut::RemoveFilter(self.index.clone()))
@@ -547,12 +554,8 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         if let Ok(number) = widgets.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
                             widgets.year_entry.set_tooltip_text(None);
-                            widgets.year_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
-                            widgets.year_entry.add_css_class("entry-error");
-                            widgets.year_entry
-                                .set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
                     Category::Cd => {
@@ -563,17 +566,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.cd_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Cd(order.order, number));
-                            widgets.cd_entry.set_secondary_icon_name(None);
                             widgets.cd_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            widgets.cd_entry
-                                .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            widgets.cd_entry.set_secondary_icon_tooltip_text(Some(
-                                "Needs to input a valid number",
-                            ));
-                            widgets.cd_entry
-                                .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
                     Category::TrackNumber => {
@@ -584,18 +579,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.track_number_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::TrackNumber(order.order, number));
-                            widgets.track_number_entry.set_secondary_icon_name(None);
                             widgets.track_number_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            widgets.track_number_entry
-                                .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            widgets.track_number_entry
-                                .set_secondary_icon_tooltip_text(Some(
-                                    "Needs to input a valid number",
-                                ));
-                            widgets.track_number_entry
-                                .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
                     Category::Duration => {
@@ -606,17 +592,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.duration_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Duration(order.order, number));
-                            widgets.duration_entry.set_secondary_icon_name(None);
                             widgets.duration_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            widgets.duration_entry
-                                .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            widgets.duration_entry.set_secondary_icon_tooltip_text(Some(
-                                "Needs to input a valid number",
-                            ));
-                            widgets.duration_entry
-                                .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
                     Category::BitRate => {
@@ -628,12 +606,8 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         if let Ok(number) = widgets.bit_rate_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::BitRate(order.order, number));
                             widgets.bit_rate_entry.set_tooltip_text(None);
-                            widgets.bit_rate_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
-                            widgets.bit_rate_entry.add_css_class("entry-error");
-                            widgets.bit_rate_entry
-                                .set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
                 }
