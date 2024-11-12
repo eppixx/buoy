@@ -38,14 +38,34 @@ impl Download {
         let ids: Vec<(String, Id)> = match drop {
             Droppable::Child(child) => vec![(format!("{}.zip", child.title), Id::album(child.id))],
             Droppable::Album(id3) => vec![(format!("{}.zip", id3.name), Id::album(id3.id))],
-            Droppable::AlbumChild(child) => vec![(format!("{}.zip", child.title), Id::album(child.id))],
-            Droppable::AlbumWithSongs(album) => vec![(format!("{}.zip", album.base.name), Id::album(album.base.id))],
-            Droppable::Artist(artist) => vec![(format!("{}.zip", artist.name), Id::artist(artist.id))],
-            Droppable::ArtistWithAlbums(artist) => {
-                vec![(format!("{}.zip", artist.base.name), Id::artist(artist.base.id))]
+            Droppable::AlbumChild(child) => {
+                vec![(format!("{}.zip", child.title), Id::album(child.id))]
             }
-            Droppable::Playlist(list) => vec![(format!("{}.zip", list.base.name), Id::playlist(list.base.id))],
-            Droppable::Queue(list) => list.iter().map(|t| (format!("{} - {}.mp3", t.artist.clone().unwrap_or_default(), t.title), Id::song(&t.id))).collect(),
+            Droppable::AlbumWithSongs(album) => {
+                vec![(format!("{}.zip", album.base.name), Id::album(album.base.id))]
+            }
+            Droppable::Artist(artist) => {
+                vec![(format!("{}.zip", artist.name), Id::artist(artist.id))]
+            }
+            Droppable::ArtistWithAlbums(artist) => {
+                vec![(
+                    format!("{}.zip", artist.base.name),
+                    Id::artist(artist.base.id),
+                )]
+            }
+            Droppable::Playlist(list) => vec![(
+                format!("{}.zip", list.base.name),
+                Id::playlist(list.base.id),
+            )],
+            Droppable::Queue(list) => list
+                .iter()
+                .map(|t| {
+                    (
+                        format!("{} - {}.mp3", t.artist.clone().unwrap_or_default(), t.title),
+                        Id::song(&t.id),
+                    )
+                })
+                .collect(),
         };
 
         //TODO sanitize file names, e.g "/"

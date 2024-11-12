@@ -14,7 +14,8 @@ use crate::{
         cover::Cover,
         filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
     },
-    factory::playlist_tracks_row::{BitRateColumn, GenreColumn}, types::Droppable,
+    factory::playlist_tracks_row::{BitRateColumn, GenreColumn},
+    types::Droppable,
 };
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
