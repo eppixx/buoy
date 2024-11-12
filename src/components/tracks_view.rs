@@ -47,6 +47,10 @@ pub enum TracksViewIn {
     FilterAdd,
     FilterRow(FilterRowOut),
     Cover(CoverOut),
+    AppendToQueue,
+    AddToQueue,
+    ReplaceQueue,
+    DownloadClicked,
 }
 
 #[derive(Debug)]
@@ -233,8 +237,8 @@ impl relm4::Component for TracksView {
                                                 set_label: "Append",
                                             }
                                         },
-                                        set_tooltip_text: Some("Append Album to end of queue"),
-                                        // connect_clicked => PlaylistsViewIn::AppendToQueue,
+                                        set_tooltip_text: Some("Append shown tracks to end of queue"),
+                                        connect_clicked => TracksViewIn::AppendToQueue,
                                     },
                                     gtk::Button {
                                         gtk::Box {
@@ -245,8 +249,8 @@ impl relm4::Component for TracksView {
                                                 set_label: "Play next"
                                             }
                                         },
-                                        set_tooltip_text: Some("Insert Album after currently played or paused item"),
-                                        // connect_clicked => PlaylistsViewIn::AddToQueue,
+                                        set_tooltip_text: Some("Insert shown after currently played or paused item"),
+                                        connect_clicked => TracksViewIn::AddToQueue,
                                     },
                                     gtk::Button {
                                         gtk::Box {
@@ -257,8 +261,8 @@ impl relm4::Component for TracksView {
                                                 set_label: "Replace queue",
                                             }
                                         },
-                                        set_tooltip_text: Some("Replaces current queue with this playlist"),
-                                        // connect_clicked => PlaylistsViewIn::ReplaceQueue,
+                                        set_tooltip_text: Some("Replaces current queue with shown tracks"),
+                                        connect_clicked => TracksViewIn::ReplaceQueue,
                                     },
                                     gtk::Button {
                                         gtk::Box {
@@ -269,8 +273,8 @@ impl relm4::Component for TracksView {
                                                 set_label: "Download Playlist",
                                             }
                                         },
-                                        set_tooltip_text: Some("Click to select a folder to download this album to"),
-                                        // connect_clicked => PlaylistsViewIn::DownloadClicked,
+                                        set_tooltip_text: Some("Click to select a folder to download shown tracks to"),
+                                        connect_clicked => TracksViewIn::DownloadClicked,
                                     }
                                 }
                             }
@@ -590,6 +594,18 @@ impl relm4::Component for TracksView {
                     sender.output(TracksViewOut::DisplayToast(msg)).unwrap()
                 }
             },
+            TracksViewIn::AddToQueue => {
+                todo!()
+            }
+            TracksViewIn::AppendToQueue => {
+                todo!()
+            }
+            TracksViewIn::ReplaceQueue => {
+                todo!()
+            }
+            TracksViewIn::DownloadClicked => {
+                todo!()
+            }
         }
     }
 }
