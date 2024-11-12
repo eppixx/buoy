@@ -419,6 +419,9 @@ impl relm4::component::AsyncComponent for Browser {
                     .unwrap(),
                 ArtistViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
             },
+            BrowserIn::TracksView(msg) => match msg {
+                TracksViewOut::DisplayToast(msg) => sender.output(BrowserOut::DisplayToast(msg)).unwrap(),
+            }
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
                     sender.output(BrowserOut::DisplayToast(title)).unwrap()

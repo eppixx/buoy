@@ -1,16 +1,15 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
         prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
-    },
-    RelmWidgetExt,
+    }, ComponentController, RelmWidgetExt
 };
 
 use crate::{
-    components::filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
+    components::{cover::Cover, filter_row::{Filter, FilterRow, FilterRowOut, TextRelation}},
     factory::playlist_tracks_row::{BitRateColumn, GenreColumn},
 };
 use crate::{
@@ -23,12 +22,18 @@ use crate::{
     subsonic::Subsonic,
 };
 
+use super::cover::CoverOut;
+
 #[derive(Debug)]
 pub struct TracksView {
     subsonic: Rc<RefCell<Subsonic>>,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
+
+    info_cover: relm4::Controller<Cover>,
     shown_tracks: Rc<RefCell<usize>>,
+    shown_artists: Rc<RefCell<HashSet<Option<String>>>>,
+    shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
 }
 
 #[derive(Debug)]
@@ -37,10 +42,13 @@ pub enum TracksViewIn {
     Favorited(String, bool),
     FilterAdd,
     FilterRow(FilterRowOut),
+    Cover(CoverOut),
 }
 
 #[derive(Debug)]
-pub enum TracksViewOut {}
+pub enum TracksViewOut {
+    DisplayToast(String),
+}
 
 #[relm4::component(pub)]
 impl relm4::Component for TracksView {
@@ -72,13 +80,19 @@ impl relm4::Component for TracksView {
         }
 
         let model = Self {
-            subsonic,
+            subsonic: subsonic.clone(),
             tracks,
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), Self::Input::FilterRow),
+            info_cover: Cover::builder()
+                .launch((subsonic, None))
+                .forward(sender.input_sender(), TracksViewIn::Cover),
             shown_tracks: Rc::new(RefCell::new(0)),
+            shown_artists: Rc::new(RefCell::new(HashSet::new())),
+            shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
+        model.info_cover.model().add_css_class_image("size100");
 
         let widgets = view_output!();
         relm4::ComponentParts { model, widgets }
@@ -86,55 +100,18 @@ impl relm4::Component for TracksView {
 
     view! {
         gtk::Box {
-            add_css_class: "tracks-view",
-            set_orientation: gtk::Orientation::Vertical,
-
-            gtk::WindowHandle {
-                gtk::CenterBox {
-                    #[wrap(Some)]
-                    set_start_widget: shown_tracks = &gtk::Label {
-                        set_text: &format!("Shown tracks: {}", model.tracks.len()),
-                    },
-                    #[wrap(Some)]
-                    set_center_widget = &gtk::Label {
-                        add_css_class: "h2",
-                        set_label: "Tracks",
-                        set_halign: gtk::Align::Center,
-                    },
-
-                    #[wrap(Some)]
-                    set_end_widget = &gtk::Box {
-                        set_spacing: 10,
-                        set_margin_end: 10,
-                        //prevent cutoff of "glow" when widget has focus
-                        set_margin_top: 2,
-                        set_margin_bottom: 2,
-
-                        gtk::Box {
-                            set_spacing: 5,
-
-                            gtk::Label {
-                                set_text: "Show only favorites:",
-                            },
-                            append: favorite = &gtk::Switch {
-                                set_active: false,
-                                connect_state_notify => Self::Input::FilterChanged,
-                                set_tooltip: "Toggle showing favortited artists",
-                            }
-                        }
-                    }
-                }
-            },
-
+            // filters
             gtk::Box {
                 append: sidebar = &gtk::Box {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
                         set_size_request: (400, -1),
 
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_text: "Active Filters",
+                        gtk::WindowHandle {
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_text: "Active Filters",
+                            }
                         },
 
                         model.filters.widget().clone() -> gtk::ListBox {
@@ -168,6 +145,131 @@ impl relm4::Component for TracksView {
                                     }
                                 }
                             },
+                        }
+                    }
+                }
+            },
+
+            // tracks
+            gtk::Box {
+                add_css_class: "tracks-view",
+                set_orientation: gtk::Orientation::Vertical,
+
+                gtk::WindowHandle {
+                    gtk::CenterBox {
+                        #[wrap(Some)]
+                        set_center_widget = &gtk::Label {
+                            add_css_class: "h2",
+                            set_label: "Tracks",
+                            set_halign: gtk::Align::Center,
+                        },
+
+                        #[wrap(Some)]
+                        set_end_widget = &gtk::Box {
+                            set_spacing: 10,
+                            set_margin_end: 10,
+                            //prevent cutoff of "glow" when widget has focus
+                            set_margin_top: 2,
+                            set_margin_bottom: 2,
+
+                            gtk::Box {
+                                set_spacing: 5,
+
+                                gtk::Label {
+                                    set_text: "Show only favorites:",
+                                },
+                                append: favorite = &gtk::Switch {
+                                    set_active: false,
+                                    connect_state_notify => Self::Input::FilterChanged,
+                                    set_tooltip: "Toggle showing favortited artists",
+                                }
+                            }
+                        }
+                    }
+                },
+
+                // info
+                gtk::WindowHandle {
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 8,
+
+                        gtk::Box {
+                            set_spacing: 15,
+
+                            model.info_cover.widget().clone() -> gtk::Box {},
+
+                            //tracks info
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 8,
+
+                                append: shown_tracks = &gtk::Label {
+                                    set_halign: gtk::Align::Start,
+                                    set_text: &format!("Shown tracks: {}", model.tracks.len()),
+                                },
+                                append: shown_artists = &gtk::Label {
+                                    set_halign: gtk::Align::Start,
+                                    set_text: &format!("Shown Artists: {}", model.subsonic.borrow().artists().len()),
+                                },
+                                append: shown_albums = &gtk::Label {
+                                    set_halign: gtk::Align::Start,
+                                    set_text: &format!("Shown Albums: {}", model.subsonic.borrow().albums().len()),
+                                },
+
+                                gtk::Box {
+                                    set_spacing: 15,
+
+                                    gtk::Button {
+                                        gtk::Box {
+                                            gtk::Image {
+                                                set_icon_name: Some("list-add-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_label: "Append",
+                                            }
+                                        },
+                                        set_tooltip_text: Some("Append Album to end of queue"),
+                                        // connect_clicked => PlaylistsViewIn::AppendToQueue,
+                                    },
+                                    gtk::Button {
+                                        gtk::Box {
+                                            gtk::Image {
+                                                set_icon_name: Some("list-add-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_label: "Play next"
+                                            }
+                                        },
+                                        set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                        // connect_clicked => PlaylistsViewIn::AddToQueue,
+                                    },
+                                    gtk::Button {
+                                        gtk::Box {
+                                            gtk::Image {
+                                                set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_label: "Replace queue",
+                                            }
+                                        },
+                                        set_tooltip_text: Some("Replaces current queue with this playlist"),
+                                        // connect_clicked => PlaylistsViewIn::ReplaceQueue,
+                                    },
+                                    gtk::Button {
+                                        gtk::Box {
+                                            gtk::Image {
+                                                set_icon_name: Some("browser-download-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_label: "Download Playlist",
+                                            }
+                                        },
+                                        set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                        // connect_clicked => PlaylistsViewIn::DownloadClicked,
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -218,9 +320,17 @@ impl relm4::Component for TracksView {
             }
             TracksViewIn::FilterChanged => {
                 *self.shown_tracks.borrow_mut() = 0;
+                self.shown_artists.borrow_mut().clear();
+                self.shown_albums.borrow_mut().clear();
                 let shown_tracks = self.shown_tracks.clone();
+                let shown_albums = self.shown_albums.clone();
+                let shown_artists = self.shown_artists.clone();
                 let shown_tracks_widget = widgets.shown_tracks.clone();
+                let shown_artists_widget = widgets.shown_artists.clone();
+                let shown_albums_widget = widgets.shown_albums.clone();
                 shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
 
                 self.tracks.pop_filter();
                 let filters: Vec<Filter> = self
@@ -386,7 +496,11 @@ impl relm4::Component for TracksView {
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
                         *shown_tracks.borrow_mut() += 1;
+                        shown_artists.borrow_mut().insert(track.item.artist.clone());
+                        shown_albums.borrow_mut().insert(track.item.album.clone());
                         shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                        shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                        shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
                         return true;
                     }
 
@@ -408,14 +522,24 @@ impl relm4::Component for TracksView {
                         let score = matcher.fuzzy_match(&title_artist_album, &search);
                         if score.is_some() {
                             *shown_tracks.borrow_mut() += 1;
+                            shown_artists.borrow_mut().insert(track.item.artist.clone());
+                            shown_albums.borrow_mut().insert(track.item.album.clone());
                             shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+
+                            shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                            shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
                             true
                         } else {
                             false
                         }
                     } else if title_artist_album.contains(&search) {
                         *shown_tracks.borrow_mut() += 1;
+                        shown_artists.borrow_mut().insert(track.item.artist.clone());
+                        shown_albums.borrow_mut().insert(track.item.album.clone());
                         shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+
+                        shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                        shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
                         true
                     } else {
                         false
@@ -443,6 +567,9 @@ impl relm4::Component for TracksView {
                 }
                 FilterRowOut::ParameterChanged => sender.input(TracksViewIn::FilterChanged),
             },
+            TracksViewIn::Cover(msg) => match msg {
+                CoverOut::DisplayToast(msg) => sender.output(TracksViewOut::DisplayToast(msg)).unwrap(),
+            }
         }
     }
 }

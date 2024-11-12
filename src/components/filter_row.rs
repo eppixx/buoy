@@ -7,7 +7,6 @@ use relm4::{
             BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt,
         },
     },
-    RelmWidgetExt,
 };
 
 use crate::components::filter_categories::Category;
