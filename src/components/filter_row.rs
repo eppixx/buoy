@@ -161,25 +161,6 @@ pub struct FilterRow {
     filter: Option<Filter>,
     index: relm4::factory::DynamicIndex,
     stack: gtk::Stack,
-
-    year_entry: gtk::SpinButton,
-    year_dropdown: gtk::DropDown,
-    cd_entry: gtk::Entry,
-    cd_dropdown: gtk::DropDown,
-    track_number_entry: gtk::Entry,
-    track_number_dropdown: gtk::DropDown,
-    duration_entry: gtk::Entry,
-    duration_dropdown: gtk::DropDown,
-    bit_rate_entry: gtk::SpinButton,
-    bit_rate_dropdown: gtk::DropDown,
-    title_entry: gtk::Entry,
-    title_dropdown: gtk::DropDown,
-    artist_entry: gtk::Entry,
-    artist_dropdown: gtk::DropDown,
-    album_entry: gtk::Entry,
-    album_dropdown: gtk::DropDown,
-    genre_entry: gtk::Entry,
-    genre_dropdown: gtk::DropDown,
 }
 
 impl FilterRow {
@@ -219,25 +200,6 @@ impl relm4::factory::FactoryComponent for FilterRow {
             filter: None,
             index: index.clone(),
             stack: gtk::Stack::default(),
-
-            year_entry: gtk::SpinButton::default(),
-            year_dropdown: gtk::DropDown::default(),
-            cd_entry: gtk::Entry::default(),
-            cd_dropdown: gtk::DropDown::default(),
-            track_number_entry: gtk::Entry::default(),
-            track_number_dropdown: gtk::DropDown::default(),
-            duration_entry: gtk::Entry::default(),
-            duration_dropdown: gtk::DropDown::default(),
-            bit_rate_entry: gtk::SpinButton::default(),
-            bit_rate_dropdown: gtk::DropDown::default(),
-            title_entry: gtk::Entry::default(),
-            title_dropdown: gtk::DropDown::default(),
-            artist_entry: gtk::Entry::default(),
-            artist_dropdown: gtk::DropDown::default(),
-            album_entry: gtk::Entry::default(),
-            album_dropdown: gtk::DropDown::default(),
-            genre_entry: gtk::Entry::default(),
-            genre_dropdown: gtk::DropDown::default(),
         }
     }
 
@@ -261,13 +223,15 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         },
                     },
 
-                    self.year_dropdown.clone() -> gtk::DropDown {
+                    #[name = "year_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
 
-                    self.year_entry.clone() -> gtk::SpinButton {
+                    #[name = "year_entry"]
+                    gtk::SpinButton {
                         set_digits: 0,
                         set_value: 2010f64,
                         set_adjustment: &gtk::Adjustment::new(2010f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
@@ -289,13 +253,16 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         },
                     },
 
-                    self.cd_dropdown.clone() -> gtk::DropDown {
+                    #[name = "cd_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
 
-                    self.cd_entry.clone() -> gtk::Entry {
+                    #[name = "cd_entry"]
+                    //TODO change to spinbutton
+                    gtk::Entry {
                         set_text: "0",
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -315,13 +282,16 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
-                    self.track_number_dropdown.clone() -> gtk::DropDown {
+                    #[name = "track_number_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
 
-                    self.track_number_entry.clone() -> gtk::Entry {
+                    #[name = "track_number_entry"]
+                    //TODO change to spinbutton
+                    gtk::Entry {
                         set_text: "0",
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -341,13 +311,16 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         },
                     },
 
-                    self.duration_dropdown.clone() -> gtk::DropDown {
+                    #[name = "duration_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
 
-                    self.duration_entry.clone() -> gtk::Entry {
+                    #[name = "duration_entry"]
+                    //TODO change to spinbutton
+                    gtk::Entry {
                         set_text: "0",
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -367,12 +340,14 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         },
                     },
 
-                    self.bit_rate_dropdown.clone() -> gtk::DropDown {
+                    #[name = "bit_rate_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    self.bit_rate_entry.clone() -> gtk::SpinButton {
+                    #[name = "bit_rate_entry"]
+                    gtk::SpinButton {
                         set_digits: 0,
                         set_adjustment: &gtk::Adjustment::new(124f64, 0f64, 3000f64, 4f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
@@ -393,12 +368,14 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         },
                     },
 
-                    self.title_dropdown.clone() -> gtk::DropDown {
+                    #[name = "title_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&TextRow::store()),
                         set_factory: Some(&TextRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    self.title_entry.clone() -> gtk::Entry {
+                    #[name = "title_entry"]
+                    gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Title"),
                         connect_text_notify => Self::Input::ParameterChanged,
@@ -419,12 +396,14 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
-                    self.artist_dropdown.clone() -> gtk::DropDown {
+                    #[name = "artist_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&TextRow::store()),
                         set_factory: Some(&TextRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    self.artist_entry.clone() -> gtk::Entry {
+                    #[name = "artist_entry"]
+                    gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Artist"),
                         connect_text_notify => Self::Input::ParameterChanged,
@@ -445,12 +424,14 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
-                    self.album_dropdown.clone() -> gtk::DropDown {
+                    #[name = "album_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&TextRow::store()),
                         set_factory: Some(&TextRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    self.album_entry.clone() -> gtk::Entry {
+                    #[name = "album_entry"]
+                    gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Album"),
                         connect_text_notify => Self::Input::ParameterChanged,
@@ -472,12 +453,14 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     },
 
-                    self.genre_dropdown.clone() -> gtk::DropDown {
+                    #[name = "genre_dropdown"]
+                    gtk::DropDown {
                         set_model: Some(&TextRow::store()),
                         set_factory: Some(&TextRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
-                    self.genre_entry.clone() -> gtk::Entry {
+                    #[name = "genre_entry"]
+                    gtk::Entry {
                         set_text: "",
                         set_placeholder_text: Some("Genre"),
                         connect_text_notify => Self::Input::ParameterChanged,
@@ -492,7 +475,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::FactorySender<Self>) {
+    fn update_with_view(&mut self,
+                        widgets: &mut Self::Widgets,
+                        msg: Self::Input, sender: relm4::FactorySender<Self>) {
         match msg {
             Self::Input::RemoveFilter => sender
                 .output(FilterRowOut::RemoveFilter(self.index.clone()))
@@ -506,7 +491,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 // update local filter
                 match &self.category {
                     Category::Title => {
-                        let relation = self.title_dropdown.selected_item().unwrap();
+                        let relation = widgets.title_dropdown.selected_item().unwrap();
                         let relation = relation
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
@@ -514,11 +499,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
 
                         self.filter = Some(Filter::Title(
                             relation.relation.clone(),
-                            self.title_entry.text().into(),
+                            widgets.title_entry.text().into(),
                         ))
                     }
                     Category::Artist => {
-                        let relation = self.artist_dropdown.selected_item().unwrap();
+                        let relation = widgets.artist_dropdown.selected_item().unwrap();
                         let relation = relation
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
@@ -526,11 +511,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
 
                         self.filter = Some(Filter::Artist(
                             relation.relation.clone(),
-                            self.artist_entry.text().into(),
+                            widgets.artist_entry.text().into(),
                         ))
                     }
                     Category::Album => {
-                        let relation = self.album_dropdown.selected_item().unwrap();
+                        let relation = widgets.album_dropdown.selected_item().unwrap();
                         let relation = relation
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
@@ -538,11 +523,11 @@ impl relm4::factory::FactoryComponent for FilterRow {
 
                         self.filter = Some(Filter::Album(
                             relation.relation.clone(),
-                            self.album_entry.text().into(),
+                            widgets.album_entry.text().into(),
                         ))
                     }
                     Category::Genre => {
-                        let relation = self.genre_dropdown.selected_item().unwrap();
+                        let relation = widgets.genre_dropdown.selected_item().unwrap();
                         let relation = relation
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
@@ -550,104 +535,104 @@ impl relm4::factory::FactoryComponent for FilterRow {
 
                         self.filter = Some(Filter::Genre(
                             relation.relation.clone(),
-                            self.genre_entry.text().into(),
+                            widgets.genre_entry.text().into(),
                         ))
                     }
                     Category::Year => {
-                        let order = self.year_dropdown.selected_item().unwrap();
+                        let order = widgets.year_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.year_entry.text().parse::<i32>() {
+                        if let Ok(number) = widgets.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
-                            self.year_entry.set_tooltip_text(None);
-                            self.year_entry.remove_css_class("entry-error");
+                            widgets.year_entry.set_tooltip_text(None);
+                            widgets.year_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
-                            self.year_entry.add_css_class("entry-error");
-                            self.year_entry
+                            widgets.year_entry.add_css_class("entry-error");
+                            widgets.year_entry
                                 .set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
                     Category::Cd => {
-                        let order = self.cd_dropdown.selected_item().unwrap();
+                        let order = widgets.cd_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.cd_entry.text().parse::<i32>() {
+                        if let Ok(number) = widgets.cd_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Cd(order.order, number));
-                            self.cd_entry.set_secondary_icon_name(None);
-                            self.cd_entry.set_tooltip_text(None);
+                            widgets.cd_entry.set_secondary_icon_name(None);
+                            widgets.cd_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            self.cd_entry
+                            widgets.cd_entry
                                 .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            self.cd_entry.set_secondary_icon_tooltip_text(Some(
+                            widgets.cd_entry.set_secondary_icon_tooltip_text(Some(
                                 "Needs to input a valid number",
                             ));
-                            self.cd_entry
+                            widgets.cd_entry
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
                     Category::TrackNumber => {
-                        let order = self.track_number_dropdown.selected_item().unwrap();
+                        let order = widgets.track_number_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.track_number_entry.text().parse::<usize>() {
+                        if let Ok(number) = widgets.track_number_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::TrackNumber(order.order, number));
-                            self.track_number_entry.set_secondary_icon_name(None);
-                            self.track_number_entry.set_tooltip_text(None);
+                            widgets.track_number_entry.set_secondary_icon_name(None);
+                            widgets.track_number_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            self.track_number_entry
+                            widgets.track_number_entry
                                 .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            self.track_number_entry
+                            widgets.track_number_entry
                                 .set_secondary_icon_tooltip_text(Some(
                                     "Needs to input a valid number",
                                 ));
-                            self.track_number_entry
+                            widgets.track_number_entry
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
                     Category::Duration => {
-                        let order = self.duration_dropdown.selected_item().unwrap();
+                        let order = widgets.duration_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.duration_entry.text().parse::<i32>() {
+                        if let Ok(number) = widgets.duration_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Duration(order.order, number));
-                            self.duration_entry.set_secondary_icon_name(None);
-                            self.duration_entry.set_tooltip_text(None);
+                            widgets.duration_entry.set_secondary_icon_name(None);
+                            widgets.duration_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
-                            self.duration_entry
+                            widgets.duration_entry
                                 .set_secondary_icon_name(Some("dialog-error-symbolic"));
-                            self.duration_entry.set_secondary_icon_tooltip_text(Some(
+                            widgets.duration_entry.set_secondary_icon_tooltip_text(Some(
                                 "Needs to input a valid number",
                             ));
-                            self.duration_entry
+                            widgets.duration_entry
                                 .set_tooltip_text(Some("Needs to input a valid number"));
                         }
                     }
                     Category::BitRate => {
-                        let order = self.bit_rate_dropdown.selected_item().unwrap();
+                        let order = widgets.bit_rate_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = self.bit_rate_entry.text().parse::<usize>() {
+                        if let Ok(number) = widgets.bit_rate_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::BitRate(order.order, number));
-                            self.bit_rate_entry.set_tooltip_text(None);
-                            self.bit_rate_entry.remove_css_class("entry-error");
+                            widgets.bit_rate_entry.set_tooltip_text(None);
+                            widgets.bit_rate_entry.remove_css_class("entry-error");
                         } else {
                             self.filter = None;
-                            self.bit_rate_entry.add_css_class("entry-error");
-                            self.bit_rate_entry
+                            widgets.bit_rate_entry.add_css_class("entry-error");
+                            widgets.bit_rate_entry
                                 .set_tooltip_text(Some("Please enter a valid number"));
                         }
                     }
