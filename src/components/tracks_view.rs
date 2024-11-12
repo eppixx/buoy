@@ -601,6 +601,7 @@ impl relm4::Component for TracksView {
                 }
             },
             TracksViewIn::AddToQueue => {
+                //TODO send all when no filters active
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
@@ -608,6 +609,7 @@ impl relm4::Component for TracksView {
                 sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
             }
             TracksViewIn::AppendToQueue => {
+                //TODO send all when no filters active
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
@@ -615,6 +617,7 @@ impl relm4::Component for TracksView {
                 sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
             }
             TracksViewIn::ReplaceQueue => {
+                //TODO send all when no filters active
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
@@ -622,6 +625,7 @@ impl relm4::Component for TracksView {
                 sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
             }
             TracksViewIn::DownloadClicked => {
+                //TODO deactivate download button when shown tracks too much
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
