@@ -1,12 +1,8 @@
 use std::cmp::Ordering;
 
-use relm4::{
-    gtk::{
-        self, gio, glib,
-        prelude::{
-            BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt,
-        },
-    },
+use relm4::gtk::{
+    self, gio, glib,
+    prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt},
 };
 
 use crate::components::filter_categories::Category;

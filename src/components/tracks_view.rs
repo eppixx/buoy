@@ -5,11 +5,15 @@ use relm4::{
     gtk::{
         self, glib,
         prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
-    }, ComponentController, RelmWidgetExt
+    },
+    ComponentController, RelmWidgetExt,
 };
 
 use crate::{
-    components::{cover::Cover, filter_row::{Filter, FilterRow, FilterRowOut, TextRelation}},
+    components::{
+        cover::Cover,
+        filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
+    },
     factory::playlist_tracks_row::{BitRateColumn, GenreColumn},
 };
 use crate::{
@@ -328,8 +332,10 @@ impl relm4::Component for TracksView {
                 let shown_artists_widget = widgets.shown_artists.clone();
                 let shown_albums_widget = widgets.shown_albums.clone();
                 shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
-                shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                shown_artists_widget
+                    .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                shown_albums_widget
+                    .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
 
                 self.tracks.pop_filter();
                 let filters: Vec<Filter> = self
@@ -497,9 +503,12 @@ impl relm4::Component for TracksView {
                         *shown_tracks.borrow_mut() += 1;
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
-                        shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                        shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                        shown_tracks_widget
+                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                        shown_artists_widget
+                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                        shown_albums_widget
+                            .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
                         return true;
                     }
 
@@ -523,10 +532,17 @@ impl relm4::Component for TracksView {
                             *shown_tracks.borrow_mut() += 1;
                             shown_artists.borrow_mut().insert(track.item.artist.clone());
                             shown_albums.borrow_mut().insert(track.item.album.clone());
-                            shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                            shown_tracks_widget
+                                .set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
 
-                            shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                            shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                            shown_artists_widget.set_text(&format!(
+                                "Shown artists: {}",
+                                shown_artists.borrow().len()
+                            ));
+                            shown_albums_widget.set_text(&format!(
+                                "Shown albums: {}",
+                                shown_albums.borrow().len()
+                            ));
                             true
                         } else {
                             false
@@ -535,10 +551,13 @@ impl relm4::Component for TracksView {
                         *shown_tracks.borrow_mut() += 1;
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                        shown_tracks_widget
+                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
 
-                        shown_artists_widget.set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                        shown_albums_widget.set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                        shown_artists_widget
+                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                        shown_albums_widget
+                            .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
                         true
                     } else {
                         false
@@ -567,8 +586,10 @@ impl relm4::Component for TracksView {
                 FilterRowOut::ParameterChanged => sender.input(TracksViewIn::FilterChanged),
             },
             TracksViewIn::Cover(msg) => match msg {
-                CoverOut::DisplayToast(msg) => sender.output(TracksViewOut::DisplayToast(msg)).unwrap(),
-            }
+                CoverOut::DisplayToast(msg) => {
+                    sender.output(TracksViewOut::DisplayToast(msg)).unwrap()
+                }
+            },
         }
     }
 }
