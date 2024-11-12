@@ -250,9 +250,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
         gtk::ListBoxRow {
             set_selectable: false,
             set_activatable: false,
-            set_margin_all: 10,
+            set_focusable: false,
 
             self.stack.clone() {
+                set_margin_start: 10,
+                set_margin_end: 10,
+
                 add_enumed[Category::Year] = &gtk::Box {
                     set_spacing: 10,
                     gtk::Box {

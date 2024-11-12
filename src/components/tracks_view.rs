@@ -137,42 +137,38 @@ impl relm4::Component for TracksView {
                             set_text: "Active Filters",
                         },
 
-                        model.filters.widget().clone() -> gtk::ListBox {},
-
-                        gtk::ListBox {
-                            add_css_class: "tracks-view-filter-list",
+                        model.filters.widget().clone() -> gtk::ListBox {
+                            set_margin_all: 5,
                             add_css_class: granite::STYLE_CLASS_FRAME,
                             add_css_class: granite::STYLE_CLASS_RICH_LIST,
                             set_vexpand: true,
                             set_selection_mode: gtk::SelectionMode::None,
 
+                            // display new filter button
                             gtk::ListBoxRow {
+                                set_focusable: false,
+
                                 gtk::Box {
-                                    set_orientation: gtk::Orientation::Vertical,
-                                    set_spacing: 8,
+                                    set_spacing: 15,
+                                    set_halign: gtk::Align::Center,
 
-                                    gtk::Separator {},
+                                    gtk::Label {
+                                        set_text: "New filter:",
+                                    },
 
-                                    gtk::Box {
-                                        set_spacing: 15,
-                                        set_halign: gtk::Align::Center,
+                                    #[name = "new_filter"]
+                                    gtk::DropDown {
+                                        set_model: Some(&Category::all()),
+                                        set_factory: Some(&Category::factory()),
+                                    },
 
-                                        gtk::Separator {},
-
-                                        #[name = "new_filter"]
-                                        gtk::DropDown {
-                                            set_model: Some(&Category::all()),
-                                            set_factory: Some(&Category::factory()),
-                                        },
-
-                                        gtk::Button {
-                                            set_icon_name: "list-add-symbolic",
-                                            connect_clicked => Self::Input::FilterAdd,
-                                        }
+                                    gtk::Button {
+                                        set_icon_name: "list-add-symbolic",
+                                        connect_clicked => Self::Input::FilterAdd,
                                     }
                                 }
-                            }
-                        },
+                            },
+                        }
                     }
                 },
 
