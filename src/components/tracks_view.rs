@@ -14,7 +14,7 @@ use crate::{
         cover::Cover,
         filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
     },
-    factory::playlist_tracks_row::{BitRateColumn, GenreColumn},
+    factory::playlist_tracks_row::{BitRateColumn, GenreColumn}, types::Droppable,
 };
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
@@ -35,7 +35,7 @@ pub struct TracksView {
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
 
     info_cover: relm4::Controller<Cover>,
-    shown_tracks: Rc<RefCell<usize>>,
+    shown_tracks: Rc<RefCell<Vec<submarine::data::Child>>>,
     shown_artists: Rc<RefCell<HashSet<Option<String>>>>,
     shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
 }
@@ -56,6 +56,10 @@ pub enum TracksViewIn {
 #[derive(Debug)]
 pub enum TracksViewOut {
     DisplayToast(String),
+    AddToQueue(Droppable),
+    AppendToQueue(Droppable),
+    ReplaceQueue(Droppable),
+    Download(Droppable),
 }
 
 #[relm4::component(pub)]
@@ -96,7 +100,7 @@ impl relm4::Component for TracksView {
             info_cover: Cover::builder()
                 .launch((subsonic, None))
                 .forward(sender.input_sender(), TracksViewIn::Cover),
-            shown_tracks: Rc::new(RefCell::new(0)),
+            shown_tracks: Rc::new(RefCell::new(vec![])),
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
             shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
@@ -326,7 +330,7 @@ impl relm4::Component for TracksView {
                     });
             }
             TracksViewIn::FilterChanged => {
-                *self.shown_tracks.borrow_mut() = 0;
+                self.shown_tracks.borrow_mut().clear();
                 self.shown_artists.borrow_mut().clear();
                 self.shown_albums.borrow_mut().clear();
                 let shown_tracks = self.shown_tracks.clone();
@@ -335,7 +339,8 @@ impl relm4::Component for TracksView {
                 let shown_tracks_widget = widgets.shown_tracks.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
                 let shown_albums_widget = widgets.shown_albums.clone();
-                shown_tracks_widget.set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                shown_tracks_widget
+                    .set_text(&format!("Shown tracks: {}", shown_tracks.borrow().len()));
                 shown_artists_widget
                     .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
                 shown_albums_widget
@@ -504,11 +509,11 @@ impl relm4::Component for TracksView {
 
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
-                        *shown_tracks.borrow_mut() += 1;
+                        shown_tracks.borrow_mut().push(track.item.clone());
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
                         shown_tracks_widget
-                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
+                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow().len()));
                         shown_artists_widget
                             .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
                         shown_albums_widget
@@ -533,12 +538,13 @@ impl relm4::Component for TracksView {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                         let score = matcher.fuzzy_match(&title_artist_album, &search);
                         if score.is_some() {
-                            *shown_tracks.borrow_mut() += 1;
+                            shown_tracks.borrow_mut().push(track.item.clone());
                             shown_artists.borrow_mut().insert(track.item.artist.clone());
                             shown_albums.borrow_mut().insert(track.item.album.clone());
-                            shown_tracks_widget
-                                .set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
-
+                            shown_tracks_widget.set_text(&format!(
+                                "Shown tracks: {}",
+                                shown_tracks.borrow().len()
+                            ));
                             shown_artists_widget.set_text(&format!(
                                 "Shown artists: {}",
                                 shown_artists.borrow().len()
@@ -552,12 +558,11 @@ impl relm4::Component for TracksView {
                             false
                         }
                     } else if title_artist_album.contains(&search) {
-                        *shown_tracks.borrow_mut() += 1;
+                        shown_tracks.borrow_mut().push(track.item.clone());
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
                         shown_tracks_widget
-                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow()));
-
+                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow().len()));
                         shown_artists_widget
                             .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
                         shown_albums_widget
@@ -595,16 +600,32 @@ impl relm4::Component for TracksView {
                 }
             },
             TracksViewIn::AddToQueue => {
-                todo!()
+                if self.shown_tracks.borrow().is_empty() {
+                    return;
+                }
+                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
             }
             TracksViewIn::AppendToQueue => {
-                todo!()
+                if self.shown_tracks.borrow().is_empty() {
+                    return;
+                }
+                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
             }
             TracksViewIn::ReplaceQueue => {
-                todo!()
+                if self.shown_tracks.borrow().is_empty() {
+                    return;
+                }
+                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
             }
             TracksViewIn::DownloadClicked => {
-                todo!()
+                if self.shown_tracks.borrow().is_empty() {
+                    return;
+                }
+                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                sender.output(TracksViewOut::Download(drop)).unwrap();
             }
         }
     }

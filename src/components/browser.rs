@@ -423,6 +423,16 @@ impl relm4::component::AsyncComponent for Browser {
                 TracksViewOut::DisplayToast(msg) => {
                     sender.output(BrowserOut::DisplayToast(msg)).unwrap()
                 }
+                TracksViewOut::AddToQueue(drop) => sender
+                    .output(BrowserOut::InsertAfterCurrentInQueue(drop))
+                    .unwrap(),
+                TracksViewOut::AppendToQueue(drop) => {
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                }
+                TracksViewOut::ReplaceQueue(drop) => {
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
+                }
+                TracksViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
