@@ -258,12 +258,12 @@ impl relm4::component::Component for AlbumsView {
                                 {
                                     for filter in &filters {
                                         match filter {
-                                            Filter::Favorite(value)
-                                                if *value != child.starred.is_some() =>
-                                            {
-                                                visible = false
+                                            Filter::Favorite(None) => {},
+                                            Filter::Favorite(Some(value)) => {
+                                                if *value != child.starred.is_some() {
+                                                    visible = false
+                                                }
                                             }
-                                            //TODO Favorite false, true and NONE set
                                             //TODO add matching for regular expressions
                                             Filter::Album(_, value) if value != &title.text() => {
                                                 //TODO

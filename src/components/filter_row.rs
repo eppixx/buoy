@@ -10,7 +10,7 @@ use crate::{common::store_from_category, gtk_helper::stack::StackExt};
 
 #[derive(Debug, Clone)]
 pub enum Filter {
-    Favorite(bool),
+    Favorite(Option<bool>),
     Title(TextRelation, String),
     Year(Ordering, i32),
     Cd(Ordering, i32),
@@ -20,6 +20,66 @@ pub enum Filter {
     Genre(TextRelation, String),
     BitRate(Ordering, usize),
     Duration(Ordering, i32),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct BoolRow {
+    relation: Option<bool>,
+    label: String,
+}
+
+impl BoolRow {
+    pub fn store() -> gio::ListStore {
+        let data: [BoolRow; 3] = [
+            BoolRow {
+                relation: None,
+                label: String::from("either"),
+            },
+            BoolRow {
+                relation: Some(true),
+                label: String::from("true"),
+            },
+            BoolRow {
+                relation: Some(false),
+                label: String::from("false"),
+            },
+        ];
+        store_from_category(&data)
+    }
+
+    pub fn factory() -> gtk::SignalListItemFactory {
+        use glib::object::Cast;
+        use granite::prelude::CastNone;
+
+        let factory = gtk::SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            let label = gtk::Label::new(Some("Selection"));
+            list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .set_child(Some(&label));
+        });
+        factory.connect_bind(move |_, list_item| {
+            // get BoxedAnyObject from ListItem
+            let boxed = list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("ist not a ListItem")
+                .item()
+                .and_downcast::<glib::BoxedAnyObject>()
+                .expect("item is not a BoxedAnyObject");
+            // get label from ListItem
+            let label = list_item
+                .downcast_ref::<gtk::ListItem>()
+                .expect("is not a ListItem")
+                .child()
+                .and_downcast::<gtk::Label>()
+                .expect("is not a Label");
+            // set label from OrderRow
+            label.set_label(&boxed.borrow::<BoolRow>().label);
+        });
+
+        factory
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -170,7 +230,7 @@ impl FilterRow {
 
     pub fn active(&self) -> bool {
         match &self.filter {
-            Some(Filter::Favorite(true)) => true,
+            Some(Filter::Favorite(None)) => true,
             Some(Filter::Album(_, value)) if !value.is_empty() => true,
             Some(Filter::Artist(_, value)) if !value.is_empty() => true,
             Some(Filter::Genre(_, value)) if !value.is_empty() => true,
@@ -223,6 +283,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
             self.stack.clone() {
                 set_margin_start: 10,
                 set_margin_end: 10,
+                set_valign: gtk::Align::Center,
 
                 add_enumed[Category::Favorite] = &gtk::Box {
                     set_spacing: 10,
@@ -233,14 +294,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             set_text: "Show favorites",
                         },
                     },
-                    gtk::Box {
-                        set_valign: gtk::Align::Center,
-
-                        #[name = "favorites"]
-                        gtk::Switch {
-                            connect_active_notify => Self::Input::ParameterChanged,
-                        }
-                    }
+                    #[name = "favorites"]
+                    gtk::DropDown {
+                        set_model: Some(&BoolRow::store()),
+                        set_factory: Some(&BoolRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
                 },
                 add_enumed[Category::Year] = &gtk::Box {
                     set_spacing: 10,
@@ -522,8 +581,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 // update local filter
                 match &self.category {
                     Category::Favorite => {
-                        let state = widgets.favorites.is_active();
-                        self.filter = Some(Filter::Favorite(state));
+                        let relation = widgets.favorites.selected_item().unwrap();
+                        let relation = relation
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let relation: std::cell::Ref<BoolRow> = relation.borrow();
+                        self.filter = Some(Filter::Favorite(relation.relation.clone()));
                     }
                     Category::Title => {
                         let relation = widgets.title_dropdown.selected_item().unwrap();

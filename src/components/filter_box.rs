@@ -16,16 +16,12 @@ pub struct FilterBox {
 
 impl FilterBox {
     pub fn get_filters(&self) -> Vec<Filter> {
-        let mut filters: Vec<Filter> = self
+        let filters: Vec<Filter> = self
             .filters
             .iter()
             .filter_map(|row| row.filter().as_ref())
             .cloned()
             .collect();
-
-        if self.favorite_switch.is_active() {
-            filters.push(Filter::Favorite(true));
-        }
         filters
     }
 }
@@ -54,7 +50,7 @@ impl relm4::SimpleComponent for FilterBox {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Self {
+        let mut model = Self {
             category_selection: gtk::DropDown::default(),
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
@@ -63,6 +59,7 @@ impl relm4::SimpleComponent for FilterBox {
         };
 
         let widgets = view_output!();
+        model.filters.guard().push_back(Category::Favorite);
 
         relm4::ComponentParts { model, widgets }
     }
