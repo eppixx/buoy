@@ -41,6 +41,47 @@ pub struct TracksView {
     shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
 }
 
+impl TracksView {
+    fn active_filters(&self) -> bool {
+        self.filters.iter().any(|f| f.active())
+    }
+
+    fn calc_sensitivity_of_buttons(&self, widgets: &<TracksView as relm4::Component>::Widgets) {
+        let allowed_queue_modifier_len = 1000;
+
+        if (!self.active_filters() && self.tracks.len() >= allowed_queue_modifier_len)
+            || (self.active_filters()
+                && self.shown_tracks.borrow().len() >= allowed_queue_modifier_len as usize)
+        {
+            widgets.add_to_queue.set_sensitive(false);
+            widgets
+                .add_to_queue
+                .set_tooltip("There are too many tracks to add to queue");
+            widgets.append_to_queue.set_sensitive(false);
+            widgets
+                .append_to_queue
+                .set_tooltip("There are too many tracks to append to queue");
+            widgets.replace_queue.set_sensitive(false);
+            widgets
+                .replace_queue
+                .set_tooltip("There are too many tracks to replace queue");
+        } else {
+            widgets.add_to_queue.set_sensitive(true);
+            widgets
+                .add_to_queue
+                .set_tooltip("Append shown tracks to end of queue");
+            widgets.append_to_queue.set_sensitive(true);
+            widgets
+                .append_to_queue
+                .set_tooltip("Insert shown after currently played or paused item");
+            widgets.replace_queue.set_sensitive(true);
+            widgets
+                .replace_queue
+                .set_tooltip("Replaces current queue with shown tracks");
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum TracksViewIn {
     FilterChanged,
@@ -108,6 +149,7 @@ impl relm4::Component for TracksView {
         model.info_cover.model().add_css_class_image("size100");
 
         let widgets = view_output!();
+        model.calc_sensitivity_of_buttons(&widgets);
         relm4::ComponentParts { model, widgets }
     }
 
@@ -233,6 +275,7 @@ impl relm4::Component for TracksView {
                                 gtk::Box {
                                     set_spacing: 15,
 
+                                    #[name = "append_to_queue"]
                                     gtk::Button {
                                         gtk::Box {
                                             gtk::Image {
@@ -242,9 +285,9 @@ impl relm4::Component for TracksView {
                                                 set_label: "Append",
                                             }
                                         },
-                                        set_tooltip_text: Some("Append shown tracks to end of queue"),
                                         connect_clicked => TracksViewIn::AppendToQueue,
                                     },
+                                    #[name = "add_to_queue"]
                                     gtk::Button {
                                         gtk::Box {
                                             gtk::Image {
@@ -254,9 +297,9 @@ impl relm4::Component for TracksView {
                                                 set_label: "Play next"
                                             }
                                         },
-                                        set_tooltip_text: Some("Insert shown after currently played or paused item"),
                                         connect_clicked => TracksViewIn::AddToQueue,
                                     },
+                                    #[name = "replace_queue"]
                                     gtk::Button {
                                         gtk::Box {
                                             gtk::Image {
@@ -266,7 +309,6 @@ impl relm4::Component for TracksView {
                                                 set_label: "Replace queue",
                                             }
                                         },
-                                        set_tooltip_text: Some("Replaces current queue with shown tracks"),
                                         connect_clicked => TracksViewIn::ReplaceQueue,
                                     },
                                     gtk::Button {
@@ -278,7 +320,7 @@ impl relm4::Component for TracksView {
                                                 set_label: "Download Playlist",
                                             }
                                         },
-                                        set_tooltip_text: Some("Click to select a folder to download shown tracks to"),
+                                        set_tooltip: "Click to select a folder to download shown tracks to",
                                         connect_clicked => TracksViewIn::DownloadClicked,
                                     }
                                 }
@@ -331,6 +373,8 @@ impl relm4::Component for TracksView {
                     });
             }
             TracksViewIn::FilterChanged => {
+                self.calc_sensitivity_of_buttons(widgets);
+
                 self.shown_tracks.borrow_mut().clear();
                 self.shown_artists.borrow_mut().clear();
                 self.shown_albums.borrow_mut().clear();
@@ -354,6 +398,18 @@ impl relm4::Component for TracksView {
                     .filter_map(|row| row.filter().as_ref())
                     .cloned()
                     .collect();
+                if filters.is_empty() {
+                    shown_tracks_widget.set_text(&format!("Shown tracks: {}", self.tracks.len()));
+                    shown_artists_widget.set_text(&format!(
+                        "Shown tracks: {}",
+                        self.subsonic.borrow().artists().len()
+                    ));
+                    shown_albums_widget.set_text(&format!(
+                        "Shown albums: {}",
+                        self.subsonic.borrow().albums().len()
+                    ));
+                    return;
+                }
 
                 let favorite = widgets.favorite.clone();
                 self.tracks.add_filter(move |track| {
@@ -601,28 +657,43 @@ impl relm4::Component for TracksView {
                 }
             },
             TracksViewIn::AddToQueue => {
-                //TODO send all when no filters active
-                if self.shown_tracks.borrow().is_empty() {
-                    return;
+                if !self.active_filters() {
+                    let tracks = self.subsonic.borrow().tracks().clone();
+                    let drop = Droppable::Queue(tracks);
+                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
+                } else {
+                    if self.shown_tracks.borrow().is_empty() {
+                        return;
+                    }
+                    let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
                 }
-                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
-                sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
             }
             TracksViewIn::AppendToQueue => {
-                //TODO send all when no filters active
-                if self.shown_tracks.borrow().is_empty() {
-                    return;
+                if !self.active_filters() {
+                    let tracks = self.subsonic.borrow().tracks().clone();
+                    let drop = Droppable::Queue(tracks);
+                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
+                } else {
+                    if self.shown_tracks.borrow().is_empty() {
+                        return;
+                    }
+                    let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
                 }
-                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
-                sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
             }
             TracksViewIn::ReplaceQueue => {
-                //TODO send all when no filters active
-                if self.shown_tracks.borrow().is_empty() {
-                    return;
+                if !self.active_filters() {
+                    let tracks = self.subsonic.borrow().tracks().clone();
+                    let drop = Droppable::Queue(tracks);
+                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
+                } else {
+                    if self.shown_tracks.borrow().is_empty() {
+                        return;
+                    }
+                    let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
                 }
-                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
-                sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
             }
             TracksViewIn::DownloadClicked => {
                 //TODO deactivate download button when shown tracks too much

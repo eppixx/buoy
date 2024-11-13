@@ -167,6 +167,16 @@ impl FilterRow {
     pub fn filter(&self) -> &Option<Filter> {
         &self.filter
     }
+
+    pub fn active(&self) -> bool {
+        match &self.filter {
+            Some(Filter::Album(_, value)) if !value.is_empty() => true,
+            Some(Filter::Artist(_, value)) if !value.is_empty() => true,
+            Some(Filter::Genre(_, value)) if !value.is_empty() => true,
+            Some(Filter::Title(_, value)) if !value.is_empty() => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug)]

@@ -408,6 +408,7 @@ impl relm4::Component for Queue {
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
+                        //TODO load cached info
                         sender.oneshot_command(async move {
                             let client = Client::get().unwrap();
                             let artist_with_albums = match client.get_artist(artist.id).await {
