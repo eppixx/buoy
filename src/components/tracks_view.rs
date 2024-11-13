@@ -396,7 +396,7 @@ impl relm4::Component for TracksView {
                             //TODO add matching for regular expressions
                             Filter::Favorite(state) => {
                                 if *state && track.item.starred.is_none() {
-                                    return false
+                                    return false;
                                 }
                             }
                             Filter::Title(_, value) if value.is_empty() => {}
