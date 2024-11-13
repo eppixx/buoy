@@ -180,6 +180,8 @@ impl relm4::Component for TracksView {
                             // display new filter button
                             gtk::ListBoxRow {
                                 set_focusable: false,
+                                set_valign: gtk::Align::Center,
+
 
                                 gtk::Box {
                                     set_spacing: 15,
@@ -241,11 +243,11 @@ impl relm4::Component for TracksView {
                                 },
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown Artists: {}", model.subsonic.borrow().artists().len()),
+                                    set_text: &format!("Shown artists: {}", model.subsonic.borrow().artists().len()),
                                 },
                                 append: shown_albums = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown Albums: {}", model.subsonic.borrow().albums().len()),
+                                    set_text: &format!("Shown albums: {}", model.subsonic.borrow().albums().len()),
                                 },
 
                                 gtk::Box {
