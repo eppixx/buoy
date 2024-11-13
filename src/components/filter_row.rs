@@ -170,6 +170,7 @@ impl FilterRow {
 
     pub fn active(&self) -> bool {
         match &self.filter {
+            Some(Filter::Favorite(true)) => true,
             Some(Filter::Album(_, value)) if !value.is_empty() => true,
             Some(Filter::Artist(_, value)) if !value.is_empty() => true,
             Some(Filter::Genre(_, value)) if !value.is_empty() => true,
@@ -223,6 +224,24 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 set_margin_start: 10,
                 set_margin_end: 10,
 
+                add_enumed[Category::Favorite] = &gtk::Box {
+                    set_spacing: 10,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "Show favorites",
+                        },
+                    },
+                    gtk::Box {
+                        set_valign: gtk::Align::Center,
+
+                        #[name = "favorites"]
+                        gtk::Switch {
+                            connect_active_notify => Self::Input::ParameterChanged,
+                        }
+                    }
+                },
                 add_enumed[Category::Year] = &gtk::Box {
                     set_spacing: 10,
                     gtk::Box {
@@ -502,6 +521,10 @@ impl relm4::factory::FactoryComponent for FilterRow {
 
                 // update local filter
                 match &self.category {
+                    Category::Favorite => {
+                        let state = widgets.favorites.is_active();
+                        self.filter = Some(Filter::Favorite(state));
+                    }
                     Category::Title => {
                         let relation = widgets.title_dropdown.selected_item().unwrap();
                         let relation = relation

@@ -133,7 +133,7 @@ impl relm4::Component for TracksView {
             tracks.append(PlaylistTracksRow::new(&subsonic, track.clone()));
         }
 
-        let model = Self {
+        let mut model = Self {
             subsonic: subsonic.clone(),
             tracks,
             filters: relm4::factory::FactoryVecDeque::builder()
@@ -149,6 +149,7 @@ impl relm4::Component for TracksView {
         model.info_cover.model().add_css_class_image("size100");
 
         let widgets = view_output!();
+        model.filters.guard().push_back(Category::Favorite);
         model.calc_sensitivity_of_buttons(&widgets);
         relm4::ComponentParts { model, widgets }
     }
@@ -190,7 +191,7 @@ impl relm4::Component for TracksView {
 
                                     #[name = "new_filter"]
                                     gtk::DropDown {
-                                        set_model: Some(&Category::all()),
+                                        set_model: Some(&Category::tracks()),
                                         set_factory: Some(&Category::factory()),
                                     },
 
@@ -211,35 +212,10 @@ impl relm4::Component for TracksView {
                 set_orientation: gtk::Orientation::Vertical,
 
                 gtk::WindowHandle {
-                    gtk::CenterBox {
-                        #[wrap(Some)]
-                        set_center_widget = &gtk::Label {
-                            add_css_class: "h2",
-                            set_label: "Tracks",
-                            set_halign: gtk::Align::Center,
-                        },
-
-                        #[wrap(Some)]
-                        set_end_widget = &gtk::Box {
-                            set_spacing: 10,
-                            set_margin_end: 10,
-                            //prevent cutoff of "glow" when widget has focus
-                            set_margin_top: 2,
-                            set_margin_bottom: 2,
-
-                            gtk::Box {
-                                set_spacing: 5,
-
-                                gtk::Label {
-                                    set_text: "Show only favorites:",
-                                },
-                                append: favorite = &gtk::Switch {
-                                    set_active: false,
-                                    connect_state_notify => Self::Input::FilterChanged,
-                                    set_tooltip: "Toggle showing favortited artists",
-                                }
-                            }
-                        }
+                    gtk::Label {
+                        add_css_class: "h2",
+                        set_label: "Tracks",
+                        set_halign: gtk::Align::Center,
                     }
                 },
 
@@ -411,7 +387,6 @@ impl relm4::Component for TracksView {
                     return;
                 }
 
-                let favorite = widgets.favorite.clone();
                 self.tracks.add_filter(move |track| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
                     let title = track.item.title.clone();
@@ -419,6 +394,11 @@ impl relm4::Component for TracksView {
                     for filter in &filters {
                         match filter {
                             //TODO add matching for regular expressions
+                            Filter::Favorite(state) => {
+                                if *state && track.item.starred.is_none() {
+                                    return false
+                                }
+                            }
                             Filter::Title(_, value) if value.is_empty() => {}
                             Filter::Title(relation, value) => match relation {
                                 TextRelation::ExactNot if value == &track.item.title => {
@@ -557,11 +537,6 @@ impl relm4::Component for TracksView {
                             }
                             _ => unreachable!("there are filters that shouldnt be"),
                         }
-                    }
-
-                    // respect favorite filter pressed
-                    if favorite.is_active() && track.item.starred.is_none() {
-                        return false;
                     }
 
                     // when search bar is hidden every element will be shown

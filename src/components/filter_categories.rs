@@ -4,6 +4,7 @@ use crate::common::store_from_category;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Category {
+    Favorite,
     Title,
     Year,
     Cd,
@@ -18,6 +19,7 @@ pub enum Category {
 impl std::fmt::Display for Category {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Favorite => write!(f, "Favorite"),
             Self::Title => write!(f, "Title"),
             Self::Year => write!(f, "Year"),
             Self::Cd => write!(f, "Cd"),
@@ -36,6 +38,7 @@ impl TryFrom<String> for Category {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_ref() {
+            "Favorite" => Ok(Self::Favorite),
             "Title" => Ok(Self::Title),
             "Year" => Ok(Self::Year),
             "Cd" => Ok(Self::Cd),
@@ -51,7 +54,7 @@ impl TryFrom<String> for Category {
 }
 
 impl Category {
-    pub fn all() -> gio::ListStore {
+    pub fn tracks() -> gio::ListStore {
         let categories = [
             Self::Title,
             Self::Year,
@@ -120,6 +123,7 @@ mod tests {
 
     #[test]
     fn category_enum_conversion() {
+        test_self(Category::Favorite);
         test_self(Category::Title);
         test_self(Category::Year);
         test_self(Category::Cd);
