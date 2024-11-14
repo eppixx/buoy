@@ -11,19 +11,19 @@ use relm4::{
 use crate::{common::convert_for_label, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug)]
-pub struct PlaylistTracksRow {
+pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     pub fav: relm4::binding::StringBinding,
 }
 
-impl PartialEq for PlaylistTracksRow {
+impl PartialEq for TrackRow {
     fn eq(&self, other: &Self) -> bool {
         self.item == other.item
     }
 }
 
-impl PlaylistTracksRow {
+impl TrackRow {
     pub fn new(subsonic: &Rc<RefCell<Subsonic>>, item: submarine::data::Child) -> Self {
         let fav = match item.starred.is_some() {
             true => String::from("starred-symbolic"),
@@ -63,7 +63,7 @@ pub struct PositionColumn;
 
 impl relm4::typed_view::column::RelmColumn for PositionColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "#";
@@ -99,7 +99,7 @@ pub struct TitleColumn;
 
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Title";
@@ -131,7 +131,7 @@ pub struct ArtistColumn;
 
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Artist";
@@ -163,7 +163,7 @@ pub struct AlbumColumn;
 
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Album";
@@ -195,7 +195,7 @@ pub struct GenreColumn;
 
 impl relm4::typed_view::column::RelmColumn for GenreColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Genre";
@@ -227,7 +227,7 @@ pub struct LengthColumn;
 
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Length";
@@ -257,7 +257,7 @@ pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {
     type Root = gtk::Box;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Bitrate";
@@ -288,7 +288,7 @@ pub struct FavColumn;
 
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Image;
-    type Item = PlaylistTracksRow;
+    type Item = TrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Favorite";

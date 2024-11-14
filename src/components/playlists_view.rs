@@ -10,8 +10,8 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::factory::playlist_tracks_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, TitleColumn,
+use crate::factory::track_row::{
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TrackRow, TitleColumn,
 };
 use crate::settings::Settings;
 use crate::{
@@ -58,7 +58,7 @@ pub struct PlaylistsView {
     index_shown: Option<relm4::factory::DynamicIndex>,
 
     track_stack: gtk::Stack,
-    tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
     info_cover: relm4::Controller<Cover>,
     info_cover_controller: gtk::DragSource,
     info_title: gtk::Label,
@@ -105,7 +105,7 @@ impl relm4::SimpleComponent for PlaylistsView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut tracks = relm4::typed_view::column::TypedColumnView::<
-            PlaylistTracksRow,
+            TrackRow,
             gtk::SingleSelection,
         >::new();
         tracks.append_column::<TitleColumn>();
@@ -380,7 +380,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                     self.tracks.clear();
                     for track in list.entry {
                         self.tracks
-                            .append(PlaylistTracksRow::new(&self.subsonic, track));
+                            .append(TrackRow::new(&self.subsonic, track));
                     }
                     self.index_shown = Some(index);
                 }
@@ -441,7 +441,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 use relm4::typed_view::TypedListItem;
 
                 let len = self.tracks.view.columns().n_items();
-                let tracks: Vec<TypedListItem<PlaylistTracksRow>> =
+                let tracks: Vec<TypedListItem<TrackRow>> =
                     (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
                     let track_id = track.borrow().item.id.clone();

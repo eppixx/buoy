@@ -14,13 +14,13 @@ use crate::{
         cover::Cover,
         filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
     },
-    factory::playlist_tracks_row::{BitRateColumn, GenreColumn},
+    factory::track_row::{BitRateColumn, GenreColumn},
     types::Droppable,
 };
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
-    factory::playlist_tracks_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
+    factory::track_row::{
+        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TrackRow, PositionColumn,
         TitleColumn,
     },
     settings::Settings,
@@ -32,7 +32,7 @@ use super::cover::CoverOut;
 #[derive(Debug)]
 pub struct TracksView {
     subsonic: Rc<RefCell<Subsonic>>,
-    tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
 
     info_cover: relm4::Controller<Cover>,
@@ -117,7 +117,7 @@ impl relm4::Component for TracksView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut tracks = relm4::typed_view::column::TypedColumnView::<
-            PlaylistTracksRow,
+            TrackRow,
             gtk::SingleSelection,
         >::new();
         tracks.append_column::<PositionColumn>();
@@ -130,7 +130,7 @@ impl relm4::Component for TracksView {
         tracks.append_column::<FavColumn>();
 
         for track in subsonic.borrow().tracks() {
-            tracks.append(PlaylistTracksRow::new(&subsonic, track.clone()));
+            tracks.append(TrackRow::new(&subsonic, track.clone()));
         }
 
         let mut model = Self {

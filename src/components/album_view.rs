@@ -17,8 +17,8 @@ use crate::{
     types::Droppable,
 };
 use crate::{
-    factory::playlist_tracks_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistTracksRow, PositionColumn,
+    factory::track_row::{
+        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TrackRow, PositionColumn,
         TitleColumn,
     },
     settings::Settings,
@@ -33,7 +33,7 @@ pub struct AlbumView {
     title: String,
     artist: Option<String>,
     info: String,
-    tracks: relm4::typed_view::column::TypedColumnView<PlaylistTracksRow, gtk::SingleSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
 }
 
 #[derive(Debug, Clone)]
@@ -86,7 +86,7 @@ impl relm4::Component for AlbumView {
         };
 
         let mut tracks = relm4::typed_view::column::TypedColumnView::<
-            PlaylistTracksRow,
+            TrackRow,
             gtk::SingleSelection,
         >::new();
         tracks.append_column::<PositionColumn>();
@@ -348,7 +348,7 @@ impl relm4::Component for AlbumView {
                 use relm4::typed_view::TypedListItem;
 
                 let len = self.tracks.view.columns().n_items();
-                let tracks: Vec<TypedListItem<PlaylistTracksRow>> =
+                let tracks: Vec<TypedListItem<TrackRow>> =
                     (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
                     let track_id = track.borrow().item.id.clone();
@@ -402,7 +402,7 @@ impl relm4::Component for AlbumView {
                 //load tracks
                 for track in &album.song {
                     self.tracks
-                        .append(PlaylistTracksRow::new(&self.subsonic, track.clone()));
+                        .append(TrackRow::new(&self.subsonic, track.clone()));
                 }
 
                 // update dragSource
