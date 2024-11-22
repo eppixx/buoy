@@ -586,7 +586,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let relation: std::cell::Ref<BoolRow> = relation.borrow();
-                        self.filter = Some(Filter::Favorite(relation.relation.clone()));
+                        self.filter = Some(Filter::Favorite(relation.relation));
                     }
                     Category::Title => {
                         let relation = widgets.title_dropdown.selected_item().unwrap();
