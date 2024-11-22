@@ -131,12 +131,17 @@ impl Settings {
         self.save();
     }
 
+    pub fn login_set(&self) -> bool {
+        self.login_uri.is_some()
+            && self.login_username.is_some()
+            && self.login_hash.is_some()
+            && self.login_salt.is_some()
+    }
+
     /// pings server with current settings and checks if they are correct
     pub async fn valid_login(&self) -> bool {
         if let Some(client) = Client::get() {
-            // let ping = futures::executor::block_on(async move { client.ping().await });
             let ping = client.ping().await;
-            tracing::error!("{ping:?}");
             ping.is_ok()
         } else {
             false
