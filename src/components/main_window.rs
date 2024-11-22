@@ -71,7 +71,7 @@ pub enum MainWindowIn {
     Mpris(MprisOut),
     ShowApp,
     ShowLogin,
-    ShowConnectionError,
+    ShowErrorScreen,
     App(AppOut),
     LoginForm(LoginFormOut),
 }
@@ -148,7 +148,7 @@ impl relm4::component::AsyncComponent for MainWindow {
                 sender.input(MainWindowIn::ShowApp);
             } else {
                 tracing::info!("show error screen");
-                sender.input(MainWindowIn::ShowConnectionError);
+                sender.input(MainWindowIn::ShowErrorScreen);
             }
         }
 
@@ -237,15 +237,22 @@ impl relm4::component::AsyncComponent for MainWindow {
                     }
                 },
                 add_enumed[Content::App] = &model.content.clone() -> gtk::Viewport {},
+                add_enumed[Content::Error] = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
 
-                add_enumed[Content::Error] = &gtk::WindowHandle {
-                    gtk::Box {
+                    gtk::HeaderBar {
+                        add_css_class: granite::STYLE_CLASS_FLAT,
+                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                    },
+
+                    gtk::WindowHandle {
                         set_hexpand: true,
                         set_vexpand: true,
                         set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
 
                         gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_text: "an error occured, you might have no connetion to your server or the server is down, if none of this is the case try deleting your cache and settings and try a new setup",
                         }
                     }
@@ -294,7 +301,7 @@ impl relm4::component::AsyncComponent for MainWindow {
                 AppOut::Reload => sender.input(MainWindowIn::ShowApp),
             },
             MainWindowIn::LoginForm(LoginFormOut::LoggedIn) => sender.input(MainWindowIn::ShowApp),
-            MainWindowIn::ShowConnectionError => todo!(),
+            MainWindowIn::ShowErrorScreen => widgets.stack.set_visible_child_enum(&Content::Error),
         }
     }
 
