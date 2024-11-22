@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use zbus::interface;
@@ -50,7 +52,9 @@ enum DataChanged {
 }
 
 impl Mpris {
-    pub async fn new(args: &Args) -> anyhow::Result<(Mpris, async_channel::Receiver<MprisOut>)> {
+    pub async fn new(
+        args: &Rc<RefCell<Args>>,
+    ) -> anyhow::Result<(Mpris, async_channel::Receiver<MprisOut>)> {
         let (sender, receiver) = async_channel::unbounded();
         let info = Arc::new(Mutex::new(Info::default()));
         let root = Root {
@@ -61,7 +65,10 @@ impl Mpris {
             info: info.clone(),
         };
         let connection = zbus::conn::Builder::session()?
-            .name(format!("org.mpris.MediaPlayer2.{}", args.alternative_title))?
+            .name(format!(
+                "org.mpris.MediaPlayer2.{}",
+                args.borrow().alternative_title
+            ))?
             .serve_at("/org/mpris/MediaPlayer2", root)?
             .serve_at("/org/mpris/MediaPlayer2", player)?
             .build()

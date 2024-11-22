@@ -18,8 +18,7 @@ use crate::{
 };
 use crate::{
     factory::track_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TrackRow, PositionColumn,
-        TitleColumn,
+        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PositionColumn, TitleColumn, TrackRow,
     },
     settings::Settings,
 };
@@ -85,10 +84,8 @@ impl relm4::Component for AlbumView {
             AlbumViewInit::AlbumId3(album) => album.cover_art,
         };
 
-        let mut tracks = relm4::typed_view::column::TypedColumnView::<
-            TrackRow,
-            gtk::SingleSelection,
-        >::new();
+        let mut tracks =
+            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();

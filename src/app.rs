@@ -1,9 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
-use granite::prelude::{SettingsExt, ToastExt};
-use gtk::prelude::{
-    BoxExt, ButtonExt, CheckButtonExt, GtkWindowExt, OrientableExt, RangeExt, ScaleButtonExt,
-};
+use granite::prelude::ToastExt;
+use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, RangeExt, ScaleButtonExt};
 use relm4::{
     actions::AccelsPlus,
     component::{AsyncComponentController, AsyncController},
@@ -17,7 +15,6 @@ use relm4::{
 use crate::{
     client::Client,
     download::Download,
-    gtk_helper::stack::StackExt,
     mpris::{Mpris, MprisOut},
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
@@ -25,13 +22,11 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
     types::Droppable,
-    window_state::WindowState,
 };
 use crate::{
     components::{
         browser::{Browser, BrowserIn, BrowserOut},
         equalizer::{Equalizer, EqualizerOut},
-        login_form::{LoginForm, LoginFormOut},
         play_controls::{PlayControl, PlayControlIn, PlayControlOut},
         play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
         queue::{Queue, QueueIn, QueueOut},
@@ -42,11 +37,10 @@ use crate::{
 
 #[derive(Debug)]
 pub struct App {
-    playback: Playback,
+    playback: Rc<RefCell<Playback>>,
     subsonic: Rc<RefCell<Subsonic>>,
-    mpris: Mpris,
+    mpris: Rc<RefCell<Mpris>>,
 
-    login_form: AsyncController<LoginForm>,
     queue: Controller<Queue>,
     play_controls: Controller<PlayControl>,
     seekbar: Controller<Seekbar>,
@@ -60,11 +54,11 @@ impl App {
         let can_prev = self.queue.model().can_play_previous();
         self.play_controls
             .emit(PlayControlIn::DisablePrevious(can_prev));
-        self.mpris.can_play_previous(can_prev);
+        self.mpris.borrow_mut().can_play_previous(can_prev);
         let can_next = self.queue.model().can_play_next();
         self.play_controls
             .emit(PlayControlIn::DisableNext(can_next));
-        self.mpris.can_play_next(can_next);
+        self.mpris.borrow_mut().can_play_next(can_next);
     }
 }
 
@@ -75,7 +69,6 @@ pub enum AppIn {
     PlayControlOutput(PlayControlOut),
     Seekbar(SeekbarOut),
     Playback(PlaybackOut),
-    LoginForm(LoginFormOut),
     Equalizer(EqualizerOut),
     Queue(Box<QueueOut>),
     Browser(BrowserOut),
@@ -93,69 +86,54 @@ pub enum AppIn {
     Download(Droppable),
 }
 
-#[relm4::widget_template(pub)]
-impl relm4::WidgetTemplate for LoadingState {
-    view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-
-            gtk::HeaderBar {
-                add_css_class: granite::STYLE_CLASS_FLAT,
-                add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-            },
-            gtk::Box {
-                set_hexpand: true,
-                set_vexpand: true,
-                set_halign: gtk::Align::Center,
-                set_valign: gtk::Align::Center,
-                set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 10,
-
-                append: label = &gtk::Label {
-                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                    set_text: "loading subsonic information from server",
-                },
-                append: spinner = &gtk::Spinner {
-                    start: (),
-                    set_halign: gtk::Align::Center,
-                }
-            }
-        }
-    }
+#[derive(Debug)]
+pub enum AppOut {
+    Quit,
+    Logout,
+    Reload,
 }
 
-relm4::new_action_group!(WindowActionGroup, "win");
-relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
-relm4::new_stateless_action!(ActivateSearchAction, WindowActionGroup, "activate-search");
+relm4::new_action_group!(AppActionGroup, "win");
+relm4::new_stateless_action!(ActivateSearchAction, AppActionGroup, "activate-search");
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for App {
-    type Init = Args;
+    type Init = (Rc<RefCell<Args>>, Rc<RefCell<Mpris>>, Rc<RefCell<Playback>>);
     type Input = AppIn;
-    type Output = ();
+    type Output = AppOut;
     type CommandOutput = ();
 
     fn init_loading_widgets(root: Self::Root) -> Option<relm4::loading_widgets::LoadingWidgets> {
         relm4::view! {
             #[local]
             root {
-                add_css_class: "main-window",
-                set_default_width: Settings::get().lock().unwrap().window_width,
-                set_default_height: Settings::get().lock().unwrap().window_height,
-                set_maximized: Settings::get().lock().unwrap().window_maximized,
-
-                #[wrap(Some)]
-                set_titlebar = &gtk::HeaderBar {
-                    add_css_class: granite::STYLE_CLASS_FLAT,
-                    add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    set_show_title_buttons: false,
-                    set_visible: false,
-                },
-
                 #[name(loading)]
                 gtk::Box {
-                    #[template]
-                    LoadingState {}
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_hexpand: true,
+
+                    gtk::HeaderBar {
+                        add_css_class: granite::STYLE_CLASS_FLAT,
+                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                    },
+                    gtk::WindowHandle {
+                        set_vexpand: true,
+                        set_valign: gtk::Align::Center,
+                        set_halign: gtk::Align::Center,
+
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 10,
+
+                            gtk::Spinner {
+                                start: ()
+                            },
+                            gtk::Label {
+                                set_text: "loading information from server",
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -167,25 +145,11 @@ impl relm4::component::AsyncComponent for App {
 
     // Initialize the UI.
     async fn init(
-        args: Self::Init,
+        (args, mpris, playback): Self::Init,
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
         let time_startup = std::time::Instant::now();
-        let (mut playback, receiver) = Playback::new().unwrap();
-
-        // decide if dark or white style; also watch if style changes
-        let gtk_settings = gtk::Settings::default().expect("Unable to get the GtkSettings object");
-        let granite_settings =
-            granite::Settings::default().expect("Unable to get the Granite settings object");
-        gtk_settings.set_gtk_application_prefer_dark_theme(
-            granite_settings.prefers_color_scheme() == granite::SettingsColorScheme::Dark,
-        );
-        granite_settings.connect_prefers_color_scheme_notify(move |granite_settings| {
-            gtk_settings.set_gtk_application_prefer_dark_theme(
-                granite_settings.prefers_color_scheme() == granite::SettingsColorScheme::Dark,
-            );
-        });
 
         // load from settings
         let (queue, queue_index, current_song, seekbar, controls) = {
@@ -218,6 +182,7 @@ impl relm4::component::AsyncComponent for App {
                 Some(_) => PlayState::Pause,
                 None => PlayState::Stop,
             };
+
             (queue, queue_index, current_song, seekbar, controls)
         };
 
@@ -234,7 +199,7 @@ impl relm4::component::AsyncComponent for App {
                 None,
             ) {
                 Ok(url) => {
-                    if let Err(e) = playback.set_track(url) {
+                    if let Err(e) = playback.borrow_mut().set_track(url) {
                         sender.input(AppIn::DisplayToast(format!("could not set track: {e}")));
                     }
                 }
@@ -244,7 +209,7 @@ impl relm4::component::AsyncComponent for App {
                     )));
                 }
             }
-            playback.pause().unwrap();
+            playback.borrow_mut().pause().unwrap();
         }
 
         tracing::info!("start loading subsonic information");
@@ -252,9 +217,6 @@ impl relm4::component::AsyncComponent for App {
         let subsonic = std::rc::Rc::new(std::cell::RefCell::new(subsonic));
         tracing::info!("finished loaded subsonic information");
 
-        let login_form: AsyncController<LoginForm> = LoginForm::builder()
-            .launch(())
-            .forward(sender.input_sender(), AppIn::LoginForm);
         let queue: Controller<Queue> = Queue::builder()
             .launch((subsonic.clone(), queue, queue_index))
             .forward(sender.input_sender(), |msg| AppIn::Queue(Box::new(msg)));
@@ -274,14 +236,11 @@ impl relm4::component::AsyncComponent for App {
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
 
-        let (mpris, mpris_receiver) = crate::mpris::Mpris::new(&args).await.unwrap();
-
-        let mut model = App {
+        let model = App {
             playback,
             subsonic,
             mpris,
 
-            login_form,
             queue,
             play_controls,
             seekbar,
@@ -292,18 +251,12 @@ impl relm4::component::AsyncComponent for App {
 
         let browser_sender = model.browser.sender().clone();
         let widgets = view_output!();
+        gtk::Window::set_default_icon_name("com.github.eppixx.buoy");
         tracing::info!("loaded main window");
 
         // set application shortcuts
         // quit
         let application = relm4::main_application();
-        application.set_accelerators_for_action::<QuitAction>(&["<Primary>Q"]);
-        let app = application.clone();
-        let quit_action: relm4::actions::RelmAction<QuitAction> =
-            relm4::actions::RelmAction::new_stateless(move |_| {
-                tracing::info!("quit called");
-                app.quit();
-            });
         application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
         let search_btn = widgets.search_btn.clone();
         let senderc = sender.clone();
@@ -314,8 +267,7 @@ impl relm4::component::AsyncComponent for App {
                 senderc.input(AppIn::SearchActivate(true));
             });
 
-        let mut group = relm4::actions::RelmActionGroup::<WindowActionGroup>::new();
-        group.add_action(quit_action);
+        let mut group = relm4::actions::RelmActionGroup::<AppActionGroup>::new();
         group.add_action(activate_search_action);
         group.register_for_widget(&widgets.main_window);
 
@@ -323,7 +275,7 @@ impl relm4::component::AsyncComponent for App {
         {
             let settings = Settings::get().lock().unwrap();
             widgets.volume_btn.set_value(settings.volume);
-            model.mpris.set_volume(settings.volume);
+            model.mpris.borrow_mut().set_volume(settings.volume);
 
             // playcontrol
             if model.queue.model().songs().is_empty() {
@@ -331,20 +283,6 @@ impl relm4::component::AsyncComponent for App {
             }
             sender.input(AppIn::CoverSizeChanged);
         }
-
-        //setup mpris
-        let sender_mpris = sender.clone();
-        gtk::glib::spawn_future_local(async move {
-            while let Ok(msg) = mpris_receiver.recv().await {
-                sender_mpris.input(AppIn::Mpris(msg));
-            }
-        });
-
-        gtk::glib::spawn_future_local(async move {
-            while let Ok(msg) = receiver.recv().await {
-                sender.input(AppIn::Playback(msg));
-            }
-        });
 
         //regularly save
         let library = model.subsonic.clone();
@@ -356,20 +294,7 @@ impl relm4::component::AsyncComponent for App {
             }
         });
 
-        {
-            let client = Client::get_mut().lock().unwrap();
-
-            match &client.inner {
-                Some(_client) => widgets
-                    .main_stack
-                    .set_visible_child_enum(&WindowState::Main),
-                None => widgets
-                    .main_stack
-                    .set_visible_child_enum(&WindowState::LoginForm),
-            }
-        }
-
-        if args.time_startup {
+        if args.borrow().time_startup {
             let shutdown = std::time::Instant::now();
             let duration = shutdown - time_startup;
             tracing::info!("startup time was {duration:?}");
@@ -381,350 +306,297 @@ impl relm4::component::AsyncComponent for App {
 
     view! {
         #[root]
-        main_window = gtk::Window {
-            add_css_class: "main-window",
-            set_default_width: Settings::get().lock().unwrap().window_width,
-            set_default_height: Settings::get().lock().unwrap().window_height,
-            set_maximized: Settings::get().lock().unwrap().window_maximized,
+        main_window = gtk::Box {
+            add_css_class: "main-box",
+            set_orientation: gtk::Orientation::Vertical,
 
-            //remove the titlebar and add WindowControl to the other widgets
-            #[wrap(Some)]
-            set_titlebar = &gtk::HeaderBar {
-                add_css_class: granite::STYLE_CLASS_FLAT,
-                add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                set_show_title_buttons: false,
-                set_visible: false,
-            },
+            append: paned = &gtk::Paned {
+                add_css_class: "main-paned",
+                set_position: Settings::get().lock().unwrap().paned_position,
+                set_shrink_start_child: false,
+                set_resize_start_child: false,
+                set_shrink_end_child: false,
 
-            #[name = "main_stack"]
-            gtk::Stack {
-                add_css_class: "main-box",
-                set_transition_type: gtk::StackTransitionType::Crossfade,
-                set_transition_duration: 200,
-
-                add_enumed[WindowState::Main] = &gtk::Box {
-                    add_css_class: "main-box",
+                #[wrap(Some)]
+                set_start_child = &gtk::Box {
+                    add_css_class: granite::STYLE_CLASS_SIDEBAR,
                     set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 15,
 
-                    append: paned = &gtk::Paned {
-                        add_css_class: "main-paned",
-                        set_position: Settings::get().lock().unwrap().paned_position,
-                        set_shrink_start_child: false,
-                        set_resize_start_child: false,
-                        set_shrink_end_child: false,
-
-                        #[wrap(Some)]
-                        set_start_child = &gtk::Box {
-                            add_css_class: granite::STYLE_CLASS_SIDEBAR,
+                    append = &gtk::WindowHandle {
+                        gtk::Box {
                             set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 15,
-
-                            append = &gtk::WindowHandle {
-                                gtk::Box {
-                                    set_orientation: gtk::Orientation::Vertical,
-                                    set_spacing: 12,
-
-                                    gtk::HeaderBar {
-                                        add_css_class: granite::STYLE_CLASS_FLAT,
-                                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                                        set_show_title_buttons: false,
-                                        pack_start = &gtk::WindowControls {
-                                            set_side: gtk::PackType::Start,
-                                        }
-                                    },
-                                    model.play_info.widget(),
-                                    model.play_controls.widget(),
-                                    model.seekbar.widget(),
-                                },
-                            },
-
-                            model.queue.widget(),
-                        },
-
-                        #[wrap(Some)]
-                        set_end_child = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 12,
 
                             gtk::HeaderBar {
                                 add_css_class: granite::STYLE_CLASS_FLAT,
                                 add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
                                 set_show_title_buttons: false,
-                                set_halign: gtk::Align::Fill,
+                                pack_start = &gtk::WindowControls {
+                                    set_side: gtk::PackType::Start,
+                                }
+                            },
+                            model.play_info.widget(),
+                            model.play_controls.widget(),
+                            model.seekbar.widget(),
+                        },
+                    },
 
-                                pack_start = &gtk::Box {
-                                    append: back_btn = &gtk::Button {
-                                        set_icon_name: "go-previous-symbolic",
-                                        add_css_class: "destructive-button-spacer",
-                                        set_tooltip: "Go back to previous page",
+                    model.queue.widget(),
+                },
 
-                                        connect_clicked[browser_sender] => move |_| {
-                                            browser_sender.emit(BrowserIn::BackClicked);
-                                        }
-                                    },
+                #[wrap(Some)]
+                set_end_child = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
 
+                    gtk::HeaderBar {
+                        add_css_class: granite::STYLE_CLASS_FLAT,
+                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        set_show_title_buttons: false,
+                        set_halign: gtk::Align::Fill,
+
+                        pack_start = &gtk::Box {
+                            append: back_btn = &gtk::Button {
+                                set_icon_name: "go-previous-symbolic",
+                                add_css_class: "destructive-button-spacer",
+                                set_tooltip: "Go back to previous page",
+
+                                connect_clicked[browser_sender] => move |_| {
+                                    browser_sender.emit(BrowserIn::BackClicked);
+                                }
+                            },
+
+                        },
+
+                        #[wrap(Some)]
+                        set_title_widget = &gtk::Box {
+                            set_hexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_spacing: 15,
+
+                            append: search_btn = &gtk::ToggleButton {
+                                add_css_class: "browser-navigation-button",
+                                set_icon_name: "system-search-symbolic",
+                                set_tooltip: "Open search bar",
+
+                                connect_toggled[sender] => move |button| {
+                                    match button.is_active() {
+                                        true => sender.input(AppIn::SearchActivate(true)),
+                                        false => sender.input(AppIn::SearchActivate(false)),
+                                    }
+                                }
+                            },
+
+                            gtk::Box {
+                                gtk::Button {
+                                    add_css_class: "browser-navigation-button",
+                                    set_icon_name: "go-home-symbolic",
+                                    set_tooltip: "Go to dashboard",
+                                    connect_clicked[browser_sender] => move |_| {
+                                        browser_sender.emit(BrowserIn::DashboardClicked);
+                                    }
                                 },
+                                gtk::Button {
+                                    add_css_class: "browser-navigation-button",
+                                    set_icon_name: "avatar-default-symbolic",
+                                    set_tooltip: "Show artists",
+                                    connect_clicked[browser_sender] => move |_| {
+                                        browser_sender.emit(BrowserIn::ArtistsClicked);
+                                    }
+                                },
+                                gtk::Button {
+                                    add_css_class: "browser-navigation-button",
+                                    set_icon_name: "media-optical-cd-audio-symbolic",
+                                    set_tooltip: "Show albums",
+                                    connect_clicked[browser_sender] => move |_| {
+                                        browser_sender.emit(BrowserIn::AlbumsClicked);
+                                    }
+                                },
+                                gtk::Button {
+                                    add_css_class: "browser-navigation-button",
+                                    set_icon_name: "audio-x-generic-symbolic",
+                                    set_tooltip: "Show tracks",
+                                    connect_clicked[browser_sender] => move |_| {
+                                        browser_sender.emit(BrowserIn::TracksClicked);
+                                    }
+                                },
+                                gtk::Button {
+                                    add_css_class: "browser-navigation-button",
+                                    set_icon_name: "playlist-symbolic",
+                                    set_tooltip: "Show playlists",
+                                    connect_clicked[browser_sender] => move |_| {
+                                        browser_sender.emit(BrowserIn::PlaylistsClicked);
+                                    }
+                                },
+                            }
+                        },
 
+                        pack_end = &gtk::Box {
+                            set_hexpand: true,
+                            set_halign: gtk::Align::End,
+                            set_spacing: 5,
+
+                            gtk::MenuButton {
+                                set_icon_name: "media-eq-symbolic",
+                                set_focus_on_click: false,
+                                set_tooltip: "Open Equalizer",
                                 #[wrap(Some)]
-                                set_title_widget = &gtk::Box {
-                                    set_hexpand: true,
-                                    set_halign: gtk::Align::Center,
-                                    set_spacing: 15,
-
-                                    append: search_btn = &gtk::ToggleButton {
-                                        add_css_class: "browser-navigation-button",
-                                        set_icon_name: "system-search-symbolic",
-                                        set_tooltip: "Open search bar",
-
-                                        connect_toggled[sender] => move |button| {
-                                            match button.is_active() {
-                                                true => sender.input(AppIn::SearchActivate(true)),
-                                                false => sender.input(AppIn::SearchActivate(false)),
-                                            }
-                                        }
-                                    },
-
-                                    gtk::Box {
-                                        gtk::Button {
-                                            add_css_class: "browser-navigation-button",
-                                            set_icon_name: "go-home-symbolic",
-                                            set_tooltip: "Go to dashboard",
-                                            connect_clicked[browser_sender] => move |_| {
-                                                browser_sender.emit(BrowserIn::DashboardClicked);
-                                            }
-                                        },
-                                        gtk::Button {
-                                            add_css_class: "browser-navigation-button",
-                                            set_icon_name: "avatar-default-symbolic",
-                                            set_tooltip: "Show artists",
-                                            connect_clicked[browser_sender] => move |_| {
-                                                browser_sender.emit(BrowserIn::ArtistsClicked);
-                                            }
-                                        },
-                                        gtk::Button {
-                                            add_css_class: "browser-navigation-button",
-                                            set_icon_name: "media-optical-cd-audio-symbolic",
-                                            set_tooltip: "Show albums",
-                                            connect_clicked[browser_sender] => move |_| {
-                                                browser_sender.emit(BrowserIn::AlbumsClicked);
-                                            }
-                                        },
-                                        gtk::Button {
-                                            add_css_class: "browser-navigation-button",
-                                            set_icon_name: "audio-x-generic-symbolic",
-                                            set_tooltip: "Show tracks",
-                                            connect_clicked[browser_sender] => move |_| {
-                                                browser_sender.emit(BrowserIn::TracksClicked);
-                                            }
-                                        },
-                                        gtk::Button {
-                                            add_css_class: "browser-navigation-button",
-                                            set_icon_name: "playlist-symbolic",
-                                            set_tooltip: "Show playlists",
-                                            connect_clicked[browser_sender] => move |_| {
-                                                browser_sender.emit(BrowserIn::PlaylistsClicked);
-                                            }
-                                        },
-                                    }
-                                },
-
-                                pack_end = &gtk::Box {
-                                    set_hexpand: true,
-                                    set_halign: gtk::Align::End,
-                                    set_spacing: 5,
-
-                                    gtk::MenuButton {
-                                        set_icon_name: "media-eq-symbolic",
-                                        set_focus_on_click: false,
-                                        set_tooltip: "Open Equalizer",
-                                        #[wrap(Some)]
-                                        set_popover = &gtk::Popover {
-                                            model.equalizer.widget(),
-                                        },
-                                    },
-
-                                    append: volume_btn = &gtk::VolumeButton {
-                                        set_focus_on_click: false,
-                                        connect_value_changed[sender] => move |_scale, value| {
-                                            sender.input(AppIn::Player(Command::Volume(value)));
-                                        }
-                                    },
-
-                                    gtk::MenuButton {
-                                        set_icon_name: "open-menu-symbolic",
-                                        set_focus_on_click: false,
-                                        set_tooltip: "Open settings",
-
-                                        #[wrap(Some)]
-                                        set_popover = &gtk::Popover {
-                                            set_position: gtk::PositionType::Right,
-
-                                            gtk::Box {
-                                                add_css_class: "config-menu",
-                                                set_orientation: gtk::Orientation::Vertical,
-                                                set_spacing: 15,
-
-                                                gtk::CenterBox {
-                                                    #[wrap(Some)]
-                                                    set_start_widget = &gtk::Label {
-                                                        set_text: "Send desktop notifications",
-                                                    },
-                                                    #[wrap(Some)]
-                                                    set_end_widget = &gtk::Switch {
-                                                        set_tooltip: "Wether or not send desktop notifications",
-                                                        set_state: Settings::get().lock().unwrap().send_notifications,
-                                                        connect_state_set => move |_switch, value| {
-                                                            Settings::get().lock().unwrap().send_notifications = value;
-                                                            gtk::glib::signal::Propagation::Proceed
-                                                        }
-                                                    },
-                                                },
-                                                gtk::CenterBox {
-                                                    #[wrap(Some)]
-                                                    set_start_widget = &gtk::Label {
-                                                        set_text: "Scrobble to server",
-                                                    },
-                                                    #[wrap(Some)]
-                                                    set_end_widget = &gtk::Switch {
-                                                        set_state: Settings::get().lock().unwrap().scrobble,
-                                                        set_tooltip: "Updates play count, played timestamp on server and the now playing page in the web app",
-
-                                                        connect_state_set => move |_switch, value| {
-                                                            Settings::get().lock().unwrap().scrobble = value;
-                                                            gtk::glib::signal::Propagation::Proceed
-                                                        }
-                                                    },
-                                                },
-                                                gtk::CenterBox {
-                                                    #[wrap(Some)]
-                                                    set_start_widget = &gtk::Label {
-                                                        set_text: "Cover size",
-                                                    },
-                                                    #[wrap(Some)]
-                                                    set_end_widget = &gtk::Scale {
-                                                        set_width_request: 200,
-                                                        set_range: (100f64, 200f64),
-                                                        set_value: Settings::get().lock().unwrap().cover_size as f64,
-                                                        set_increments: (25f64, 25f64),
-                                                        set_slider_size_fixed: true,
-                                                        set_tooltip: "Changes cover sizes on Dashboard, Artists and Albums pages",
-                                                        connect_change_value[sender] => move |_scale, _, value| {
-                                                            Settings::get().lock().unwrap().cover_size = value as i32;
-                                                            sender.input(AppIn::CoverSizeChanged);
-                                                            gtk::glib::Propagation::Proceed
-                                                        },
-                                                    }
-                                                },
-                                                gtk::Separator {},
-                                                gtk::Box {
-                                                    set_halign: gtk::Align::End,
-                                                    gtk::Button {
-                                                        add_css_class: "destructive-action",
-                                                        set_label: "Delete cache",
-                                                        set_tooltip: "Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start",
-                                                        connect_clicked => AppIn::DeleteCache,
-                                                    }
-                                                },
-                                                gtk::Box {
-                                                    set_halign: gtk::Align::End,
-                                                    gtk::Button {
-                                                        add_css_class: "destructive-action",
-                                                        set_label: "Logout from Server",
-                                                        set_tooltip: "Logging out will delete the cache and also require to login again to listen to music",
-                                                        connect_clicked => AppIn::ResetLogin,
-                                                    },
-
-                                                },
-                                            },
-                                        },
-                                    },
-
-                                    gtk::WindowControls {
-                                        set_side: gtk::PackType::End,
-                                    }
+                                set_popover = &gtk::Popover {
+                                    model.equalizer.widget(),
                                 },
                             },
 
-                            gtk::Overlay {
+                            append: volume_btn = &gtk::VolumeButton {
+                                set_focus_on_click: false,
+                                connect_value_changed[sender] => move |_scale, value| {
+                                    sender.input(AppIn::Player(Command::Volume(value)));
+                                }
+                            },
+
+                            gtk::MenuButton {
+                                set_icon_name: "open-menu-symbolic",
+                                set_focus_on_click: false,
+                                set_tooltip: "Open settings",
+
                                 #[wrap(Some)]
-                                set_child = &gtk::Box {
-                                    set_orientation: gtk::Orientation::Vertical,
+                                set_popover = &gtk::Popover {
+                                    set_position: gtk::PositionType::Right,
 
-                                    append: search_bar = &gtk::Revealer {
-                                        set_transition_duration: 200,
-                                        set_transition_type: gtk::RevealerTransitionType::SlideUp,
+                                    gtk::Box {
+                                        add_css_class: "config-menu",
+                                        set_orientation: gtk::Orientation::Vertical,
+                                        set_spacing: 15,
 
-                                        gtk::Box {
-                                            set_spacing: 10,
-                                            set_halign: gtk::Align::Center,
-                                            set_margin_vertical: 2,
-
-                                            append: search = &gtk::SearchEntry {
-                                                set_placeholder_text: Some("Search..."),
-                                                set_text: &Settings::get().lock().unwrap().search_text,
-                                                set_tooltip: "Enter your search here",
-                                                connect_search_changed => AppIn::SearchChanged,
+                                        gtk::CenterBox {
+                                            #[wrap(Some)]
+                                            set_start_widget = &gtk::Label {
+                                                set_text: "Send desktop notifications",
                                             },
-                                            gtk::CheckButton {
-                                                set_label: Some("Use fuzzy search"),
-                                                set_tooltip: "Shows close and similar search results if activated",
-                                                set_active: Settings::get().lock().unwrap().fuzzy_search,
-
-                                                connect_toggled[sender] => move |btn| {
-                                                    Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
-                                                    sender.input(AppIn::SearchChanged);
+                                            #[wrap(Some)]
+                                            set_end_widget = &gtk::Switch {
+                                                set_tooltip: "Wether or not send desktop notifications",
+                                                set_state: Settings::get().lock().unwrap().send_notifications,
+                                                connect_state_set => move |_switch, value| {
+                                                    Settings::get().lock().unwrap().send_notifications = value;
+                                                    gtk::glib::signal::Propagation::Proceed
                                                 }
                                             },
-                                            gtk::CheckButton {
-                                                set_label: Some("Use case sensitivity"),
-                                                set_tooltip: "Ignores case sensitivity in search term and results",
-                                                set_active: Settings::get().lock().unwrap().case_sensitive,
+                                        },
+                                        gtk::CenterBox {
+                                            #[wrap(Some)]
+                                            set_start_widget = &gtk::Label {
+                                                set_text: "Scrobble to server",
+                                            },
+                                            #[wrap(Some)]
+                                            set_end_widget = &gtk::Switch {
+                                                set_state: Settings::get().lock().unwrap().scrobble,
+                                                set_tooltip: "Updates play count, played timestamp on server and the now playing page in the web app",
 
-                                                connect_toggled[sender] => move |btn| {
-                                                    Settings::get().lock().unwrap().case_sensitive = btn.is_active();
-                                                    sender.input(AppIn::SearchChanged);
-
+                                                connect_state_set => move |_switch, value| {
+                                                    Settings::get().lock().unwrap().scrobble = value;
+                                                    gtk::glib::signal::Propagation::Proceed
                                                 }
+                                            },
+                                        },
+                                        gtk::CenterBox {
+                                            #[wrap(Some)]
+                                            set_start_widget = &gtk::Label {
+                                                set_text: "Cover size",
+                                            },
+                                            #[wrap(Some)]
+                                            set_end_widget = &gtk::Scale {
+                                                set_width_request: 200,
+                                                set_range: (100f64, 200f64),
+                                                set_value: Settings::get().lock().unwrap().cover_size as f64,
+                                                set_increments: (25f64, 25f64),
+                                                set_slider_size_fixed: true,
+                                                set_tooltip: "Changes cover sizes on Dashboard, Artists and Albums pages",
+                                                connect_change_value[sender] => move |_scale, _, value| {
+                                                    Settings::get().lock().unwrap().cover_size = value as i32;
+                                                    sender.input(AppIn::CoverSizeChanged);
+                                                    gtk::glib::Propagation::Proceed
+                                                },
                                             }
+                                        },
+                                        gtk::Separator {},
+                                        gtk::Box {
+                                            set_halign: gtk::Align::End,
+                                            gtk::Button {
+                                                add_css_class: "destructive-action",
+                                                set_label: "Delete cache",
+                                                set_tooltip: "Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start",
+                                                connect_clicked => AppIn::DeleteCache,
+                                            }
+                                        },
+                                        gtk::Box {
+                                            set_halign: gtk::Align::End,
+                                            gtk::Button {
+                                                add_css_class: "destructive-action",
+                                                set_label: "Logout from Server",
+                                                set_tooltip: "Logging out will delete the cache and also require to login again to listen to music",
+                                                connect_clicked => AppIn::ResetLogin,
+                                            },
+
+                                        },
+                                    },
+                                },
+                            },
+
+                            gtk::WindowControls {
+                                set_side: gtk::PackType::End,
+                            }
+                        },
+                    },
+
+                    gtk::Overlay {
+                        #[wrap(Some)]
+                        set_child = &gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+
+                            append: search_bar = &gtk::Revealer {
+                                set_transition_duration: 200,
+                                set_transition_type: gtk::RevealerTransitionType::SlideUp,
+
+                                gtk::Box {
+                                    set_spacing: 10,
+                                    set_halign: gtk::Align::Center,
+                                    set_margin_vertical: 2,
+
+                                    append: search = &gtk::SearchEntry {
+                                        set_placeholder_text: Some("Search..."),
+                                        set_text: &Settings::get().lock().unwrap().search_text,
+                                        set_tooltip: "Enter your search here",
+                                        connect_search_changed => AppIn::SearchChanged,
+                                    },
+                                    gtk::CheckButton {
+                                        set_label: Some("Use fuzzy search"),
+                                        set_tooltip: "Shows close and similar search results if activated",
+                                        set_active: Settings::get().lock().unwrap().fuzzy_search,
+
+                                        connect_toggled[sender] => move |btn| {
+                                            Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
+                                            sender.input(AppIn::SearchChanged);
                                         }
                                     },
+                                    gtk::CheckButton {
+                                        set_label: Some("Use case sensitivity"),
+                                        set_tooltip: "Ignores case sensitivity in search term and results",
+                                        set_active: Settings::get().lock().unwrap().case_sensitive,
 
-                                    model.browser.widget(),
-                                },
-                                add_overlay: toasts = &granite::Toast,
-                            }
-                        }
-                    }
-                },
-                add_enumed[WindowState::LoginForm] = &gtk::WindowHandle {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
+                                        connect_toggled[sender] => move |btn| {
+                                            Settings::get().lock().unwrap().case_sensitive = btn.is_active();
+                                            sender.input(AppIn::SearchChanged);
 
-                        gtk::HeaderBar {
-                            add_css_class: granite::STYLE_CLASS_FLAT,
-                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                                        }
+                                    }
+                                }
+                            },
+
+                            model.browser.widget(),
                         },
-
-                        model.login_form.widget() {
-                            set_hexpand: true,
-                            set_vexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                        }
+                        add_overlay: toasts = &granite::Toast,
                     }
-                },
-                add_enumed[WindowState::Loading] = &gtk::WindowHandle {
-                    #[template]
-                    LoadingState {
-                        #[template_child]
-                        label {
-                            set_text: "please restart application",
-                        },
-                        #[template_child]
-                        spinner {
-                            set_visible: false,
-                        }
-                    }
-                },
+                }
             }
         }
     }
@@ -742,7 +614,7 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::Seekbar(msg) => match msg {
                 SeekbarOut::SeekDragged(seek_in_ms) => {
-                    if let Err(e) = self.playback.set_position(seek_in_ms) {
+                    if let Err(e) = self.playback.borrow_mut().set_position(seek_in_ms) {
                         sender.input(AppIn::DisplayToast(format!("seek failed: {e:?}")));
                     }
                 }
@@ -753,23 +625,13 @@ impl relm4::component::AsyncComponent for App {
                     sender.input(AppIn::Player(Command::SetSongPosition(ms)))
                 }
             },
-            AppIn::LoginForm(client) => match client {
-                LoginFormOut::LoggedIn => {
-                    widgets
-                        .main_stack
-                        .set_visible_child_enum(&WindowState::Loading);
-                }
-            },
             AppIn::Equalizer(_changed) => {
-                self.playback.sync_equalizer();
+                self.playback.borrow_mut().sync_equalizer();
             }
             AppIn::ResetLogin => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
-                widgets
-                    .main_stack
-                    .set_visible_child_enum(&WindowState::LoginForm);
-                sender.input(AppIn::DeleteCache);
+                sender.output(AppOut::Logout).unwrap();
             }
             AppIn::DeleteCache => {
                 if let Err(e) = self.subsonic.borrow_mut().delete_cache() {
@@ -781,9 +643,8 @@ impl relm4::component::AsyncComponent for App {
                         "Deleted cache\nPlease restart to reload the cache",
                     )));
                 }
-                widgets
-                    .main_stack
-                    .set_visible_child_enum(&WindowState::Loading);
+
+                sender.output(AppOut::Reload).unwrap();
             }
             AppIn::Queue(msg) => match *msg {
                 QueueOut::Play(child) => {
@@ -799,7 +660,7 @@ impl relm4::component::AsyncComponent for App {
                         None,
                     ) {
                         Ok(url) => {
-                            if let Err(e) = self.playback.set_track(url) {
+                            if let Err(e) = self.playback.borrow_mut().set_track(url) {
                                 sender.input(AppIn::DisplayToast(format!(
                                     "could not set track: {e}"
                                 )));
@@ -815,7 +676,7 @@ impl relm4::component::AsyncComponent for App {
                     }
 
                     // playback play
-                    if let Err(e) = self.playback.play() {
+                    if let Err(e) = self.playback.borrow_mut().play() {
                         sender.input(AppIn::DisplayToast(format!(
                             "could set playback to play: {e:?}"
                         )));
@@ -845,17 +706,17 @@ impl relm4::component::AsyncComponent for App {
                     // update playcontrol
                     self.play_info
                         .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
-                    self.mpris.set_song(Some(*child)).await;
+                    self.mpris.borrow_mut().set_song(Some(*child)).await;
                     self.recalculate_mpris_next_prev();
-                    self.mpris.set_state(PlayState::Play);
+                    self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 QueueOut::QueueEmpty => {
                     self.play_controls.emit(PlayControlIn::Disable);
-                    self.mpris.can_play(false);
+                    self.mpris.borrow_mut().can_play(false);
                 }
                 QueueOut::QueueNotEmpty => {
                     self.play_controls.emit(PlayControlIn::Enable);
-                    self.mpris.can_play(true);
+                    self.mpris.borrow_mut().can_play(true);
                 }
                 QueueOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
                 QueueOut::CreatePlaylist => {
@@ -1009,7 +870,7 @@ impl relm4::component::AsyncComponent for App {
                     }
                     self.queue.emit(QueueIn::PlayNext);
                     self.recalculate_mpris_next_prev();
-                    self.mpris.set_state(PlayState::Play);
+                    self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 Command::Previous => {
                     if !self.queue.model().can_play_previous() {
@@ -1017,23 +878,23 @@ impl relm4::component::AsyncComponent for App {
                     }
                     self.queue.emit(QueueIn::PlayPrevious);
                     self.recalculate_mpris_next_prev();
-                    self.mpris.set_state(PlayState::Play);
+                    self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 Command::Play => {
                     if !self.queue.model().can_play() {
                         return;
                     }
 
-                    if let Err(e) = self.playback.play() {
+                    if let Err(e) = self.playback.borrow_mut().play() {
                         sender.input(AppIn::DisplayToast(format!(
                             "could not play playback: {e:?}"
                         )));
                     }
                     self.recalculate_mpris_next_prev();
-                    self.mpris.set_state(PlayState::Play);
+                    self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 Command::Pause => {
-                    if let Err(e) = self.playback.pause() {
+                    if let Err(e) = self.playback.borrow_mut().pause() {
                         sender.input(AppIn::DisplayToast(format!(
                             "could not pause playback: {e:?}"
                         )));
@@ -1041,16 +902,16 @@ impl relm4::component::AsyncComponent for App {
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Pause));
                     self.queue.emit(QueueIn::NewState(PlayState::Pause));
-                    self.mpris.set_state(PlayState::Pause);
+                    self.mpris.borrow_mut().set_state(PlayState::Pause);
                 }
-                Command::PlayPause => match self.playback.is_playing() {
+                Command::PlayPause => match self.playback.borrow_mut().is_playing() {
                     PlayState::Stop | PlayState::Pause => {
                         sender.input(AppIn::Player(Command::Play))
                     }
                     PlayState::Play => sender.input(AppIn::Player(Command::Pause)),
                 },
                 Command::Stop => {
-                    if let Err(e) = self.playback.stop() {
+                    if let Err(e) = self.playback.borrow_mut().stop() {
                         sender.input(AppIn::DisplayToast(format!(
                             "could not stop playback: {e:?}"
                         )));
@@ -1060,27 +921,27 @@ impl relm4::component::AsyncComponent for App {
                         .emit(PlayControlIn::NewState(PlayState::Stop));
                     self.queue.emit(QueueIn::NewState(PlayState::Stop));
                     self.seekbar.emit(SeekbarIn::Disable);
-                    self.mpris.set_state(PlayState::Stop);
+                    self.mpris.borrow_mut().set_state(PlayState::Stop);
                 }
                 Command::SetSongPosition(pos_ms) => {
                     self.seekbar.emit(SeekbarIn::SeekTo(pos_ms));
                     self.play_controls
                         .emit(PlayControlIn::NewState(PlayState::Play));
-                    self.mpris.set_position(pos_ms);
+                    self.mpris.borrow_mut().set_position(pos_ms);
                 }
                 Command::Volume(volume) => {
-                    self.playback.set_volume(volume);
+                    self.playback.borrow_mut().set_volume(volume);
                     widgets.volume_btn.set_value(volume);
-                    self.mpris.set_volume(volume);
+                    self.mpris.borrow_mut().set_volume(volume);
                     let mut settings = Settings::get().lock().unwrap();
                     settings.volume = volume;
                     settings.save();
                 }
                 Command::Repeat(repeat) => {
-                    self.mpris.set_loop_status(repeat.clone());
+                    self.mpris.borrow_mut().set_loop_status(repeat.clone());
                 }
                 Command::Shuffle(shuffle) => {
-                    self.mpris.set_shuffle(shuffle.clone());
+                    self.mpris.borrow_mut().set_shuffle(shuffle.clone());
                 }
             },
             AppIn::FavoriteAlbumClicked(id, state) => {
@@ -1175,9 +1036,8 @@ impl relm4::component::AsyncComponent for App {
         }
     }
 
-    fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        tracing::info!("shutdown called");
-        self.playback.shutdown().unwrap();
+    fn shutdown(&mut self, widgets: &mut Self::Widgets, _sender: relm4::Sender<Self::Output>) {
+        tracing::info!("shutdown app");
 
         let mut settings = Settings::get().lock().unwrap();
 
@@ -1192,9 +1052,6 @@ impl relm4::component::AsyncComponent for App {
         settings.queue_seek = self.seekbar.model().current();
 
         //save window state
-        settings.window_width = widgets.main_window.default_width();
-        settings.window_height = widgets.main_window.default_height();
-        settings.window_maximized = widgets.main_window.is_maximized();
         settings.paned_position = widgets.paned.position();
         settings.save();
     }

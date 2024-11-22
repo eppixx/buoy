@@ -1,7 +1,8 @@
-use clap::Parser;
-use relm4::{gtk, RelmApp};
+use std::{cell::RefCell, rc::Rc};
 
-use app::App;
+use clap::Parser;
+use components::main_window::MainWindow;
+use relm4::{gtk, RelmApp};
 
 mod app;
 pub mod client;
@@ -24,7 +25,7 @@ pub mod window_state;
 
 const LOG_PARA: &str = "info,bouy:trace,submarine:info";
 
-#[derive(Parser)]
+#[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// starts and closes the application and shows the startup time
@@ -52,12 +53,12 @@ fn main() -> anyhow::Result<()> {
     };
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
-    let args = Args::parse();
+    let args = Rc::new(RefCell::new(Args::parse()));
 
-    let app = RelmApp::new(&args.alternative_id);
+    let app = RelmApp::new(&args.borrow().alternative_id);
     load_css();
     // gtk parses arguments and conclicts with clap
-    app.with_args(vec![]).run_async::<App>(args);
+    app.with_args(vec![]).run_async::<MainWindow>(args);
 
     Ok(())
 }

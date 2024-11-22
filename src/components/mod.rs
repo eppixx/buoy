@@ -13,6 +13,7 @@ pub mod filter_box;
 pub mod filter_categories;
 pub mod filter_row;
 pub mod login_form;
+pub mod main_window;
 pub mod play_controls;
 pub mod play_info;
 pub mod playlist_element;

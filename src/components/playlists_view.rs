@@ -11,7 +11,7 @@ use relm4::{
 };
 
 use crate::factory::track_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TrackRow, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TitleColumn, TrackRow,
 };
 use crate::settings::Settings;
 use crate::{
@@ -104,10 +104,8 @@ impl relm4::SimpleComponent for PlaylistsView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut tracks = relm4::typed_view::column::TypedColumnView::<
-            TrackRow,
-            gtk::SingleSelection,
-        >::new();
+        let mut tracks =
+            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
         tracks.append_column::<AlbumColumn>();
@@ -379,8 +377,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                     //set tracks
                     self.tracks.clear();
                     for track in list.entry {
-                        self.tracks
-                            .append(TrackRow::new(&self.subsonic, track));
+                        self.tracks.append(TrackRow::new(&self.subsonic, track));
                     }
                     self.index_shown = Some(index);
                 }

@@ -20,8 +20,7 @@ use crate::{
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
     factory::track_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TrackRow, PositionColumn,
-        TitleColumn,
+        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PositionColumn, TitleColumn, TrackRow,
     },
     settings::Settings,
     subsonic::Subsonic,
@@ -116,10 +115,8 @@ impl relm4::Component for TracksView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut tracks = relm4::typed_view::column::TypedColumnView::<
-            TrackRow,
-            gtk::SingleSelection,
-        >::new();
+        let mut tracks =
+            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
@@ -396,7 +393,7 @@ impl relm4::Component for TracksView {
                     for filter in &filters {
                         match filter {
                             //TODO add matching for regular expressions
-                            Filter::Favorite(None) => {},
+                            Filter::Favorite(None) => {}
                             Filter::Favorite(Some(state)) => {
                                 if *state != track.item.starred.is_some() {
                                     return false;

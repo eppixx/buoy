@@ -258,7 +258,7 @@ impl relm4::component::Component for AlbumsView {
                                 {
                                     for filter in &filters {
                                         match filter {
-                                            Filter::Favorite(None) => {},
+                                            Filter::Favorite(None) => {}
                                             Filter::Favorite(Some(value)) => {
                                                 if *value != child.starred.is_some() {
                                                     visible = false
