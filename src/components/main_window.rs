@@ -121,6 +121,7 @@ impl relm4::component::AsyncComponent for MainWindow {
             app: None,
         };
         let widgets = view_output!();
+        gtk::Window::set_default_icon_name("com.github.eppixx.buoy");
 
         // set window shortcuts
         let application = relm4::main_application();

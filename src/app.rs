@@ -251,7 +251,6 @@ impl relm4::component::AsyncComponent for App {
 
         let browser_sender = model.browser.sender().clone();
         let widgets = view_output!();
-        gtk::Window::set_default_icon_name("com.github.eppixx.buoy");
         tracing::info!("loaded main window");
 
         // set application shortcuts
