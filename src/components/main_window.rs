@@ -135,9 +135,11 @@ impl relm4::component::AsyncComponent for MainWindow {
         group.add_action(quit_action);
         group.register_for_widget(&widgets.main_window);
 
-        // decide which content to show
         {
             let settings = Settings::get().lock().unwrap().clone();
+            widgets.main_window.set_maximized(settings.window_maximized);
+
+            // decide which content to show
             if !settings.login_set() {
                 tracing::info!("show login form");
                 sender.input(MainWindowIn::ShowLogin);
