@@ -4,7 +4,7 @@ use granite::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, WidgetExt, ButtonExt},
+        prelude::{BoxExt, WidgetExt},
     },
     Component, ComponentController, RelmObjectExt,
 };
@@ -100,7 +100,7 @@ impl relm4::typed_view::column::RelmColumn for CoverColumn {
 pub struct TitleColumn;
 
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
-    type Root = gtk::Button;
+    type Root = gtk::Box;
     type Item = ArtistRow;
     type Widgets = gtk::Label;
 
@@ -109,21 +109,20 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let btn = gtk::Button::default();
+        let b = gtk::Box::default();
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        btn.set_hexpand(true);
-        btn.add_css_class(granite::STYLE_CLASS_FLAT);
-        btn.set_focusable(false);
-        btn.set_child(Some(&label));
-        (btn, (label))
+        b.set_hexpand(true);
+        b.add_css_class(granite::STYLE_CLASS_FLAT);
+        b.append(&label);
+        (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, btn: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
         label.set_label(&item.item.name);
-        btn.add_controller(item.get_drag_src());
+        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
