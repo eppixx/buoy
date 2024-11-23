@@ -14,6 +14,7 @@ pub enum Category {
     Genre,
     Duration,
     BitRate,
+    AlbumCount,
 }
 
 impl std::fmt::Display for Category {
@@ -29,6 +30,7 @@ impl std::fmt::Display for Category {
             Self::Genre => write!(f, "Genre"),
             Self::Duration => write!(f, "Duration"),
             Self::BitRate => write!(f, "Bit Rate"),
+            Self::AlbumCount => write!(f, "Album Count"),
         }
     }
 }
@@ -48,6 +50,7 @@ impl TryFrom<String> for Category {
             "Genre" => Ok(Self::Genre),
             "Duration" => Ok(Self::Duration),
             "Bit Rate" => Ok(Self::BitRate),
+            "Album Count" => Ok(Self::AlbumCount),
             e => Err(format!("\"{e}\" is not a State")),
         }
     }
@@ -65,6 +68,14 @@ impl Category {
             Self::Genre,
             Self::Duration,
             Self::BitRate,
+        ];
+        store_from_category(&categories)
+    }
+
+    pub fn artists() -> gio::ListStore {
+        let categories = [
+            Self::Artist,
+            Self::AlbumCount,
         ];
         store_from_category(&categories)
     }

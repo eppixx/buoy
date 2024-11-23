@@ -20,6 +20,7 @@ pub enum Filter {
     Genre(TextRelation, String),
     BitRate(Ordering, usize),
     Duration(Ordering, i32),
+    AlbumCount(Ordering, i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -388,6 +389,36 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
+                add_enumed[Category::AlbumCount] = &gtk::Box {
+                    set_spacing: 10,
+
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "By album count",
+                        }
+                    },
+
+                    #[name = "album_count_dropdown"]
+                    gtk::DropDown {
+                        set_model: Some(&OrderRow::store()),
+                        set_factory: Some(&OrderRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
+
+                    #[name = "album_count_entry"]
+                    gtk::SpinButton {
+                        set_digits: 0,
+                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
+                    }
+                },
                 add_enumed[Category::Duration] = &gtk::Box {
                     set_spacing: 10,
                     gtk::Box {
@@ -697,6 +728,19 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         if let Ok(number) = widgets.bit_rate_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::BitRate(order.order, number));
                             widgets.bit_rate_entry.set_tooltip_text(None);
+                        } else {
+                            self.filter = None;
+                        }
+                    }
+                    Category::AlbumCount => {
+                        let order = widgets.album_count_dropdown.selected_item().unwrap();
+                        let order = order
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let order: std::cell::Ref<OrderRow> = order.borrow();
+                        if let Ok(number) = widgets.album_count_entry.text().parse::<i32>() {
+                            self.filter = Some(Filter::AlbumCount(order.order, number));
+                            widgets.album_count_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
                         }

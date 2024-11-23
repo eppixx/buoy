@@ -591,9 +591,6 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::CoverSizeChanged => {
                 self.dashboard.emit(DashboardIn::CoverSizeChanged);
-                if let Some(artists) = &self.artists {
-                    artists.emit(ArtistsViewIn::CoverSizeChanged);
-                }
                 if let Some(albums) = &self.albums {
                     albums.emit(AlbumsViewIn::CoverSizeChanged);
                 }
