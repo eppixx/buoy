@@ -154,53 +154,51 @@ impl relm4::Component for TracksView {
     view! {
         gtk::Box {
             // filters
-            gtk::Box {
-                append: sidebar = &gtk::Box {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_size_request: (400, -1),
+            append: sidebar = &gtk::Box {
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_size_request: (400, -1),
 
-                        gtk::WindowHandle {
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_text: "Active Filters",
+                    gtk::WindowHandle {
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            set_text: "Active Filters",
+                        }
+                    },
+
+                    model.filters.widget().clone() -> gtk::ListBox {
+                        set_margin_all: 5,
+                        add_css_class: granite::STYLE_CLASS_FRAME,
+                        add_css_class: granite::STYLE_CLASS_RICH_LIST,
+                        set_vexpand: true,
+                        set_selection_mode: gtk::SelectionMode::None,
+
+                        // display new filter button
+                        gtk::ListBoxRow {
+                            set_focusable: false,
+                            set_valign: gtk::Align::Center,
+
+
+                            gtk::Box {
+                                set_spacing: 15,
+                                set_halign: gtk::Align::Center,
+
+                                gtk::Label {
+                                    set_text: "New filter:",
+                                },
+
+                                #[name = "new_filter"]
+                                gtk::DropDown {
+                                    set_model: Some(&Category::tracks()),
+                                    set_factory: Some(&Category::factory()),
+                                },
+
+                                gtk::Button {
+                                    set_icon_name: "list-add-symbolic",
+                                    connect_clicked => Self::Input::FilterAdd,
+                                }
                             }
                         },
-
-                        model.filters.widget().clone() -> gtk::ListBox {
-                            set_margin_all: 5,
-                            add_css_class: granite::STYLE_CLASS_FRAME,
-                            add_css_class: granite::STYLE_CLASS_RICH_LIST,
-                            set_vexpand: true,
-                            set_selection_mode: gtk::SelectionMode::None,
-
-                            // display new filter button
-                            gtk::ListBoxRow {
-                                set_focusable: false,
-                                set_valign: gtk::Align::Center,
-
-
-                                gtk::Box {
-                                    set_spacing: 15,
-                                    set_halign: gtk::Align::Center,
-
-                                    gtk::Label {
-                                        set_text: "New filter:",
-                                    },
-
-                                    #[name = "new_filter"]
-                                    gtk::DropDown {
-                                        set_model: Some(&Category::tracks()),
-                                        set_factory: Some(&Category::factory()),
-                                    },
-
-                                    gtk::Button {
-                                        set_icon_name: "list-add-symbolic",
-                                        connect_clicked => Self::Input::FilterAdd,
-                                    }
-                                }
-                            },
-                        }
                     }
                 }
             },
