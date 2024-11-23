@@ -303,6 +303,6 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
-        Some(Box::new(|a, b| a.item.album.cmp(&b.item.album)))
+        Some(Box::new(|a, b| b.item.starred.cmp(&a.item.starred)))
     }
 }
