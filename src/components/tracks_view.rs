@@ -374,7 +374,7 @@ impl relm4::Component for TracksView {
                 if filters.is_empty() {
                     shown_tracks_widget.set_text(&format!("Shown tracks: {}", self.tracks.len()));
                     shown_artists_widget.set_text(&format!(
-                        "Shown tracks: {}",
+                        "Shown artists: {}",
                         self.subsonic.borrow().artists().len()
                     ));
                     shown_albums_widget.set_text(&format!(
