@@ -34,15 +34,15 @@ impl BoolRow {
         let data: [BoolRow; 3] = [
             BoolRow {
                 relation: None,
-                label: String::from("either"),
+                label: String::from("both"),
             },
             BoolRow {
                 relation: Some(true),
-                label: String::from("true"),
+                label: String::from("yes"),
             },
             BoolRow {
                 relation: Some(false),
-                label: String::from("false"),
+                label: String::from("no"),
             },
         ];
         store_from_category(&data)
@@ -102,19 +102,19 @@ impl TextRow {
         let data: [TextRow; 4] = [
             TextRow {
                 relation: TextRelation::Contains,
-                label: String::from("Contains"),
+                label: String::from("contains"),
             },
             TextRow {
                 relation: TextRelation::ContainsNot,
-                label: String::from("Contains not"),
+                label: String::from("contains not"),
             },
             TextRow {
                 relation: TextRelation::ExactNot,
-                label: String::from("Matches not"),
+                label: String::from("matches not"),
             },
             TextRow {
                 relation: TextRelation::Exact,
-                label: String::from("Matches"),
+                label: String::from("matches"),
             },
         ];
         store_from_category(&data)
@@ -287,12 +287,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                 set_valign: gtk::Align::Center,
 
                 add_enumed[Category::Favorite] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Show favorites",
+                            set_text: "Favorites",
                         },
                     },
                     #[name = "favorites"]
@@ -303,12 +303,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                 },
                 add_enumed[Category::Year] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By year",
+                            set_text: "Year",
                         },
                     },
 
@@ -332,12 +332,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::Cd] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By cd number",
+                            set_text: "CD number",
                         },
                     },
 
@@ -361,12 +361,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::TrackNumber] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By track number",
+                            set_text: "Track number",
                         }
                     },
 
@@ -390,13 +390,13 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::AlbumCount] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
 
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By album count",
+                            set_text: "Album count",
                         }
                     },
 
@@ -420,12 +420,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::Duration] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By duration",
+                            set_text: "Duration",
                         },
                     },
 
@@ -449,12 +449,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::BitRate] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By bit rate",
+                            set_text: "Bit rate",
                         },
                     },
 
@@ -477,12 +477,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::Title] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By title name",
+                            set_text: "Title name",
                         },
                     },
 
@@ -504,12 +504,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::Artist] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By artist name",
+                            set_text: "Artist name",
                         }
                     },
 
@@ -531,12 +531,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::Album] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By album name",
+                            set_text: "Album name",
                         }
                     },
 
@@ -558,13 +558,13 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     }
                 },
                 add_enumed[Category::Genre] = &gtk::Box {
-                    set_spacing: 10,
+                    set_spacing: 5,
 
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "By genre",
+                            set_text: "Genre",
                         }
                     },
 
