@@ -279,7 +279,6 @@ impl relm4::Component for TracksView {
                             set_single_click_activate: true,
 
                             connect_activate[sender] => move |_column_view, index| {
-                                println!("dsfdf");
                                 sender.input(TracksViewIn::TrackClicked(index));
                             }
                         }
@@ -712,7 +711,6 @@ impl relm4::Component for TracksView {
                     .set_reveal_child(!widgets.filters.reveals_child());
             }
             TracksViewIn::TrackClicked(index) => {
-                println!("clicked track {index}");
                 if let Some(track) = self.tracks.get(index) {
                     self.info_cover.emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
                 }

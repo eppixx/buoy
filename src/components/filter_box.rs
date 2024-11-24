@@ -153,12 +153,10 @@ impl relm4::SimpleComponent for FilterBox {
             Self::Input::FilterRow(msg) => match msg {
                 FilterRowOut::RemoveFilter(index) => {
                     self.filters.guard().remove(index.current_index());
-                    println!("current filters {:?}", self.get_filters());
                     sender.output(Self::Output::FiltersChanged).unwrap();
                 }
                 FilterRowOut::ParameterChanged => {
                     sender.output(FilterBoxOut::FiltersChanged).unwrap();
-                    println!("current filters {:?}", self.get_filters());
                 }
             },
         }

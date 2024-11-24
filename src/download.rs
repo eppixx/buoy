@@ -107,7 +107,6 @@ impl Download {
                         Ok(buffer) => {
                             let mut path = path.clone();
                             path.push(&name);
-                            println!("saving to path: {path:?}");
                             let mut file = std::fs::OpenOptions::new()
                                 .create(true)
                                 .truncate(true)
