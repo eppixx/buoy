@@ -566,6 +566,14 @@ impl relm4::component::AsyncComponent for App {
                                         set_text: &Settings::get().lock().unwrap().search_text,
                                         set_tooltip: "Enter your search here",
                                         connect_search_changed => AppIn::SearchChanged,
+                                        add_controller = gtk::EventControllerKey {
+                                            connect_key_pressed[sender] => move |_, key, _, _modifier| {
+                                                if key == gtk::gdk::Key::Escape {
+                                                    sender.input(AppIn::SearchActivate(false));
+                                                }
+                                                gtk::glib::signal::Propagation::Proceed
+                                            }
+                                        }
                                     },
                                     gtk::CheckButton {
                                         set_label: Some("Use fuzzy search"),
