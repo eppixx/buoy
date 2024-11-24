@@ -87,6 +87,7 @@ pub enum ArtistsViewIn {
     AppendToQueue,
     AddToQueue,
     ReplaceQueue,
+    ArtistClicked(u32),
 }
 
 #[relm4::component(pub)]
@@ -260,6 +261,11 @@ impl relm4::component::Component for ArtistsView {
                         model.entries.view.clone() {
                             add_css_class: "album-view-tracks-row",
                             set_vexpand: true,
+                            set_single_click_activate: true,
+
+                            connect_activate[sender] => move |_column_view, index| {
+                                sender.input(ArtistsViewIn::ArtistClicked(index))
+                            },
                         }
                     }
                 },
@@ -425,6 +431,11 @@ impl relm4::component::Component for ArtistsView {
             ArtistsViewIn::AddToQueue => {}
             ArtistsViewIn::AppendToQueue => {}
             ArtistsViewIn::ReplaceQueue => {}
+            ArtistsViewIn::ArtistClicked(index) => {
+                if let Some(clicked_artist) = self.entries.get(index) {
+                    sender.output(ArtistsViewOut::ClickedArtist(clicked_artist.borrow().item.clone())).unwrap();
+                }
+            }
         }
     }
 }

@@ -4,13 +4,16 @@ use granite::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, WidgetExt},
     },
-    Component, ComponentController, RelmObjectExt,
+    Component, ComponentController, RelmObjectExt, RelmWidgetExt,
 };
 
 use crate::{
-    components::{artists_view::{ArtistsView, ArtistsViewIn}, cover::Cover},
+    components::{
+        artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
+        cover::Cover,
+    },
     subsonic::Subsonic,
     types::Droppable,
 };
@@ -21,6 +24,7 @@ pub struct ArtistRow {
     pub item: submarine::data::ArtistId3,
     pub fav: relm4::binding::StringBinding,
     pub cover: relm4::Controller<Cover>,
+    fav_btn: gtk::Button,
 }
 
 impl PartialEq for ArtistRow {
@@ -45,11 +49,28 @@ impl ArtistRow {
             .forward(sender.input_sender(), ArtistsViewIn::Cover);
         cover.model().change_size(75);
 
+        let fav_btn = gtk::Button::from_icon_name(&fav);
+        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_focus_on_click(false);
+        let id = item.id.clone();
+        fav_btn.connect_clicked(move |btn| {
+            match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => sender
+                    .output(ArtistsViewOut::FavoriteClicked(id.clone(), false))
+                    .unwrap(),
+                Some("non-starred-symbolic") => sender
+                    .output(ArtistsViewOut::FavoriteClicked(id.clone(), true))
+                    .unwrap(),
+                _ => unreachable!("unkown icon name"),
+            }
+        });
+
         Self {
             subsonic: subsonic.clone(),
             item,
             fav: relm4::binding::StringBinding::new(fav),
             cover,
+            fav_btn,
         }
     }
 
@@ -158,11 +179,10 @@ impl relm4::typed_view::column::RelmColumn for AlbumCountColumn {
     }
 }
 
-
 pub struct FavColumn;
 
 impl relm4::typed_view::column::RelmColumn for FavColumn {
-    type Root = gtk::Image;
+    type Root = gtk::Viewport;
     type Item = ArtistRow;
     type Widgets = ();
 
@@ -170,11 +190,12 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Image::from_icon_name("non-starred"), ())
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, image: &mut Self::Root) {
-        image.add_write_only_binding(&item.fav, "icon_name");
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        item.fav_btn.add_write_only_binding(&item.fav, "icon_name");
+        view.set_child(Some(&item.fav_btn));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
