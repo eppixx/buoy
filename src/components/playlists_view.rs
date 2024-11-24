@@ -5,7 +5,7 @@ use relm4::gtk::glib::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     Component, ComponentController,
 };
@@ -440,33 +440,26 @@ impl relm4::SimpleComponent for PlaylistsView {
                 self.playlists.guard().remove(index.current_index());
             }
             PlaylistsViewIn::Favorited(id, state) => {
-                use relm4::typed_view::TypedListItem;
-
-                let len = self.tracks.len();
-                let tracks: Vec<TypedListItem<TrackRow>> =
-                    (0..len).filter_map(|i| self.tracks.get(i)).collect();
-                for track in tracks {
-                    let track_id = track.borrow().item.id.clone();
-                    if track_id == id {
-                        match state {
-                            true => {
-                                track
-                                    .borrow_mut()
-                                    .fav
-                                    .set_value(String::from("starred-symbolic"));
-                                track.borrow_mut().item.starred =
-                                    Some(chrono::offset::Local::now().into());
-                            }
-                            false => {
-                                track
-                                    .borrow_mut()
-                                    .fav
-                                    .set_value(String::from("non-starred-symbolic"));
-                                track.borrow_mut().item.starred = None;
-                            }
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .filter(|t| t.borrow().item.id == id)
+                    .for_each(|track| match state {
+                        true => {
+                            track
+                                .borrow_mut()
+                                .fav
+                                .set_value(String::from("starred-symbolic"));
+                            track.borrow_mut().item.starred =
+                                Some(chrono::offset::Local::now().into());
                         }
-                    }
-                }
+                        false => {
+                            track
+                                .borrow_mut()
+                                .fav
+                                .set_value(String::from("non-starred-symbolic"));
+                            track.borrow_mut().item.starred = None;
+                        }
+                    });
             }
             PlaylistsViewIn::DownloadClicked => {
                 if let Some(index) = &self.index_shown {

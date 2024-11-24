@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
@@ -400,8 +400,7 @@ impl relm4::component::Component for ArtistsView {
                 });
             }
             ArtistsViewIn::Favorited(id, state) => {
-                let len = self.entries.len();
-                (0..len)
+                (0..self.entries.len())
                     .filter_map(|i| self.entries.get(i))
                     .filter(|t| t.borrow().item.id == id)
                     .for_each(|track| match state {

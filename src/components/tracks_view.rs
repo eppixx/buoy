@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
     },
     ComponentController, RelmWidgetExt,
 };
@@ -355,8 +355,7 @@ impl relm4::Component for TracksView {
     ) {
         match msg {
             TracksViewIn::Favorited(id, state) => {
-                let len = self.tracks.len();
-                (0..len)
+                (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
                     .filter(|t| t.borrow().item.id == id)
                     .for_each(|track| match state {
