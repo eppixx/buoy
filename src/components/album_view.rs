@@ -398,8 +398,11 @@ impl relm4::Component for AlbumView {
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 //load tracks
                 for track in &album.song {
-                    self.tracks
-                        .append(TrackRow::new(&self.subsonic, track.clone()));
+                    self.tracks.append(TrackRow::new_album_track(
+                        &self.subsonic,
+                        track.clone(),
+                        sender.clone(),
+                    ));
                 }
 
                 // update dragSource

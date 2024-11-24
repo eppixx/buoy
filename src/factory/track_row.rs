@@ -3,18 +3,28 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ToValue, WidgetExt},
+        prelude::{BoxExt, ButtonExt, ToValue, WidgetExt},
     },
-    RelmObjectExt,
+    RelmObjectExt, RelmWidgetExt,
 };
 
-use crate::{common::convert_for_label, subsonic::Subsonic, types::Droppable};
+use crate::{
+    common::convert_for_label,
+    components::{
+        album_view::{AlbumView, AlbumViewOut},
+        playlists_view::{PlaylistsView, PlaylistsViewOut},
+        tracks_view::{TracksView, TracksViewOut},
+    },
+    subsonic::Subsonic,
+    types::Droppable,
+};
 
 #[derive(Debug)]
 pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     pub fav: relm4::binding::StringBinding,
+    fav_btn: gtk::Button,
 }
 
 impl PartialEq for TrackRow {
@@ -24,15 +34,99 @@ impl PartialEq for TrackRow {
 }
 
 impl TrackRow {
-    pub fn new(subsonic: &Rc<RefCell<Subsonic>>, item: submarine::data::Child) -> Self {
+    pub fn new_track(
+        subsonic: &Rc<RefCell<Subsonic>>,
+        item: submarine::data::Child,
+        sender: relm4::ComponentSender<TracksView>,
+    ) -> Self {
         let fav = match item.starred.is_some() {
             true => String::from("starred-symbolic"),
             false => String::from("non-starred-symbolic"),
         };
+
+        let fav_btn = gtk::Button::from_icon_name(&fav);
+        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_focus_on_click(false);
+        let id = item.id.clone();
+        fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+            Some("starred-symbolic") => sender
+                .output(TracksViewOut::FavoriteClicked(id.clone(), false))
+                .unwrap(),
+            Some("non-starred-symbolic") => sender
+                .output(TracksViewOut::FavoriteClicked(id.clone(), true))
+                .unwrap(),
+            _ => unreachable!("unkown icon name"),
+        });
+
         Self {
             subsonic: subsonic.clone(),
             item,
             fav: relm4::binding::StringBinding::new(fav),
+            fav_btn,
+        }
+    }
+
+    pub fn new_album_track(
+        subsonic: &Rc<RefCell<Subsonic>>,
+        item: submarine::data::Child,
+        sender: relm4::ComponentSender<AlbumView>,
+    ) -> Self {
+        let fav = match item.starred.is_some() {
+            true => String::from("starred-symbolic"),
+            false => String::from("non-starred-symbolic"),
+        };
+
+        let fav_btn = gtk::Button::from_icon_name(&fav);
+        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_focus_on_click(false);
+        let id = item.id.clone();
+        fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+            Some("starred-symbolic") => sender
+                .output(AlbumViewOut::FavoriteClicked(id.clone(), false))
+                .unwrap(),
+            Some("non-starred-symbolic") => sender
+                .output(AlbumViewOut::FavoriteClicked(id.clone(), true))
+                .unwrap(),
+            _ => unreachable!("unkown icon name"),
+        });
+
+        Self {
+            subsonic: subsonic.clone(),
+            item,
+            fav: relm4::binding::StringBinding::new(fav),
+            fav_btn,
+        }
+    }
+
+    pub fn new_playlist_track(
+        subsonic: &Rc<RefCell<Subsonic>>,
+        item: submarine::data::Child,
+        sender: relm4::ComponentSender<PlaylistsView>,
+    ) -> Self {
+        let fav = match item.starred.is_some() {
+            true => String::from("starred-symbolic"),
+            false => String::from("non-starred-symbolic"),
+        };
+
+        let fav_btn = gtk::Button::from_icon_name(&fav);
+        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_focus_on_click(false);
+        let id = item.id.clone();
+        fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+            Some("starred-symbolic") => sender
+                .output(PlaylistsViewOut::FavoriteClicked(id.clone(), false))
+                .unwrap(),
+            Some("non-starred-symbolic") => sender
+                .output(PlaylistsViewOut::FavoriteClicked(id.clone(), true))
+                .unwrap(),
+            _ => unreachable!("unkown icon name"),
+        });
+
+        Self {
+            subsonic: subsonic.clone(),
+            item,
+            fav: relm4::binding::StringBinding::new(fav),
+            fav_btn,
         }
     }
 
@@ -287,7 +381,7 @@ impl relm4::typed_view::column::RelmColumn for BitRateColumn {
 pub struct FavColumn;
 
 impl relm4::typed_view::column::RelmColumn for FavColumn {
-    type Root = gtk::Image;
+    type Root = gtk::Viewport;
     type Item = TrackRow;
     type Widgets = ();
 
@@ -295,11 +389,12 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Image::from_icon_name("non-starred"), ())
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, image: &mut Self::Root) {
-        image.add_write_only_binding(&item.fav, "icon_name");
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        item.fav_btn.add_write_only_binding(&item.fav, "icon_name");
+        view.set_child(Some(&item.fav_btn));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

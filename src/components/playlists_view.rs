@@ -77,6 +77,7 @@ pub enum PlaylistsViewOut {
     CreatePlaylist,
     DisplayToast(String),
     Download(Droppable),
+    FavoriteClicked(String, bool),
 }
 
 #[derive(Debug)]
@@ -377,7 +378,11 @@ impl relm4::SimpleComponent for PlaylistsView {
                     //set tracks
                     self.tracks.clear();
                     for track in list.entry {
-                        self.tracks.append(TrackRow::new(&self.subsonic, track));
+                        self.tracks.append(TrackRow::new_playlist_track(
+                            &self.subsonic,
+                            track,
+                            sender.clone(),
+                        ));
                     }
                     self.index_shown = Some(index);
                 }

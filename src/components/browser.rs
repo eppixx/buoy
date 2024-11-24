@@ -433,6 +433,9 @@ impl relm4::component::AsyncComponent for Browser {
                     sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
                 }
                 TracksViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
+                TracksViewOut::FavoriteClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteSongClicked(id, state))
+                    .unwrap(),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
@@ -478,6 +481,9 @@ impl relm4::component::AsyncComponent for Browser {
                 PlaylistsViewOut::Download(drop) => {
                     sender.output(BrowserOut::Download(drop)).unwrap()
                 }
+                PlaylistsViewOut::FavoriteClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteSongClicked(id, state))
+                    .unwrap(),
             },
             BrowserIn::NewPlaylist(name, list) => {
                 const CHUNKS: usize = 100;

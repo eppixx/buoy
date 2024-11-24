@@ -103,6 +103,7 @@ pub enum TracksViewOut {
     AppendToQueue(Droppable),
     ReplaceQueue(Droppable),
     Download(Droppable),
+    FavoriteClicked(String, bool),
 }
 
 #[relm4::component(pub)]
@@ -129,7 +130,11 @@ impl relm4::Component for TracksView {
         tracks.append_column::<FavColumn>();
 
         for track in subsonic.borrow().tracks() {
-            tracks.append(TrackRow::new(&subsonic, track.clone()));
+            tracks.append(TrackRow::new_track(
+                &subsonic,
+                track.clone(),
+                sender.clone(),
+            ));
         }
 
         let mut model = Self {
@@ -712,7 +717,8 @@ impl relm4::Component for TracksView {
             }
             TracksViewIn::TrackClicked(index) => {
                 if let Some(track) = self.tracks.get(index) {
-                    self.info_cover.emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
+                    self.info_cover
+                        .emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
                 }
             }
         }
