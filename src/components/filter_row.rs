@@ -494,7 +494,6 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "title_entry"]
                     gtk::Entry {
-                        set_text: "",
                         set_placeholder_text: Some("Title"),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -522,7 +521,6 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "artist_entry"]
                     gtk::Entry {
-                        set_text: "",
                         set_placeholder_text: Some("Artist"),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -550,7 +548,6 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "album_entry"]
                     gtk::Entry {
-                        set_text: "",
                         set_placeholder_text: Some("Album"),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
@@ -579,7 +576,6 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "genre_entry"]
                     gtk::Entry {
-                        set_text: "",
                         set_placeholder_text: Some("Genre"),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
