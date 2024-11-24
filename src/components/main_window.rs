@@ -86,6 +86,37 @@ impl relm4::component::AsyncComponent for MainWindow {
     type Output = ();
     type CommandOutput = ();
 
+    fn init_loading_widgets(root: Self::Root) -> Option<relm4::loading_widgets::LoadingWidgets> {
+        relm4::view! {
+            #[local]
+            root {
+                add_css_class: "main-window",
+                set_default_width: Settings::get().lock().unwrap().window_width,
+                set_default_height: Settings::get().lock().unwrap().window_height,
+                set_maximized: Settings::get().lock().unwrap().window_maximized,
+
+                //remove the titlebar and add WindowControl to the other widgets
+                #[wrap(Some)]
+                set_titlebar = &gtk::HeaderBar {
+                    add_css_class: granite::STYLE_CLASS_FLAT,
+                    add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                    set_show_title_buttons: false,
+                    set_visible: false,
+                },
+
+                #[name(spinner)]
+                gtk::Spinner {
+                    start: (),
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+                    set_vexpand: true,
+                    set_hexpand: true,
+                }
+            }
+        }
+        Some(relm4::loading_widgets::LoadingWidgets::new(root, spinner))
+    }
+
     async fn init(
         args: Self::Init,
         root: Self::Root,
@@ -173,20 +204,6 @@ impl relm4::component::AsyncComponent for MainWindow {
 
     view! {
         main_window = gtk::Window {
-            add_css_class: "main-window",
-            set_default_width: Settings::get().lock().unwrap().window_width,
-            set_default_height: Settings::get().lock().unwrap().window_height,
-            set_maximized: Settings::get().lock().unwrap().window_maximized,
-
-            //remove the titlebar and add WindowControl to the other widgets
-            #[wrap(Some)]
-            set_titlebar = &gtk::HeaderBar {
-                add_css_class: granite::STYLE_CLASS_FLAT,
-                add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                set_show_title_buttons: false,
-                set_visible: false,
-            },
-
             #[name = "stack"]
             gtk::Stack {
                 add_css_class: "main-box",
