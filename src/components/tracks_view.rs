@@ -11,7 +11,7 @@ use relm4::{
 
 use crate::{
     components::{
-        cover::Cover,
+        cover::{Cover, CoverIn},
         filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
     },
     factory::track_row::{BitRateColumn, GenreColumn},
@@ -93,6 +93,7 @@ pub enum TracksViewIn {
     ReplaceQueue,
     DownloadClicked,
     ToggleFilters,
+    TrackClicked(u32),
 }
 
 #[derive(Debug)]
@@ -275,6 +276,12 @@ impl relm4::Component for TracksView {
                         model.tracks.view.clone() {
                             add_css_class: "album-view-tracks-row",
                             set_vexpand: true,
+                            set_single_click_activate: true,
+
+                            connect_activate[sender] => move |_column_view, index| {
+                                println!("dsfdf");
+                                sender.input(TracksViewIn::TrackClicked(index));
+                            }
                         }
                     }
                 },
@@ -703,6 +710,12 @@ impl relm4::Component for TracksView {
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
+            }
+            TracksViewIn::TrackClicked(index) => {
+                println!("clicked track {index}");
+                if let Some(track) = self.tracks.get(index) {
+                    self.info_cover.emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
+                }
             }
         }
     }
