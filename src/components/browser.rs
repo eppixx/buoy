@@ -377,6 +377,34 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
                     .unwrap(),
                 AlbumViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
+                AlbumViewOut::ArtistClicked(id) => {
+                    let subsonic = self.subsonic.borrow();
+                    let artist = subsonic.artists().iter().find(|a| a.id == id);
+                    let artist = if let Some(artist) = artist {
+                        artist
+                    } else {
+                        sender
+                            .output(BrowserOut::DisplayToast(String::from(
+                                "clicked artist not found",
+                            )))
+                            .unwrap();
+                        return;
+                    };
+                    let artist: relm4::Controller<ArtistView> = ArtistView::builder()
+                        .launch((self.subsonic.clone(), artist.clone()))
+                        .forward(sender.input_sender(), |msg| {
+                            BrowserIn::ArtistView(Box::new(msg))
+                        });
+
+                    self.history_widget
+                        .push(Views::Artist(artist.widget().clone()));
+                    self.artist_views.push(artist);
+                    self.content
+                        .set_child(Some(self.history_widget.last().unwrap().widget()));
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(true))
+                        .expect("main window.gone");
+                }
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {

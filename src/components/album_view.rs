@@ -32,6 +32,7 @@ pub struct AlbumView {
     title: String,
     artist: Option<String>,
     info: String,
+    artist_id: Option<String>,
     tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
 }
 
@@ -49,6 +50,7 @@ pub enum AlbumViewOut {
     FavoriteClicked(String, bool),
     DisplayToast(String),
     Download(Droppable),
+    ArtistClicked(String),
 }
 
 #[derive(Debug)]
@@ -93,6 +95,11 @@ impl relm4::Component for AlbumView {
         tracks.append_column::<LengthColumn>();
         tracks.append_column::<FavColumn>();
 
+        let (id, artist_id) = match &init {
+            AlbumViewInit::Child(child) => (&child.id, child.artist_id.clone()),
+            AlbumViewInit::AlbumId3(album) => (&album.id, album.artist_id.clone()),
+        };
+
         let model = Self {
             subsonic: subsonic.clone(),
             init: init.clone(),
@@ -103,10 +110,10 @@ impl relm4::Component for AlbumView {
             title: String::from("Unkonwn Title"),
             artist: None,
             info: String::new(),
+            artist_id,
             tracks,
         };
 
-        let init2 = init.clone();
         let widgets = view_output!();
         model.cover.model().add_css_class_image("size150");
 
@@ -143,17 +150,13 @@ impl relm4::Component for AlbumView {
                         set_height_request: 24,
                         set_icon_name: "non-starred-symbolic",
 
-                        connect_clicked[sender] => move |btn| {
-                            let id: String = match &init2 {
-                                AlbumViewInit::Child(child) => child.id.clone(),
-                                AlbumViewInit::AlbumId3(album) => album.id.clone(),
-                            };
+                        connect_clicked[sender, id] => move |btn| {
                             let state = match btn.icon_name().as_deref() {
                                 Some("non-starred-symbolic") => true,
                                 Some("starred-symbolic") => false,
                                 _ => true,
                             };
-                            sender.output(AlbumViewOut::FavoriteClicked(id, state)).unwrap();
+                            sender.output(AlbumViewOut::FavoriteClicked(id.clone(), state)).unwrap();
                         }
                     },
 
@@ -180,9 +183,14 @@ impl relm4::Component for AlbumView {
                         },
                         gtk::Label {
                             #[watch]
-                            set_markup: &format!("by <span style=\"italic\">{}</span>",
-                                                 glib::markup_escape_text(model.artist.as_deref().unwrap_or("Unkown Artist"))),
+                            set_markup: &format!("by <span style=\"italic\"><a href=\"{}\">{}</a></span>",
+                                                 model.artist_id.as_deref().unwrap_or("")
+                                                 ,glib::markup_escape_text(model.artist.as_deref().unwrap_or("Unkown Artist"))),
                             set_halign: gtk::Align::Start,
+                            connect_activate_link[sender] => move |_label, text| {
+                                sender.output(AlbumViewOut::ArtistClicked(text.to_string())).unwrap();
+                                gtk::glib::signal::Propagation::Stop
+                            }
                         },
                         gtk::Label {
                             #[watch]
