@@ -23,7 +23,7 @@ use super::{
 
 #[derive(Debug)]
 pub struct ArtistsView {
-    subsonic: Rc<RefCell<Subsonic>>,
+    _subsonic: Rc<RefCell<Subsonic>>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
     entries: relm4::typed_view::column::TypedColumnView<ArtistRow, gtk::SingleSelection>,
     shown_artists: Rc<RefCell<HashSet<String>>>,
@@ -111,7 +111,7 @@ impl relm4::component::Component for ArtistsView {
         entries.append_column::<FavColumn>();
 
         let mut model = Self {
-            subsonic: init.clone(),
+            _subsonic: init.clone(),
             entries,
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
