@@ -103,7 +103,7 @@ impl relm4::Component for ArtistView {
         model
             .cover
             .emit(CoverIn::LoadArtist(Box::new(init.clone())));
-        model.cover.model().add_css_class_image("size100");
+        model.cover.model().add_css_class_image("size150");
 
         // set favorite icon
         if init.starred.is_some() {
@@ -177,7 +177,7 @@ impl relm4::Component for ArtistView {
                         set_spacing: 5,
 
                         gtk::Label {
-                            add_css_class: "h3",
+                            add_css_class: "h2",
                             #[watch]
                             set_label: &model.title,
                             set_halign: gtk::Align::Start,

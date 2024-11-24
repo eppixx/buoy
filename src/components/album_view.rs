@@ -108,7 +108,7 @@ impl relm4::Component for AlbumView {
 
         let init2 = init.clone();
         let widgets = view_output!();
-        model.cover.model().add_css_class_image("size100");
+        model.cover.model().add_css_class_image("size150");
 
         //load album
         sender.oneshot_command(async move {
@@ -173,7 +173,7 @@ impl relm4::Component for AlbumView {
                         set_spacing: 8,
 
                         gtk::Label {
-                            add_css_class: "h3",
+                            add_css_class: "h2",
                             #[watch]
                             set_label: &model.title,
                             set_halign: gtk::Align::Start,
