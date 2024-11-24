@@ -188,7 +188,7 @@ impl relm4::component::Component for ArtistsView {
                 gtk::WindowHandle {
                     gtk::Label {
                         add_css_class: "h2",
-                        set_label: "Tracks",
+                        set_label: "Artists",
                         set_halign: gtk::Align::Center,
                     }
                 },
