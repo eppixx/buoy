@@ -92,6 +92,7 @@ pub enum TracksViewIn {
     AddToQueue,
     ReplaceQueue,
     DownloadClicked,
+    ToggleFilters,
 }
 
 #[derive(Debug)]
@@ -153,66 +154,33 @@ impl relm4::Component for TracksView {
 
     view! {
         gtk::Box {
-            // filters
-            append: sidebar = &gtk::Box {
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_size_request: (400, -1),
-
-                    gtk::WindowHandle {
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_text: "Active Filters",
-                        }
-                    },
-
-                    model.filters.widget().clone() -> gtk::ListBox {
-                        set_margin_all: 5,
-                        add_css_class: granite::STYLE_CLASS_FRAME,
-                        add_css_class: granite::STYLE_CLASS_RICH_LIST,
-                        set_vexpand: true,
-                        set_selection_mode: gtk::SelectionMode::None,
-
-                        // display new filter button
-                        gtk::ListBoxRow {
-                            set_focusable: false,
-                            set_valign: gtk::Align::Center,
-
-
-                            gtk::Box {
-                                set_spacing: 15,
-                                set_halign: gtk::Align::Center,
-
-                                gtk::Label {
-                                    set_text: "New filter:",
-                                },
-
-                                #[name = "new_filter"]
-                                gtk::DropDown {
-                                    set_model: Some(&Category::tracks()),
-                                    set_factory: Some(&Category::factory()),
-                                },
-
-                                gtk::Button {
-                                    set_icon_name: "list-add-symbolic",
-                                    connect_clicked => Self::Input::FilterAdd,
-                                }
-                            }
-                        },
-                    }
-                }
-            },
-
             // tracks
             gtk::Box {
                 add_css_class: "tracks-view",
                 set_orientation: gtk::Orientation::Vertical,
 
                 gtk::WindowHandle {
-                    gtk::Label {
-                        add_css_class: "h2",
-                        set_label: "Tracks",
-                        set_halign: gtk::Align::Center,
+                    gtk::CenterBox {
+                        #[wrap(Some)]
+                        set_center_widget = &gtk::Label {
+                            add_css_class: "h2",
+                            set_label: "Tracks",
+                            set_halign: gtk::Align::Center,
+                        },
+
+                        #[wrap(Some)]
+                        set_end_widget = &gtk::Box {
+                            set_spacing: 10,
+                            set_margin_end: 10,
+
+                            gtk::Label {
+                                set_text: "Filters:",
+                            },
+                            gtk::Switch {
+                                set_valign: gtk::Align::Center,
+                                connect_active_notify => TracksViewIn::ToggleFilters,
+                            }
+                        }
                     }
                 },
 
@@ -310,6 +278,59 @@ impl relm4::Component for TracksView {
                         }
                     }
                 },
+            },
+
+            // filters
+            append: filters = &gtk::Revealer {
+                set_transition_duration: 200,
+                set_transition_type: gtk::RevealerTransitionType::SlideLeft,
+
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_size_request: (400, -1),
+
+                    gtk::WindowHandle {
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            set_text: "Active Filters",
+                        }
+                    },
+
+                    model.filters.widget().clone() -> gtk::ListBox {
+                        set_margin_all: 5,
+                        add_css_class: granite::STYLE_CLASS_FRAME,
+                        add_css_class: granite::STYLE_CLASS_RICH_LIST,
+                        set_vexpand: true,
+                        set_selection_mode: gtk::SelectionMode::None,
+
+                        // display new filter button
+                        gtk::ListBoxRow {
+                            set_focusable: false,
+                            set_valign: gtk::Align::Center,
+
+
+                            gtk::Box {
+                                set_spacing: 15,
+                                set_halign: gtk::Align::Center,
+
+                                gtk::Label {
+                                    set_text: "New filter:",
+                                },
+
+                                #[name = "new_filter"]
+                                gtk::DropDown {
+                                    set_model: Some(&Category::tracks()),
+                                    set_factory: Some(&Category::factory()),
+                                },
+
+                                gtk::Button {
+                                    set_icon_name: "list-add-symbolic",
+                                    connect_clicked => Self::Input::FilterAdd,
+                                }
+                            }
+                        },
+                    }
+                }
             }
         }
     }
@@ -371,7 +392,9 @@ impl relm4::Component for TracksView {
                     .filter_map(|row| row.filter().as_ref())
                     .cloned()
                     .collect();
-                if filters.is_empty() && !Settings::get().lock().unwrap().search_active {
+                if (filters.is_empty() || !widgets.filters.reveals_child())
+                    && !Settings::get().lock().unwrap().search_active
+                {
                     shown_tracks_widget.set_text(&format!("Shown tracks: {}", self.tracks.len()));
                     shown_artists_widget.set_text(&format!(
                         "Shown artists: {}",
@@ -675,6 +698,11 @@ impl relm4::Component for TracksView {
                 }
                 let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
                 sender.output(TracksViewOut::Download(drop)).unwrap();
+            }
+            TracksViewIn::ToggleFilters => {
+                widgets
+                    .filters
+                    .set_reveal_child(!widgets.filters.reveals_child());
             }
         }
     }

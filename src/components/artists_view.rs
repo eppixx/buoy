@@ -151,6 +151,7 @@ impl relm4::component::Component for ArtistsView {
                         #[wrap(Some)]
                         set_end_widget = &gtk::Box {
                             set_spacing: 10,
+                            set_margin_end: 10,
 
                             gtk::Label {
                                 set_text: "Filters:",
