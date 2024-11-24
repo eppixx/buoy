@@ -371,7 +371,7 @@ impl relm4::Component for TracksView {
                     .filter_map(|row| row.filter().as_ref())
                     .cloned()
                     .collect();
-                if filters.is_empty() {
+                if filters.is_empty() && !Settings::get().lock().unwrap().search_active {
                     shown_tracks_widget.set_text(&format!("Shown tracks: {}", self.tracks.len()));
                     shown_artists_widget.set_text(&format!(
                         "Shown artists: {}",

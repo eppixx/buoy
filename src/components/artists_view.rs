@@ -297,11 +297,11 @@ impl relm4::component::Component for ArtistsView {
                     .filter_map(|row| row.filter().as_ref())
                     .cloned()
                     .collect();
-                if filters.is_empty() {
                     shown_artists_widget.set_text(&format!(
                         "Shown artists: {}",
                         self.subsonic.borrow().artists().len()
                     ));
+                if filters.is_empty() && !Settings::get().lock().unwrap().search_active {
                     return;
                 }
 
