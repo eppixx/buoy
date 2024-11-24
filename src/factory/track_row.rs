@@ -20,20 +20,13 @@ use crate::{
 };
 
 #[derive(Debug)]
-enum View {
-    Album,
-    Tracks,
-    Playlist,
-}
-
-#[derive(Debug)]
 pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
-    view: View,
     pub item: submarine::data::Child,
     pub fav: relm4::binding::StringBinding,
     fav_btn: gtk::Button,
     artist_label: gtk::Label,
+    album_label: gtk::Label,
 }
 
 impl PartialEq for TrackRow {
@@ -43,10 +36,7 @@ impl PartialEq for TrackRow {
 }
 
 impl TrackRow {
-    pub fn new(
-        subsonic: &Rc<RefCell<Subsonic>>,
-        item: submarine::data::Child,
-    ) -> Self {
+    pub fn new(subsonic: &Rc<RefCell<Subsonic>>, item: submarine::data::Child) -> Self {
         let fav = match item.starred.is_some() {
             true => String::from("starred-symbolic"),
             false => String::from("non-starred-symbolic"),
@@ -56,23 +46,23 @@ impl TrackRow {
         fav_btn.set_tooltip("Click to (un)favorite song");
         fav_btn.set_focus_on_click(false);
 
-        let artist = item.artist.as_deref().unwrap_or("Unknown Artist");
-        let artist = gtk::glib::markup_escape_text(artist);
-        let artist_id = item.artist_id.as_deref().unwrap_or("");
         let artist_label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
-            .label(&format!("<a href=\"{artist_id}\">{artist}</a>"))
-            .use_markup(true)
+            .build();
+
+        let album_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
 
         Self {
             subsonic: subsonic.clone(),
-            view: View::Album,
             item,
             fav: relm4::binding::StringBinding::new(fav),
             fav_btn,
             artist_label,
+            album_label,
         }
     }
 
@@ -85,27 +75,50 @@ impl TrackRow {
 
         let id = result.item.id.clone();
         let send = sender.clone();
-        result.fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
-            Some("starred-symbolic") => send
-                .output(TracksViewOut::FavoriteClicked(id.clone(), false))
-                .unwrap(),
-            Some("non-starred-symbolic") => send
-                .output(TracksViewOut::FavoriteClicked(id.clone(), true))
-                .unwrap(),
-            _ => unreachable!("unkown icon name"),
-        });
+        result
+            .fav_btn
+            .connect_clicked(move |btn| match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => send
+                    .output(TracksViewOut::FavoriteClicked(id.clone(), false))
+                    .unwrap(),
+                Some("non-starred-symbolic") => send
+                    .output(TracksViewOut::FavoriteClicked(id.clone(), true))
+                    .unwrap(),
+                _ => unreachable!("unkown icon name"),
+            });
 
         let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
-        if let Some(_) = subsonic.borrow().artists().iter().find(|a| Some(&a.id) == result.item.artist_id.as_ref()) {
+        let send = sender.clone();
+        if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
-            let artist_id = result.item.artist_id.as_deref().unwrap_or("");
-            result.artist_label.set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
-            result.artist_label.connect_activate_link(move |_label, id| {
-                sender.output(TracksViewOut::ClickedArtist(id.to_string())).unwrap();
+            result
+                .artist_label
+                .set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
+            result
+                .artist_label
+                .connect_activate_link(move |_label, id| {
+                    send.output(TracksViewOut::ClickedArtist(id.to_string()))
+                        .unwrap();
+                    gtk::glib::signal::Propagation::Stop
+                });
+        } else {
+            result.artist_label.set_text(artist);
+        }
+
+        let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        if let Some(album_id) = &result.item.album_id {
+            let album = gtk::glib::markup_escape_text(album);
+            result
+                .album_label
+                .set_markup(&format!("<a href=\"{album_id}\">{album}</a>"));
+            result.album_label.connect_activate_link(move |_label, id| {
+                sender
+                    .output(TracksViewOut::ClickedAlbum(id.to_string()))
+                    .unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
-            result.artist_label.set_text(artist);
+            result.album_label.set_text(album);
         }
 
         result
@@ -120,25 +133,32 @@ impl TrackRow {
 
         let id = result.item.id.clone();
         let send = sender.clone();
-        result.fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
-            Some("starred-symbolic") => send
-                .output(AlbumViewOut::FavoriteClicked(id.clone(), false))
-                .unwrap(),
-            Some("non-starred-symbolic") => send
-                .output(AlbumViewOut::FavoriteClicked(id.clone(), true))
-                .unwrap(),
-            _ => unreachable!("unkown icon name"),
-        });
+        result
+            .fav_btn
+            .connect_clicked(move |btn| match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => send
+                    .output(AlbumViewOut::FavoriteClicked(id.clone(), false))
+                    .unwrap(),
+                Some("non-starred-symbolic") => send
+                    .output(AlbumViewOut::FavoriteClicked(id.clone(), true))
+                    .unwrap(),
+                _ => unreachable!("unkown icon name"),
+            });
 
         let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
-        if let Some(_) = subsonic.borrow().artists().iter().find(|a| Some(&a.id) == result.item.artist_id.as_ref()) {
+        if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
-            let artist_id = result.item.artist_id.as_deref().unwrap_or("");
-            result.artist_label.set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
-            result.artist_label.connect_activate_link(move |_label, id| {
-                sender.output(AlbumViewOut::ArtistClicked(id.to_string())).unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
+            result
+                .artist_label
+                .set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
+            result
+                .artist_label
+                .connect_activate_link(move |_label, id| {
+                    sender
+                        .output(AlbumViewOut::ArtistClicked(id.to_string()))
+                        .unwrap();
+                    gtk::glib::signal::Propagation::Stop
+                });
         } else {
             result.artist_label.set_text(artist);
         }
@@ -155,25 +175,48 @@ impl TrackRow {
 
         let id = result.item.id.clone();
         let send = sender.clone();
-        result.fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
-            Some("starred-symbolic") => send
-                .output(PlaylistsViewOut::FavoriteClicked(id.clone(), false))
-                .unwrap(),
-            Some("non-starred-symbolic") => send
-                .output(PlaylistsViewOut::FavoriteClicked(id.clone(), true))
-                .unwrap(),
-            _ => unreachable!("unkown icon name"),
-        });
+        result
+            .fav_btn
+            .connect_clicked(move |btn| match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => send
+                    .output(PlaylistsViewOut::FavoriteClicked(id.clone(), false))
+                    .unwrap(),
+                Some("non-starred-symbolic") => send
+                    .output(PlaylistsViewOut::FavoriteClicked(id.clone(), true))
+                    .unwrap(),
+                _ => unreachable!("unkown icon name"),
+            });
 
-        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
-        if let Some(_) = subsonic.borrow().artists().iter().find(|a| Some(&a.id) == result.item.artist_id.as_ref()) {
-            let artist = gtk::glib::markup_escape_text(artist);
-            let artist_id = result.item.artist_id.as_deref().unwrap_or("");
-            result.artist_label.set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
-            result.artist_label.connect_activate_link(move |_label, id| {
-                sender.output(PlaylistsViewOut::ClickedArtist(id.to_string())).unwrap();
+        let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        let send = sender.clone();
+        if let Some(album_id) = &result.item.album_id {
+            let album = gtk::glib::markup_escape_text(album);
+            result
+                .album_label
+                .set_markup(&format!("<a href=\"{album_id}\">{album}</a>"));
+            result.album_label.connect_activate_link(move |_label, id| {
+                send.output(PlaylistsViewOut::ClickedAlbum(id.to_string()))
+                    .unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
+        } else {
+            result.album_label.set_text(album);
+        }
+
+        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
+        if let Some(artist_id) = &result.item.artist_id {
+            let artist = gtk::glib::markup_escape_text(artist);
+            result
+                .artist_label
+                .set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
+            result
+                .artist_label
+                .connect_activate_link(move |_label, id| {
+                    sender
+                        .output(PlaylistsViewOut::ClickedArtist(id.to_string()))
+                        .unwrap();
+                    gtk::glib::signal::Propagation::Stop
+                });
         } else {
             result.artist_label.set_text(artist);
         }
@@ -289,9 +332,6 @@ impl relm4::typed_view::column::RelmColumn for ArtistColumn {
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.artist_label));
-        // let artist = item.item.artist.as_deref().unwrap_or("Unknown Artist");
-        // let artist_id = item.item.artist_id.as_deref().unwrap_or("");
-        // label.set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
         view.add_controller(item.get_drag_src());
     }
 
@@ -303,28 +343,21 @@ impl relm4::typed_view::column::RelmColumn for ArtistColumn {
 pub struct AlbumColumn;
 
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = gtk::Label;
+    type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Album";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(item.item.album.as_deref().unwrap_or("Unknown Album"));
-        b.add_controller(item.get_drag_src());
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(Some(&item.album_label));
+        view.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

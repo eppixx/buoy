@@ -105,6 +105,7 @@ pub enum TracksViewOut {
     Download(Droppable),
     FavoriteClicked(String, bool),
     ClickedArtist(String),
+    ClickedAlbum(String),
 }
 
 #[relm4::component(pub)]

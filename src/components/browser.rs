@@ -465,18 +465,12 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::FavoriteSongClicked(id, state))
                     .unwrap(),
                 TracksViewOut::ClickedArtist(id) => {
-                    let subsonic = self.subsonic.borrow();
-                    let artist = subsonic.artists().iter().find(|a| a.id == id);
-                    let artist = if let Some(artist) = artist {
+                    let artist = if let Some(artist) = self.subsonic.borrow().find_artist(&id) {
                         artist
                     } else {
-                        sender
-                            .output(BrowserOut::DisplayToast(String::from(
-                                "clicked artist not found",
-                            )))
-                            .unwrap();
                         return;
                     };
+
                     let artist: relm4::Controller<ArtistView> = ArtistView::builder()
                         .launch((self.subsonic.clone(), artist.clone()))
                         .forward(sender.input_sender(), |msg| {
@@ -491,6 +485,29 @@ impl relm4::component::AsyncComponent for Browser {
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
+                }
+                TracksViewOut::ClickedAlbum(id) => {
+                    let child = if let Some(child) = self.subsonic.borrow().find_album(&id) {
+                        child
+                    } else {
+                        return;
+                    };
+
+                    let init = AlbumViewInit::Child(Box::new(child));
+                    let album: relm4::Controller<AlbumView> = AlbumView::builder()
+                        .launch((self.subsonic.clone(), init))
+                        .forward(sender.input_sender(), |msg| {
+                            BrowserIn::AlbumView(Box::new(msg))
+                        });
+
+                    self.history_widget
+                        .push(Views::Album(album.widget().clone()));
+                    self.album_views.push(album);
+                    self.content
+                        .set_child(Some(self.history_widget.last().unwrap().widget()));
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(true))
+                        .unwrap();
                 }
             },
             BrowserIn::PlaylistsView(msg) => match msg {
@@ -567,6 +584,29 @@ impl relm4::component::AsyncComponent for Browser {
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
+                }
+                PlaylistsViewOut::ClickedAlbum(id) => {
+                    let child = if let Some(child) = self.subsonic.borrow().find_album(&id) {
+                        child
+                    } else {
+                        return;
+                    };
+
+                    let init = AlbumViewInit::Child(Box::new(child));
+                    let album: relm4::Controller<AlbumView> = AlbumView::builder()
+                        .launch((self.subsonic.clone(), init))
+                        .forward(sender.input_sender(), |msg| {
+                            BrowserIn::AlbumView(Box::new(msg))
+                        });
+
+                    self.history_widget
+                        .push(Views::Album(album.widget().clone()));
+                    self.album_views.push(album);
+                    self.content
+                        .set_child(Some(self.history_widget.last().unwrap().widget()));
+                    sender
+                        .output(BrowserOut::BackButtonSensitivity(true))
+                        .unwrap();
                 }
             },
             BrowserIn::NewPlaylist(name, list) => {
