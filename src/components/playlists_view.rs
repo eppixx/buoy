@@ -78,6 +78,7 @@ pub enum PlaylistsViewOut {
     DisplayToast(String),
     Download(Droppable),
     FavoriteClicked(String, bool),
+    ClickedArtist(String),
 }
 
 #[derive(Debug)]

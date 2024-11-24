@@ -104,6 +104,7 @@ pub enum TracksViewOut {
     ReplaceQueue(Droppable),
     Download(Droppable),
     FavoriteClicked(String, bool),
+    ClickedArtist(String),
 }
 
 #[relm4::component(pub)]
