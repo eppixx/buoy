@@ -35,7 +35,7 @@ impl ArtistsView {
     }
 
     fn calc_sensitivity_of_buttons(&self, widgets: &<ArtistsView as relm4::Component>::Widgets) {
-        let allowed_queue_modifier_len = 1000;
+        let allowed_queue_modifier_len = 5;
 
         if (!self.active_filters() && self.entries.len() >= allowed_queue_modifier_len)
             || (self.active_filters()
@@ -44,28 +44,28 @@ impl ArtistsView {
             widgets.add_to_queue.set_sensitive(false);
             widgets
                 .add_to_queue
-                .set_tooltip("There are too many tracks to add to queue");
+                .set_tooltip("There are too many artists to add to queue");
             widgets.append_to_queue.set_sensitive(false);
             widgets
                 .append_to_queue
-                .set_tooltip("There are too many tracks to append to queue");
+                .set_tooltip("There are too many artists to append to queue");
             widgets.replace_queue.set_sensitive(false);
             widgets
                 .replace_queue
-                .set_tooltip("There are too many tracks to replace queue");
+                .set_tooltip("There are too many artists to replace queue");
         } else {
             widgets.add_to_queue.set_sensitive(true);
             widgets
                 .add_to_queue
-                .set_tooltip("Append shown tracks to end of queue");
+                .set_tooltip("Append shown artists to end of queue");
             widgets.append_to_queue.set_sensitive(true);
             widgets
                 .append_to_queue
-                .set_tooltip("Insert shown after currently played or paused item");
+                .set_tooltip("Insert shown artists after currently played or paused item");
             widgets.replace_queue.set_sensitive(true);
             widgets
                 .replace_queue
-                .set_tooltip("Replaces current queue with shown tracks");
+                .set_tooltip("Replaces current queue with shown artists");
         }
     }
 }
@@ -127,6 +127,8 @@ impl relm4::component::Component for ArtistsView {
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
+
+        model.calc_sensitivity_of_buttons(&widgets);
         relm4::component::ComponentParts { model, widgets }
     }
 
