@@ -355,7 +355,7 @@ impl relm4::Component for TracksView {
     ) {
         match msg {
             TracksViewIn::Favorited(id, state) => {
-                let len = self.tracks.view.columns().n_items();
+                let len = self.tracks.len();
                 (0..len)
                     .filter_map(|i| self.tracks.get(i))
                     .filter(|t| t.borrow().item.id == id)

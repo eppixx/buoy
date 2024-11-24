@@ -400,7 +400,7 @@ impl relm4::component::Component for ArtistsView {
                 });
             }
             ArtistsViewIn::Favorited(id, state) => {
-                let len = self.entries.view.columns().n_items();
+                let len = self.entries.len();
                 (0..len)
                     .filter_map(|i| self.entries.get(i))
                     .filter(|t| t.borrow().item.id == id)

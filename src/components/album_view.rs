@@ -344,7 +344,7 @@ impl relm4::Component for AlbumView {
             AlbumViewIn::FavoritedSong(id, state) => {
                 use relm4::typed_view::TypedListItem;
 
-                let len = self.tracks.view.columns().n_items();
+                let len = self.tracks.len();
                 let tracks: Vec<TypedListItem<TrackRow>> =
                     (0..len).filter_map(|i| self.tracks.get(i)).collect();
                 for track in tracks {
