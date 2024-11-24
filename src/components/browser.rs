@@ -70,6 +70,7 @@ pub enum BrowserIn {
     AlbumsClicked,
     TracksClicked,
     PlaylistsClicked,
+    AlbumClicked(String),
     Dashboard(DashboardOut),
     AlbumsView(AlbumsViewOut),
     AlbumView(Box<AlbumViewOut>),
@@ -257,6 +258,29 @@ impl relm4::component::AsyncComponent for Browser {
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .expect("main window gone");
+            }
+            BrowserIn::AlbumClicked(id) => {
+                let child = if let Some(child) = self.subsonic.borrow().find_album(&id) {
+                    child
+                } else {
+                    return;
+                };
+
+                let init = AlbumViewInit::Child(Box::new(child));
+                let album: relm4::Controller<AlbumView> = AlbumView::builder()
+                    .launch((self.subsonic.clone(), init))
+                    .forward(sender.input_sender(), |msg| {
+                        BrowserIn::AlbumView(Box::new(msg))
+                    });
+
+                self.history_widget
+                    .push(Views::Album(album.widget().clone()));
+                self.album_views.push(album);
+                self.content
+                    .set_child(Some(self.history_widget.last().unwrap().widget()));
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .unwrap();
             }
             BrowserIn::TracksClicked => {
                 if let Some(&Views::Tracks(_)) = self.history_widget.last() {
@@ -486,29 +510,7 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
-                TracksViewOut::ClickedAlbum(id) => {
-                    let child = if let Some(child) = self.subsonic.borrow().find_album(&id) {
-                        child
-                    } else {
-                        return;
-                    };
-
-                    let init = AlbumViewInit::Child(Box::new(child));
-                    let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch((self.subsonic.clone(), init))
-                        .forward(sender.input_sender(), |msg| {
-                            BrowserIn::AlbumView(Box::new(msg))
-                        });
-
-                    self.history_widget
-                        .push(Views::Album(album.widget().clone()));
-                    self.album_views.push(album);
-                    self.content
-                        .set_child(Some(self.history_widget.last().unwrap().widget()));
-                    sender
-                        .output(BrowserOut::BackButtonSensitivity(true))
-                        .unwrap();
-                }
+                TracksViewOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumClicked(id)),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
@@ -585,29 +587,7 @@ impl relm4::component::AsyncComponent for Browser {
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .expect("main window.gone");
                 }
-                PlaylistsViewOut::ClickedAlbum(id) => {
-                    let child = if let Some(child) = self.subsonic.borrow().find_album(&id) {
-                        child
-                    } else {
-                        return;
-                    };
-
-                    let init = AlbumViewInit::Child(Box::new(child));
-                    let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch((self.subsonic.clone(), init))
-                        .forward(sender.input_sender(), |msg| {
-                            BrowserIn::AlbumView(Box::new(msg))
-                        });
-
-                    self.history_widget
-                        .push(Views::Album(album.widget().clone()));
-                    self.album_views.push(album);
-                    self.content
-                        .set_child(Some(self.history_widget.last().unwrap().widget()));
-                    sender
-                        .output(BrowserOut::BackButtonSensitivity(true))
-                        .unwrap();
-                }
+                PlaylistsViewOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumClicked(id)),
             },
             BrowserIn::NewPlaylist(name, list) => {
                 const CHUNKS: usize = 100;
