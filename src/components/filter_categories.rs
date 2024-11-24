@@ -73,10 +73,7 @@ impl Category {
     }
 
     pub fn artists() -> gio::ListStore {
-        let categories = [
-            Self::Artist,
-            Self::AlbumCount,
-        ];
+        let categories = [Self::Artist, Self::AlbumCount];
         store_from_category(&categories)
     }
 

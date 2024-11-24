@@ -53,16 +53,14 @@ impl ArtistRow {
         fav_btn.set_tooltip("Click to (un)favorite song");
         fav_btn.set_focus_on_click(false);
         let id = item.id.clone();
-        fav_btn.connect_clicked(move |btn| {
-            match btn.icon_name().as_deref() {
-                Some("starred-symbolic") => sender
-                    .output(ArtistsViewOut::FavoriteClicked(id.clone(), false))
-                    .unwrap(),
-                Some("non-starred-symbolic") => sender
-                    .output(ArtistsViewOut::FavoriteClicked(id.clone(), true))
-                    .unwrap(),
-                _ => unreachable!("unkown icon name"),
-            }
+        fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+            Some("starred-symbolic") => sender
+                .output(ArtistsViewOut::FavoriteClicked(id.clone(), false))
+                .unwrap(),
+            Some("non-starred-symbolic") => sender
+                .output(ArtistsViewOut::FavoriteClicked(id.clone(), true))
+                .unwrap(),
+            _ => unreachable!("unkown icon name"),
         });
 
         Self {

@@ -284,11 +284,14 @@ impl relm4::component::Component for ArtistsView {
             ArtistsViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);
 
+                let update_label = |label: &gtk::Label, counter: &Rc<RefCell<HashSet<String>>>| {
+                    label.set_text(&format!("Shown artists: {}", counter.borrow().len()));
+                };
+
                 self.shown_artists.borrow_mut().clear();
                 let shown_artists = self.shown_artists.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
-                shown_artists_widget
-                    .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                update_label(&shown_artists_widget, &shown_artists);
 
                 self.entries.pop_filter();
                 let filters: Vec<Filter> = self
@@ -297,11 +300,8 @@ impl relm4::component::Component for ArtistsView {
                     .filter_map(|row| row.filter().as_ref())
                     .cloned()
                     .collect();
-                    shown_artists_widget.set_text(&format!(
-                        "Shown artists: {}",
-                        self.subsonic.borrow().artists().len()
-                    ));
                 if filters.is_empty() && !Settings::get().lock().unwrap().search_active {
+                    update_label(&shown_artists_widget, &shown_artists);
                     return;
                 }
 
@@ -342,8 +342,7 @@ impl relm4::component::Component for ArtistsView {
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
                         shown_artists.borrow_mut().insert(track.item.name.clone());
-                        shown_artists_widget
-                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                        update_label(&shown_artists_widget, &shown_artists);
                         return true;
                     }
 
@@ -361,18 +360,14 @@ impl relm4::component::Component for ArtistsView {
                         let score = matcher.fuzzy_match(&artist, &search);
                         if score.is_some() {
                             shown_artists.borrow_mut().insert(track.item.name.clone());
-                            shown_artists_widget.set_text(&format!(
-                                "Shown artists: {}",
-                                shown_artists.borrow().len()
-                            ));
+                            update_label(&shown_artists_widget, &shown_artists);
                             true
                         } else {
                             false
                         }
                     } else if artist.contains(&search) {
                         shown_artists.borrow_mut().insert(track.item.name.clone());
-                        shown_artists_widget
-                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
+                        update_label(&shown_artists_widget, &shown_artists);
                         true
                     } else {
                         false
@@ -433,7 +428,11 @@ impl relm4::component::Component for ArtistsView {
             ArtistsViewIn::ReplaceQueue => {}
             ArtistsViewIn::ArtistClicked(index) => {
                 if let Some(clicked_artist) = self.entries.get(index) {
-                    sender.output(ArtistsViewOut::ClickedArtist(clicked_artist.borrow().item.clone())).unwrap();
+                    sender
+                        .output(ArtistsViewOut::ClickedArtist(
+                            clicked_artist.borrow().item.clone(),
+                        ))
+                        .unwrap();
                 }
             }
         }
