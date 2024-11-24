@@ -117,8 +117,6 @@ impl relm4::component::Component for ArtistsView {
                 .forward(sender.input_sender(), Self::Input::FilterRow),
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
         };
-        let widgets = view_output!();
-        model.filters.guard().push_back(Category::Favorite);
 
         // add artists with cover and title
         for artist in init.borrow().artists().iter() {
@@ -127,6 +125,8 @@ impl relm4::component::Component for ArtistsView {
                 .append(ArtistRow::new(&init, artist.clone(), sender.clone()));
         }
 
+        model.filters.guard().push_back(Category::Favorite);
+        let widgets = view_output!();
         relm4::component::ComponentParts { model, widgets }
     }
 
