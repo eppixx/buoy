@@ -152,8 +152,8 @@ impl relm4::Component for AlbumView {
 
                         connect_clicked[sender, id] => move |btn| {
                             let state = match btn.icon_name().as_deref() {
-                                Some("non-starred-symbolic") => true,
                                 Some("starred-symbolic") => false,
+                                Some("non-starred-symbolic") => true,
                                 _ => true,
                             };
                             sender.output(AlbumViewOut::FavoriteClicked(id.clone(), state)).unwrap();
@@ -307,7 +307,7 @@ impl relm4::Component for AlbumView {
             AlbumViewIn::AlbumTracks => {} //do nothing
             AlbumViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => {
-                    sender.output(AlbumViewOut::DisplayToast(title)).unwrap()
+                    sender.output(AlbumViewOut::DisplayToast(title)).unwrap();
                 }
             },
             AlbumViewIn::SearchChanged(search) => {

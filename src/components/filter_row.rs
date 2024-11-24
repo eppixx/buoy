@@ -625,7 +625,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         self.filter = Some(Filter::Title(
                             relation.relation.clone(),
                             widgets.title_entry.text().into(),
-                        ))
+                        ));
                     }
                     Category::Artist => {
                         let relation = widgets.artist_dropdown.selected_item().unwrap();
@@ -637,7 +637,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         self.filter = Some(Filter::Artist(
                             relation.relation.clone(),
                             widgets.artist_entry.text().into(),
-                        ))
+                        ));
                     }
                     Category::Album => {
                         let relation = widgets.album_dropdown.selected_item().unwrap();
@@ -649,7 +649,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         self.filter = Some(Filter::Album(
                             relation.relation.clone(),
                             widgets.album_entry.text().into(),
-                        ))
+                        ));
                     }
                     Category::Genre => {
                         let relation = widgets.genre_dropdown.selected_item().unwrap();
@@ -661,7 +661,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         self.filter = Some(Filter::Genre(
                             relation.relation.clone(),
                             widgets.genre_entry.text().into(),
-                        ))
+                        ));
                     }
                     Category::Year => {
                         let order = widgets.year_dropdown.selected_item().unwrap();

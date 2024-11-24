@@ -176,64 +176,61 @@ impl relm4::Component for Dashboard {
             while let Ok(msg) = receiver.recv().await {
                 scrollings.replace(msg.clone());
 
-                match msg {
-                    Scrolling::None => {}
-                    _ => {
-                        let scrolling = scrollings.clone();
-                        let recently_added_scroll = recently_added_scroll.clone();
-                        let recently_played_scroll = recently_played_scroll.clone();
-                        let random_album_scroll = random_album_scroll.clone();
-                        let most_played_scroll = most_played_scroll.clone();
+                if let Scrolling::None = msg {} else {
+                    let scrolling = scrollings.clone();
+                    let recently_added_scroll = recently_added_scroll.clone();
+                    let recently_played_scroll = recently_played_scroll.clone();
+                    let random_album_scroll = random_album_scroll.clone();
+                    let most_played_scroll = most_played_scroll.clone();
 
-                        //scroll the albums when arrow is hovered
-                        gtk::glib::source::timeout_add_local(
-                            core::time::Duration::from_millis(15),
-                            move || {
-                                const SCROLL_MOVE: f64 = 5f64;
-                                enum Op {
-                                    Add,
-                                    Sub,
+                    //scroll the albums when arrow is hovered
+                    gtk::glib::source::timeout_add_local(
+                        core::time::Duration::from_millis(15),
+                        move || {
+                            const SCROLL_MOVE: f64 = 5f64;
+                            enum Op {
+                                Add,
+                                Sub,
+                            }
+                            let adj_fn = |scroll: &gtk::ScrolledWindow, op: Op| {
+                                let vadj = scroll.hadjustment();
+                                match op {
+                                    Op::Add => vadj.set_value(vadj.value() + SCROLL_MOVE),
+                                    Op::Sub => vadj.set_value(vadj.value() - SCROLL_MOVE),
                                 }
-                                let adj_fn = |scroll: &gtk::ScrolledWindow, op: Op| {
-                                    let vadj = scroll.hadjustment();
-                                    match op {
-                                        Op::Add => vadj.set_value(vadj.value() + SCROLL_MOVE),
-                                        Op::Sub => vadj.set_value(vadj.value() - SCROLL_MOVE),
-                                    }
-                                    scroll.set_hadjustment(Some(&vadj));
-                                };
-                                match *scrolling.borrow() {
-                                    // when no scrolling end closure
-                                    Scrolling::None => return gtk::glib::ControlFlow::Break,
-                                    Scrolling::RecentlyAddedLeft => {
-                                        adj_fn(&recently_added_scroll, Op::Sub);
-                                    }
-                                    Scrolling::RecentlyAddedRight => {
-                                        adj_fn(&recently_added_scroll, Op::Add);
-                                    }
-                                    Scrolling::RecentlyPlayedLeft => {
-                                        adj_fn(&recently_played_scroll, Op::Sub);
-                                    }
-                                    Scrolling::RecentlyPlayedRight => {
-                                        adj_fn(&recently_played_scroll, Op::Add);
-                                    }
-                                    Scrolling::RandomAlbumLeft => {
-                                        adj_fn(&random_album_scroll, Op::Sub);
-                                    }
-                                    Scrolling::RandomAlbumRight => {
-                                        adj_fn(&random_album_scroll, Op::Add);
-                                    }
-                                    Scrolling::MostPlayedLeft => {
-                                        adj_fn(&most_played_scroll, Op::Sub);
-                                    }
-                                    Scrolling::MostPlayedRight => {
-                                        adj_fn(&most_played_scroll, Op::Add);
-                                    }
+                                scroll.set_hadjustment(Some(&vadj));
+                            };
+                            match *scrolling.borrow() {
+                                // when no scrolling end closure
+                                Scrolling::None => return gtk::glib::ControlFlow::Break,
+                                Scrolling::RecentlyAddedLeft => {
+                                    adj_fn(&recently_added_scroll, Op::Sub);
                                 }
-                                gtk::glib::ControlFlow::Continue
-                            },
-                        );
-                    }
+                                Scrolling::RecentlyAddedRight => {
+                                    adj_fn(&recently_added_scroll, Op::Add);
+                                }
+                                Scrolling::RecentlyPlayedLeft => {
+                                    adj_fn(&recently_played_scroll, Op::Sub);
+                                }
+                                Scrolling::RecentlyPlayedRight => {
+                                    adj_fn(&recently_played_scroll, Op::Add);
+                                }
+                                Scrolling::RandomAlbumLeft => {
+                                    adj_fn(&random_album_scroll, Op::Sub);
+                                }
+                                Scrolling::RandomAlbumRight => {
+                                    adj_fn(&random_album_scroll, Op::Add);
+                                }
+                                Scrolling::MostPlayedLeft => {
+                                    adj_fn(&most_played_scroll, Op::Sub);
+                                }
+                                Scrolling::MostPlayedRight => {
+                                    adj_fn(&most_played_scroll, Op::Add);
+                                }
+                            }
+                            gtk::glib::ControlFlow::Continue
+                        },
+                    );
                 }
             }
         });
@@ -580,7 +577,7 @@ impl relm4::Component for Dashboard {
                     sender.output(DashboardOut::ClickedAlbum(clicked)).unwrap();
                 }
                 AlbumElementOut::DisplayToast(title) => {
-                    sender.output(DashboardOut::DisplayToast(title)).unwrap()
+                    sender.output(DashboardOut::DisplayToast(title)).unwrap();
                 }
                 AlbumElementOut::FavoriteClicked(id, state) => sender
                     .output(DashboardOut::FavoriteClicked(id, state))

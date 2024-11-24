@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Read};
+use std::collections::HashMap;
 
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -59,9 +59,7 @@ impl Subsonic {
         let cache_path = xdg_dirs
             .place_cache_file(MUSIC_INFOS)
             .expect("cannot create cache directory");
-        let mut content = String::new();
-        let mut file = std::fs::File::open(cache_path)?;
-        file.read_to_string(&mut content)?;
+        let content = tokio::fs::read_to_string(cache_path).await?;
         tracing::info!("loaded subsonic cache");
         let result = toml::from_str::<Self>(&content)?;
 

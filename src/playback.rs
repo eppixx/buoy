@@ -103,9 +103,8 @@ impl Playback {
         let pipeline_weak = pipeline.downgrade();
         let send = sender.clone();
         gtk::glib::source::timeout_add_local(std::time::Duration::from_millis(TICK), move || {
-            let pipeline = match pipeline_weak.upgrade() {
-                Some(pipeline) => pipeline,
-                None => return gtk::glib::ControlFlow::Continue,
+            let Some(pipeline) = pipeline_weak.upgrade() else {
+                return gtk::glib::ControlFlow::Continue;
             };
 
             //dont send messages when not playing a stream

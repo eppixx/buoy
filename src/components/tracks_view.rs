@@ -661,46 +661,46 @@ impl relm4::Component for TracksView {
             },
             TracksViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => {
-                    sender.output(TracksViewOut::DisplayToast(msg)).unwrap()
+                    sender.output(TracksViewOut::DisplayToast(msg)).unwrap();
                 }
             },
             TracksViewIn::AddToQueue => {
-                if !self.active_filters() {
-                    let tracks = self.subsonic.borrow().tracks().clone();
-                    let drop = Droppable::Queue(tracks);
-                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
-                } else {
+                if self.active_filters() {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
                     let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
                     sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
-                }
-            }
-            TracksViewIn::AppendToQueue => {
-                if !self.active_filters() {
+                } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
                     let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
-                } else {
+                }
+            }
+            TracksViewIn::AppendToQueue => {
+                if self.active_filters() {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
                     let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
                     sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
-                }
-            }
-            TracksViewIn::ReplaceQueue => {
-                if !self.active_filters() {
+                } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
                     let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
-                } else {
+                }
+            }
+            TracksViewIn::ReplaceQueue => {
+                if self.active_filters() {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
                     let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
                     sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
+                } else {
+                    let tracks = self.subsonic.borrow().tracks().clone();
+                    let drop = Droppable::Queue(tracks);
+                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
                 }
             }
             TracksViewIn::DownloadClicked => {

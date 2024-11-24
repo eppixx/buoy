@@ -120,7 +120,7 @@ impl relm4::component::Component for ArtistsView {
         };
 
         // add artists with cover and title
-        for artist in init.borrow().artists().iter() {
+        for artist in init.borrow().artists() {
             model
                 .entries
                 .append(ArtistRow::new(&init, artist.clone(), sender.clone()));
@@ -235,7 +235,7 @@ impl relm4::component::Component for ArtistsView {
                             set_single_click_activate: true,
 
                             connect_activate[sender] => move |_column_view, index| {
-                                sender.input(ArtistsViewIn::ArtistClicked(index))
+                                sender.input(ArtistsViewIn::ArtistClicked(index));
                             },
                         }
                     }
@@ -423,7 +423,7 @@ impl relm4::component::Component for ArtistsView {
             }
             ArtistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => {
-                    sender.output(ArtistsViewOut::DisplayToast(msg)).unwrap()
+                    sender.output(ArtistsViewOut::DisplayToast(msg)).unwrap();
                 }
             },
             ArtistsViewIn::FilterAdd => {
@@ -447,7 +447,7 @@ impl relm4::component::Component for ArtistsView {
                 }
                 FilterRowOut::ParameterChanged => sender.input(ArtistsViewIn::FilterChanged),
             },
-            ArtistsViewIn::AddToQueue => {}
+            ArtistsViewIn::AddToQueue => {} //TODO
             ArtistsViewIn::AppendToQueue => {}
             ArtistsViewIn::ReplaceQueue => {}
             ArtistsViewIn::ArtistClicked(index) => {

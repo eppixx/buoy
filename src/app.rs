@@ -506,7 +506,7 @@ impl relm4::component::AsyncComponent for App {
                                             set_end_widget = &gtk::Scale {
                                                 set_width_request: 200,
                                                 set_range: (100f64, 200f64),
-                                                set_value: Settings::get().lock().unwrap().cover_size as f64,
+                                                set_value: f64::from(Settings::get().lock().unwrap().cover_size),
                                                 set_increments: (25f64, 25f64),
                                                 set_slider_size_fixed: true,
                                                 set_tooltip: "Changes cover sizes on Dashboard, Artists and Albums pages",
@@ -629,7 +629,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::Playback(playback) => match playback {
                 PlaybackOut::TrackEnd => sender.input(AppIn::Player(Command::Next)),
                 PlaybackOut::SongPosition(ms) => {
-                    sender.input(AppIn::Player(Command::SetSongPosition(ms)))
+                    sender.input(AppIn::Player(Command::SetSongPosition(ms)));
                 }
             },
             AppIn::Equalizer(_changed) => {
@@ -774,7 +774,7 @@ impl relm4::component::AsyncComponent for App {
                     }
                 }
                 QueueOut::FavoriteClicked(id, state) => {
-                    sender.input(AppIn::FavoriteSongClicked(id, state))
+                    sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
             },
             AppIn::Browser(msg) => match msg {
@@ -786,13 +786,13 @@ impl relm4::component::AsyncComponent for App {
                 BrowserOut::BackButtonSensitivity(status) => widgets.back_btn.set_sensitive(status),
                 BrowserOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 BrowserOut::FavoriteAlbumClicked(id, state) => {
-                    sender.input(AppIn::FavoriteAlbumClicked(id, state))
+                    sender.input(AppIn::FavoriteAlbumClicked(id, state));
                 }
                 BrowserOut::FavoriteArtistClicked(id, state) => {
-                    sender.input(AppIn::FavoriteArtistClicked(id, state))
+                    sender.input(AppIn::FavoriteArtistClicked(id, state));
                 }
                 BrowserOut::FavoriteSongClicked(id, state) => {
-                    sender.input(AppIn::FavoriteSongClicked(id, state))
+                    sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
                 BrowserOut::Download(drop) => sender.input(AppIn::Download(drop)),
             },
@@ -913,7 +913,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 Command::PlayPause => match self.playback.borrow_mut().is_playing() {
                     PlayState::Stop | PlayState::Pause => {
-                        sender.input(AppIn::Player(Command::Play))
+                        sender.input(AppIn::Player(Command::Play));
                     }
                     PlayState::Play => sender.input(AppIn::Player(Command::Pause)),
                 },

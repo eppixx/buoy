@@ -155,7 +155,7 @@ impl relm4::Component for Cover {
                                 CoverCmd::CoverLoaded(id, Some(texture), Some(buffer))
                             }
                             Ok((id, _, _)) => CoverCmd::CoverLoaded(id, None, None),
-                            Err(_) => panic!(),
+                            Err(e) => panic!("Cover error: {e}"),
                         }
                     });
                 }

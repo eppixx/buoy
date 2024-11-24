@@ -105,7 +105,7 @@ impl relm4::SimpleComponent for PlayInfo {
             },
             PlayInfoIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => {
-                    sender.output(PlayInfoOut::DisplayToast(title)).unwrap()
+                    sender.output(PlayInfoOut::DisplayToast(title)).unwrap();
                 }
             },
         }
@@ -117,21 +117,21 @@ fn style_label(title: &str, artist: &str, album: &str) -> String {
         "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
         glib::markup_escape_text(title)
     );
-    if !artist.is_empty() {
+    if artist.is_empty() {
+        result.push('\n');
+    } else {
         result.push_str(&format!(
             "\nby <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(artist)
         ));
-    } else {
-        result.push('\n')
     }
-    if !album.is_empty() {
+    if album.is_empty() {
+        result.push('\n');
+    } else {
         result.push_str(&format!(
             " on <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
             glib::markup_escape_text(album)
         ));
-    } else {
-        result.push('\n')
     }
     result
 }

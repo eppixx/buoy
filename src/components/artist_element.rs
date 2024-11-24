@@ -166,7 +166,7 @@ impl relm4::factory::FactoryComponent for ArtistElement {
         match msg {
             ArtistElementIn::DescriptiveCover(msg) => match msg {
                 DescriptiveCoverOut::DisplayToast(msg) => {
-                    sender.output(ArtistElementOut::DisplayToast(msg)).unwrap()
+                    sender.output(ArtistElementOut::DisplayToast(msg)).unwrap();
                 }
             },
             ArtistElementIn::Favorited(id, state) => {

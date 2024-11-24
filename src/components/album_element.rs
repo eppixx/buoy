@@ -239,7 +239,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         match msg {
             AlbumElementIn::DescriptiveCover(msg) => match msg {
                 DescriptiveCoverOut::DisplayToast(title) => {
-                    sender.output(AlbumElementOut::DisplayToast(title)).unwrap()
+                    sender.output(AlbumElementOut::DisplayToast(title)).unwrap();
                 }
             },
             AlbumElementIn::Favorited(id, state) => {

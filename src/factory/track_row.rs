@@ -272,7 +272,7 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
             text.push('.');
         }
         if let Some(track) = item.item.track {
-            text = format!("{text}{track:02}")
+            text = format!("{text}{track:02}");
         }
         label.set_label(&text);
         b.add_controller(item.get_drag_src());

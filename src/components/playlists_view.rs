@@ -389,7 +389,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                     self.index_shown = Some(index);
                 }
                 PlaylistElementOut::DisplayToast(msg) => {
-                    sender.output(PlaylistsViewOut::DisplayToast(msg)).unwrap()
+                    sender.output(PlaylistsViewOut::DisplayToast(msg)).unwrap();
                 }
                 PlaylistElementOut::Delete(index) => {
                     let list = match self.playlists.get(index.current_index()) {

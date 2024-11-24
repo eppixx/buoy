@@ -16,11 +16,11 @@ pub fn convert_for_label(time: i64) -> String {
     result
 }
 
-/// takes a Slice and creates a ListStore in a generic fashion; to be used in a gtk::DropDown as a store
+/// takes a Slice and creates a `ListStore` in a generic fashion; to be used in a `gtk::DropDown` as a store
 pub fn store_from_category<T: Clone + 'static>(categories: &[T]) -> relm4::gtk::gio::ListStore {
     use relm4::gtk::{gio, glib};
     let store = gio::ListStore::new::<glib::BoxedAnyObject>();
-    for category in categories.iter() {
+    for category in categories {
         let category = category.clone();
         store.append(&glib::BoxedAnyObject::new(category));
     }

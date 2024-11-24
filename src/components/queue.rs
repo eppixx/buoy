@@ -201,33 +201,30 @@ impl relm4::Component for Queue {
             while let Ok(msg) = receiver.recv().await {
                 scrolling.replace(msg.clone());
 
-                match msg {
-                    ScrollMotion::None => {}
-                    _ => {
-                        let scrolled = scrolled.clone();
-                        let scrolling = scrolling.clone();
+                if msg == ScrollMotion::None {} else {
+                    let scrolled = scrolled.clone();
+                    let scrolling = scrolling.clone();
 
-                        gtk::glib::source::timeout_add_local(
-                            core::time::Duration::from_millis(15),
-                            move || {
-                                const SCROLL_MOVE: f64 = 5f64;
-                                match *scrolling.borrow() {
-                                    ScrollMotion::None => return gtk::glib::ControlFlow::Break,
-                                    ScrollMotion::Up => {
-                                        let vadj = scrolled.vadjustment();
-                                        vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                        scrolled.set_vadjustment(Some(&vadj));
-                                    }
-                                    ScrollMotion::Down => {
-                                        let vadj = scrolled.vadjustment();
-                                        vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                        scrolled.set_vadjustment(Some(&vadj));
-                                    }
+                    gtk::glib::source::timeout_add_local(
+                        core::time::Duration::from_millis(15),
+                        move || {
+                            const SCROLL_MOVE: f64 = 5f64;
+                            match *scrolling.borrow() {
+                                ScrollMotion::None => return gtk::glib::ControlFlow::Break,
+                                ScrollMotion::Up => {
+                                    let vadj = scrolled.vadjustment();
+                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                    scrolled.set_vadjustment(Some(&vadj));
                                 }
-                                gtk::glib::ControlFlow::Continue
-                            },
-                        );
-                    }
+                                ScrollMotion::Down => {
+                                    let vadj = scrolled.vadjustment();
+                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                    scrolled.set_vadjustment(Some(&vadj));
+                                }
+                            }
+                            gtk::glib::ControlFlow::Continue
+                        },
+                    );
                 }
             }
         });
@@ -744,7 +741,7 @@ impl relm4::Component for Queue {
                     self.last_selected = Some(index.clone());
                 }
                 QueueSongOut::DisplayToast(msg) => {
-                    sender.output(QueueOut::DisplayToast(msg)).unwrap()
+                    sender.output(QueueOut::DisplayToast(msg)).unwrap();
                 }
                 QueueSongOut::DropAbove { src, dest } => {
                     let mut guard = self.songs.guard();
@@ -810,7 +807,7 @@ impl relm4::Component for Queue {
                     }
                 }
                 QueueSongOut::FavoriteClicked(id, state) => {
-                    sender.output(QueueOut::FavoriteClicked(id, state)).unwrap()
+                    sender.output(QueueOut::FavoriteClicked(id, state)).unwrap();
                 }
             },
             QueueIn::DisplayToast(title) => sender.output(QueueOut::DisplayToast(title)).unwrap(),
@@ -823,9 +820,9 @@ impl relm4::Component for Queue {
                 if let Some(current) = &self.playing_index {
                     let height = self.songs.widget().height();
                     let adj = self.scrolled.vadjustment();
-                    let scroll_y = height as f64 / self.songs.len() as f64
+                    let scroll_y = f64::from(height) / self.songs.len() as f64
                         * current.current_index() as f64
-                        - self.scrolled.height() as f64 * CURRENT_POSITION;
+                        - f64::from(self.scrolled.height()) * CURRENT_POSITION;
                     adj.set_value(scroll_y);
                     self.scrolled.set_vadjustment(Some(&adj));
                 }

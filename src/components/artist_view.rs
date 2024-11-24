@@ -147,8 +147,8 @@ impl relm4::Component for ArtistView {
 
                         connect_clicked[sender, init] => move |btn| {
                             let state = match btn.icon_name().as_deref() {
-                                Some("non-starred-symbolic") => true,
                                 Some("starred-symbolic") => false,
+                                Some("non-starred-symbolic") => true,
                                 _ => true,
                             };
                             sender.output(ArtistViewOut::FavoriteArtistClicked(init.id.clone(), state)).unwrap();
@@ -278,7 +278,7 @@ impl relm4::Component for ArtistView {
                     sender.output(ArtistViewOut::AlbumClicked(id)).unwrap();
                 }
                 AlbumElementOut::DisplayToast(title) => {
-                    sender.output(ArtistViewOut::DisplayToast(title)).unwrap()
+                    sender.output(ArtistViewOut::DisplayToast(title)).unwrap();
                 }
                 AlbumElementOut::FavoriteClicked(id, state) => sender
                     .output(ArtistViewOut::FavoriteAlbumClicked(id, state))
@@ -286,7 +286,7 @@ impl relm4::Component for ArtistView {
             },
             ArtistViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => {
-                    sender.output(ArtistViewOut::DisplayToast(title)).unwrap()
+                    sender.output(ArtistViewOut::DisplayToast(title)).unwrap();
                 }
             },
             ArtistViewIn::SearchChanged(search) => {

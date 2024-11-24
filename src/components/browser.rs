@@ -179,10 +179,8 @@ impl relm4::component::AsyncComponent for Browser {
                     match self.history_widget.pop() {
                         None => {}
                         Some(view) => match view {
-                            Views::Dashboard(_) => {}
-                            Views::Artists(_) => {}
+                            Views::Dashboard(_) | Views::Artists(_) | Views::Albums(_) => {}
                             Views::Artist(_) => _ = self.artist_views.pop(),
-                            Views::Albums(_) => {}
                             Views::Album(_) => _ = self.album_views.pop(),
                             Views::Tracks(_) => todo!(),
                             Views::Playlists(_) => _ = self.playlists_views.pop(),
@@ -260,9 +258,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .expect("main window gone");
             }
             BrowserIn::AlbumClicked(id) => {
-                let child = if let Some(child) = self.subsonic.borrow().find_album(&id) {
-                    child
-                } else {
+                let Some(child) = self.subsonic.borrow().find_album(&id) else {
                     return;
                 };
 
@@ -323,10 +319,10 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
-                    sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id)))
+                    sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id)));
                 }
                 DashboardOut::DisplayToast(title) => {
-                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap();
                 }
                 DashboardOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
@@ -354,7 +350,7 @@ impl relm4::component::AsyncComponent for Browser {
                         .expect("main window.gone");
                 }
                 AlbumsViewOut::DisplayToast(title) => {
-                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap();
                 }
                 AlbumsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
@@ -378,7 +374,7 @@ impl relm4::component::AsyncComponent for Browser {
                         .expect("main window.gone");
                 }
                 ArtistsViewOut::DisplayToast(msg) => {
-                    sender.output(BrowserOut::DisplayToast(msg)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(msg)).unwrap();
                 }
                 ArtistsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteArtistClicked(id, state))
@@ -392,10 +388,10 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
                 AlbumViewOut::ReplaceQueue(drop) => {
-                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap();
                 }
                 AlbumViewOut::DisplayToast(title) => {
-                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap();
                 }
                 AlbumViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
@@ -404,9 +400,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::ArtistClicked(id) => {
                     let subsonic = self.subsonic.borrow();
                     let artist = subsonic.artists().iter().find(|a| a.id == id);
-                    let artist = if let Some(artist) = artist {
-                        artist
-                    } else {
+                    let Some(artist) = artist else {
                         sender
                             .output(BrowserOut::DisplayToast(String::from(
                                 "clicked artist not found",
@@ -452,16 +446,16 @@ impl relm4::component::AsyncComponent for Browser {
                         .unwrap();
                 }
                 ArtistViewOut::AppendArtist(drop) => {
-                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap();
                 }
                 ArtistViewOut::InsertAfterCurrentPlayed(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
                 ArtistViewOut::ReplaceQueue(drop) => {
-                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap();
                 }
                 ArtistViewOut::DisplayToast(title) => {
-                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap();
                 }
                 ArtistViewOut::FavoriteAlbumClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
@@ -473,25 +467,23 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::TracksView(msg) => match msg {
                 TracksViewOut::DisplayToast(msg) => {
-                    sender.output(BrowserOut::DisplayToast(msg)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(msg)).unwrap();
                 }
                 TracksViewOut::AddToQueue(drop) => sender
                     .output(BrowserOut::InsertAfterCurrentInQueue(drop))
                     .unwrap(),
                 TracksViewOut::AppendToQueue(drop) => {
-                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap();
                 }
                 TracksViewOut::ReplaceQueue(drop) => {
-                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap();
                 }
                 TracksViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
                 TracksViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteSongClicked(id, state))
                     .unwrap(),
                 TracksViewOut::ClickedArtist(id) => {
-                    let artist = if let Some(artist) = self.subsonic.borrow().find_artist(&id) {
-                        artist
-                    } else {
+                    let Some(artist) = self.subsonic.borrow().find_artist(&id) else {
                         return;
                     };
 
@@ -514,7 +506,7 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
-                    sender.output(BrowserOut::DisplayToast(title)).unwrap()
+                    sender.output(BrowserOut::DisplayToast(title)).unwrap();
                 }
                 PlaylistsViewOut::AppendToQueue(list) => {
                     let drop = Droppable::Playlist(Box::new(list));
@@ -551,10 +543,10 @@ impl relm4::component::AsyncComponent for Browser {
                     }
                 }
                 PlaylistsViewOut::CreatePlaylist => {
-                    sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![]))
+                    sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![]));
                 }
                 PlaylistsViewOut::Download(drop) => {
-                    sender.output(BrowserOut::Download(drop)).unwrap()
+                    sender.output(BrowserOut::Download(drop)).unwrap();
                 }
                 PlaylistsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteSongClicked(id, state))
@@ -562,9 +554,7 @@ impl relm4::component::AsyncComponent for Browser {
                 PlaylistsViewOut::ClickedArtist(id) => {
                     let subsonic = self.subsonic.borrow();
                     let artist = subsonic.artists().iter().find(|a| a.id == id);
-                    let artist = if let Some(artist) = artist {
-                        artist
-                    } else {
+                    let Some(artist) = artist else {
                         sender
                             .output(BrowserOut::DisplayToast(String::from(
                                 "clicked artist not found",

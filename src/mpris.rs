@@ -369,7 +369,7 @@ impl Player {
     pub fn set_volume(&mut self, volume: f64) {
         self.sender
             .try_send(MprisOut::Player(Command::Volume(volume)))
-            .unwrap()
+            .unwrap();
     }
 
     //time im microseconds

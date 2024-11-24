@@ -188,7 +188,7 @@ impl relm4::component::Component for AlbumsView {
                     sender.output(AlbumsViewOut::Clicked(clicked)).unwrap();
                 }
                 AlbumElementOut::DisplayToast(title) => {
-                    sender.output(AlbumsViewOut::DisplayToast(title)).unwrap()
+                    sender.output(AlbumsViewOut::DisplayToast(title)).unwrap();
                 }
                 AlbumElementOut::FavoriteClicked(id, state) => sender
                     .output(AlbumsViewOut::FavoriteClicked(id, state))
@@ -261,17 +261,17 @@ impl relm4::component::Component for AlbumsView {
                                             Filter::Favorite(None) => {}
                                             Filter::Favorite(Some(value)) => {
                                                 if *value != child.starred.is_some() {
-                                                    visible = false
+                                                    visible = false;
                                                 }
                                             }
                                             //TODO add matching for regular expressions
                                             Filter::Album(_, value) if value != &title.text() => {
                                                 //TODO
-                                                visible = false
+                                                visible = false;
                                             }
                                             Filter::Artist(_, value) if value != &artist.text() => {
                                                 //TODO
-                                                visible = false
+                                                visible = false;
                                             }
                                             Filter::Year(order, value) => {
                                                 if let Some(year) = &child.year {
@@ -294,7 +294,7 @@ impl relm4::component::Component for AlbumsView {
                                             Filter::Genre(_, value) if value != &artist.text() => {
                                                 //TODO
                                                 // TODO fix artist.text()
-                                                visible = false
+                                                visible = false;
                                             }
                                             Filter::Duration(order, value) => {
                                                 if let Some(duration) = &child.duration {
