@@ -33,6 +33,7 @@ pub enum ScrollMotion {
 pub struct Queue {
     subsonic: Rc<RefCell<Subsonic>>,
     scrolled: gtk::ScrolledWindow,
+    scroll_motion: Rc<RefCell<ScrollMotion>>,
     songs: FactoryVecDeque<QueueSong>,
     randomized_indices: Vec<usize>,
     loading_queue: bool,
@@ -174,6 +175,7 @@ impl relm4::Component for Queue {
         let model = Queue {
             subsonic,
             scrolled: gtk::ScrolledWindow::default(),
+            scroll_motion: Rc::new(RefCell::new(ScrollMotion::None)),
             songs: FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), QueueIn::QueueSong),
@@ -191,42 +193,37 @@ impl relm4::Component for Queue {
 
         let songs = model.songs.widget().clone();
         let scrolled = model.scrolled.clone();
-        let scrolling = Rc::new(RefCell::new(ScrollMotion::None));
-        let (scroll_sender, receiver) = async_channel::unbounded::<ScrollMotion>();
+        let scrolling = model.scroll_motion.clone();
+        let (scroll_sender, receiver) = async_channel::unbounded::<bool>();
         let widgets = view_output!();
 
         gtk::glib::spawn_future_local(async move {
             let scrolling = scrolling.clone();
 
-            while let Ok(msg) = receiver.recv().await {
-                scrolling.replace(msg.clone());
+            while let Ok(_msg) = receiver.recv().await {
+                let scrolled = scrolled.clone();
+                let scrolling = scrolling.clone();
 
-                if msg == ScrollMotion::None {
-                } else {
-                    let scrolled = scrolled.clone();
-                    let scrolling = scrolling.clone();
-
-                    gtk::glib::source::timeout_add_local(
-                        core::time::Duration::from_millis(15),
-                        move || {
-                            const SCROLL_MOVE: f64 = 5f64;
-                            match *scrolling.borrow() {
-                                ScrollMotion::None => return gtk::glib::ControlFlow::Break,
-                                ScrollMotion::Up => {
-                                    let vadj = scrolled.vadjustment();
-                                    vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                    scrolled.set_vadjustment(Some(&vadj));
-                                }
-                                ScrollMotion::Down => {
-                                    let vadj = scrolled.vadjustment();
-                                    vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                    scrolled.set_vadjustment(Some(&vadj));
-                                }
+                gtk::glib::source::timeout_add_local(
+                    core::time::Duration::from_millis(15),
+                    move || {
+                        const SCROLL_MOVE: f64 = 5f64;
+                        match *scrolling.borrow() {
+                            ScrollMotion::None => return gtk::glib::ControlFlow::Break,
+                            ScrollMotion::Up => {
+                                let vadj = scrolled.vadjustment();
+                                vadj.set_value(vadj.value() - SCROLL_MOVE);
+                                scrolled.set_vadjustment(Some(&vadj));
                             }
-                            gtk::glib::ControlFlow::Continue
-                        },
-                    );
-                }
+                            ScrollMotion::Down => {
+                                let vadj = scrolled.vadjustment();
+                                vadj.set_value(vadj.value() + SCROLL_MOVE);
+                                scrolled.set_vadjustment(Some(&vadj));
+                            }
+                        }
+                        gtk::glib::ControlFlow::Continue
+                    },
+                );
             }
         });
 
@@ -266,6 +263,13 @@ impl relm4::Component for Queue {
                             sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
                         },
 
+                        // when hovering over the queue stop scrolling
+                        add_controller = gtk::EventControllerMotion {
+                            connect_motion[scrolling] => move |_self, _x, _y| {
+                                scrolling.replace(ScrollMotion::None);
+                            }
+                        },
+
                         add_controller = gtk::DropControllerMotion {
                             connect_motion[scrolled, scrolling, scroll_sender] => move |_self, x, y| {
                                 if *scrolling.borrow() != ScrollMotion::None {
@@ -277,24 +281,21 @@ impl relm4::Component for Queue {
                                 let point = gtk::graphene::Point::new(x as f32, y as f32);
                                 let computed = songs.compute_point(&scrolled, &point).unwrap();
                                 if computed.y() >= 0f32 && computed.y() <= SCROLL_ZONE {
-                                    println!("up");
-                                    scroll_sender.try_send(ScrollMotion::Up).unwrap();
+                                    scrolling.replace(ScrollMotion::Up);
+                                    scroll_sender.try_send(true).unwrap();
                                 } else if computed.y() >= scrolled.height() as f32 - SCROLL_ZONE && computed.y() <= scrolled.height() as f32 {
-                                    println!("down");
-                                    scroll_sender.try_send(ScrollMotion::Down).unwrap();
+                                    scrolling.replace(ScrollMotion::Down);
+                                    scroll_sender.try_send(true).unwrap();
                                 } else {
-                                    println!("none");
-                                    scroll_sender.try_send(ScrollMotion::None).unwrap();
+                                    scrolling.replace(ScrollMotion::None);
                                 }
                             },
 
-                            //TODO fix continued scrolling when droping while scrolling
-                            connect_leave[scroll_sender] => move |_self| {
-                                scroll_sender.try_send(ScrollMotion::None).unwrap();
+                            connect_leave[scrolling] => move |_self| {
+                                scrolling.replace(ScrollMotion::None);
                             },
 
-                            connect_drop_notify[scroll_sender, scrolling] => move |_self| {
-                                scroll_sender.try_send(ScrollMotion::None).unwrap();
+                            connect_drop_notify[scrolling] => move |_self| {
                                 scrolling.replace(ScrollMotion::None);
                             }
                         },
@@ -745,6 +746,7 @@ impl relm4::Component for Queue {
                     sender.output(QueueOut::DisplayToast(msg)).unwrap();
                 }
                 QueueSongOut::DropAbove { src, dest } => {
+                    self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
                     for (i, child) in src.iter().enumerate() {
                         guard.insert(
@@ -755,6 +757,7 @@ impl relm4::Component for Queue {
                     sender.input(QueueIn::Rerandomize);
                 }
                 QueueSongOut::DropBelow { src, dest } => {
+                    self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
                     for (i, child) in src.iter().enumerate() {
                         guard.insert(
