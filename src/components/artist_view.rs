@@ -184,7 +184,7 @@ impl relm4::Component for ArtistView {
                         },
                         gtk::Label {
                             #[watch]
-                            set_label: &model.bio,
+                            set_markup: &gtk::glib::markup_escape_text(&model.bio),
                             set_halign: gtk::Align::Start,
                             set_single_line_mode: false,
                             set_lines: -1,
