@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use relm4::{
     gtk::{
         self, glib,
@@ -24,7 +25,7 @@ use super::{
 
 #[derive(Debug)]
 pub struct ArtistsView {
-    _subsonic: Rc<RefCell<Subsonic>>,
+    subsonic: Rc<RefCell<Subsonic>>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
     entries: relm4::typed_view::column::TypedColumnView<ArtistRow, gtk::SingleSelection>,
     shown_artists: Rc<RefCell<HashSet<String>>>,
@@ -95,12 +96,18 @@ pub enum ArtistsViewIn {
     ToggleFilters,
 }
 
+#[derive(Debug)]
+pub enum ArtistsViewCmd {
+    AddArtists(Vec<submarine::data::ArtistId3>),
+    LoadingArtistsFinished,
+}
+
 #[relm4::component(pub)]
 impl relm4::component::Component for ArtistsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = ArtistsViewIn;
     type Output = ArtistsViewOut;
-    type CommandOutput = ();
+    type CommandOutput = ArtistsViewCmd;
 
     fn init(
         init: Self::Init,
@@ -115,7 +122,7 @@ impl relm4::component::Component for ArtistsView {
         entries.append_column::<FavColumn>();
 
         let mut model = Self {
-            _subsonic: init.clone(),
+            subsonic: init.clone(),
             entries,
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
@@ -129,6 +136,31 @@ impl relm4::component::Component for ArtistsView {
                 .entries
                 .append(ArtistRow::new(&init, artist.clone(), sender.clone()));
         }
+
+        // add tracks in chunks to not overwhelm the app
+        const CHUNK_SIZE: usize = 20;
+        const WAIT: u64 = 20;
+        let mut countdown = 0;
+        for chunk in &model
+            .subsonic
+            .borrow()
+            .artists()
+            .iter()
+            .cloned()
+            .chunks(CHUNK_SIZE)
+        {
+            let chunk: Vec<submarine::data::ArtistId3> = chunk.into_iter().collect();
+            sender.oneshot_command(async move {
+                tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+                ArtistsViewCmd::AddArtists(chunk)
+            });
+            countdown += WAIT;
+        }
+        sender.oneshot_command(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+            ArtistsViewCmd::LoadingArtistsFinished
+        });
+        tracing::info!("loading tracks should be finished in {countdown}ms");
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
@@ -146,10 +178,18 @@ impl relm4::component::Component for ArtistsView {
                 gtk::WindowHandle {
                     gtk::CenterBox {
                         #[wrap(Some)]
-                        set_center_widget = &gtk::Label {
-                            add_css_class: "h2",
-                            set_label: "Artists",
-                            set_halign: gtk::Align::Center,
+                        set_center_widget = &gtk::Box {
+                            set_spacing: 5,
+
+                            gtk::Label {
+                                add_css_class: "h2",
+                                set_label: "Artists",
+                                set_halign: gtk::Align::Center,
+                            },
+                            append: spinner = &gtk::Spinner {
+                                set_spinning: true,
+                                start: (),
+                            }
                         },
 
                         #[wrap(Some)]
@@ -507,6 +547,26 @@ impl relm4::component::Component for ArtistsView {
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
+            }
+        }
+    }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::CommandOutput,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            ArtistsViewCmd::AddArtists(artists) => {
+                for artist in artists {
+                    let artist = ArtistRow::new(&self.subsonic, artist, sender.clone());
+                    self.entries.append(artist);
+                }
+            }
+            ArtistsViewCmd::LoadingArtistsFinished => {
+                widgets.spinner.set_visible(false);
             }
         }
     }
