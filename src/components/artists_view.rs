@@ -544,6 +544,7 @@ impl relm4::component::Component for ArtistsView {
                 }
             }
             ArtistsViewIn::ToggleFilters => {
+                sender.input(ArtistsViewIn::FilterChanged);
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());

@@ -731,6 +731,7 @@ impl relm4::Component for TracksView {
                 sender.output(TracksViewOut::Download(drop)).unwrap();
             }
             TracksViewIn::ToggleFilters => {
+                sender.input(TracksViewIn::FilterChanged);
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
