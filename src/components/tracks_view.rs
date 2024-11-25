@@ -142,7 +142,13 @@ impl relm4::Component for TracksView {
         const CHUNK_SIZE: usize = 20;
         const WAIT: u64 = 20;
         let mut countdown = 0;
-        for chunk in &subsonic.borrow().tracks().iter().cloned().chunks(CHUNK_SIZE) {
+        for chunk in &subsonic
+            .borrow()
+            .tracks()
+            .iter()
+            .cloned()
+            .chunks(CHUNK_SIZE)
+        {
             let chunk: Vec<submarine::data::Child> = chunk.into_iter().collect();
             sender.oneshot_command(async move {
                 tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
@@ -151,7 +157,7 @@ impl relm4::Component for TracksView {
             countdown += WAIT;
         }
         sender.oneshot_command(async move {
-           tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
             TracksViewCmd::LoadingTracksFinished
         });
         tracing::info!("loading tracks should be finished in {countdown}ms");
