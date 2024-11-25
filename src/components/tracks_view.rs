@@ -301,7 +301,7 @@ impl relm4::Component for TracksView {
                         set_vexpand: true,
 
                         model.tracks.view.clone() {
-                            add_css_class: "album-view-tracks-row",
+                            add_css_class: "tracks-view-tracks-row",
                             set_vexpand: true,
                             set_single_click_activate: true,
 

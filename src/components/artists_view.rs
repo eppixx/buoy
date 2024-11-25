@@ -168,6 +168,7 @@ impl relm4::component::Component for ArtistsView {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
+                    set_margin_horizontal: 7,
 
                     gtk::WindowHandle {
                         gtk::Box {
@@ -230,7 +231,7 @@ impl relm4::component::Component for ArtistsView {
                         set_vexpand: true,
 
                         model.entries.view.clone() {
-                            add_css_class: "album-view-tracks-row",
+                            add_css_class: "artists-view-tracks-row",
                             set_vexpand: true,
                             set_single_click_activate: true,
 
