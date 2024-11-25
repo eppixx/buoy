@@ -97,11 +97,12 @@ impl TrackRow {
             let artist = gtk::glib::markup_escape_text(artist);
             result
                 .artist_label
-                .set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
+                .set_markup(&format!("<a href=\"\">{artist}</a>"));
+            let artist_id = artist_id.clone();
             result
                 .artist_label
-                .connect_activate_link(move |_label, id| {
-                    send.output(TracksViewOut::ClickedArtist(id.to_string()))
+                .connect_activate_link(move |_label, _id| {
+                    send.output(TracksViewOut::ClickedArtist(artist_id.clone()))
                         .unwrap();
                     gtk::glib::signal::Propagation::Stop
                 });
@@ -114,10 +115,11 @@ impl TrackRow {
             let album = gtk::glib::markup_escape_text(album);
             result
                 .album_label
-                .set_markup(&format!("<a href=\"{album_id}\">{album}</a>"));
-            result.album_label.connect_activate_link(move |_label, id| {
+                .set_markup(&format!("<a href=\"\">{album}</a>"));
+            let album_id = album_id.clone();
+            result.album_label.connect_activate_link(move |_label, _id| {
                 sender
-                    .output(TracksViewOut::ClickedAlbum(id.to_string()))
+                    .output(TracksViewOut::ClickedAlbum(album_id.to_string()))
                     .unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
@@ -158,12 +160,13 @@ impl TrackRow {
             let artist = gtk::glib::markup_escape_text(artist);
             result
                 .artist_label
-                .set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
+                .set_markup(&format!("<a href=\"\">{artist}</a>"));
+            let artist_id = artist_id.clone();
             result
                 .artist_label
-                .connect_activate_link(move |_label, id| {
+                .connect_activate_link(move |_label, _id| {
                     sender
-                        .output(AlbumViewOut::ArtistClicked(id.to_string()))
+                        .output(AlbumViewOut::ArtistClicked(artist_id.clone()))
                         .unwrap();
                     gtk::glib::signal::Propagation::Stop
                 });
@@ -205,9 +208,10 @@ impl TrackRow {
             let album = gtk::glib::markup_escape_text(album);
             result
                 .album_label
-                .set_markup(&format!("<a href=\"{album_id}\">{album}</a>"));
-            result.album_label.connect_activate_link(move |_label, id| {
-                send.output(PlaylistsViewOut::ClickedAlbum(id.to_string()))
+                .set_markup(&format!("<a href=\"\">{album}</a>"));
+            let album_id = album_id.clone();
+            result.album_label.connect_activate_link(move |_label, _id| {
+                send.output(PlaylistsViewOut::ClickedAlbum(album_id.clone()))
                     .unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
@@ -220,12 +224,13 @@ impl TrackRow {
             let artist = gtk::glib::markup_escape_text(artist);
             result
                 .artist_label
-                .set_markup(&format!("<a href=\"{artist_id}\">{artist}</a>"));
+                .set_markup(&format!("<a href=\"\">{artist}</a>"));
+            let artist_id = artist_id.clone();
             result
                 .artist_label
-                .connect_activate_link(move |_label, id| {
+                .connect_activate_link(move |_label, _id| {
                     sender
-                        .output(PlaylistsViewOut::ClickedArtist(id.to_string()))
+                        .output(PlaylistsViewOut::ClickedArtist(artist_id.clone()))
                         .unwrap();
                     gtk::glib::signal::Propagation::Stop
                 });
