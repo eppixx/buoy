@@ -78,6 +78,7 @@ pub enum BrowserIn {
     ArtistsView(ArtistsViewOut),
     ArtistView(Box<ArtistViewOut>),
     PlaylistsView(PlaylistsViewOut),
+    RenamePlaylist(submarine::data::Playlist),
     NewPlaylist(String, Vec<submarine::data::Child>),
     FavoriteAlbum(String, bool),
     FavoriteArtist(String, bool),
@@ -587,7 +588,31 @@ impl relm4::component::AsyncComponent for Browser {
                         .expect("main window.gone");
                 }
                 PlaylistsViewOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumClicked(id)),
+                PlaylistsViewOut::RenamePlaylist(list) => {
+                    sender.input(BrowserIn::RenamePlaylist(list))
+                }
             },
+            BrowserIn::RenamePlaylist(list) => {
+                let client = Client::get().unwrap();
+                match client
+                    .update_playlist(
+                        list.id,
+                        Some(list.name),
+                        None::<&str>,
+                        None,
+                        Vec::<&str>::new(),
+                        vec![],
+                    )
+                    .await
+                {
+                    Err(e) => sender
+                        .output(BrowserOut::DisplayToast(format!(
+                            "could not create playlist on server: {e:?}"
+                        )))
+                        .unwrap(),
+                    Ok(_list) => {}
+                }
+            }
             BrowserIn::NewPlaylist(name, list) => {
                 const CHUNKS: usize = 100;
                 let client = Client::get().unwrap();

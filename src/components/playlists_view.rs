@@ -75,6 +75,7 @@ pub enum PlaylistsViewOut {
         submarine::data::PlaylistWithSongs,
     ),
     CreatePlaylist,
+    RenamePlaylist(submarine::data::Playlist),
     DisplayToast(String),
     Download(Droppable),
     FavoriteClicked(String, bool),
@@ -407,6 +408,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .output(PlaylistsViewOut::DeletePlaylist(index, list.info().clone()))
                         .unwrap();
                 }
+                PlaylistElementOut::RenamePlaylist(list) => sender
+                    .output(PlaylistsViewOut::RenamePlaylist(list))
+                    .unwrap(),
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender

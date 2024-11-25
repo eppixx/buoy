@@ -110,6 +110,7 @@ pub enum PlaylistElementOut {
     ),
     Delete(relm4::factory::DynamicIndex),
     DisplayToast(String),
+    RenamePlaylist(submarine::data::Playlist),
 }
 
 #[relm4::factory(pub)]
@@ -301,7 +302,11 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 let text = self.edit_entry.text();
                 self.playlist.base.name = String::from(text);
                 sender.input(PlaylistElementIn::ChangeState(State::Normal));
-                //TODO rename playlist on server
+                sender
+                    .output(PlaylistElementOut::RenamePlaylist(
+                        self.playlist.base.clone(),
+                    ))
+                    .unwrap();
             }
         }
     }
