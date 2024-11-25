@@ -120,6 +120,7 @@ impl relm4::Component for TracksView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let time_startup = std::time::Instant::now();
         let mut tracks =
             relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
         tracks.append_column::<PositionColumn>();
@@ -131,13 +132,25 @@ impl relm4::Component for TracksView {
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
-        for track in subsonic.borrow().tracks() {
-            tracks.append(TrackRow::new_track(
-                &subsonic,
-                track.clone(),
-                sender.clone(),
-            ));
+        let entries: Vec<TrackRow> = subsonic.borrow().tracks().iter().map(|t| TrackRow::new_track(&subsonic, t.clone(), sender.clone())).collect();
+        let shutdown = std::time::Instant::now();
+        let duration = shutdown - time_startup;
+        tracing::info!("loading time of TracksView was {duration:?}");
+
+        // for track in subsonic.borrow().tracks() {
+        //     tracks.append(TrackRow::new_track(
+        //         &subsonic,
+        //         track.clone(),
+        //         sender.clone(),
+        //     ));
+        // }
+        for entry in entries {
+            tracks.append(entry);
         }
+        let shutdown = std::time::Instant::now();
+        let duration = shutdown - time_startup;
+        tracing::info!("loading time of TracksView was {duration:?}");
+
 
         let mut model = Self {
             subsonic: subsonic.clone(),
@@ -157,6 +170,9 @@ impl relm4::Component for TracksView {
         let widgets = view_output!();
         model.filters.guard().push_back(Category::Favorite);
         model.calc_sensitivity_of_buttons(&widgets);
+        let shutdown = std::time::Instant::now();
+        let duration = shutdown - time_startup;
+        tracing::info!("loading time of TracksView was {duration:?}");
         relm4::ComponentParts { model, widgets }
     }
 
@@ -362,20 +378,10 @@ impl relm4::Component for TracksView {
                     .filter(|t| t.borrow().item.id == id)
                     .for_each(|track| match state {
                         true => {
-                            track
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("starred-symbolic"));
                             track.borrow_mut().item.starred =
                                 Some(chrono::offset::Local::now().into());
                         }
-                        false => {
-                            track
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("non-starred-symbolic"));
-                            track.borrow_mut().item.starred = None;
-                        }
+                        false => track.borrow_mut().item.starred = None,
                     });
             }
             TracksViewIn::FilterChanged => {

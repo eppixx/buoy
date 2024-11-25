@@ -355,20 +355,10 @@ impl relm4::Component for AlbumView {
                     .filter(|t| t.borrow().item.id == id)
                     .for_each(|track| match state {
                         true => {
-                            track
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("starred-symbolic"));
                             track.borrow_mut().item.starred =
                                 Some(chrono::offset::Local::now().into());
                         }
-                        false => {
-                            track
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("non-starred-symbolic"));
-                            track.borrow_mut().item.starred = None;
-                        }
+                        false => track.borrow_mut().item.starred = None,
                     });
             }
             AlbumViewIn::HoverCover(false) => {

@@ -5,7 +5,7 @@ use relm4::{
         self,
         prelude::{BoxExt, ButtonExt, ToValue, WidgetExt},
     },
-    RelmObjectExt, RelmWidgetExt,
+    RelmWidgetExt,
 };
 
 use crate::{
@@ -23,7 +23,6 @@ use crate::{
 pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
-    pub fav: relm4::binding::StringBinding,
     fav_btn: gtk::Button,
     artist_label: gtk::Label,
     album_label: gtk::Label,
@@ -59,7 +58,6 @@ impl TrackRow {
         Self {
             subsonic: subsonic.clone(),
             item,
-            fav: relm4::binding::StringBinding::new(fav),
             fav_btn,
             artist_label,
             album_label,
@@ -78,12 +76,16 @@ impl TrackRow {
         result
             .fav_btn
             .connect_clicked(move |btn| match btn.icon_name().as_deref() {
-                Some("starred-symbolic") => send
-                    .output(TracksViewOut::FavoriteClicked(id.clone(), false))
-                    .unwrap(),
-                Some("non-starred-symbolic") => send
-                    .output(TracksViewOut::FavoriteClicked(id.clone(), true))
-                    .unwrap(),
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    send.output(TracksViewOut::FavoriteClicked(id.clone(), false))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    send.output(TracksViewOut::FavoriteClicked(id.clone(), true))
+                        .unwrap();
+                }
                 _ => unreachable!("unkown icon name"),
             });
 
@@ -136,12 +138,16 @@ impl TrackRow {
         result
             .fav_btn
             .connect_clicked(move |btn| match btn.icon_name().as_deref() {
-                Some("starred-symbolic") => send
-                    .output(AlbumViewOut::FavoriteClicked(id.clone(), false))
-                    .unwrap(),
-                Some("non-starred-symbolic") => send
-                    .output(AlbumViewOut::FavoriteClicked(id.clone(), true))
-                    .unwrap(),
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    send.output(AlbumViewOut::FavoriteClicked(id.clone(), false))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    send.output(AlbumViewOut::FavoriteClicked(id.clone(), true))
+                        .unwrap();
+                }
                 _ => unreachable!("unkown icon name"),
             });
 
@@ -178,12 +184,16 @@ impl TrackRow {
         result
             .fav_btn
             .connect_clicked(move |btn| match btn.icon_name().as_deref() {
-                Some("starred-symbolic") => send
-                    .output(PlaylistsViewOut::FavoriteClicked(id.clone(), false))
-                    .unwrap(),
-                Some("non-starred-symbolic") => send
-                    .output(PlaylistsViewOut::FavoriteClicked(id.clone(), true))
-                    .unwrap(),
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    send.output(PlaylistsViewOut::FavoriteClicked(id.clone(), false))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    send.output(PlaylistsViewOut::FavoriteClicked(id.clone(), true))
+                        .unwrap();
+                }
                 _ => unreachable!("unkown icon name"),
             });
 
@@ -473,7 +483,6 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        item.fav_btn.add_write_only_binding(&item.fav, "icon_name");
         view.set_child(Some(&item.fav_btn));
     }
 
