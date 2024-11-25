@@ -724,7 +724,6 @@ impl relm4::Component for TracksView {
                 }
             }
             TracksViewIn::DownloadClicked => {
-                //TODO deactivate download button when shown tracks too much
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
