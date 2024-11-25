@@ -379,6 +379,15 @@ impl relm4::component::AsyncComponent for Browser {
                 ArtistsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteArtistClicked(id, state))
                     .unwrap(),
+                ArtistsViewOut::AddToQueue(drop) => sender
+                    .output(BrowserOut::InsertAfterCurrentInQueue(drop))
+                    .unwrap(),
+                ArtistsViewOut::AppendToQueue(drop) => {
+                    sender.output(BrowserOut::AppendToQueue(drop)).unwrap()
+                }
+                ArtistsViewOut::ReplaceQueue(drop) => {
+                    sender.output(BrowserOut::ReplaceQueue(drop)).unwrap()
+                }
             },
             BrowserIn::AlbumView(msg) => match *msg {
                 AlbumViewOut::AppendAlbum(drop) => {

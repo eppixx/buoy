@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
@@ -14,6 +14,7 @@ use crate::{
     factory::artist_row::{AlbumCountColumn, ArtistRow, CoverColumn, FavColumn, TitleColumn},
     settings::Settings,
     subsonic::Subsonic,
+    types::Droppable,
 };
 
 use super::{
@@ -75,6 +76,9 @@ pub enum ArtistsViewOut {
     ClickedArtist(submarine::data::ArtistId3),
     DisplayToast(String),
     FavoriteClicked(String, bool),
+    AddToQueue(Droppable),
+    AppendToQueue(Droppable),
+    ReplaceQueue(Droppable),
 }
 
 #[derive(Debug)]
@@ -448,9 +452,48 @@ impl relm4::component::Component for ArtistsView {
                 }
                 FilterRowOut::ParameterChanged => sender.input(ArtistsViewIn::FilterChanged),
             },
-            ArtistsViewIn::AddToQueue => {} //TODO
-            ArtistsViewIn::AppendToQueue => {}
-            ArtistsViewIn::ReplaceQueue => {}
+            ArtistsViewIn::AddToQueue => {
+                if self.shown_artists.borrow().is_empty() {
+                    return;
+                }
+                let artists: Vec<submarine::data::ArtistId3> =
+                    (0..self.entries.selection_model.n_items())
+                        .filter_map(|i| self.entries.get_visible(i))
+                        .map(|i| i.borrow().item.clone())
+                        .collect();
+                for artist in artists {
+                    let drop = Droppable::Artist(Box::new(artist));
+                    sender.output(ArtistsViewOut::AddToQueue(drop)).unwrap();
+                }
+            }
+            ArtistsViewIn::AppendToQueue => {
+                if self.shown_artists.borrow().is_empty() {
+                    return;
+                }
+                let artists: Vec<submarine::data::ArtistId3> =
+                    (0..self.entries.selection_model.n_items())
+                        .filter_map(|i| self.entries.get_visible(i))
+                        .map(|i| i.borrow().item.clone())
+                        .collect();
+                for artist in artists {
+                    let drop = Droppable::Artist(Box::new(artist));
+                    sender.output(ArtistsViewOut::AppendToQueue(drop)).unwrap();
+                }
+            }
+            ArtistsViewIn::ReplaceQueue => {
+                if self.shown_artists.borrow().is_empty() {
+                    return;
+                }
+                let artists: Vec<submarine::data::ArtistId3> =
+                    (0..self.entries.selection_model.n_items())
+                        .filter_map(|i| self.entries.get_visible(i))
+                        .map(|i| i.borrow().item.clone())
+                        .collect();
+                for artist in artists {
+                    let drop = Droppable::Artist(Box::new(artist));
+                    sender.output(ArtistsViewOut::ReplaceQueue(drop)).unwrap();
+                }
+            }
             ArtistsViewIn::ArtistClicked(index) => {
                 if let Some(clicked_artist) = self.entries.get_visible(index) {
                     sender
