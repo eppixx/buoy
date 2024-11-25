@@ -138,7 +138,7 @@ impl relm4::Component for TracksView {
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
-        // addtracks in chunks to not overwhelm the app
+        // add tracks in chunks to not overwhelm the app
         const CHUNK_SIZE: usize = 20;
         const WAIT: u64 = 20;
         let mut countdown = 0;
