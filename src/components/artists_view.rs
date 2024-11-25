@@ -452,7 +452,7 @@ impl relm4::component::Component for ArtistsView {
             ArtistsViewIn::AppendToQueue => {}
             ArtistsViewIn::ReplaceQueue => {}
             ArtistsViewIn::ArtistClicked(index) => {
-                if let Some(clicked_artist) = self.entries.get(index) {
+                if let Some(clicked_artist) = self.entries.get_visible(index) {
                     sender
                         .output(ArtistsViewOut::ClickedArtist(
                             clicked_artist.borrow().item.clone(),
