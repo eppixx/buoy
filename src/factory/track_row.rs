@@ -117,12 +117,14 @@ impl TrackRow {
                 .album_label
                 .set_markup(&format!("<a href=\"\">{album}</a>"));
             let album_id = album_id.clone();
-            result.album_label.connect_activate_link(move |_label, _id| {
-                sender
-                    .output(TracksViewOut::ClickedAlbum(album_id.to_string()))
-                    .unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
+            result
+                .album_label
+                .connect_activate_link(move |_label, _id| {
+                    sender
+                        .output(TracksViewOut::ClickedAlbum(album_id.to_string()))
+                        .unwrap();
+                    gtk::glib::signal::Propagation::Stop
+                });
         } else {
             result.album_label.set_text(album);
         }
@@ -210,11 +212,13 @@ impl TrackRow {
                 .album_label
                 .set_markup(&format!("<a href=\"\">{album}</a>"));
             let album_id = album_id.clone();
-            result.album_label.connect_activate_link(move |_label, _id| {
-                send.output(PlaylistsViewOut::ClickedAlbum(album_id.clone()))
-                    .unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
+            result
+                .album_label
+                .connect_activate_link(move |_label, _id| {
+                    send.output(PlaylistsViewOut::ClickedAlbum(album_id.clone()))
+                        .unwrap();
+                    gtk::glib::signal::Propagation::Stop
+                });
         } else {
             result.album_label.set_text(album);
         }
