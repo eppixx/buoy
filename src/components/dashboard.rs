@@ -176,7 +176,8 @@ impl relm4::Component for Dashboard {
             while let Ok(msg) = receiver.recv().await {
                 scrollings.replace(msg.clone());
 
-                if let Scrolling::None = msg {} else {
+                if let Scrolling::None = msg {
+                } else {
                     let scrolling = scrollings.clone();
                     let recently_added_scroll = recently_added_scroll.clone();
                     let recently_played_scroll = recently_played_scroll.clone();

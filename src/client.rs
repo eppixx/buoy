@@ -11,7 +11,9 @@ pub struct Client {
 impl Client {
     pub fn get() -> Option<submarine::Client> {
         static CLIENT: OnceLock<Mutex<Client>> = OnceLock::new();
-        if let Some(client) = CLIENT.get() { client.lock().unwrap().inner.clone() } else {
+        if let Some(client) = CLIENT.get() {
+            client.lock().unwrap().inner.clone()
+        } else {
             let settings = Settings::get().lock().unwrap();
             if let (Some(uri), Some(user), Some(hash), Some(salt)) = (
                 &settings.login_uri,

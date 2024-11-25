@@ -132,7 +132,12 @@ impl relm4::Component for TracksView {
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
-        let entries: Vec<TrackRow> = subsonic.borrow().tracks().iter().map(|t| TrackRow::new_track(&subsonic, t.clone(), sender.clone())).collect();
+        let entries: Vec<TrackRow> = subsonic
+            .borrow()
+            .tracks()
+            .iter()
+            .map(|t| TrackRow::new_track(&subsonic, t.clone(), sender.clone()))
+            .collect();
         let shutdown = std::time::Instant::now();
         let duration = shutdown - time_startup;
         tracing::info!("loading time of TracksView was {duration:?}");
@@ -150,7 +155,6 @@ impl relm4::Component for TracksView {
         let shutdown = std::time::Instant::now();
         let duration = shutdown - time_startup;
         tracing::info!("loading time of TracksView was {duration:?}");
-
 
         let mut model = Self {
             subsonic: subsonic.clone(),

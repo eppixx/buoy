@@ -201,7 +201,8 @@ impl relm4::Component for Queue {
             while let Ok(msg) = receiver.recv().await {
                 scrolling.replace(msg.clone());
 
-                if msg == ScrollMotion::None {} else {
+                if msg == ScrollMotion::None {
+                } else {
                     let scrolled = scrolled.clone();
                     let scrolling = scrolling.clone();
 
