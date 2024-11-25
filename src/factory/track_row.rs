@@ -49,11 +49,13 @@ impl TrackRow {
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
+        artist_label.inline_css("color: inherit");
 
         let album_label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
+        album_label.inline_css("color: inherit");
 
         Self {
             subsonic: subsonic.clone(),
