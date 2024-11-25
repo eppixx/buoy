@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use relm4::{
     gtk::{
         self, glib,
@@ -108,19 +109,24 @@ pub enum TracksViewOut {
     ClickedAlbum(String),
 }
 
+#[derive(Debug)]
+pub enum TracksViewCmd {
+    AddTracks(Vec<submarine::data::Child>),
+    LoadingTracksFinished,
+}
+
 #[relm4::component(pub)]
 impl relm4::Component for TracksView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = TracksViewIn;
     type Output = TracksViewOut;
-    type CommandOutput = ();
+    type CommandOutput = TracksViewCmd;
 
     fn init(
         subsonic: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let time_startup = std::time::Instant::now();
         let mut tracks =
             relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
         tracks.append_column::<PositionColumn>();
@@ -132,29 +138,23 @@ impl relm4::Component for TracksView {
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
-        let entries: Vec<TrackRow> = subsonic
-            .borrow()
-            .tracks()
-            .iter()
-            .map(|t| TrackRow::new_track(&subsonic, t.clone(), sender.clone()))
-            .collect();
-        let shutdown = std::time::Instant::now();
-        let duration = shutdown - time_startup;
-        tracing::info!("loading time of TracksView was {duration:?}");
-
-        // for track in subsonic.borrow().tracks() {
-        //     tracks.append(TrackRow::new_track(
-        //         &subsonic,
-        //         track.clone(),
-        //         sender.clone(),
-        //     ));
-        // }
-        for entry in entries {
-            tracks.append(entry);
+        // addtracks in chunks to not overwhelm the app
+        const CHUNK_SIZE: usize = 20;
+        const WAIT: u64 = 20;
+        let mut countdown = 0;
+        for chunk in &subsonic.borrow().tracks().iter().cloned().chunks(CHUNK_SIZE) {
+            let chunk: Vec<submarine::data::Child> = chunk.into_iter().collect();
+            sender.oneshot_command(async move {
+                tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+                TracksViewCmd::AddTracks(chunk)
+            });
+            countdown += WAIT;
         }
-        let shutdown = std::time::Instant::now();
-        let duration = shutdown - time_startup;
-        tracing::info!("loading time of TracksView was {duration:?}");
+        sender.oneshot_command(async move {
+           tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+            TracksViewCmd::LoadingTracksFinished
+        });
+        tracing::info!("loading tracks should be finished in {countdown}ms");
 
         let mut model = Self {
             subsonic: subsonic.clone(),
@@ -174,9 +174,6 @@ impl relm4::Component for TracksView {
         let widgets = view_output!();
         model.filters.guard().push_back(Category::Favorite);
         model.calc_sensitivity_of_buttons(&widgets);
-        let shutdown = std::time::Instant::now();
-        let duration = shutdown - time_startup;
-        tracing::info!("loading time of TracksView was {duration:?}");
         relm4::ComponentParts { model, widgets }
     }
 
@@ -190,10 +187,17 @@ impl relm4::Component for TracksView {
                 gtk::WindowHandle {
                     gtk::CenterBox {
                         #[wrap(Some)]
-                        set_center_widget = &gtk::Label {
-                            add_css_class: "h2",
-                            set_label: "Tracks",
-                            set_halign: gtk::Align::Center,
+                        set_center_widget = &gtk::Box {
+                            set_spacing: 5,
+                            gtk::Label {
+                                add_css_class: "h2",
+                                set_label: "Tracks",
+                                set_halign: gtk::Align::Center,
+                            },
+                            append: spinner = &gtk::Spinner {
+                                set_spinning: true,
+                                start: (),
+                            }
                         },
 
                         #[wrap(Some)]
@@ -731,6 +735,26 @@ impl relm4::Component for TracksView {
                     self.info_cover
                         .emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
                 }
+            }
+        }
+    }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::CommandOutput,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            TracksViewCmd::AddTracks(tracks) => {
+                for track in tracks {
+                    let track = TrackRow::new_track(&self.subsonic, track, sender.clone());
+                    self.tracks.append(track);
+                }
+            }
+            TracksViewCmd::LoadingTracksFinished => {
+                widgets.spinner.set_visible(false);
             }
         }
     }
