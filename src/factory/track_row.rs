@@ -409,7 +409,7 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(item.item.genre.as_deref().unwrap_or("No genre given"));
+        label.set_label(item.item.genre.as_deref().unwrap_or("Unknown genre"));
         b.add_controller(item.get_drag_src());
     }
 
