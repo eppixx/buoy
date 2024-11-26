@@ -154,6 +154,7 @@ impl Playback {
         self.pipeline.set_state(gst::State::Playing)?;
         Ok(())
     }
+
     pub fn pause(&mut self) -> anyhow::Result<()> {
         self.pipeline.set_state(gst::State::Paused)?;
         Ok(())
@@ -178,10 +179,12 @@ impl Playback {
         Ok(())
     }
 
+    /// position in ms
     pub fn set_position(&self, position: i64) -> anyhow::Result<()> {
+        let position = position as u64 * gst::ClockTime::MSECOND;
         self.pipeline.seek_simple(
-            gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-            position as u64 * gst::ClockTime::MSECOND,
+            gst::SeekFlags::SNAP_AFTER | gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
+            position,
         )?;
         Ok(())
     }
