@@ -280,11 +280,7 @@ impl relm4::component::AsyncComponent for App {
             model
                 .seekbar
                 .emit(SeekbarIn::SeekTo(settings.queue_seek as i64));
-            model
-                .playback
-                .borrow()
-                .set_position(0)
-                .unwrap();
+            model.playback.borrow().set_position(0).unwrap();
 
             // playcontrol
             if model.queue.model().songs().is_empty() {

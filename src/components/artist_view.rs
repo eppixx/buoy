@@ -10,7 +10,9 @@ use relm4::{
 };
 
 use crate::components::{
-    album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
+    album_element::{
+        get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
+    },
     cover::{Cover, CoverIn, CoverOut},
 };
 use crate::{client::Client, subsonic::Subsonic, types::Droppable};
@@ -291,8 +293,7 @@ impl relm4::Component for ArtistView {
             },
             ArtistViewIn::SearchChanged(search) => {
                 self.albums.widget().set_filter_func(move |element| {
-                    let (title, _artist) =
-                        crate::components::albums_view::get_info_of_flowboxchild(element);
+                    let (title, _artist) = get_info_of_flowboxchild(element);
 
                     //actual matching
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();

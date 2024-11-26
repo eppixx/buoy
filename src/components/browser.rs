@@ -320,7 +320,11 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
-                    sender.input(BrowserIn::AlbumsView(AlbumsViewOut::Clicked(id)));
+                    if let AlbumElementInit::Child(child) = id {
+                        sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(*child)));
+                    } else {
+                        unimplemented!("encountered not child");
+                    }
                 }
                 DashboardOut::DisplayToast(title) => {
                     sender.output(BrowserOut::DisplayToast(title)).unwrap();
@@ -330,11 +334,8 @@ impl relm4::component::AsyncComponent for Browser {
                     .unwrap(),
             },
             BrowserIn::AlbumsView(msg) => match msg {
-                AlbumsViewOut::Clicked(id) => {
-                    let init: AlbumViewInit = match id {
-                        AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
-                        AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
-                    };
+                AlbumsViewOut::ClickedAlbum(child) => {
+                    let init = AlbumViewInit::Child(child.into());
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
                         .launch((self.subsonic.clone(), init))
                         .forward(sender.input_sender(), |msg| {
@@ -356,6 +357,9 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumsViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
                     .unwrap(),
+                AlbumsViewOut::AddToQueue(drop) => {}
+                AlbumsViewOut::AppendToQueue(drop) => {}
+                AlbumsViewOut::ReplaceQueue(drop) => {}
             },
             BrowserIn::ArtistsView(msg) => match msg {
                 ArtistsViewOut::ClickedArtist(id) => {
@@ -725,9 +729,6 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::CoverSizeChanged => {
                 self.dashboard.emit(DashboardIn::CoverSizeChanged);
-                if let Some(albums) = &self.albums {
-                    albums.emit(AlbumsViewIn::CoverSizeChanged);
-                }
             }
         }
     }

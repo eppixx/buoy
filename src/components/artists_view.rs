@@ -323,8 +323,7 @@ impl relm4::component::Component for ArtistsView {
                                     set_text: "New filter:",
                                 },
 
-                                #[name = "new_filter"]
-                                gtk::DropDown {
+                                append: new_filter = &gtk::DropDown {
                                     set_model: Some(&Category::artists()),
                                     set_factory: Some(&Category::factory()),
                                 },

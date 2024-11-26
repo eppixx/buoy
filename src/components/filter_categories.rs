@@ -77,7 +77,7 @@ impl Category {
         store_from_category(&categories)
     }
 
-    pub fn albums_view() -> gio::ListStore {
+    pub fn albums() -> gio::ListStore {
         let categories = [
             Self::Album,
             Self::Artist,

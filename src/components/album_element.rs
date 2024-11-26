@@ -4,6 +4,7 @@ use relm4::{
     gtk::{
         self,
         prelude::{ButtonExt, ToValue, WidgetExt},
+        FlowBoxChild,
     },
     Component, ComponentController, RelmWidgetExt,
 };
@@ -288,4 +289,19 @@ impl relm4::factory::FactoryComponent for AlbumElement {
             }
         }
     }
+}
+
+pub fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) {
+    use gtk::glib::object::Cast;
+    let overlay = element.first_child().unwrap();
+    let button = overlay.first_child().unwrap();
+    let overlay = button.first_child().unwrap();
+    let bo = overlay.first_child().unwrap();
+    let cover = bo.first_child().unwrap();
+    let title = cover.next_sibling().unwrap();
+    let title = title.downcast::<gtk::Label>().expect("unepected element");
+    let artist = title.next_sibling().unwrap();
+    let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
+
+    (title, artist)
 }

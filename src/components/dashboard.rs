@@ -13,11 +13,11 @@ use relm4::{
 
 use crate::{client::Client, subsonic::Subsonic};
 use crate::{
-    components::album_element::{AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut},
+    components::album_element::{
+        get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
+    },
     settings::Settings,
 };
-
-use super::albums_view::get_info_of_flowboxchild;
 
 #[derive(Debug, Clone)]
 enum Scrolling {
