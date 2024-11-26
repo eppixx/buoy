@@ -8,7 +8,6 @@ pub mod cover;
 pub mod dashboard;
 pub mod descriptive_cover;
 pub mod equalizer;
-pub mod filter_box;
 pub mod filter_categories;
 pub mod filter_row;
 pub mod login_form;
