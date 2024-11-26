@@ -87,6 +87,7 @@ pub enum AlbumsViewOut {
     AddToQueue(Droppable),
     AppendToQueue(Droppable),
     ReplaceQueue(Droppable),
+    ClickedArtist(String),
 }
 
 #[derive(Debug)]

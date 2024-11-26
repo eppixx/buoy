@@ -25,6 +25,7 @@ pub struct AlbumRow {
     pub item: submarine::data::Child,
     pub fav: relm4::binding::StringBinding,
     pub cover: relm4::Controller<Cover>,
+    artist_label: gtk::Label,
     fav_btn: gtk::Button,
 }
 
@@ -54,15 +55,38 @@ impl AlbumRow {
         fav_btn.set_tooltip("Click to (un)favorite album");
         fav_btn.set_focus_on_click(false);
         let id = item.id.clone();
+        let send = sender.clone();
         fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
-            Some("starred-symbolic") => sender
+            Some("starred-symbolic") => send
                 .output(AlbumsViewOut::FavoriteClicked(id.clone(), false))
                 .unwrap(),
-            Some("non-starred-symbolic") => sender
+            Some("non-starred-symbolic") => send
                 .output(AlbumsViewOut::FavoriteClicked(id.clone(), true))
                 .unwrap(),
             _ => unreachable!("unkown icon name"),
         });
+
+        let artist = item.artist.as_deref().unwrap_or("Unknown Artist");
+        let send = sender.clone();
+        let artist_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .valign(gtk::Align::Center)
+            .ellipsize(gtk::pango::EllipsizeMode::End);
+        let artist_label = if let Some(artist_id) = item.artist_id.clone() {
+            let artist = gtk::glib::markup_escape_text(artist);
+            let artist_label = artist_label
+                .label(&format!("<a href=\"\">{artist}</a>"))
+                .use_markup(true)
+                .build();
+            artist_label.connect_activate_link(move |_label, _id| {
+                send.output(AlbumsViewOut::ClickedArtist(artist_id.clone()))
+                    .unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
+            artist_label
+        } else {
+            artist_label.label(artist).build()
+        };
 
         Self {
             subsonic: subsonic.clone(),
@@ -70,6 +94,7 @@ impl AlbumRow {
             fav: relm4::binding::StringBinding::new(fav),
             cover,
             fav_btn,
+            artist_label,
         }
     }
 
@@ -153,29 +178,21 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
 pub struct ArtistColumn;
 
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = AlbumRow;
-    type Widgets = gtk::Label;
+    type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Artist";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        b.set_hexpand(true);
-        b.add_css_class(granite::STYLE_CLASS_FLAT);
-        b.append(&label);
-        (b, (label))
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(&item.item.artist.as_deref().unwrap_or("Unkonwn Artist"));
-        b.add_controller(item.get_drag_src());
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(Some(&item.artist_label));
+        view.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -320,7 +337,9 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let view = gtk::Viewport::default();
+        view.set_valign(gtk::Align::Center);
+        (view, ())
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
