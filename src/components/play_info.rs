@@ -92,7 +92,7 @@ impl relm4::SimpleComponent for PlayInfo {
             PlayInfoIn::NewState(child) => match *child {
                 None => {
                     self.covers.emit(CoverIn::LoadId(None));
-                    self.title = String::from("Nothing is played currently");
+                    self.title = String::from("Nothing is playing");
                     self.artist = String::new();
                     self.album = String::new();
                 }
