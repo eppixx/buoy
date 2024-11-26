@@ -120,6 +120,7 @@ impl relm4::component::Component for AlbumsView {
             relm4::typed_view::column::TypedColumnView::<AlbumRow, gtk::SingleSelection>::new();
         entries.append_column::<CoverColumn>();
         entries.append_column::<TitleColumn>();
+        entries.append_column::<ArtistColumn>();
         entries.append_column::<GenreColumn>();
         entries.append_column::<LengthColumn>();
         entries.append_column::<YearColumn>();
