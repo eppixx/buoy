@@ -472,6 +472,11 @@ impl relm4::component::Component for AlbumsView {
                                     return false;
                                 }
                             }
+                            Filter::Cd(_, 0) => {
+                                if let Some(_) = &track.item.disc_number {
+                                    return false;
+                                }
+                            }
                             Filter::Cd(order, value) => {
                                 if let Some(disc) = &track.item.disc_number {
                                     if disc.cmp(value) != *order {
