@@ -43,7 +43,7 @@ impl AlbumsView {
     }
 
     fn calc_sensitivity_of_buttons(&self, widgets: &<AlbumsView as relm4::Component>::Widgets) {
-        let allowed_queue_modifier_len = 5;
+        let allowed_queue_modifier_len = 10;
 
         if (!self.active_filters() && self.entries.len() >= allowed_queue_modifier_len)
             || (self.active_filters()
