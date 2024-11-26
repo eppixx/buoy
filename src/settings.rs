@@ -58,7 +58,7 @@ pub struct Settings {
     #[serde(default)] //defaults to [0.0f64; 10]
     pub equalizer_bands: [f64; 10],
 
-    #[serde(default)]
+    #[serde(skip)]
     pub search_active: bool,
     #[serde(default)]
     pub search_text: String,
