@@ -130,13 +130,6 @@ impl relm4::component::Component for ArtistsView {
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
         };
 
-        // add artists with cover and title
-        for artist in init.borrow().artists() {
-            model
-                .entries
-                .append(ArtistRow::new(&init, artist.clone(), sender.clone()));
-        }
-
         // add tracks in chunks to not overwhelm the app
         const CHUNK_SIZE: usize = 20;
         const WAIT: u64 = 20;
@@ -160,7 +153,7 @@ impl relm4::component::Component for ArtistsView {
             tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
             ArtistsViewCmd::LoadingArtistsFinished
         });
-        tracing::info!("loading tracks should be finished in {countdown}ms");
+        tracing::info!("loading artists should be finished in {countdown}ms");
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
@@ -225,7 +218,7 @@ impl relm4::component::Component for ArtistsView {
 
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.entries.len()),
+                                    set_text: &format!("Shown artists: {}", model.subsonic.borrow().artists().len()),
                                 },
                                 gtk::Box {
                                     set_spacing: 15,
