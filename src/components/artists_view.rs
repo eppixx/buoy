@@ -130,7 +130,7 @@ impl relm4::component::Component for ArtistsView {
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
         };
 
-        // add tracks in chunks to not overwhelm the app
+        // add artists in chunks to not overwhelm the app
         const CHUNK_SIZE: usize = 20;
         const WAIT: u64 = 20;
         let mut countdown = 0;

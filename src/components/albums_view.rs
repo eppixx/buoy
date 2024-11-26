@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use relm4::{
     gtk::{
         self, glib,
@@ -15,8 +16,7 @@ use crate::{
         filter_row::{Filter, FilterRowIn},
     },
     factory::album_row::{
-        AlbumRow, CdColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, TitleColumn,
-        YearColumn,
+        AlbumRow, ArtistColumn, CdColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, TitleColumn, YearColumn
     },
     settings::Settings,
     subsonic::Subsonic,
@@ -102,14 +102,18 @@ pub enum AlbumsViewIn {
     ToggleFilters,
 }
 
-//TODO Cmd to stagger loading
+#[derive(Debug)]
+pub enum AlbumsViewCmd {
+    AddAlbums(Vec<submarine::data::Child>),
+    LoadingAlbumsFinished,
+}
 
 #[relm4::component(pub)]
 impl relm4::component::Component for AlbumsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = AlbumsViewIn;
     type Output = AlbumsViewOut;
-    type CommandOutput = ();
+    type CommandOutput = AlbumsViewCmd;
 
     fn init(
         init: Self::Init,
@@ -137,12 +141,30 @@ impl relm4::component::Component for AlbumsView {
             shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
 
-        // add albums with cover and title
-        for album in init.borrow().albums() {
-            model
-                .entries
-                .append(AlbumRow::new(init.clone(), album.clone(), sender.clone()));
+        // add albums in chunks to not overwhelm the app
+        const CHUNK_SIZE: usize = 20;
+        const WAIT: u64 = 20;
+        let mut countdown = 0;
+        for chunk in &model
+            .subsonic
+            .borrow()
+            .albums()
+            .iter()
+            .cloned()
+            .chunks(CHUNK_SIZE)
+        {
+            let chunk: Vec<submarine::data::Child> = chunk.into_iter().collect();
+            sender.oneshot_command(async move {
+                tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+                AlbumsViewCmd::AddAlbums(chunk)
+            });
+            countdown += WAIT;
         }
+        sender.oneshot_command(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
+            AlbumsViewCmd::LoadingAlbumsFinished
+        });
+        tracing::info!("loading artists should be finished in {countdown}ms");
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
@@ -646,6 +668,26 @@ impl relm4::component::Component for AlbumsView {
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
+            }
+        }
+    }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::CommandOutput,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            AlbumsViewCmd::AddAlbums(artists) => {
+                for artist in artists {
+                    let artist = AlbumRow::new(self.subsonic.clone(), artist, sender.clone());
+                    self.entries.append(artist);
+                }
+            }
+            AlbumsViewCmd::LoadingAlbumsFinished => {
+                widgets.spinner.set_visible(false);
             }
         }
     }
