@@ -90,9 +90,9 @@ impl Playback {
                         track.store(false, Ordering::Relaxed);
                         send.try_send(PlaybackOut::TrackEnd).unwrap();
                     }
-                    MessageView::StreamStart(..) => {
-                        send.try_send(PlaybackOut::SongPosition(0)).unwrap();
-                    }
+                    // MessageView::StreamStart(..) => {
+                    //     send.try_send(PlaybackOut::SongPosition(0)).unwrap();
+                    // }
                     _ => {}
                 }
             }

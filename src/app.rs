@@ -276,6 +276,16 @@ impl relm4::component::AsyncComponent for App {
             widgets.volume_btn.set_value(settings.volume);
             model.mpris.borrow_mut().set_volume(settings.volume);
 
+            //seekbar
+            model
+                .seekbar
+                .emit(SeekbarIn::SeekTo(settings.queue_seek as i64));
+            model
+                .playback
+                .borrow()
+                .set_position(0)
+                .unwrap();
+
             // playcontrol
             if model.queue.model().songs().is_empty() {
                 model.play_controls.emit(PlayControlIn::Disable);
