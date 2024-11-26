@@ -50,7 +50,7 @@ impl ArtistRow {
         cover.model().change_size(75);
 
         let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_tooltip("Click to (un)favorite artist");
         fav_btn.set_focus_on_click(false);
         let id = item.id.clone();
         fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
