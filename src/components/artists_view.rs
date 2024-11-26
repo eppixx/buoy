@@ -398,7 +398,7 @@ impl relm4::component::Component for ArtistsView {
                                 TextRelation::Contains if !track.item.name.contains(value) => {
                                     return false
                                 }
-                                _ => {}
+                                _ => {} // filter matches
                             },
                             Filter::AlbumCount(order, value) => {
                                 if track.item.album_count.cmp(value) != *order {

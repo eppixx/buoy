@@ -149,7 +149,7 @@ impl relm4::Component for ArtistView {
                             let state = match btn.icon_name().as_deref() {
                                 Some("starred-symbolic") => false,
                                 Some("non-starred-symbolic") => true,
-                                _ => true,
+                                name => unreachable!("unknown icon name: {name:?}"),
                             };
                             sender.output(ArtistViewOut::FavoriteArtistClicked(init.id.clone(), state)).unwrap();
                         }

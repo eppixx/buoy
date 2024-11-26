@@ -159,7 +159,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                                 "Subsonic server not found. Is the address correct"
                             }
                             SubsonicError::Server(_) => "Username or password is wrong",
-                            _ => "Login error",
+                            e => &format!("Login error: {e}"),
                         };
                         widgets.toasts.set_title(error_str);
                         widgets.toasts.send_notification();
@@ -191,7 +191,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                         url::ParseError::InvalidDomainCharacter => {
                             "Address contains invalid character"
                         }
-                        _ => "Address is invalid",
+                        e => &format!("Address is invalid: {e}"),
                     };
                     widgets.uri.set_secondary_icon_tooltip_text(Some(error_str));
                 }

@@ -463,7 +463,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
                 Some("non-starred-symbolic") => sender
                     .output(QueueSongOut::FavoriteClicked(self.info.id.clone(), true))
                     .unwrap(),
-                _ => {}
+                name => unimplemented!("unkonwn icon name: {name:?}"),
             },
             QueueSongIn::FavoriteSong(id, true) if id == self.info.id => {
                 self.info.starred = Some(chrono::Utc::now().into());

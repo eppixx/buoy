@@ -116,7 +116,7 @@ impl relm4::SimpleComponent for PlayControl {
                         "media-playback-pause-symbolic" => {
                             sender.output(PlayControlOut::Player(Command::Pause)).unwrap();
                         }
-                        _ => unreachable!("unkonwn icon name"),
+                        name => unreachable!("unkonwn icon name: {name}"),
                     }
                 },
             },

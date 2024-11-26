@@ -452,7 +452,7 @@ impl relm4::Component for TracksView {
                                     return false;
                                 }
                             }
-                            Filter::Title(_, value) if value.is_empty() => {}
+                            Filter::Title(_, value) if value.is_empty() => {} // filter matches
                             Filter::Title(relation, value) => match relation {
                                 TextRelation::ExactNot if value == &track.item.title => {
                                     return false
@@ -464,9 +464,9 @@ impl relm4::Component for TracksView {
                                 TextRelation::Contains if !track.item.title.contains(value) => {
                                     return false
                                 }
-                                _ => {}
+                                _ => {} // filter matches
                             },
-                            Filter::Album(_, value) if value.is_empty() => {}
+                            Filter::Album(_, value) if value.is_empty() => {} // filter matches
                             Filter::Album(relation, value) => match relation {
                                 TextRelation::ExactNot
                                     if Some(value) == track.item.album.as_ref() =>
@@ -492,9 +492,9 @@ impl relm4::Component for TracksView {
                                         return false;
                                     }
                                 }
-                                _ => {}
+                                _ => {} // filter matches
                             },
-                            Filter::Artist(_, value) if value.is_empty() => {}
+                            Filter::Artist(_, value) if value.is_empty() => {} // filter matches
                             Filter::Artist(relation, value) => match relation {
                                 TextRelation::ExactNot
                                     if Some(value) == track.item.artist.as_ref() =>
@@ -522,7 +522,7 @@ impl relm4::Component for TracksView {
                                         return false;
                                     }
                                 }
-                                _ => {}
+                                _ => {} // filter matches
                             },
                             Filter::Year(order, value) => {
                                 if let Some(year) = &track.item.year {
@@ -568,7 +568,7 @@ impl relm4::Component for TracksView {
                                         return false;
                                     }
                                 }
-                                _ => {}
+                                _ => {} // filter matches
                             },
                             Filter::Duration(order, value) => {
                                 if let Some(duration) = &track.item.duration {

@@ -167,7 +167,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
                 model.favorite.set_icon_name("starred-symbolic");
                 model.favorite_ribbon.set_visible(true);
             }
-            _ => {}
+            _ => {} // default is not favorited
         }
 
         model
@@ -278,7 +278,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
                     Some("non-starred-symbolic") => sender
                         .output(AlbumElementOut::FavoriteClicked(id, true))
                         .unwrap(),
-                    _ => {}
+                    name => unreachable!("unkonwn icon name: {name:?}"),
                 }
             }
             AlbumElementIn::Clicked => {

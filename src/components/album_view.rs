@@ -154,7 +154,7 @@ impl relm4::Component for AlbumView {
                             let state = match btn.icon_name().as_deref() {
                                 Some("starred-symbolic") => false,
                                 Some("non-starred-symbolic") => true,
-                                _ => true,
+                                name => unreachable!("unkonwn icon name: {name:?}"),
                             };
                             sender.output(AlbumViewOut::FavoriteClicked(id.clone(), state)).unwrap();
                         }
@@ -347,7 +347,7 @@ impl relm4::Component for AlbumView {
                 match state {
                     true if matched => self.favorite.set_icon_name("starred-symbolic"),
                     false if matched => self.favorite.set_icon_name("non-starred-symbolic"),
-                    _ => {}
+                    _ => {} // already in the right state
                 }
             }
             AlbumViewIn::FavoritedSong(id, state) => {
