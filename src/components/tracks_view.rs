@@ -240,15 +240,15 @@ impl relm4::Component for TracksView {
 
                                 append: shown_tracks = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown tracks: {}", model.tracks.len()),
+                                    set_text: &format!("Shown tracks: {}", model.shown_tracks.borrow().len()),
                                 },
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.subsonic.borrow().artists().len()),
+                                    set_text: &format!("Shown artists: {}", model.shown_artists.borrow().len()),
                                 },
                                 append: shown_albums = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown albums: {}", model.subsonic.borrow().albums().len()),
+                                    set_text: &format!("Shown albums: {}", model.shown_albums.borrow().len()),
                                 },
 
                                 gtk::Box {
@@ -401,9 +401,6 @@ impl relm4::Component for TracksView {
             TracksViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);
 
-                self.shown_tracks.borrow_mut().clear();
-                self.shown_artists.borrow_mut().clear();
-                self.shown_albums.borrow_mut().clear();
                 let shown_tracks = self.shown_tracks.clone();
                 let shown_albums = self.shown_albums.clone();
                 let shown_artists = self.shown_artists.clone();
@@ -438,6 +435,10 @@ impl relm4::Component for TracksView {
                     ));
                     return;
                 }
+
+                self.shown_tracks.borrow_mut().clear();
+                self.shown_artists.borrow_mut().clear();
+                self.shown_albums.borrow_mut().clear();
 
                 self.tracks.add_filter(move |track| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
@@ -755,9 +756,25 @@ impl relm4::Component for TracksView {
         match msg {
             TracksViewCmd::AddTracks(tracks) => {
                 for track in tracks {
+                    self.shown_tracks.borrow_mut().push(track.clone());
+                    self.shown_albums.borrow_mut().insert(track.album.clone());
+                    self.shown_artists.borrow_mut().insert(track.artist.clone());
                     let track = TrackRow::new_track(&self.subsonic, track, sender.clone());
                     self.tracks.append(track);
                 }
+                widgets.shown_tracks.set_label(&format!(
+                    "Shown tracks: {}",
+                    self.shown_tracks.borrow().len()
+                ));
+                widgets.shown_albums.set_label(&format!(
+                    "Shown albums: {}",
+                    self.shown_albums.borrow().len()
+                ));
+                widgets.shown_artists.set_label(&format!(
+                    "Shown artists: {}",
+                    self.shown_artists.borrow().len()
+                ));
+                self.calc_sensitivity_of_buttons(widgets);
             }
             TracksViewCmd::LoadingTracksFinished => {
                 widgets.spinner.set_visible(false);

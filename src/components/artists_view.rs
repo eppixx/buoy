@@ -218,7 +218,7 @@ impl relm4::component::Component for ArtistsView {
 
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.subsonic.borrow().artists().len()),
+                                    set_text: &format!("Shown artists: {}", model.shown_artists.borrow().len()),
                                 },
                                 gtk::Box {
                                     set_spacing: 15,
@@ -348,7 +348,6 @@ impl relm4::component::Component for ArtistsView {
                     label.set_text(&format!("Shown artists: {}", counter.borrow().len()));
                 };
 
-                self.shown_artists.borrow_mut().clear();
                 let shown_artists = self.shown_artists.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
                 update_label(&shown_artists_widget, &shown_artists);
@@ -366,6 +365,8 @@ impl relm4::component::Component for ArtistsView {
                     update_label(&shown_artists_widget, &shown_artists);
                     return;
                 }
+
+                self.shown_artists.borrow_mut().clear();
 
                 self.entries.add_filter(move |track| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
@@ -554,9 +555,15 @@ impl relm4::component::Component for ArtistsView {
         match msg {
             ArtistsViewCmd::AddArtists(artists) => {
                 for artist in artists {
+                    self.shown_artists.borrow_mut().insert(artist.name.clone());
                     let artist = ArtistRow::new(&self.subsonic, artist, sender.clone());
                     self.entries.append(artist);
                 }
+                widgets.shown_artists.set_label(&format!(
+                    "Shown artists: {}",
+                    self.shown_artists.borrow().len()
+                ));
+                self.calc_sensitivity_of_buttons(widgets);
             }
             ArtistsViewCmd::LoadingArtistsFinished => {
                 widgets.spinner.set_visible(false);

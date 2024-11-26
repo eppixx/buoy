@@ -16,7 +16,8 @@ use crate::{
         filter_row::{Filter, FilterRowIn},
     },
     factory::album_row::{
-        AlbumRow, ArtistColumn, CdColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, TitleColumn, YearColumn
+        AlbumRow, ArtistColumn, CdColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn,
+        TitleColumn, YearColumn,
     },
     settings::Settings,
     subsonic::Subsonic,
@@ -229,11 +230,11 @@ impl relm4::component::Component for AlbumsView {
 
                                 append: shown_albums = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown albums: {}", model.entries.len()),
+                                    set_text: &format!("Shown albums: {}", model.shown_albums.borrow().len()),
                                 },
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.entries.len()), //TODO
+                                    set_text: &format!("Shown artists: {}", model.shown_artists.borrow().len()),
                                 },
 
                                 gtk::Box {
@@ -361,12 +362,11 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);
 
-                let update_label = |label: &gtk::Label, name: &str, counter: &Rc<RefCell<HashSet<_>>>| {
-                    label.set_text(&format!("Shown {name}: {}", counter.borrow().len()));
-                };
+                let update_label =
+                    |label: &gtk::Label, name: &str, counter: &Rc<RefCell<HashSet<_>>>| {
+                        label.set_text(&format!("Shown {name}: {}", counter.borrow().len()));
+                    };
 
-                self.shown_artists.borrow_mut().clear();
-                self.shown_albums.borrow_mut().clear();
                 let shown_albums = self.shown_albums.clone();
                 let shown_artists = self.shown_artists.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
@@ -388,6 +388,9 @@ impl relm4::component::Component for AlbumsView {
                     update_label(&shown_albums_widget, "albums", &shown_albums);
                     return;
                 }
+
+                self.shown_artists.borrow_mut().clear();
+                self.shown_albums.borrow_mut().clear();
 
                 self.entries.add_filter(move |track| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
@@ -682,9 +685,22 @@ impl relm4::component::Component for AlbumsView {
         match msg {
             AlbumsViewCmd::AddAlbums(artists) => {
                 for artist in artists {
+                    self.shown_artists
+                        .borrow_mut()
+                        .insert(artist.artist.clone());
+                    self.shown_albums.borrow_mut().insert(artist.album.clone());
                     let artist = AlbumRow::new(self.subsonic.clone(), artist, sender.clone());
                     self.entries.append(artist);
                 }
+                widgets.shown_albums.set_label(&format!(
+                    "Shown albums: {}",
+                    self.shown_albums.borrow().len()
+                ));
+                widgets.shown_artists.set_label(&format!(
+                    "Shown artists: {}",
+                    self.shown_artists.borrow().len()
+                ));
+                self.calc_sensitivity_of_buttons(widgets);
             }
             AlbumsViewCmd::LoadingAlbumsFinished => {
                 widgets.spinner.set_visible(false);
