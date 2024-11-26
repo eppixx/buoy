@@ -52,28 +52,28 @@ impl AlbumsView {
             widgets.add_to_queue.set_sensitive(false);
             widgets
                 .add_to_queue
-                .set_tooltip("There are too many artists to add to queue");
+                .set_tooltip("There are too many albums to add to queue");
             widgets.append_to_queue.set_sensitive(false);
             widgets
                 .append_to_queue
-                .set_tooltip("There are too many artists to append to queue");
+                .set_tooltip("There are too many albums to append to queue");
             widgets.replace_queue.set_sensitive(false);
             widgets
                 .replace_queue
-                .set_tooltip("There are too many artists to replace queue");
+                .set_tooltip("There are too many albums to replace queue");
         } else {
             widgets.add_to_queue.set_sensitive(true);
             widgets
                 .add_to_queue
-                .set_tooltip("Append shown artists to end of queue");
+                .set_tooltip("Append shown albums to end of queue");
             widgets.append_to_queue.set_sensitive(true);
             widgets
                 .append_to_queue
-                .set_tooltip("Insert shown artists after currently played or paused item");
+                .set_tooltip("Insert shown albums after currently played or paused item");
             widgets.replace_queue.set_sensitive(true);
             widgets
                 .replace_queue
-                .set_tooltip("Replaces current queue with shown artists");
+                .set_tooltip("Replaces current queue with shown albums");
         }
     }
 }
@@ -338,16 +338,18 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);
 
+                let update_label = |label: &gtk::Label, name: &str, counter: &Rc<RefCell<HashSet<_>>>| {
+                    label.set_text(&format!("Shown {name}: {}", counter.borrow().len()));
+                };
+
                 self.shown_artists.borrow_mut().clear();
                 self.shown_albums.borrow_mut().clear();
                 let shown_albums = self.shown_albums.clone();
                 let shown_artists = self.shown_artists.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
                 let shown_albums_widget = widgets.shown_albums.clone();
-                shown_artists_widget
-                    .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                shown_albums_widget
-                    .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                update_label(&shown_artists_widget, "artists", &shown_artists);
+                update_label(&shown_albums_widget, "albums", &shown_albums);
 
                 self.entries.pop_filter();
                 let filters: Vec<Filter> = self
@@ -359,14 +361,8 @@ impl relm4::component::Component for AlbumsView {
                 if (filters.is_empty() || !widgets.filters.reveals_child())
                     && !Settings::get().lock().unwrap().search_active
                 {
-                    shown_artists_widget.set_text(&format!(
-                        "Shown artists: {}",
-                        self.subsonic.borrow().artists().len()
-                    ));
-                    shown_albums_widget.set_text(&format!(
-                        "Shown albums: {}",
-                        self.subsonic.borrow().albums().len()
-                    ));
+                    update_label(&shown_artists_widget, "artists", &shown_artists);
+                    update_label(&shown_albums_widget, "albums", &shown_albums);
                     return;
                 }
 
@@ -504,10 +500,8 @@ impl relm4::component::Component for AlbumsView {
                     if !Settings::get().lock().unwrap().search_active {
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        shown_artists_widget
-                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                        shown_albums_widget
-                            .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                        update_label(&shown_artists_widget, "artists", &shown_artists);
+                        update_label(&shown_albums_widget, "albums", &shown_albums);
                         return true;
                     }
 
@@ -530,14 +524,8 @@ impl relm4::component::Component for AlbumsView {
                         if score.is_some() {
                             shown_artists.borrow_mut().insert(track.item.artist.clone());
                             shown_albums.borrow_mut().insert(track.item.album.clone());
-                            shown_artists_widget.set_text(&format!(
-                                "Shown artists: {}",
-                                shown_artists.borrow().len()
-                            ));
-                            shown_albums_widget.set_text(&format!(
-                                "Shown albums: {}",
-                                shown_albums.borrow().len()
-                            ));
+                            update_label(&shown_artists_widget, "artists", &shown_artists);
+                            update_label(&shown_albums_widget, "albums", &shown_albums);
                             true
                         } else {
                             false
@@ -545,10 +533,8 @@ impl relm4::component::Component for AlbumsView {
                     } else if title_artist_album.contains(&search) {
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        shown_artists_widget
-                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                        shown_albums_widget
-                            .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                        update_label(&shown_artists_widget, "artists", &shown_artists);
+                        update_label(&shown_albums_widget, "albums", &shown_albums);
                         true
                     } else {
                         false
