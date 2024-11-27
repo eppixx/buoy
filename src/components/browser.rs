@@ -320,7 +320,9 @@ impl relm4::component::AsyncComponent for Browser {
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
                     if let AlbumElementInit::Child(child) = id {
-                        sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(Box::new(*child))));
+                        sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(
+                            Box::new(*child),
+                        )));
                     } else {
                         unimplemented!("encountered not child");
                     }

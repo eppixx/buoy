@@ -667,9 +667,9 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::ClickedAlbum(index) => {
                 if let Some(clicked_album) = self.entries.get_visible(index) {
                     sender
-                        .output(AlbumsViewOut::ClickedAlbum(
-                            Box::new(clicked_album.borrow().item.clone()),
-                        ))
+                        .output(AlbumsViewOut::ClickedAlbum(Box::new(
+                            clicked_album.borrow().item.clone(),
+                        )))
                         .unwrap();
                 }
             }
