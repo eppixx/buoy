@@ -140,7 +140,7 @@ impl Playback {
         Ok(())
     }
 
-    pub fn _is_track_set(&self) -> bool {
+    pub fn is_track_set(&self) -> bool {
         self.track_set.load(Ordering::Relaxed)
     }
 
