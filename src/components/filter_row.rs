@@ -19,7 +19,8 @@ pub enum Filter {
     Album(TextRelation, String),
     Genre(TextRelation, String),
     BitRate(Ordering, usize),
-    Duration(Ordering, i32),
+    DurationSec(Ordering, i32),
+    DurationMin(Ordering, i32),
     AlbumCount(Ordering, i32),
 }
 
@@ -419,27 +420,56 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
-                add_enumed[Category::Duration] = &gtk::Box {
+                add_enumed[Category::DurationSec] = &gtk::Box {
                     set_spacing: 5,
                     gtk::Box {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Duration",
+                            set_text: "Duration (sec)",
                         },
                     },
 
-                    #[name = "duration_dropdown"]
+                    #[name = "duration_sec_dropdown"]
                     gtk::DropDown {
                         set_model: Some(&OrderRow::store()),
                         set_factory: Some(&OrderRow::factory()),
                         connect_selected_item_notify => Self::Input::ParameterChanged,
                     },
 
-                    #[name = "duration_entry"]
+                    #[name = "duration_sec_entry"]
                     gtk::SpinButton {
                         set_digits: 0,
-                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 3000f64, 1f64, 1f64, 1f64),
+                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 7200f64, 1f64, 1f64, 1f64),
+                        connect_text_notify => Self::Input::ParameterChanged,
+                    },
+                    gtk::Button {
+                        set_icon_name: "user-trash-symbolic",
+                        set_tooltip_text: Some("remove this filter"),
+                        connect_clicked => Self::Input::RemoveFilter,
+                    }
+                },
+                add_enumed[Category::DurationMin] = &gtk::Box {
+                    set_spacing: 5,
+                    gtk::Box {
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_text: "Duration (min)",
+                        },
+                    },
+
+                    #[name = "duration_min_dropdown"]
+                    gtk::DropDown {
+                        set_model: Some(&OrderRow::store()),
+                        set_factory: Some(&OrderRow::factory()),
+                        connect_selected_item_notify => Self::Input::ParameterChanged,
+                    },
+
+                    #[name = "duration_min_entry"]
+                    gtk::SpinButton {
+                        set_digits: 0,
+                        set_adjustment: &gtk::Adjustment::new(0f64, 0f64, 600f64, 1f64, 1f64, 1f64),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
@@ -702,15 +732,28 @@ impl relm4::factory::FactoryComponent for FilterRow {
                             self.filter = None;
                         }
                     }
-                    Category::Duration => {
-                        let order = widgets.duration_dropdown.selected_item().unwrap();
+                    Category::DurationMin => {
+                        let order = widgets.duration_min_dropdown.selected_item().unwrap();
                         let order = order
                             .downcast_ref::<glib::BoxedAnyObject>()
                             .expect("Needs to be ListItem");
                         let order: std::cell::Ref<OrderRow> = order.borrow();
-                        if let Ok(number) = widgets.duration_entry.text().parse::<i32>() {
-                            self.filter = Some(Filter::Duration(order.order, number));
-                            widgets.duration_entry.set_tooltip_text(None);
+                        if let Ok(number) = widgets.duration_min_entry.text().parse::<i32>() {
+                            self.filter = Some(Filter::DurationMin(order.order, number));
+                            widgets.duration_min_entry.set_tooltip_text(None);
+                        } else {
+                            self.filter = None;
+                        }
+                    }
+                    Category::DurationSec => {
+                        let order = widgets.duration_sec_dropdown.selected_item().unwrap();
+                        let order = order
+                            .downcast_ref::<glib::BoxedAnyObject>()
+                            .expect("Needs to be ListItem");
+                        let order: std::cell::Ref<OrderRow> = order.borrow();
+                        if let Ok(number) = widgets.duration_sec_entry.text().parse::<i32>() {
+                            self.filter = Some(Filter::DurationSec(order.order, number));
+                            widgets.duration_sec_entry.set_tooltip_text(None);
                         } else {
                             self.filter = None;
                         }

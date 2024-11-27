@@ -571,7 +571,7 @@ impl relm4::Component for TracksView {
                                 }
                                 _ => {} // filter matches
                             },
-                            Filter::Duration(order, value) => {
+                            Filter::DurationMin(order, value) => {
                                 if let Some(duration) = &track.item.duration {
                                     if duration.cmp(value) != *order {
                                         return false;

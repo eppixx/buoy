@@ -515,9 +515,10 @@ impl relm4::component::Component for AlbumsView {
                                 }
                                 _ => {} // filter matches
                             },
-                            Filter::Duration(order, value) => {
+                            Filter::DurationMin(order, value) => {
+                                let value = value * 60;
                                 if let Some(duration) = &track.item.duration {
-                                    if duration.cmp(value) != *order {
+                                    if duration.cmp(&value) != *order {
                                         return false;
                                     }
                                 } else {

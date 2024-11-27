@@ -12,7 +12,8 @@ pub enum Category {
     Artist,
     Album,
     Genre,
-    Duration,
+    DurationMin,
+    DurationSec,
     BitRate,
     AlbumCount,
 }
@@ -28,7 +29,8 @@ impl std::fmt::Display for Category {
             Self::Artist => write!(f, "Artist"),
             Self::Album => write!(f, "Album"),
             Self::Genre => write!(f, "Genre"),
-            Self::Duration => write!(f, "Duration"),
+            Self::DurationMin => write!(f, "Length (min)"),
+            Self::DurationSec => write!(f, "Length (sec)"),
             Self::BitRate => write!(f, "Bit Rate"),
             Self::AlbumCount => write!(f, "Album Count"),
         }
@@ -48,7 +50,8 @@ impl TryFrom<String> for Category {
             "Artist" => Ok(Self::Artist),
             "Album" => Ok(Self::Album),
             "Genre" => Ok(Self::Genre),
-            "Duration" => Ok(Self::Duration),
+            "Length (min)" => Ok(Self::DurationMin),
+            "Length (sec)" => Ok(Self::DurationSec),
             "Bit Rate" => Ok(Self::BitRate),
             "Album Count" => Ok(Self::AlbumCount),
             e => Err(format!("\"{e}\" is not a State")),
@@ -66,7 +69,7 @@ impl Category {
             Self::Artist,
             Self::Album,
             Self::Genre,
-            Self::Duration,
+            Self::DurationSec,
             Self::BitRate,
         ];
         store_from_category(&categories)
@@ -84,7 +87,7 @@ impl Category {
             Self::Year,
             Self::Cd,
             Self::Genre,
-            Self::Duration,
+            Self::DurationMin,
         ];
         store_from_category(&categories)
     }
@@ -139,7 +142,8 @@ mod tests {
         test_self(Category::Artist);
         test_self(Category::Album);
         test_self(Category::Genre);
-        test_self(Category::Duration);
+        test_self(Category::DurationSec);
+        test_self(Category::DurationMin);
         test_self(Category::BitRate);
     }
 }
