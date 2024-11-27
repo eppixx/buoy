@@ -5,9 +5,9 @@ use relm4::{
     actions::AccelsPlus,
     gtk::{
         self,
-        prelude::{ApplicationExt, BoxExt, GtkWindowExt, OrientableExt, WidgetExt},
+        prelude::{ApplicationExt, BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt},
     },
-    prelude::AsyncComponentController,
+    prelude::AsyncComponentController, RelmWidgetExt,
 };
 
 use crate::{
@@ -74,6 +74,7 @@ pub enum MainWindowIn {
     ShowErrorScreen,
     App(AppOut),
     LoginForm(LoginFormOut),
+    Logout,
 }
 
 relm4::new_action_group!(WindowActionGroup, "win");
@@ -269,10 +270,29 @@ impl relm4::component::AsyncComponent for MainWindow {
                         set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
 
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                            set_text: "an error occured, you might have no connetion to your server or the server is down, if none of this is the case try deleting your cache and settings and try a new setup",
-                        }
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_spacing: 20,
+                            set_margin_all: 7,
+
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_text: "Can't connect to subsonic server",
+                            },
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                set_wrap: true,
+                                set_text: "Make sure the connection to the server is available. You might want to try later or connect to another server",
+                            },
+                            gtk::CenterBox {
+                                #[wrap(Some)]
+                                set_end_widget = &gtk::Button {
+                                    add_css_class: "destructive-action",
+                                    set_label: "Logout",
+                                    connect_clicked => MainWindowIn::Logout,
+                                },
+                            }
+                        },
                     }
                 }
             }
@@ -319,6 +339,11 @@ impl relm4::component::AsyncComponent for MainWindow {
             },
             MainWindowIn::LoginForm(LoginFormOut::LoggedIn) => sender.input(MainWindowIn::ShowApp),
             MainWindowIn::ShowErrorScreen => widgets.stack.set_visible_child_enum(&Content::Error),
+            MainWindowIn::Logout => {
+                let mut settings = Settings::get().lock().unwrap();
+                settings.reset_login();
+                sender.input(MainWindowIn::ShowLogin);
+            }
         }
     }
 
