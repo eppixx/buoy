@@ -201,15 +201,15 @@ impl relm4::component::Component for ArtistsView {
                     }
                 },
 
-                // info
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
-                    set_margin_horizontal: 7,
 
+                    // info
                     gtk::WindowHandle {
                         gtk::Box {
                             set_spacing: 15,
+                            set_margin_horizontal: 7,
 
                             //tracks info
                             gtk::Box {
