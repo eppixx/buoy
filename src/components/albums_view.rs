@@ -81,7 +81,7 @@ impl AlbumsView {
 
 #[derive(Debug)]
 pub enum AlbumsViewOut {
-    ClickedAlbum(submarine::data::Child),
+    ClickedAlbum(Box<submarine::data::Child>),
     DisplayToast(String),
     FavoriteClicked(String, bool),
     AddToQueue(Droppable),
@@ -474,7 +474,7 @@ impl relm4::component::Component for AlbumsView {
                                 }
                             }
                             Filter::Cd(_, 0) => {
-                                if let Some(_) = &track.item.disc_number {
+                                if track.item.disc_number.is_some() {
                                     return false;
                                 }
                             }
@@ -668,7 +668,7 @@ impl relm4::component::Component for AlbumsView {
                 if let Some(clicked_album) = self.entries.get_visible(index) {
                     sender
                         .output(AlbumsViewOut::ClickedAlbum(
-                            clicked_album.borrow().item.clone(),
+                            Box::new(clicked_album.borrow().item.clone()),
                         ))
                         .unwrap();
                 }

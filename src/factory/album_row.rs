@@ -75,7 +75,7 @@ impl AlbumRow {
         let artist_label = if let Some(artist_id) = item.artist_id.clone() {
             let artist = gtk::glib::markup_escape_text(artist);
             let artist_label = artist_label
-                .label(&format!("<a href=\"\">{artist}</a>"))
+                .label(format!("<a href=\"\">{artist}</a>"))
                 .use_markup(true)
                 .build();
             artist_label.connect_activate_link(move |_label, _id| {

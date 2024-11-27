@@ -320,7 +320,7 @@ impl relm4::component::AsyncComponent for Browser {
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
                     if let AlbumElementInit::Child(child) = id {
-                        sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(*child)));
+                        sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(Box::new(*child))));
                     } else {
                         unimplemented!("encountered not child");
                     }
@@ -334,7 +334,7 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::ClickedAlbum(child) => {
-                    let init = AlbumViewInit::Child(child.into());
+                    let init = AlbumViewInit::Child(child);
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
                         .launch((self.subsonic.clone(), init))
                         .forward(sender.input_sender(), |msg| {

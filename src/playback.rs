@@ -85,15 +85,9 @@ impl Playback {
         std::thread::spawn(move || {
             for msg in bus.iter_timed(gst::ClockTime::NONE) {
                 use gstreamer::MessageView;
-                match msg.view() {
-                    MessageView::Eos(..) => {
-                        track.store(false, Ordering::Relaxed);
-                        send.try_send(PlaybackOut::TrackEnd).unwrap();
-                    }
-                    // MessageView::StreamStart(..) => {
-                    //     send.try_send(PlaybackOut::SongPosition(0)).unwrap();
-                    // }
-                    _ => {}
+                if let MessageView::Eos(..) = msg.view() {
+                    track.store(false, Ordering::Relaxed);
+                    send.try_send(PlaybackOut::TrackEnd).unwrap();
                 }
             }
         });
