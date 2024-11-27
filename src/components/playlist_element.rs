@@ -96,7 +96,6 @@ impl TryFrom<String> for EditState {
 
 #[derive(Debug)]
 pub enum PlaylistElementIn {
-    Clicked,
     DeletePressed,
     ChangeState(State),
     ConfirmRename,
@@ -104,10 +103,6 @@ pub enum PlaylistElementIn {
 
 #[derive(Debug)]
 pub enum PlaylistElementOut {
-    Clicked(
-        relm4::factory::DynamicIndex,
-        submarine::data::PlaylistWithSongs,
-    ),
     Delete(relm4::factory::DynamicIndex),
     DisplayToast(String),
     RenamePlaylist(submarine::data::Playlist),
@@ -159,12 +154,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     set_halign: gtk::Align::Fill,
 
                     add_controller = self.drag_src.clone(),
-
-                    add_controller = gtk::GestureClick {
-                        connect_released[sender] => move |_w, _, _, _| {
-                            sender.input(PlaylistElementIn::Clicked);
-                        }
-                    },
 
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
@@ -284,14 +273,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::FactorySender<Self>) {
         match msg {
-            PlaylistElementIn::Clicked => {
-                sender
-                    .output(PlaylistElementOut::Clicked(
-                        self.index.clone(),
-                        self.playlist.clone(),
-                    ))
-                    .unwrap();
-            }
             PlaylistElementIn::DeletePressed => {
                 sender
                     .output(PlaylistElementOut::Delete(self.index.clone()))

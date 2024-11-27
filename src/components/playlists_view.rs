@@ -5,7 +5,7 @@ use relm4::gtk::glib::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt, ListBoxRowExt},
     },
     Component, ComponentController,
 };
@@ -55,7 +55,6 @@ impl TryFrom<String> for TracksState {
 pub struct PlaylistsView {
     subsonic: Rc<RefCell<Subsonic>>,
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
-    index_shown: Option<relm4::factory::DynamicIndex>,
 
     track_stack: gtk::Stack,
     tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
@@ -95,6 +94,7 @@ pub enum PlaylistsViewIn {
     DeletePlaylist(relm4::factory::DynamicIndex),
     Favorited(String, bool),
     DownloadClicked,
+    Selected(i32),
 }
 
 #[relm4::component(pub)]
@@ -121,7 +121,6 @@ impl relm4::SimpleComponent for PlaylistsView {
             playlists: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
-            index_shown: None,
 
             track_stack: gtk::Stack::default(),
             tracks,
@@ -173,6 +172,12 @@ impl relm4::SimpleComponent for PlaylistsView {
                     add_css_class: granite::STYLE_CLASS_FRAME,
                     add_css_class: granite::STYLE_CLASS_RICH_LIST,
                     set_vexpand: true,
+
+                    connect_row_selected[sender] => move |_listbox, row| {
+                        if let Some(row) = row {
+                            sender.input(PlaylistsViewIn::Selected(row.index()));
+                        }
+                    },
 
                     gtk::ListBoxRow {
                         add_css_class: "playlist-view-add-playlist",
@@ -341,54 +346,6 @@ impl relm4::SimpleComponent for PlaylistsView {
                 });
             }
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
-                PlaylistElementOut::Clicked(index, list) => {
-                    // set every state in PlaylistElement to normal
-                    for list in self.playlists.guard().iter() {
-                        list.change_state(&State::Normal);
-                    }
-
-                    self.track_stack.set_visible_child_name("tracks");
-                    if self.index_shown == Some(index.clone()) {
-                        return;
-                    }
-
-                    if let Some(i) = &self.index_shown {
-                        self.playlists
-                            .guard()
-                            .get(i.current_index())
-                            .unwrap()
-                            .set_edit_area(false);
-                    }
-                    self.playlists
-                        .guard()
-                        .get(index.current_index())
-                        .unwrap()
-                        .set_edit_area(true);
-
-                    // set info
-                    self.info_cover
-                        .emit(CoverIn::LoadPlaylist(Box::new(list.clone())));
-                    self.info_title.set_text(&list.base.name);
-                    self.info_details.set_text(&build_info_string(&list));
-
-                    //set drag controller
-                    let drop = Droppable::Playlist(Box::new(list.clone()));
-                    let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-                    self.info_cover_controller.set_content(Some(&content));
-                    self.info_cover_controller
-                        .set_actions(gtk::gdk::DragAction::MOVE);
-
-                    //set tracks
-                    self.tracks.clear();
-                    for track in list.entry {
-                        self.tracks.append(TrackRow::new_playlist_track(
-                            &self.subsonic,
-                            track,
-                            sender.clone(),
-                        ));
-                    }
-                    self.index_shown = Some(index);
-                }
                 PlaylistElementOut::DisplayToast(msg) => {
                     sender.output(PlaylistsViewOut::DisplayToast(msg)).unwrap();
                 }
@@ -418,23 +375,27 @@ impl relm4::SimpleComponent for PlaylistsView {
                     .unwrap(),
             },
             PlaylistsViewIn::ReplaceQueue => {
-                if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()].info().clone();
-                    sender.output(PlaylistsViewOut::ReplaceQueue(list)).unwrap();
+                let Some(row) = self.playlists.widget().selected_row() else {
+                    unreachable!("replace should not be possible when no playlists selected");
+                };
+                if let Some(element) = self.playlists.get(row.index() as usize) {
+                    sender.output(PlaylistsViewOut::ReplaceQueue(element.info().clone())).unwrap();
                 }
             }
             PlaylistsViewIn::AddToQueue => {
-                if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()].info().clone();
-                    sender.output(PlaylistsViewOut::AddToQueue(list)).unwrap();
+                let Some(row) = self.playlists.widget().selected_row() else {
+                    unreachable!("add to queue should not be possible when no playlists selected");
+                };
+                if let Some(element) = self.playlists.get(row.index() as usize) {
+                    sender.output(PlaylistsViewOut::AddToQueue(element.info().clone())).unwrap();
                 }
             }
             PlaylistsViewIn::AppendToQueue => {
-                if let Some(index) = &self.index_shown {
-                    let list = self.playlists.guard()[index.current_index()].info().clone();
-                    sender
-                        .output(PlaylistsViewOut::AppendToQueue(list))
-                        .unwrap();
+                let Some(row) = self.playlists.widget().selected_row() else {
+                    unreachable!("add to queue should not be possible when no playlists selected");
+                };
+                if let Some(element) = self.playlists.get(row.index() as usize) {
+                    sender.output(PlaylistsViewOut::AppendToQueue(element.info().clone())).unwrap();
                 }
             }
             PlaylistsViewIn::NewPlaylist(list) => {
@@ -458,10 +419,52 @@ impl relm4::SimpleComponent for PlaylistsView {
                     });
             }
             PlaylistsViewIn::DownloadClicked => {
-                if let Some(index) = &self.index_shown {
-                    let element = self.playlists.get(index.current_index()).unwrap();
+                let Some(row) = self.playlists.widget().selected_row() else {
+                    unreachable!("add to queue should not be possible when no playlists selected");
+                };
+                if let Some(element) = self.playlists.get(row.index() as usize) {
                     let drop = Droppable::Playlist(Box::new(element.info().clone()));
                     sender.output(PlaylistsViewOut::Download(drop)).unwrap();
+                }
+            }
+            PlaylistsViewIn::Selected(index) => {
+                // set every state in PlaylistElement to normal
+                for list in self.playlists.guard().iter() {
+                    list.change_state(&State::Normal);
+                    list.set_edit_area(false);
+                }
+
+                self.track_stack.set_visible_child_name("tracks");
+
+                let guard = self.playlists.guard();
+                let Some(list) = guard.get(index as usize) else {
+                    tracing::error!("index has no playlist");
+                    return;
+                };
+                list.set_edit_area(true);
+                let list = list.info();
+
+                // set info
+                self.info_cover
+                    .emit(CoverIn::LoadPlaylist(Box::new(list.clone())));
+                self.info_title.set_text(&list.base.name);
+                self.info_details.set_text(&build_info_string(&list));
+
+                //update drag controller for cover
+                let drop = Droppable::Playlist(Box::new(list.clone()));
+                let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+                self.info_cover_controller.set_content(Some(&content));
+                self.info_cover_controller
+                    .set_actions(gtk::gdk::DragAction::MOVE);
+
+                //set tracks
+                self.tracks.clear();
+                for track in &list.entry {
+                    self.tracks.append(TrackRow::new_playlist_track(
+                        &self.subsonic,
+                        track.clone(),
+                        sender.clone(),
+                    ));
                 }
             }
         }
