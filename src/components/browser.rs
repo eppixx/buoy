@@ -83,7 +83,6 @@ pub enum BrowserIn {
     FavoriteAlbum(String, bool),
     FavoriteArtist(String, bool),
     FavoriteSong(String, bool),
-    CoverSizeChanged,
 }
 
 #[derive(Debug)]
@@ -758,9 +757,6 @@ impl relm4::component::AsyncComponent for Browser {
                 if let Some(artists) = &self.artists {
                     artists.emit(ArtistsViewIn::Favorited(id, state));
                 }
-            }
-            BrowserIn::CoverSizeChanged => {
-                self.dashboard.emit(DashboardIn::CoverSizeChanged);
             }
         }
     }

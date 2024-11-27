@@ -62,7 +62,6 @@ pub enum DashboardIn {
     AlbumElement(AlbumElementOut),
     ClickedRandomize,
     FavoritedAlbum(String, bool),
-    CoverSizeChanged,
     ScrollOuter(f64),
 }
 
@@ -609,21 +608,6 @@ impl relm4::Component for Dashboard {
                     .broadcast(AlbumElementIn::Favorited(id.clone(), state));
                 self.most_played_list
                     .broadcast(AlbumElementIn::Favorited(id, state));
-            }
-            DashboardIn::CoverSizeChanged => {
-                let size = Settings::get().lock().unwrap().cover_size;
-                for album in self.recently_added_list.iter() {
-                    album.change_size(size);
-                }
-                for album in self.recently_played_list.iter() {
-                    album.change_size(size);
-                }
-                for album in self.random_album_list.iter() {
-                    album.change_size(size);
-                }
-                for album in self.most_played_list.iter() {
-                    album.change_size(size);
-                }
             }
             DashboardIn::ScrollOuter(y) => {
                 if y < 0.0 {

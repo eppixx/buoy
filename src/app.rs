@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use granite::prelude::ToastExt;
-use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, RangeExt, ScaleButtonExt};
+use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     actions::AccelsPlus,
     component::{AsyncComponentController, AsyncController},
@@ -82,7 +82,6 @@ pub enum AppIn {
     FavoriteSongClicked(String, bool),
     SearchActivate(bool),
     SearchChanged,
-    CoverSizeChanged,
     Download(Droppable),
 }
 
@@ -286,7 +285,6 @@ impl relm4::component::AsyncComponent for App {
             if model.queue.model().songs().is_empty() {
                 model.play_controls.emit(PlayControlIn::Disable);
             }
-            sender.input(AppIn::CoverSizeChanged);
         }
 
         //regularly save
@@ -502,26 +500,6 @@ impl relm4::component::AsyncComponent for App {
                                                     gtk::glib::signal::Propagation::Proceed
                                                 }
                                             },
-                                        },
-                                        gtk::CenterBox {
-                                            #[wrap(Some)]
-                                            set_start_widget = &gtk::Label {
-                                                set_text: "Cover size",
-                                            },
-                                            #[wrap(Some)]
-                                            set_end_widget = &gtk::Scale {
-                                                set_width_request: 200,
-                                                set_range: (100f64, 200f64),
-                                                set_value: f64::from(Settings::get().lock().unwrap().cover_size),
-                                                set_increments: (25f64, 25f64),
-                                                set_slider_size_fixed: true,
-                                                set_tooltip: "Changes cover sizes on Dashboard, Artists and Albums pages",
-                                                connect_change_value[sender] => move |_scale, _, value| {
-                                                    Settings::get().lock().unwrap().cover_size = value as i32;
-                                                    sender.input(AppIn::CoverSizeChanged);
-                                                    gtk::glib::Propagation::Proceed
-                                                },
-                                            }
                                         },
                                         gtk::Separator {},
                                         gtk::Box {
@@ -1039,9 +1017,6 @@ impl relm4::component::AsyncComponent for App {
                     self.browser
                         .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
                 }
-            }
-            AppIn::CoverSizeChanged => {
-                self.browser.emit(BrowserIn::CoverSizeChanged);
             }
             AppIn::Download(drop) => {
                 Download::download(sender.clone(), drop);
