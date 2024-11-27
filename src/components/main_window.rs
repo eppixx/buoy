@@ -315,7 +315,6 @@ impl relm4::component::AsyncComponent for MainWindow {
             }
             MainWindowIn::App(msg) => match msg {
                 AppOut::Logout => sender.input(MainWindowIn::ShowLogin),
-                AppOut::Quit => todo!(), //TODO
                 AppOut::Reload => sender.input(MainWindowIn::ShowApp),
             },
             MainWindowIn::LoginForm(LoginFormOut::LoggedIn) => sender.input(MainWindowIn::ShowApp),

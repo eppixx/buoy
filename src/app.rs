@@ -87,7 +87,6 @@ pub enum AppIn {
 
 #[derive(Debug)]
 pub enum AppOut {
-    Quit,
     Logout,
     Reload,
 }
