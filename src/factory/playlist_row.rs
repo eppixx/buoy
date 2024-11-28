@@ -89,7 +89,9 @@ impl PlaylistRow {
             .build();
         result.title_box.append(&title_label);
         result.title_box.add_controller(result.get_drag_src());
-        result.title_box_drag.set_actions(gtk::gdk::DragAction::COPY);
+        result
+            .title_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
 
         // setup album label
         let album_label = gtk::Label::builder()
@@ -113,7 +115,9 @@ impl PlaylistRow {
         }
         result.album_box.append(&album_label);
         result.album_box.add_controller(result.get_drag_src());
-        result.album_box_drag.set_actions(gtk::gdk::DragAction::COPY);
+        result
+            .album_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
 
         // setup artist label
         let artist_label = gtk::Label::builder()
@@ -137,7 +141,9 @@ impl PlaylistRow {
         }
         result.artist_box.append(&artist_label);
         result.artist_box.add_controller(result.get_drag_src());
-        result.artist_box_drag.set_actions(gtk::gdk::DragAction::COPY);
+        result
+            .artist_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
 
         result
     }
