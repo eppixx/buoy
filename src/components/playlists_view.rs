@@ -157,7 +157,6 @@ impl relm4::SimpleComponent for PlaylistsView {
             .tracks
             .selection_model
             .connect_selection_changed(move |_selection_model, _x, _y| {
-                println!("connect selection changed");
                 sender.input(PlaylistsViewIn::RecalcDragSource);
             });
 
@@ -320,8 +319,6 @@ impl relm4::SimpleComponent for PlaylistsView {
 
                                 add_controller = gtk::DragSource {
                                     connect_prepare[sender] => move |_drag_src, _x, _y| {
-                                        println!("connect prepare");
-                                        //TODO set drag source (more than one if there are any)
                                         sender.input(PlaylistsViewIn::RecalcDragSource);
                                         None
                                     }
@@ -500,21 +497,21 @@ impl relm4::SimpleComponent for PlaylistsView {
                 let selected_rows: Vec<u32> = (0..len)
                     .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
                     .collect();
-                println!("selected {selected_rows:?}");
-                print!("remove dragsource from");
+
+                // remove DragSource of not selected items
                 (0..len)
                     .filter(|i| !selected_rows.contains(i))
-                    .inspect(|i| print!(" {i}"))
                     .filter_map(|i| self.tracks.get(i))
                     .for_each(|row| row.borrow_mut().remove_drag_src());
-                println!();
 
+                // get selected children
                 let children: Vec<submarine::data::Child> = selected_rows
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
                     .map(|row| row.borrow().item.clone())
                     .collect();
 
+                // set children as content for DragSource
                 let drop = Droppable::Queue(children);
                 selected_rows
                     .iter()

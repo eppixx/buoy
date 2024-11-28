@@ -89,6 +89,7 @@ impl PlaylistRow {
             .build();
         result.title_box.append(&title_label);
         result.title_box.add_controller(result.get_drag_src());
+        result.title_box_drag.set_actions(gtk::gdk::DragAction::COPY);
 
         // setup album label
         let album_label = gtk::Label::builder()
@@ -112,6 +113,7 @@ impl PlaylistRow {
         }
         result.album_box.append(&album_label);
         result.album_box.add_controller(result.get_drag_src());
+        result.album_box_drag.set_actions(gtk::gdk::DragAction::COPY);
 
         // setup artist label
         let artist_label = gtk::Label::builder()
@@ -135,6 +137,7 @@ impl PlaylistRow {
         }
         result.artist_box.append(&artist_label);
         result.artist_box.add_controller(result.get_drag_src());
+        result.artist_box_drag.set_actions(gtk::gdk::DragAction::COPY);
 
         result
     }
@@ -154,7 +157,18 @@ impl PlaylistRow {
 
             let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
             src.set_content(Some(&content));
-            src.set_actions(gtk::gdk::DragAction::COPY);
+            let album = self.subsonic.borrow().album_of_song(&self.item);
+            let subsonic = self.subsonic.clone();
+            src.connect_drag_begin(move |src, _drag| {
+                if let Some(album) = &album {
+                    if let Some(cover_id) = &album.cover_art {
+                        let cover = subsonic.borrow().cover_icon(cover_id);
+                        if let Some(tex) = cover {
+                            src.set_icon(Some(&tex), 0, 0);
+                        }
+                    }
+                }
+            });
             widget.add_controller(src.clone());
         }
         self.content_set = true;
@@ -178,7 +192,7 @@ impl PlaylistRow {
         let drop = Droppable::Child(Box::new(self.item.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::MOVE);
+        src.set_actions(gtk::gdk::DragAction::COPY);
 
         let album = self.subsonic.borrow().album_of_song(&self.item);
         let subsonic = self.subsonic.clone();
