@@ -271,7 +271,7 @@ impl relm4::Component for Queue {
                         },
 
                         add_controller = gtk::DropControllerMotion {
-                            connect_motion[scrolled, scrolling, scroll_sender] => move |_self, x, y| {
+                            connect_motion[scrolled, songs, scrolling, scroll_sender] => move |_self, x, y| {
                                 if *scrolling.borrow() != ScrollMotion::None {
                                     return;
                                 }

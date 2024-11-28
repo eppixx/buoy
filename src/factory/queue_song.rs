@@ -254,7 +254,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
 
             // accept drop from queue items and id's and render drop indicators
             add_controller = gtk::DropTarget {
-                set_actions: gdk::DragAction::MOVE,
+                set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
                 set_types: &[<Index as gtk::prelude::StaticType>::static_type(),
                              <Droppable as gtk::prelude::StaticType>::static_type(),
                 ],
