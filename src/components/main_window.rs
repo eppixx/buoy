@@ -7,7 +7,8 @@ use relm4::{
         self,
         prelude::{ApplicationExt, BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt},
     },
-    prelude::AsyncComponentController, RelmWidgetExt,
+    prelude::AsyncComponentController,
+    RelmWidgetExt,
 };
 
 use crate::{

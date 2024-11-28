@@ -5,13 +5,16 @@ use relm4::gtk::glib::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt, ListBoxRowExt},
+        prelude::{
+            BoxExt, ButtonExt, ListBoxRowExt, ListModelExt, OrientableExt, SelectionModelExt,
+            WidgetExt,
+        },
     },
     Component, ComponentController,
 };
 
-use crate::factory::track_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, TitleColumn, TrackRow,
+use crate::factory::playlist_row::{
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, TitleColumn,
 };
 use crate::settings::Settings;
 use crate::{
@@ -57,7 +60,7 @@ pub struct PlaylistsView {
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
 
     track_stack: gtk::Stack,
-    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<PlaylistRow, gtk::MultiSelection>,
     info_cover: relm4::Controller<Cover>,
     info_cover_controller: gtk::DragSource,
     info_title: gtk::Label,
@@ -95,6 +98,7 @@ pub enum PlaylistsViewIn {
     Favorited(String, bool),
     DownloadClicked,
     Selected(i32),
+    RecalcDragSource,
 }
 
 #[relm4::component(pub)]
@@ -109,7 +113,7 @@ impl relm4::SimpleComponent for PlaylistsView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut tracks =
-            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
+            relm4::typed_view::column::TypedColumnView::<PlaylistRow, gtk::MultiSelection>::new();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
         tracks.append_column::<AlbumColumn>();
@@ -133,7 +137,6 @@ impl relm4::SimpleComponent for PlaylistsView {
         };
 
         let track_stack = &model.track_stack.clone();
-        let column = &model.tracks.view;
         let info_cover = model.info_cover.widget().clone();
         let info_title = model.info_title.clone();
         let info_details = model.info_details.clone();
@@ -149,6 +152,14 @@ impl relm4::SimpleComponent for PlaylistsView {
         for playlist in model.subsonic.borrow().playlists() {
             model.playlists.guard().push_back(playlist.clone());
         }
+
+        model
+            .tracks
+            .selection_model
+            .connect_selection_changed(move |_selection_model, _x, _y| {
+                println!("connect selection changed");
+                sender.input(PlaylistsViewIn::RecalcDragSource);
+            });
 
         relm4::ComponentParts { model, widgets }
     }
@@ -304,9 +315,17 @@ impl relm4::SimpleComponent for PlaylistsView {
                             set_hexpand: true,
                             set_vexpand: true,
 
-                            #[local_ref]
-                            column -> gtk::ColumnView {
+                            model.tracks.view.clone() -> gtk::ColumnView {
                                 add_css_class: "playlist-view-tracks-row",
+
+                                add_controller = gtk::DragSource {
+                                    connect_prepare[sender] => move |_drag_src, _x, _y| {
+                                        println!("connect prepare");
+                                        //TODO set drag source (more than one if there are any)
+                                        sender.input(PlaylistsViewIn::RecalcDragSource);
+                                        None
+                                    }
+                                }
                             }
                         }
                     }
@@ -382,7 +401,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                     unreachable!("replace should not be possible when no playlists selected");
                 };
                 if let Some(element) = self.playlists.get(row.index() as usize) {
-                    sender.output(PlaylistsViewOut::ReplaceQueue(element.info().clone())).unwrap();
+                    sender
+                        .output(PlaylistsViewOut::ReplaceQueue(element.info().clone()))
+                        .unwrap();
                 }
             }
             PlaylistsViewIn::AddToQueue => {
@@ -390,7 +411,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                     unreachable!("add to queue should not be possible when no playlists selected");
                 };
                 if let Some(element) = self.playlists.get(row.index() as usize) {
-                    sender.output(PlaylistsViewOut::AddToQueue(element.info().clone())).unwrap();
+                    sender
+                        .output(PlaylistsViewOut::AddToQueue(element.info().clone()))
+                        .unwrap();
                 }
             }
             PlaylistsViewIn::AppendToQueue => {
@@ -398,7 +421,9 @@ impl relm4::SimpleComponent for PlaylistsView {
                     unreachable!("add to queue should not be possible when no playlists selected");
                 };
                 if let Some(element) = self.playlists.get(row.index() as usize) {
-                    sender.output(PlaylistsViewOut::AppendToQueue(element.info().clone())).unwrap();
+                    sender
+                        .output(PlaylistsViewOut::AppendToQueue(element.info().clone()))
+                        .unwrap();
                 }
             }
             PlaylistsViewIn::NewPlaylist(list) => {
@@ -451,7 +476,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                 self.info_cover
                     .emit(CoverIn::LoadPlaylist(Box::new(list.clone())));
                 self.info_title.set_text(&list.base.name);
-                self.info_details.set_text(&build_info_string(&list));
+                self.info_details.set_text(&build_info_string(list));
 
                 //update drag controller for cover
                 let drop = Droppable::Playlist(Box::new(list.clone()));
@@ -463,12 +488,38 @@ impl relm4::SimpleComponent for PlaylistsView {
                 //set tracks
                 self.tracks.clear();
                 for track in &list.entry {
-                    self.tracks.append(TrackRow::new_playlist_track(
+                    self.tracks.append(PlaylistRow::new(
                         &self.subsonic,
                         track.clone(),
                         sender.clone(),
                     ));
                 }
+            }
+            PlaylistsViewIn::RecalcDragSource => {
+                let len = self.tracks.selection_model.n_items();
+                let selected_rows: Vec<u32> = (0..len)
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .collect();
+                println!("selected {selected_rows:?}");
+                print!("remove dragsource from");
+                (0..len)
+                    .filter(|i| !selected_rows.contains(i))
+                    .inspect(|i| print!(" {i}"))
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|row| row.borrow_mut().remove_drag_src());
+                println!();
+
+                let children: Vec<submarine::data::Child> = selected_rows
+                    .iter()
+                    .filter_map(|i| self.tracks.get(*i))
+                    .map(|row| row.borrow().item.clone())
+                    .collect();
+
+                let drop = Droppable::Queue(children);
+                selected_rows
+                    .iter()
+                    .filter_map(|i| self.tracks.get(*i))
+                    .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
             }
         }
     }
