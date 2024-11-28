@@ -365,9 +365,12 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .output(PlaylistsViewOut::DeletePlaylist(index, list.info().clone()))
                         .unwrap();
                 }
-                PlaylistElementOut::RenamePlaylist(list) => sender
-                    .output(PlaylistsViewOut::RenamePlaylist(list))
-                    .unwrap(),
+                PlaylistElementOut::RenamePlaylist(list) => {
+                    self.info_title.set_label(&list.name);
+                    sender
+                        .output(PlaylistsViewOut::RenamePlaylist(list))
+                        .unwrap();
+                }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
