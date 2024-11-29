@@ -110,9 +110,7 @@ pub enum TracksViewOut {
 
 #[derive(Debug)]
 pub enum TracksViewCmd {
-    AddTrack(Vec<submarine::data::Child>, usize),
-    AddTracks(Vec<submarine::data::Child>),
-    LoadingTracksFinished,
+    AddTracks(Vec<submarine::data::Child>, usize),
 }
 
 #[relm4::component(pub)]
@@ -145,7 +143,7 @@ impl relm4::Component for TracksView {
             .iter()
             .cloned().collect();
         sender.oneshot_command(async move {
-            TracksViewCmd::AddTrack(list, 0)
+            TracksViewCmd::AddTracks(list, 0)
         });
 
         let mut model = Self {
@@ -741,32 +739,7 @@ impl relm4::Component for TracksView {
         _root: &Self::Root,
     ) {
         match msg {
-            TracksViewCmd::AddTracks(tracks) => {
-                for track in tracks {
-                    self.shown_tracks.borrow_mut().push(track.clone());
-                    self.shown_albums.borrow_mut().insert(track.album.clone());
-                    self.shown_artists.borrow_mut().insert(track.artist.clone());
-                    let track = TrackRow::new_track(&self.subsonic, track, sender.clone());
-                    self.tracks.append(track);
-                }
-                widgets.shown_tracks.set_label(&format!(
-                    "Shown tracks: {}",
-                    self.shown_tracks.borrow().len()
-                ));
-                widgets.shown_albums.set_label(&format!(
-                    "Shown albums: {}",
-                    self.shown_albums.borrow().len()
-                ));
-                widgets.shown_artists.set_label(&format!(
-                    "Shown artists: {}",
-                    self.shown_artists.borrow().len()
-                ));
-                self.calc_sensitivity_of_buttons(widgets);
-            }
-            TracksViewCmd::LoadingTracksFinished => {
-                widgets.spinner.set_visible(false);
-            }
-            TracksViewCmd::AddTrack(candidates, processed) => {
+            TracksViewCmd::AddTracks(candidates, processed) => {
                 const CHUNK: usize = 10;
                 const TIMEOUT: u64 = 2;
 
@@ -803,7 +776,7 @@ impl relm4::Component for TracksView {
                 //recursion the rest of the list
                 sender.oneshot_command(async move {
                     tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
-                    TracksViewCmd::AddTrack(candidates, processed + CHUNK)
+                    TracksViewCmd::AddTracks(candidates, processed + CHUNK)
                 });
             }
         }
