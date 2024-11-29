@@ -136,10 +136,6 @@ impl relm4::SimpleComponent for PlaylistsView {
             info_details: gtk::Label::default(),
         };
 
-        let track_stack = &model.track_stack.clone();
-        let info_cover = model.info_cover.widget().clone();
-        let info_title = model.info_title.clone();
-        let info_details = model.info_details.clone();
         let widgets = view_output!();
         model.info_cover.model().add_css_class_image("size100");
 
@@ -153,6 +149,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             model.playlists.guard().push_back((model.subsonic.clone(), playlist.clone()));
         }
 
+        // send signal on selection change
         model
             .tracks
             .selection_model
@@ -213,8 +210,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             },
 
             gtk::Box {
-                #[local_ref]
-                track_stack -> gtk::Stack {
+                model.track_stack.clone() -> gtk::Stack {
                     add_named[Some("tracks-stock")] = &gtk::Box {
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
@@ -227,12 +223,12 @@ impl relm4::SimpleComponent for PlaylistsView {
                         set_orientation: gtk::Orientation::Vertical,
                         set_spacing: 8,
 
+                        // top
                         gtk::Box {
                             add_css_class: "playlist-view-info",
                             set_spacing: 15,
 
-                            #[local_ref]
-                            info_cover -> gtk::Box {},
+                            model.info_cover.widget().clone() -> gtk::Box {},
 
                             // playlist info
                             gtk::WindowHandle {
@@ -242,15 +238,13 @@ impl relm4::SimpleComponent for PlaylistsView {
                                     set_orientation: gtk::Orientation::Vertical,
                                     set_spacing: 8,
 
-                                    #[local_ref]
-                                    info_title -> gtk::Label {
+                                    model.info_title.clone() -> gtk::Label {
                                         add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                         set_label: "title",
                                         set_halign: gtk::Align::Start,
                                     },
 
-                                    #[local_ref]
-                                    info_details -> gtk::Label {
+                                    model.info_details.clone() -> gtk::Label {
                                         set_label: "more info",
                                         set_halign: gtk::Align::Start,
                                     },
@@ -310,6 +304,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                             }
                         },
 
+                        //bottom
                         gtk::ScrolledWindow {
                             set_hexpand: true,
                             set_vexpand: true,
