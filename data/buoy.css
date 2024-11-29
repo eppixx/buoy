@@ -240,7 +240,7 @@ contents > box {
   padding: 2px 7px;
 }
 
-.albums-view-tracks-row > listview > row {
+.album-view-tracks-row > listview > row {
   border-radius: 8px;
   margin: 1px 0px;
   padding: 2px 7px;
