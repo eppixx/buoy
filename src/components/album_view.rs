@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
+        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, SelectionModelExt, ToValue, WidgetExt},
     },
     ComponentController, RelmWidgetExt,
 };
@@ -33,7 +33,7 @@ pub struct AlbumView {
     artist: Option<String>,
     info: String,
     artist_id: Option<String>,
-    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::MultiSelection>,
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +61,7 @@ pub enum AlbumViewIn {
     FavoritedSong(String, bool),
     SearchChanged(String),
     HoverCover(bool),
+    RecalcDragSource,
 }
 
 #[derive(Debug)]
@@ -87,7 +88,7 @@ impl relm4::Component for AlbumView {
         };
 
         let mut tracks =
-            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
+            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::MultiSelection>::new();
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
@@ -127,6 +128,14 @@ impl relm4::Component for AlbumView {
             let client = Client::get().unwrap();
             AlbumViewCmd::LoadedAlbum(client.get_album(id).await)
         });
+
+        // send signal on selection change
+        model
+            .tracks
+            .selection_model
+            .connect_selection_changed(move |_selection_model, _x, _y| {
+                sender.input(AlbumViewIn::RecalcDragSource);
+            });
 
         relm4::ComponentParts { model, widgets }
     }
@@ -286,6 +295,7 @@ impl relm4::Component for AlbumView {
                 },
             },
 
+            // bottom
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
@@ -293,6 +303,13 @@ impl relm4::Component for AlbumView {
                 model.tracks.view.clone() {
                     add_css_class: "album-view-tracks-row",
                     set_vexpand: true,
+
+                    add_controller = gtk::DragSource {
+                        connect_prepare[sender] => move |_drag_src, _x, _y| {
+                            sender.input(AlbumViewIn::RecalcDragSource);
+                            None
+                        }
+                    }
                 }
             },
         }
@@ -371,6 +388,32 @@ impl relm4::Component for AlbumView {
             AlbumViewIn::HoverCover(true) => {
                 self.favorite.add_css_class("cover-favorite");
                 self.favorite.set_visible(true);
+            }
+            AlbumViewIn::RecalcDragSource => {
+                let len = self.tracks.selection_model.n_items();
+                let selected_rows: Vec<u32> = (0..len)
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .collect();
+
+                // remove DragSource of not selected items
+                (0..len)
+                    .filter(|i| !selected_rows.contains(i))
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|row| row.borrow_mut().remove_drag_src());
+
+                // get selected children
+                let children: Vec<submarine::data::Child> = selected_rows
+                    .iter()
+                    .filter_map(|i| self.tracks.get(*i))
+                    .map(|row| row.borrow().item.clone())
+                    .collect();
+
+                // set children as content for DragSource
+                let drop = Droppable::Queue(children);
+                selected_rows
+                    .iter()
+                    .filter_map(|i| self.tracks.get(*i))
+                    .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
             }
         }
     }

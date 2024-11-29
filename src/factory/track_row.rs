@@ -23,8 +23,17 @@ pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     fav_btn: gtk::Button,
-    artist_label: gtk::Label,
-    album_label: gtk::Label,
+    position_box: gtk::Box,
+    position_box_drag: gtk::DragSource,
+    title_box: gtk::Box,
+    title_box_drag: gtk::DragSource,
+    artist_box: gtk::Box,
+    artist_box_drag: gtk::DragSource,
+    album_box: gtk::Box,
+    album_box_drag: gtk::DragSource,
+    length_box: gtk::Box,
+    length_box_drag: gtk::DragSource,
+    content_set: bool,
 }
 
 impl PartialEq for TrackRow {
@@ -56,13 +65,54 @@ impl TrackRow {
             .build();
         album_label.inline_css("color: inherit");
 
-        Self {
+        let result = Self {
             subsonic: subsonic.clone(),
             item,
             fav_btn,
-            artist_label,
-            album_label,
+            position_box: gtk::Box::default(),
+            position_box_drag: gtk::DragSource::default(),
+            title_box: gtk::Box::default(),
+            title_box_drag: gtk::DragSource::default(),
+            album_box: gtk::Box::default(),
+            album_box_drag: gtk::DragSource::default(),
+            artist_box: gtk::Box::default(),
+            artist_box_drag: gtk::DragSource::default(),
+            length_box: gtk::Box::default(),
+            length_box_drag: gtk::DragSource::default(),
+            content_set: false,
+        };
+
+        //setup position label
+        let position_label = gtk::Label::builder().build();
+        let mut text = String::new();
+        if let Some(cd) = result.item.disc_number {
+            text.push_str(&cd.to_string());
+            text.push('.');
         }
+        if let Some(track) = result.item.track {
+            text = format!("{text}{track:02}");
+        }
+        position_label.set_label(&text);
+        result.position_box.append(&position_label);
+
+        // setup title label
+        let title_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .label(&result.item.title)
+            .build();
+        result.title_box.append(&title_label);
+        result.title_box.add_controller(result.get_drag_src());
+        result
+            .title_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
+
+        //setup length_box
+        let length = convert_for_label(i64::from(result.item.duration.unwrap_or(0)) * 1000);
+        let length_label = gtk::Label::new(Some(&length));
+        result.length_box.append(&length_label);
+
+        result
     }
 
     pub fn new_track(
@@ -90,43 +140,57 @@ impl TrackRow {
                 _ => unreachable!("unkown icon name"),
             });
 
-        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
-        let send = sender.clone();
-        if let Some(artist_id) = &result.item.artist_id {
-            let artist = gtk::glib::markup_escape_text(artist);
-            result
-                .artist_label
-                .set_markup(&format!("<a href=\"\">{artist}</a>"));
-            let artist_id = artist_id.clone();
-            result
-                .artist_label
-                .connect_activate_link(move |_label, _id| {
-                    send.output(TracksViewOut::ClickedArtist(artist_id.clone()))
-                        .unwrap();
-                    gtk::glib::signal::Propagation::Stop
-                });
-        } else {
-            result.artist_label.set_text(artist);
-        }
-
+        // setup album label
+        let album_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        album_label.inline_css("color: inherit");
         let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        let send = sender.clone();
         if let Some(album_id) = &result.item.album_id {
             let album = gtk::glib::markup_escape_text(album);
-            result
-                .album_label
-                .set_markup(&format!("<a href=\"\">{album}</a>"));
+            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
             let album_id = album_id.clone();
-            result
-                .album_label
-                .connect_activate_link(move |_label, _id| {
-                    sender
-                        .output(TracksViewOut::ClickedAlbum(album_id.to_string()))
-                        .unwrap();
-                    gtk::glib::signal::Propagation::Stop
-                });
+            album_label.connect_activate_link(move |_label, _id| {
+                send.output(TracksViewOut::ClickedAlbum(album_id.clone()))
+                    .unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
         } else {
-            result.album_label.set_text(album);
+            album_label.set_text(album);
         }
+        result.album_box.append(&album_label);
+        result.album_box.add_controller(result.get_drag_src());
+        result
+            .album_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
+
+        // setup artist label
+        let artist_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        artist_label.inline_css("color: inherit");
+        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
+        if let Some(artist_id) = &result.item.artist_id {
+            let artist = gtk::glib::markup_escape_text(artist);
+            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
+            let artist_id = artist_id.clone();
+            artist_label.connect_activate_link(move |_label, _id| {
+                sender
+                    .output(TracksViewOut::ClickedArtist(artist_id.clone()))
+                    .unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
+        } else {
+            artist_label.set_text(artist);
+        }
+        result.artist_box.append(&artist_label);
+        result.artist_box.add_controller(result.get_drag_src());
+        result
+            .artist_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
 
         result
     }
@@ -156,36 +220,88 @@ impl TrackRow {
                 _ => unreachable!("unkown icon name"),
             });
 
+        // setup album label
+        let album_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        album_label.set_label(&album);
+        result.album_box.append(&album_label);
+
+        // setup artist label
+        let artist_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        artist_label.inline_css("color: inherit");
         let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
         if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
-            result
-                .artist_label
-                .set_markup(&format!("<a href=\"\">{artist}</a>"));
+            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
             let artist_id = artist_id.clone();
-            result
-                .artist_label
-                .connect_activate_link(move |_label, _id| {
-                    sender
-                        .output(AlbumViewOut::ArtistClicked(artist_id.clone()))
-                        .unwrap();
-                    gtk::glib::signal::Propagation::Stop
-                });
+            artist_label.connect_activate_link(move |_label, _id| {
+                sender
+                    .output(AlbumViewOut::ArtistClicked(artist_id.clone())) //TODO rename to be uniform to ClickedArtist
+                    .unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
         } else {
-            result.artist_label.set_text(artist);
+            artist_label.set_text(artist);
         }
+        result.artist_box.append(&artist_label);
+        result.artist_box.add_controller(result.get_drag_src());
+        result
+            .artist_box_drag
+            .set_actions(gtk::gdk::DragAction::COPY);
 
         result
     }
 
-    pub fn set_drag_src(&self, drop: Droppable) {
-        let src = gtk::DragSource::default();
-        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-        src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::COPY);
-        // self.album_label.add_controller(src.clone());
-        self.fav_btn.add_controller(src.clone());
-        // self.artist_label.add_controller(src.clone());
+    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 5] {
+        //add new widgets here
+        [
+            (&self.position_box_drag, &self.position_box),
+            (&self.title_box_drag, &self.title_box),
+            (&self.artist_box_drag, &self.artist_box),
+            (&self.album_box_drag, &self.album_box),
+            (&self.length_box_drag, &self.length_box),
+        ]
+    }
+
+    pub fn set_drag_src(&mut self, drop: Droppable) {
+        for (src, widget) in self.get_widgets() {
+            //remove DragSource before add new one
+            if self.content_set {
+                widget.remove_controller(src);
+            }
+
+            let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+            src.set_content(Some(&content));
+            let album = self.subsonic.borrow().album_of_song(&self.item);
+            let subsonic = self.subsonic.clone();
+            src.connect_drag_begin(move |src, _drag| {
+                if let Some(album) = &album {
+                    if let Some(cover_id) = &album.cover_art {
+                        let cover = subsonic.borrow().cover_icon(cover_id);
+                        if let Some(tex) = cover {
+                            src.set_icon(Some(&tex), 0, 0);
+                        }
+                    }
+                }
+            });
+            widget.add_controller(src.clone());
+        }
+        self.content_set = true;
+    }
+
+    pub fn remove_drag_src(&mut self) {
+        for (src, widget) in self.get_widgets() {
+            if self.content_set {
+                widget.remove_controller(src);
+            }
+        }
+        self.content_set = false;
     }
 
     fn get_drag_src(&self) -> gtk::DragSource {
@@ -214,32 +330,20 @@ impl TrackRow {
 pub struct PositionColumn;
 
 impl relm4::typed_view::column::RelmColumn for PositionColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = gtk::Label;
+    type Widgets = ();
 
     const COLUMN_NAME: &'static str = "#";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::builder().build();
-        b.append(&label);
-        (b, (label))
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        let mut text = String::new();
-        if let Some(cd) = item.item.disc_number {
-            text.push_str(&cd.to_string());
-            text.push('.');
-        }
-        if let Some(track) = item.item.track {
-            text = format!("{text}{track:02}");
-        }
-        label.set_label(&text);
-        b.add_controller(item.get_drag_src());
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(Some(&item.position_box));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -250,28 +354,20 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
 pub struct TitleColumn;
 
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = gtk::Label;
+    type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(&item.item.title);
-        b.add_controller(item.get_drag_src());
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(Some(&item.title_box));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -295,8 +391,7 @@ impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.artist_label));
-        view.add_controller(item.get_drag_src());
+        view.set_child(Some(&item.artist_box));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -320,8 +415,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.album_label));
-        view.add_controller(item.get_drag_src());
+        view.set_child(Some(&item.album_box));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -364,26 +458,20 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
 pub struct LengthColumn;
 
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = gtk::Label;
+    type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Length";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::default();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
-        label.set_label(&length);
-        b.add_controller(item.get_drag_src());
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(Some(&item.length_box));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
