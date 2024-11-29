@@ -38,21 +38,35 @@ pub struct Args {
     /// using a alternative title; a debug option
     #[arg(long, default_value = "buoy")]
     alternative_title: String,
+
+    /// logs infos about events while running; useful for debugging bugs
+    #[arg(short, long)]
+    debug_logs: bool,
 }
 
 fn main() -> anyhow::Result<()> {
-    //enable logging
-    // use filters from RUST_LOG variable when given, otherwise use default filters
-    let filter = match tracing_subscriber::EnvFilter::builder()
-        .with_env_var("RUST_LOG")
-        .try_from_env()
-    {
-        Ok(filter) => filter,
-        Err(_) => tracing_subscriber::EnvFilter::builder().parse(LOG_PARA)?,
-    };
-    tracing_subscriber::fmt().with_env_filter(filter).init();
-
     let args = Rc::new(RefCell::new(Args::parse()));
+
+    // invert debug logging when compiled with debug mode
+    #[cfg(debug_assertions)]
+    {
+        let mut args = args.borrow_mut();
+        args.debug_logs = !args.debug_logs;
+    }
+
+    //enable logging
+    if args.borrow().debug_logs {
+        // use filters from RUST_LOG variable when given, otherwise use default filters
+        let filter = match tracing_subscriber::EnvFilter::builder()
+            .with_env_var("RUST_LOG")
+            .try_from_env()
+        {
+            Ok(filter) => filter,
+            Err(_) => tracing_subscriber::EnvFilter::builder().parse(LOG_PARA)?,
+        };
+        tracing_subscriber::fmt().with_env_filter(filter).init();
+    }
+
 
     let app = RelmApp::new(&args.borrow().alternative_id);
     load_css();
