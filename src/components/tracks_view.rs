@@ -140,7 +140,7 @@ impl relm4::Component for TracksView {
 
         // add tracks in chunks to not overwhelm the app
         const CHUNK_SIZE: usize = 20;
-        const WAIT: u64 = 20;
+        const WAIT: u64 = 40;
         let mut countdown = 0;
         for chunk in &subsonic
             .borrow()
