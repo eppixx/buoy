@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt, SelectionModelExt, ListModelExt},
     },
     ComponentController, RelmWidgetExt,
 };
@@ -31,7 +31,7 @@ use super::cover::CoverOut;
 #[derive(Debug)]
 pub struct TracksView {
     subsonic: Rc<RefCell<Subsonic>>,
-    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::SingleSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::MultiSelection>,
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
 
     info_cover: relm4::Controller<Cover>,
@@ -94,6 +94,7 @@ pub enum TracksViewIn {
     DownloadClicked,
     ToggleFilters,
     TrackClicked(u32),
+    RecalcDragSource,
 }
 
 #[derive(Debug)]
@@ -126,7 +127,7 @@ impl relm4::Component for TracksView {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let mut tracks =
-            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::SingleSelection>::new();
+            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::MultiSelection>::new();
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
@@ -158,6 +159,15 @@ impl relm4::Component for TracksView {
         let widgets = view_output!();
         model.filters.guard().push_back(Category::Favorite);
         model.calc_sensitivity_of_buttons(&widgets);
+
+        // send signal on selection change
+        model
+            .tracks
+            .selection_model
+            .connect_selection_changed(move |_selection_model, _x, _y| {
+                sender.input(TracksViewIn::RecalcDragSource);
+            });
+
         relm4::ComponentParts { model, widgets }
     }
 
@@ -292,10 +302,16 @@ impl relm4::Component for TracksView {
                         model.tracks.view.clone() {
                             add_css_class: "tracks-view-tracks-row",
                             set_vexpand: true,
-                            set_single_click_activate: true,
 
                             connect_activate[sender] => move |_column_view, index| {
                                 sender.input(TracksViewIn::TrackClicked(index));
+                            },
+
+                            add_controller = gtk::DragSource {
+                                connect_prepare[sender] => move |_drag_src, _x, _y| {
+                                    sender.input(TracksViewIn::RecalcDragSource);
+                                    None
+                                }
                             }
                         }
                     }
@@ -721,6 +737,32 @@ impl relm4::Component for TracksView {
                     self.info_cover
                         .emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
                 }
+            }
+            TracksViewIn::RecalcDragSource => {
+                let len = self.tracks.selection_model.n_items();
+                let selected_rows: Vec<u32> = (0..len)
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .collect();
+
+                // remove DragSource of not selected items
+                (0..len)
+                    .filter(|i| !selected_rows.contains(i))
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|row| row.borrow_mut().remove_drag_src());
+
+                // get selected children
+                let children: Vec<submarine::data::Child> = selected_rows
+                    .iter()
+                    .filter_map(|i| self.tracks.get(*i))
+                    .map(|row| row.borrow().item.clone())
+                    .collect();
+
+                // set children as content for DragSource
+                let drop = Droppable::Queue(children);
+                selected_rows
+                    .iter()
+                    .filter_map(|i| self.tracks.get(*i))
+                    .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
             }
         }
     }
