@@ -33,6 +33,8 @@ pub struct TrackRow {
     album_box_drag: gtk::DragSource,
     length_box: gtk::Box,
     length_box_drag: gtk::DragSource,
+    bitrate_box: gtk::Box,
+    bitrate_box_drag: gtk::DragSource,
     content_set: bool,
 }
 
@@ -79,6 +81,8 @@ impl TrackRow {
             artist_box_drag: gtk::DragSource::default(),
             length_box: gtk::Box::default(),
             length_box_drag: gtk::DragSource::default(),
+            bitrate_box: gtk::Box::default(),
+            bitrate_box_drag: gtk::DragSource::default(),
             content_set: false,
         };
 
@@ -111,6 +115,14 @@ impl TrackRow {
         let length = convert_for_label(i64::from(result.item.duration.unwrap_or(0)) * 1000);
         let length_label = gtk::Label::new(Some(&length));
         result.length_box.append(&length_label);
+        result.length_box.add_controller(result.get_drag_src());
+
+        //setup bitrate_box
+        let bitrate = result.item.bit_rate;
+        let bitrate = bitrate.map(|n| n.to_string());
+        let bitrate_label = gtk::Label::new(Some(&bitrate.unwrap_or(String::from("-"))));
+        result.bitrate_box.append(&bitrate_label);
+        result.bitrate_box.add_controller(result.get_drag_src());
 
         result
     }
@@ -258,7 +270,7 @@ impl TrackRow {
         result
     }
 
-    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 5] {
+    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 6] {
         //add new widgets here
         [
             (&self.position_box_drag, &self.position_box),
@@ -266,6 +278,7 @@ impl TrackRow {
             (&self.artist_box_drag, &self.artist_box),
             (&self.album_box_drag, &self.album_box),
             (&self.length_box_drag, &self.length_box),
+            (&self.bitrate_box_drag, &self.bitrate_box),
         ]
     }
 
@@ -482,27 +495,20 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
 pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = gtk::Label;
+    type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Bitrate";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::default();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        (gtk::Viewport::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        let bitrate = item.item.bit_rate;
-        let bitrate = bitrate.map(|n| n.to_string());
-        label.set_label(&bitrate.unwrap_or(String::from("-")));
-        b.add_controller(item.get_drag_src());
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(Some(&item.bitrate_box));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
