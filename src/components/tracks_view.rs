@@ -200,15 +200,15 @@ impl relm4::Component for TracksView {
                     }
                 },
 
-                // info
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
-                    set_margin_horizontal: 7,
 
+                    // info
                     gtk::WindowHandle {
                         gtk::Box {
                             set_spacing: 15,
+                            set_margin_horizontal: 7,
 
                             model.info_cover.widget().clone() -> gtk::Box {},
 
