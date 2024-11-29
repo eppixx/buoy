@@ -226,6 +226,7 @@ impl relm4::Component for TracksView {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
+                    set_margin_horizontal: 7,
 
                     gtk::WindowHandle {
                         gtk::Box {
