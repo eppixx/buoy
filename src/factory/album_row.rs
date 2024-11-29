@@ -101,7 +101,7 @@ impl AlbumRow {
 
     fn get_drag_src(&self) -> gtk::DragSource {
         let src = gtk::DragSource::default();
-        let drop = Droppable::Child(Box::new(self.item.clone()));
+        let drop = Droppable::AlbumChild(Box::new(self.item.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
         src.set_actions(gtk::gdk::DragAction::MOVE);
