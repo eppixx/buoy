@@ -1003,6 +1003,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::SearchActivate(true) => {
                 Settings::get().lock().unwrap().search_active = true;
                 widgets.search_bar.set_reveal_child(true);
+                widgets.search_btn.set_active(true);
                 self.browser
                     .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
                 widgets.search.grab_focus();
@@ -1010,6 +1011,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::SearchActivate(false) => {
                 Settings::get().lock().unwrap().search_active = false;
                 widgets.search_bar.set_reveal_child(false);
+                widgets.search_btn.set_active(false);
                 self.browser.emit(BrowserIn::SearchChanged(String::new()));
             }
             AppIn::SearchChanged => {
