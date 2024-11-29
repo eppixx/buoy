@@ -738,10 +738,7 @@ impl relm4::Component for Queue {
                     self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
                     for child in src.iter().rev() {
-                        guard.insert(
-                            dest.current_index(),
-                            (self.subsonic.clone(), child.clone()),
-                        );
+                        guard.insert(dest.current_index(), (self.subsonic.clone(), child.clone()));
                     }
                     sender.input(QueueIn::Rerandomize);
                 }

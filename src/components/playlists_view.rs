@@ -10,7 +10,7 @@ use relm4::{
             WidgetExt,
         },
     },
-    Component, ComponentController,
+    ComponentController,
 };
 
 use crate::factory::playlist_row::{
@@ -59,12 +59,9 @@ pub struct PlaylistsView {
     subsonic: Rc<RefCell<Subsonic>>,
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
 
-    track_stack: gtk::Stack,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistRow, gtk::MultiSelection>,
     info_cover: relm4::Controller<Cover>,
     info_cover_controller: gtk::DragSource,
-    info_title: gtk::Label,
-    info_details: gtk::Label,
 }
 
 #[derive(Debug)]
@@ -102,10 +99,11 @@ pub enum PlaylistsViewIn {
 }
 
 #[relm4::component(pub)]
-impl relm4::SimpleComponent for PlaylistsView {
+impl relm4::Component for PlaylistsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = PlaylistsViewIn;
     type Output = PlaylistsViewOut;
+    type CommandOutput = ();
 
     fn init(
         subsonic: Self::Init,
@@ -126,14 +124,11 @@ impl relm4::SimpleComponent for PlaylistsView {
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
 
-            track_stack: gtk::Stack::default(),
             tracks,
             info_cover: Cover::builder()
                 .launch((subsonic, None))
                 .forward(sender.input_sender(), PlaylistsViewIn::Cover),
             info_cover_controller: gtk::DragSource::default(),
-            info_title: gtk::Label::default(),
-            info_details: gtk::Label::default(),
         };
 
         let widgets = view_output!();
@@ -146,7 +141,10 @@ impl relm4::SimpleComponent for PlaylistsView {
 
         // add playlists to list
         for playlist in model.subsonic.borrow().playlists() {
-            model.playlists.guard().push_back((model.subsonic.clone(), playlist.clone()));
+            model
+                .playlists
+                .guard()
+                .push_back((model.subsonic.clone(), playlist.clone()));
         }
 
         // send signal on selection change
@@ -210,7 +208,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             },
 
             gtk::Box {
-                model.track_stack.clone() -> gtk::Stack {
+                append: track_stack = &gtk::Stack {
                     add_named[Some("tracks-stock")] = &gtk::Box {
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
@@ -238,13 +236,13 @@ impl relm4::SimpleComponent for PlaylistsView {
                                     set_orientation: gtk::Orientation::Vertical,
                                     set_spacing: 8,
 
-                                    model.info_title.clone() -> gtk::Label {
+                                    append: info_title = &gtk::Label {
                                         add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                         set_label: "title",
                                         set_halign: gtk::Align::Start,
                                     },
 
-                                    model.info_details.clone() -> gtk::Label {
+                                    append: info_details = &gtk::Label {
                                         set_label: "more info",
                                         set_halign: gtk::Align::Start,
                                     },
@@ -326,7 +324,13 @@ impl relm4::SimpleComponent for PlaylistsView {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
             PlaylistsViewIn::SearchChanged(search) => {
                 self.tracks.clear_filters();
@@ -377,7 +381,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                         .unwrap();
                 }
                 PlaylistElementOut::RenamePlaylist(list) => {
-                    self.info_title.set_label(&list.name);
+                    widgets.info_title.set_label(&list.name);
                     sender
                         .output(PlaylistsViewOut::RenamePlaylist(list))
                         .unwrap();
@@ -420,10 +424,12 @@ impl relm4::SimpleComponent for PlaylistsView {
             }
             PlaylistsViewIn::NewPlaylist(list) => {
                 //show new playlist
-                self.playlists.guard().push_back((self.subsonic.clone(), list));
+                self.playlists
+                    .guard()
+                    .push_back((self.subsonic.clone(), list));
             }
             PlaylistsViewIn::DeletePlaylist(index) => {
-                self.track_stack.set_visible_child_name("tracks-stock");
+                widgets.track_stack.set_visible_child_name("tracks-stock");
                 self.playlists.guard().remove(index.current_index());
             }
             PlaylistsViewIn::Favorited(id, state) => {
@@ -454,7 +460,7 @@ impl relm4::SimpleComponent for PlaylistsView {
                     list.set_edit_area(false);
                 }
 
-                self.track_stack.set_visible_child_name("tracks");
+                widgets.track_stack.set_visible_child_name("tracks");
 
                 let guard = self.playlists.guard();
                 let Some(list) = guard.get(index as usize) else {
@@ -467,8 +473,8 @@ impl relm4::SimpleComponent for PlaylistsView {
                 // set info
                 self.info_cover
                     .emit(CoverIn::LoadPlaylist(Box::new(list.clone())));
-                self.info_title.set_text(&list.base.name);
-                self.info_details.set_text(&build_info_string(list));
+                widgets.info_title.set_text(&list.base.name);
+                widgets.info_details.set_text(&build_info_string(list));
 
                 //update drag controller for cover
                 let drop = Droppable::Playlist(Box::new(list.clone()));
