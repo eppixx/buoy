@@ -148,12 +148,17 @@ impl PlaylistRow {
         result
     }
 
-    pub fn set_drag_src(&mut self, drop: Droppable) {
-        for (src, widget) in [
+    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 3] {
+        //add new widgets here
+        [
             (&self.title_box_drag, &self.title_box),
             (&self.artist_box_drag, &self.artist_box),
             (&self.album_box_drag, &self.album_box),
-        ] {
+        ]
+    }
+
+    pub fn set_drag_src(&mut self, drop: Droppable) {
+        for (src, widget) in self.get_widgets() {
             //TODO add other widgets here
 
             //remove DragSource before add new one
@@ -181,11 +186,7 @@ impl PlaylistRow {
     }
 
     pub fn remove_drag_src(&mut self) {
-        for (src, widget) in [
-            (&self.title_box_drag, &self.title_box),
-            (&self.artist_box_drag, &self.artist_box),
-            (&self.album_box_drag, &self.album_box),
-        ] {
+        for (src, widget) in self.get_widgets() {
             if self.content_set {
                 widget.remove_controller(src);
             }
