@@ -737,9 +737,9 @@ impl relm4::Component for Queue {
                 QueueSongOut::DropAbove { src, dest } => {
                     self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
-                    for (i, child) in src.iter().enumerate() {
+                    for child in src.iter().rev() {
                         guard.insert(
-                            dest.current_index() + i,
+                            dest.current_index(),
                             (self.subsonic.clone(), child.clone()),
                         );
                     }
@@ -748,9 +748,9 @@ impl relm4::Component for Queue {
                 QueueSongOut::DropBelow { src, dest } => {
                     self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
-                    for (i, child) in src.iter().enumerate() {
+                    for child in src.iter().rev() {
                         guard.insert(
-                            dest.current_index() + i + 1,
+                            dest.current_index() + 1,
                             (self.subsonic.clone(), child.clone()),
                         );
                     }
