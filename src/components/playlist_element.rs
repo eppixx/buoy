@@ -1,12 +1,15 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::gtk::{
     self,
     prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
 };
 
-use crate::{gtk_helper::stack::StackExt, types::Droppable};
+use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, types::Droppable};
 
 #[derive(Debug)]
 pub struct PlaylistElement {
+    subsonic: Rc<RefCell<Subsonic>>,
     playlist: submarine::data::PlaylistWithSongs,
     index: relm4::factory::DynamicIndex,
     drag_src: gtk::DragSource,
@@ -110,18 +113,19 @@ pub enum PlaylistElementOut {
 
 #[relm4::factory(pub)]
 impl relm4::factory::FactoryComponent for PlaylistElement {
-    type Init = submarine::data::PlaylistWithSongs;
+    type Init = (Rc<RefCell<Subsonic>>, submarine::data::PlaylistWithSongs);
     type Input = PlaylistElementIn;
     type Output = PlaylistElementOut;
     type ParentWidget = gtk::ListBox;
     type CommandOutput = ();
 
     fn init_model(
-        init: Self::Init,
+        (subsonic, init): Self::Init,
         index: &relm4::factory::DynamicIndex,
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         let model = Self {
+            subsonic,
             playlist: init.clone(),
             index: index.clone(),
             drag_src: gtk::DragSource::default(),
@@ -138,7 +142,17 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         let drop = Droppable::Playlist(Box::new(init.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         model.drag_src.set_content(Some(&content));
-        model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+        model.drag_src.set_actions(gtk::gdk::DragAction::COPY);
+        let cover_art = init.base.cover_art.clone();
+        let subsonic = model.subsonic.clone();
+        model.drag_src.connect_drag_begin(move |src, _drag| {
+            if let Some(art) = &cover_art {
+                let cover = subsonic.borrow().cover_icon(art);
+                if let Some(tex) = cover {
+                    src.set_icon(Some(&tex), 0, 0);
+                }
+            }
+        });
 
         model
     }

@@ -150,7 +150,7 @@ impl relm4::SimpleComponent for PlaylistsView {
 
         // add playlists to list
         for playlist in model.subsonic.borrow().playlists() {
-            model.playlists.guard().push_back(playlist.clone());
+            model.playlists.guard().push_back((model.subsonic.clone(), playlist.clone()));
         }
 
         model
@@ -425,7 +425,7 @@ impl relm4::SimpleComponent for PlaylistsView {
             }
             PlaylistsViewIn::NewPlaylist(list) => {
                 //show new playlist
-                self.playlists.guard().push_back(list);
+                self.playlists.guard().push_back((self.subsonic.clone(), list));
             }
             PlaylistsViewIn::DeletePlaylist(index) => {
                 self.track_stack.set_visible_child_name("tracks-stock");
