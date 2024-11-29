@@ -1,7 +1,6 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
-use itertools::Itertools;
 use relm4::{
     gtk::{
         self, glib,
@@ -106,8 +105,7 @@ pub enum AlbumsViewIn {
 
 #[derive(Debug)]
 pub enum AlbumsViewCmd {
-    AddAlbums(Vec<submarine::data::Child>),
-    LoadingAlbumsFinished,
+    AddAlbums(Vec<submarine::data::Child>, usize),
 }
 
 #[relm4::component(pub)]
@@ -144,29 +142,8 @@ impl relm4::component::Component for AlbumsView {
         };
 
         // add albums in chunks to not overwhelm the app
-        const CHUNK_SIZE: usize = 20;
-        const WAIT: u64 = 20;
-        let mut countdown = 0;
-        for chunk in &model
-            .subsonic
-            .borrow()
-            .albums()
-            .iter()
-            .cloned()
-            .chunks(CHUNK_SIZE)
-        {
-            let chunk: Vec<submarine::data::Child> = chunk.into_iter().collect();
-            sender.oneshot_command(async move {
-                tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
-                AlbumsViewCmd::AddAlbums(chunk)
-            });
-            countdown += WAIT;
-        }
-        sender.oneshot_command(async move {
-            tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
-            AlbumsViewCmd::LoadingAlbumsFinished
-        });
-        tracing::info!("loading artists should be finished in {countdown}ms");
+        let list = model.subsonic.borrow().albums().to_vec();
+        sender.oneshot_command(async move { AlbumsViewCmd::AddAlbums(list, 0) });
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
@@ -690,15 +667,19 @@ impl relm4::component::Component for AlbumsView {
         _root: &Self::Root,
     ) {
         match msg {
-            AlbumsViewCmd::AddAlbums(artists) => {
-                for artist in artists {
-                    self.shown_artists
-                        .borrow_mut()
-                        .insert(artist.artist.clone());
-                    self.shown_albums.borrow_mut().insert(artist.album.clone());
-                    let artist = AlbumRow::new(self.subsonic.clone(), artist, sender.clone());
-                    self.entries.append(artist);
+            AlbumsViewCmd::AddAlbums(candidates, processed) => {
+                const CHUNK: usize = 20;
+                const TIMEOUT: u64 = 2;
+
+                //add some albums
+                for album in candidates.iter().skip(processed).take(CHUNK) {
+                    self.shown_albums.borrow_mut().insert(album.album.clone());
+                    self.shown_artists.borrow_mut().insert(album.artist.clone());
+                    let album = AlbumRow::new(&self.subsonic, album.clone(), sender.clone());
+                    self.entries.append(album);
                 }
+
+                //update labels and buttons
                 widgets.shown_albums.set_label(&format!(
                     "Shown albums: {}",
                     self.shown_albums.borrow().len()
@@ -708,9 +689,18 @@ impl relm4::component::Component for AlbumsView {
                     self.shown_artists.borrow().len()
                 ));
                 self.calc_sensitivity_of_buttons(widgets);
-            }
-            AlbumsViewCmd::LoadingAlbumsFinished => {
-                widgets.spinner.set_visible(false);
+
+                // recursion anchor
+                if processed >= candidates.len() {
+                    widgets.spinner.set_visible(false);
+                    return;
+                }
+
+                //recursion the rest of the list
+                sender.oneshot_command(async move {
+                    tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
+                    AlbumsViewCmd::AddAlbums(candidates, processed + CHUNK)
+                });
             }
         }
     }

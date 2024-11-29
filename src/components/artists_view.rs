@@ -1,7 +1,6 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
-use itertools::Itertools;
 use relm4::{
     gtk::{
         self, glib,
@@ -98,8 +97,7 @@ pub enum ArtistsViewIn {
 
 #[derive(Debug)]
 pub enum ArtistsViewCmd {
-    AddArtists(Vec<submarine::data::ArtistId3>),
-    LoadingArtistsFinished,
+    AddArtists(Vec<submarine::data::ArtistId3>, usize),
 }
 
 #[relm4::component(pub)]
@@ -131,29 +129,8 @@ impl relm4::component::Component for ArtistsView {
         };
 
         // add artists in chunks to not overwhelm the app
-        const CHUNK_SIZE: usize = 20;
-        const WAIT: u64 = 20;
-        let mut countdown = 0;
-        for chunk in &model
-            .subsonic
-            .borrow()
-            .artists()
-            .iter()
-            .cloned()
-            .chunks(CHUNK_SIZE)
-        {
-            let chunk: Vec<submarine::data::ArtistId3> = chunk.into_iter().collect();
-            sender.oneshot_command(async move {
-                tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
-                ArtistsViewCmd::AddArtists(chunk)
-            });
-            countdown += WAIT;
-        }
-        sender.oneshot_command(async move {
-            tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
-            ArtistsViewCmd::LoadingArtistsFinished
-        });
-        tracing::info!("loading artists should be finished in {countdown}ms");
+        let list = model.subsonic.borrow().artists().to_vec();
+        sender.oneshot_command(async move { ArtistsViewCmd::AddArtists(list, 0) });
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
@@ -553,20 +530,35 @@ impl relm4::component::Component for ArtistsView {
         _root: &Self::Root,
     ) {
         match msg {
-            ArtistsViewCmd::AddArtists(artists) => {
-                for artist in artists {
+            ArtistsViewCmd::AddArtists(candidates, processed) => {
+                const CHUNK: usize = 20;
+                const TIMEOUT: u64 = 2;
+
+                //add some albums
+                for artist in candidates.iter().skip(processed).take(CHUNK) {
                     self.shown_artists.borrow_mut().insert(artist.name.clone());
-                    let artist = ArtistRow::new(&self.subsonic, artist, sender.clone());
+                    let artist = ArtistRow::new(&self.subsonic, artist.clone(), sender.clone());
                     self.entries.append(artist);
                 }
+
+                //update labels and buttons
                 widgets.shown_artists.set_label(&format!(
                     "Shown artists: {}",
                     self.shown_artists.borrow().len()
                 ));
                 self.calc_sensitivity_of_buttons(widgets);
-            }
-            ArtistsViewCmd::LoadingArtistsFinished => {
-                widgets.spinner.set_visible(false);
+
+                // recursion anchor
+                if processed >= candidates.len() {
+                    widgets.spinner.set_visible(false);
+                    return;
+                }
+
+                //recursion the rest of the list
+                sender.oneshot_command(async move {
+                    tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
+                    ArtistsViewCmd::AddArtists(candidates, processed + CHUNK)
+                });
             }
         }
     }

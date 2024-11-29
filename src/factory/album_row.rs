@@ -37,7 +37,7 @@ impl PartialEq for AlbumRow {
 
 impl AlbumRow {
     pub fn new(
-        subsonic: Rc<RefCell<Subsonic>>,
+        subsonic: &Rc<RefCell<Subsonic>>,
         item: submarine::data::Child,
         sender: relm4::ComponentSender<AlbumsView>,
     ) -> Self {
