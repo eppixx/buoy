@@ -226,7 +226,7 @@ impl TrackRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         let album = result.item.album.as_deref().unwrap_or("Unknown Album");
-        album_label.set_label(&album);
+        album_label.set_label(album);
         result.album_box.append(&album_label);
 
         // setup artist label

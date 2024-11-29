@@ -137,14 +137,8 @@ impl relm4::Component for TracksView {
         tracks.append_column::<FavColumn>();
 
         // add tracks in chunks to not overwhelm the app
-        let list = subsonic
-            .borrow()
-            .tracks()
-            .iter()
-            .cloned().collect();
-        sender.oneshot_command(async move {
-            TracksViewCmd::AddTracks(list, 0)
-        });
+        let list = subsonic.borrow().tracks().to_vec();
+        sender.oneshot_command(async move { TracksViewCmd::AddTracks(list, 0) });
 
         let mut model = Self {
             subsonic: subsonic.clone(),
