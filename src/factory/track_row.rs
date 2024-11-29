@@ -309,10 +309,11 @@ impl TrackRow {
     }
 
     pub fn remove_drag_src(&mut self) {
+        if !self.content_set {
+            return;
+        }
         for (src, widget) in self.get_widgets() {
-            if self.content_set {
-                widget.remove_controller(src);
-            }
+            widget.remove_controller(src);
         }
         self.content_set = false;
     }
