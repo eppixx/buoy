@@ -1,7 +1,6 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
-use itertools::Itertools;
 use relm4::{
     gtk::{
         self, glib,
@@ -111,6 +110,7 @@ pub enum TracksViewOut {
 
 #[derive(Debug)]
 pub enum TracksViewCmd {
+    AddTrack(Vec<submarine::data::Child>, usize),
     AddTracks(Vec<submarine::data::Child>),
     LoadingTracksFinished,
 }
@@ -139,28 +139,14 @@ impl relm4::Component for TracksView {
         tracks.append_column::<FavColumn>();
 
         // add tracks in chunks to not overwhelm the app
-        const CHUNK_SIZE: usize = 20;
-        const WAIT: u64 = 40;
-        let mut countdown = 0;
-        for chunk in &subsonic
+        let list = subsonic
             .borrow()
             .tracks()
             .iter()
-            .cloned()
-            .chunks(CHUNK_SIZE)
-        {
-            let chunk: Vec<submarine::data::Child> = chunk.into_iter().collect();
-            sender.oneshot_command(async move {
-                tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
-                TracksViewCmd::AddTracks(chunk)
-            });
-            countdown += WAIT;
-        }
+            .cloned().collect();
         sender.oneshot_command(async move {
-            tokio::time::sleep(std::time::Duration::from_millis(countdown)).await;
-            TracksViewCmd::LoadingTracksFinished
+            TracksViewCmd::AddTrack(list, 0)
         });
-        tracing::info!("loading tracks should be finished in {countdown}ms");
 
         let mut model = Self {
             subsonic: subsonic.clone(),
@@ -779,6 +765,46 @@ impl relm4::Component for TracksView {
             }
             TracksViewCmd::LoadingTracksFinished => {
                 widgets.spinner.set_visible(false);
+            }
+            TracksViewCmd::AddTrack(candidates, processed) => {
+                const CHUNK: usize = 10;
+                const TIMEOUT: u64 = 2;
+
+                //add some tracks
+                for track in candidates.iter().skip(processed).take(CHUNK) {
+                    self.shown_tracks.borrow_mut().push(track.clone());
+                    self.shown_albums.borrow_mut().insert(track.album.clone());
+                    self.shown_artists.borrow_mut().insert(track.artist.clone());
+                    let track = TrackRow::new_track(&self.subsonic, track.clone(), sender.clone());
+                    self.tracks.append(track);
+                }
+
+                //update labels and buttons
+                widgets.shown_tracks.set_label(&format!(
+                    "Shown tracks: {}",
+                    self.shown_tracks.borrow().len()
+                ));
+                widgets.shown_albums.set_label(&format!(
+                    "Shown albums: {}",
+                    self.shown_albums.borrow().len()
+                ));
+                widgets.shown_artists.set_label(&format!(
+                    "Shown artists: {}",
+                    self.shown_artists.borrow().len()
+                ));
+                self.calc_sensitivity_of_buttons(widgets);
+
+                // recursion anchor
+                if processed >= candidates.len() {
+                    widgets.spinner.set_visible(false);
+                    return;
+                }
+
+                //recursion the rest of the list
+                sender.oneshot_command(async move {
+                    tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
+                    TracksViewCmd::AddTrack(candidates, processed + CHUNK)
+                });
             }
         }
     }
