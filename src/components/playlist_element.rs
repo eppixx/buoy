@@ -17,9 +17,6 @@ pub struct PlaylistElement {
     main_stack: gtk::Stack,
 
     edit_area: gtk::Stack,
-    edit_entry: gtk::Entry,
-    edit: gtk::Button,
-    delete: gtk::Button,
 }
 
 impl PlaylistElement {
@@ -131,11 +128,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             drag_src: gtk::DragSource::default(),
 
             main_stack: gtk::Stack::default(),
-
             edit_area: gtk::Stack::default(),
-            edit_entry: gtk::Entry::default(),
-            edit: gtk::Button::default(),
-            delete: gtk::Button::default(),
         };
 
         //setup content for DropSource
@@ -196,12 +189,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                                 gtk::Box {
                                     set_spacing: 10,
 
-                                    self.edit.clone() -> gtk::Button {
+                                    gtk::Button {
                                         set_icon_name: "edit-symbolic",
                                         set_tooltip_text: Some("Rename Playlist"),
                                         connect_clicked => PlaylistElementIn::ChangeState(State::Edit),
                                     },
-                                    self.delete.clone() -> gtk::Button {
+                                    gtk::Button {
                                         add_css_class: granite::STYLE_CLASS_DESTRUCTIVE_ACTION,
                                         set_icon_name: "edit-delete-symbolic",
                                         set_tooltip_text: Some("Delete Playlist"),
@@ -219,7 +212,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     gtk::Box {
                         set_valign: gtk::Align::Center,
 
-                        self.edit_entry.clone() -> gtk::Entry {
+                        append: edit_entry = &gtk::Entry {
                             set_hexpand: true,
                             set_halign: gtk::Align::Fill,
 
@@ -282,7 +275,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::FactorySender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: relm4::FactorySender<Self>,
+    ) {
         match msg {
             PlaylistElementIn::DeletePressed => {
                 sender
@@ -291,7 +289,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             }
             PlaylistElementIn::ChangeState(state) => self.main_stack.set_visible_child_enum(&state),
             PlaylistElementIn::ConfirmRename => {
-                let text = self.edit_entry.text();
+                let text = widgets.edit_entry.text();
                 self.playlist.base.name = String::from(text);
                 sender.input(PlaylistElementIn::ChangeState(State::Normal));
                 sender
