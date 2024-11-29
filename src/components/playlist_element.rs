@@ -188,9 +188,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                     gtk::Box {
                         self.edit_area.clone() -> gtk::Stack {
-                            set_transition_duration: 250,
-                            set_transition_type: gtk::StackTransitionType::Crossfade,
-
                             add_enumed[EditState::Clean] = &gtk::Box {},
                             add_enumed[EditState::Edit] = &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
