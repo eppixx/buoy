@@ -16,6 +16,7 @@ use crate::{
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
     css::DragState,
+    gtk_helper::stack::StackExt,
     play_state::PlayState,
     subsonic::Subsonic,
     types::{Droppable, Id},
@@ -69,7 +70,6 @@ pub struct QueueSong {
     root_widget: gtk::ListBoxRow,
     info: submarine::data::Child,
     cover: relm4::Controller<Cover>,
-    playing: PlayState,
     favorited: gtk::Button,
     index: relm4::factory::DynamicIndex,
     sender: relm4::FactorySender<Self>,
@@ -148,7 +148,6 @@ impl relm4::factory::FactoryComponent for QueueSong {
             root_widget: gtk::ListBoxRow::new(),
             info: init.clone(),
             cover,
-            playing: PlayState::Stop,
             favorited: gtk::Button::default(),
             index: index.clone(),
             sender: sender.clone(),
@@ -194,38 +193,34 @@ impl relm4::factory::FactoryComponent for QueueSong {
                     set_orientation: gtk::Orientation::Vertical,
                     set_valign: gtk::Align::Center,
 
-                    #[transition = "Crossfade"]
-                    append = match self.playing {
-                        PlayState::Play => {
-                            gtk::Image {
-                                add_css_class: "queue-song-state",
-                                set_icon_name: Some("audio-volume-high-symbolic"),
-                            }
-                        }
-                        PlayState::Pause => {
-                            gtk::Image {
-                                add_css_class: "queue-song-state",
-                                set_icon_name: Some("media-playback-pause-symbolic"),
-                            }
-                        }
-                        PlayState::Stop => {
-                            &self.cover.widget().clone() {}
-                        }
+                    // cover
+                    append: icon_stack = &gtk::Stack {
+                        set_transition_type: gtk::StackTransitionType::Crossfade,
+
+                        add_enumed[PlayState::Stop] = &self.cover.widget().clone(),
+                        add_enumed[PlayState::Play] = &gtk::Image {
+                            add_css_class: "queue-song-state",
+                            set_icon_name: Some("audio-volume-high-symbolic"),
+                        },
+                        add_enumed[PlayState::Pause] = &gtk::Image {
+                            add_css_class: "queue-song-state",
+                            set_icon_name: Some("media-playback-pause-symbolic"),
+                        },
                     },
                 },
 
+                // title and artist
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
-                    set_valign: gtk::Align::Center,
 
-                    gtk::Label {
+                    append: title = &gtk::Label {
                         set_label: &self.info.title,
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
                         set_ellipsize: pango::EllipsizeMode::End,
                     },
-                    gtk:: Label {
+                    append: artist = &gtk:: Label {
                         set_markup: &format!("<span style=\"italic\">{}</span>"
                                              , glib::markup_escape_text(self.info.artist.as_deref().unwrap_or("Unknown Artist"))),
                         set_width_chars: 3,
@@ -235,10 +230,12 @@ impl relm4::factory::FactoryComponent for QueueSong {
                     }
                 },
 
+                // length
                 gtk::Label {
                     set_label: &convert_for_label(i64::from(self.info.duration.unwrap_or(0)) * 1000),
                 },
 
+                // favorite
                 self.favorited.clone() {
                     set_tooltip: "Click to (un)favorite song",
                     set_focus_on_click: false,
@@ -311,7 +308,12 @@ impl relm4::factory::FactoryComponent for QueueSong {
         }
     }
 
-    fn update(&mut self, message: Self::Input, sender: relm4::FactorySender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: relm4::FactorySender<Self>,
+    ) {
         match message {
             QueueSongIn::Activated => {
                 self.new_play_state(&PlayState::Play);
@@ -332,7 +334,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
             }
             QueueSongIn::DragLeave => DragState::reset(&mut self.root_widget),
             QueueSongIn::NewState(state) => {
-                self.playing = state;
+                widgets.icon_stack.set_visible_child_enum(&state);
             }
             QueueSongIn::DroppedSong { drop, y } => {
                 sender.input(QueueSongIn::DragLeave);

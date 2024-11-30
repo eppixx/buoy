@@ -4,7 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt, SelectionModelExt, ListModelExt},
+        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, SelectionModelExt, WidgetExt},
     },
     ComponentController, RelmWidgetExt,
 };

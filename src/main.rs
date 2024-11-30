@@ -67,7 +67,6 @@ fn main() -> anyhow::Result<()> {
         tracing_subscriber::fmt().with_env_filter(filter).init();
     }
 
-
     let app = RelmApp::new(&args.borrow().alternative_id);
     load_css();
     // gtk parses arguments and conclicts with clap
