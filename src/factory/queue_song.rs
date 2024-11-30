@@ -144,23 +144,23 @@ impl relm4::factory::FactoryComponent for QueueSong {
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.model().add_css_class_image("size32");
         cover.emit(CoverIn::LoadSong(Box::new(init.clone())));
+
+        let icon_name = match init.starred {
+            Some(_) => "starred-symbolic",
+            None => "non-starred-symbolic",
+        };
+
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
             info: init.clone(),
             cover,
-            favorited: gtk::Button::default(),
+            favorited: gtk::Button::from_icon_name(icon_name),
             index: index.clone(),
             sender: sender.clone(),
             drag_src: gtk::DragSource::new(),
         };
 
         DragState::reset(&mut model.root_widget);
-
-        if init.starred.is_some() {
-            model.favorited.set_icon_name("starred-symbolic");
-        } else {
-            model.favorited.set_icon_name("non-starred-symbolic");
-        }
 
         // setup DragSource
         let index = Index(index.clone());
