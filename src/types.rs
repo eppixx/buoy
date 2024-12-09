@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use relm4::gtk::glib;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, glib::Boxed)]
@@ -115,7 +113,7 @@ impl AsRef<str> for Id {
     }
 }
 
-impl Display for Id {
+impl std::fmt::Display for Id {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Id: {{{}:{}}}", self.kind(), self.inner())
     }
