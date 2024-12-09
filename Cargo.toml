@@ -7,23 +7,23 @@ edition = "2021"
 
 [dependencies]
 # common components
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"]}
-anyhow = "1.0.93"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"]}
+anyhow = "1.0.94"
 
 # core components
 relm4 = "0.9.1"
-relm4-components = "0.9.1"
-granite = { version = "1.3.0", package = "granite-rs", features = ["v7_2"] }
+# relm4-components = "0.9.1"
+granite = { version = "1.4.0", package = "granite-rs", features = ["v7_2"] }
 submarine = { git = "https://github.com/eppixx/submarine", features = ["navidrome"] }
 gstreamer = "0.23.3"
-tokio = { version = "1.41.1", features = ["rt", "macros", "rt-multi-thread"]}
+tokio = { version = "1.42.0", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.31"
 async-channel = "2.3.1"
 fuzzy-matcher = "0.3.7"
 rand = "0.8.5"
 itertools = "0.13.0"
-clap = { version = "4.5.20", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 clap_derive = "4.5.18"
 
 #mpris
@@ -31,16 +31,16 @@ zbus = "5.1.1"
 zvariant = "5.1.0"
 
 # converting strings on seekbar
-chrono = "0.4.38"
+chrono = "0.4.39"
 
 # used for loading and saving settings
-serde = { version = "1.0.214", features = ["derive"] }
-postcard = { version = "1.0.10", features = ["alloc"] }
+serde = { version = "1.0.215", features = ["derive"] }
+postcard = { version = "1.1.1", features = ["alloc"] }
 toml = "0.8.19"
 xdg = "2.5.2"
 
 # for validating urls
-url = "2.5.3"
+url = "2.5.4"
 
 # desktop notifications
 notify-rust = { version = "4.11.3", features = ["images"] }
