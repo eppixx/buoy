@@ -130,7 +130,7 @@ impl TrackRow {
     pub fn new_track(
         subsonic: &Rc<RefCell<Subsonic>>,
         item: submarine::data::Child,
-        sender: relm4::ComponentSender<TracksView>,
+        sender: &relm4::ComponentSender<TracksView>,
     ) -> Self {
         let result = Self::new(subsonic, item);
 
@@ -183,6 +183,7 @@ impl TrackRow {
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
+        let sender = sender.clone();
         artist_label.inline_css("color: inherit");
         let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
         if let Some(artist_id) = &result.item.artist_id {

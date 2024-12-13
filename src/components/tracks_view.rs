@@ -35,7 +35,7 @@ pub struct TracksView {
     filters: relm4::factory::FactoryVecDeque<FilterRow>,
 
     info_cover: relm4::Controller<Cover>,
-    shown_tracks: Rc<RefCell<Vec<submarine::data::Child>>>,
+    shown_tracks: Rc<RefCell<Vec<String>>>,
     shown_artists: Rc<RefCell<HashSet<Option<String>>>>,
     shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
 }
@@ -590,7 +590,7 @@ impl relm4::Component for TracksView {
 
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
-                        shown_tracks.borrow_mut().push(track.item.clone());
+                        shown_tracks.borrow_mut().push(track.item.id.clone());
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
                         shown_tracks_widget
@@ -619,7 +619,7 @@ impl relm4::Component for TracksView {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                         let score = matcher.fuzzy_match(&title_artist_album, &search);
                         if score.is_some() {
-                            shown_tracks.borrow_mut().push(track.item.clone());
+                            shown_tracks.borrow_mut().push(track.item.id.clone());
                             shown_artists.borrow_mut().insert(track.item.artist.clone());
                             shown_albums.borrow_mut().insert(track.item.album.clone());
                             shown_tracks_widget.set_text(&format!(
@@ -639,7 +639,7 @@ impl relm4::Component for TracksView {
                             false
                         }
                     } else if title_artist_album.contains(&search) {
-                        shown_tracks.borrow_mut().push(track.item.clone());
+                        shown_tracks.borrow_mut().push(track.item.id.clone());
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
                         shown_tracks_widget
@@ -685,7 +685,8 @@ impl relm4::Component for TracksView {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
-                    let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                    let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
                 } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
@@ -698,7 +699,8 @@ impl relm4::Component for TracksView {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
-                    let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                    let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
                 } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
@@ -711,7 +713,8 @@ impl relm4::Component for TracksView {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
-                    let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                    let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
                 } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
@@ -723,7 +726,8 @@ impl relm4::Component for TracksView {
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
-                let drop = Droppable::Queue(self.shown_tracks.borrow().clone());
+                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                let drop = Droppable::Queue(tracks);
                 sender.output(TracksViewOut::Download(drop)).unwrap();
             }
             TracksViewIn::ToggleFilters => {
