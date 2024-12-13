@@ -777,16 +777,16 @@ impl relm4::Component for TracksView {
         match msg {
             TracksViewCmd::AddTracks(candidates, processed) => {
                 const CHUNK: usize = 20;
-                const TIMEOUT: u64 = 2;
+                const TIMEOUT: u64 = 1;
 
-                //add some tracks
-                for track in candidates.iter().skip(processed).take(CHUNK) {
-                    self.shown_tracks.borrow_mut().push(track.clone());
+                //add tracks
+                let tracks: Vec<TrackRow> = candidates.iter().skip(processed).take(CHUNK).map(|track| {
+                    self.shown_tracks.borrow_mut().push(track.id.clone());
                     self.shown_albums.borrow_mut().insert(track.album.clone());
                     self.shown_artists.borrow_mut().insert(track.artist.clone());
-                    let track = TrackRow::new_track(&self.subsonic, track.clone(), sender.clone());
-                    self.tracks.append(track);
-                }
+                    TrackRow::new_track(&self.subsonic, track.clone(), &sender)
+                }).collect();
+                self.tracks.extend_from_iter(tracks);
 
                 //update labels and buttons
                 widgets.shown_tracks.set_label(&format!(
