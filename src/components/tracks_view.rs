@@ -148,9 +148,9 @@ impl relm4::Component for TracksView {
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), Self::Input::FilterRow),
             info_cover: Cover::builder()
-                .launch((subsonic, None))
+                .launch((subsonic.clone(), None))
                 .forward(sender.input_sender(), TracksViewIn::Cover),
-            shown_tracks: Rc::new(RefCell::new(vec![])),
+            shown_tracks: Rc::new(RefCell::new(Vec::with_capacity(subsonic.borrow().tracks().len()))),
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
             shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
