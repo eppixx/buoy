@@ -279,7 +279,9 @@ impl relm4::component::AsyncComponent for App {
                 .seekbar
                 .emit(SeekbarIn::SeekTo(settings.queue_seek as i64));
             if model.playback.borrow().is_track_set() {
-                model.playback.borrow().set_position(0).unwrap();
+                if let Err(e) = model.playback.borrow().set_position(settings.queue_seek as i64) {
+                    sender.input(AppIn::DisplayToast(format!("playback set position error: {e}")));
+                }
             }
 
             // playcontrol
