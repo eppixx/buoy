@@ -20,52 +20,6 @@ pub struct Subsonic {
 }
 
 impl Subsonic {
-    // this is the main way to create a Subsonic object
-    pub async fn load_or_create() -> anyhow::Result<Self> {
-        let current_scan_status = {
-            let client = match Client::get() {
-                None => {
-                    tracing::warn!("no client found");
-                    return Ok(Self::default());
-                }
-                Some(client) => client,
-            };
-            client.get_scan_status().await?
-        };
-
-        let mut subsonic = match Self::load().await {
-            Ok(subsonic) => {
-                if subsonic.scan_status == current_scan_status.count {
-                    tracing::info!("scan status is current; load cached info");
-                    subsonic
-                } else {
-                    tracing::info!("scan_status changed; reload info");
-                    Self::new().await?
-                }
-            }
-            Err(_e) => {
-                tracing::warn!("no cache found or cache is malformed");
-                //load new from server
-                Self::new().await?
-            }
-        };
-
-        let _ = subsonic.covers.load();
-        Ok(subsonic)
-    }
-
-    pub async fn load() -> anyhow::Result<Self> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(MUSIC_INFOS)
-            .expect("cannot create cache directory");
-        let content = tokio::fs::read_to_string(cache_path).await?;
-        tracing::info!("loaded subsonic cache");
-        let result = toml::from_str::<Self>(&content)?;
-
-        Ok(result)
-    }
-
     pub async fn new() -> anyhow::Result<Self> {
         tracing::info!("create subsonic cache");
         let client = Client::get().unwrap();
@@ -154,12 +108,64 @@ impl Subsonic {
         Ok(result)
     }
 
+    // this is the main way to create a Subsonic object
+    pub async fn load_or_create() -> anyhow::Result<Self> {
+        let current_scan_status = {
+            let client = match Client::get() {
+                None => {
+                    tracing::warn!("no client found");
+                    return Ok(Self::default());
+                }
+                Some(client) => client,
+            };
+            client.get_scan_status().await?
+        };
+
+        let mut subsonic = match Self::load().await {
+            Ok(subsonic) => {
+                if subsonic.scan_status == current_scan_status.count {
+                    tracing::info!("scan status is current; load cached info");
+                    subsonic
+                } else {
+                    tracing::info!("scan_status changed; reload info");
+                    Self::new().await?
+                }
+            }
+            Err(_e) => {
+                tracing::warn!("no cache found or cache is malformed");
+                //load new from server
+                Self::new().await?
+            }
+        };
+
+        let _ = subsonic.covers.load();
+        Ok(subsonic)
+    }
+
+    pub async fn load() -> anyhow::Result<Self> {
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
+        let cache_path = xdg_dirs
+            .place_cache_file(MUSIC_INFOS)
+            .expect("cannot create cache directory");
+        // let content = tokio::fs::read_to_string(cache_path).await?;
+        let content = tokio::fs::read(cache_path).await?;
+        tracing::info!("loaded subsonic cache");
+        let mut reader = content.as_slice();
+        let mut deserializer = rmp_serde::Deserializer::new(&mut reader);
+        let result = Self::deserialize(&mut deserializer).unwrap();
+        tracing::info!("loaded subsonic cache for real");
+
+        Ok(result)
+    }
+
     pub fn save(&self) -> anyhow::Result<()> {
         tracing::info!("saving cover cache");
         self.covers.save()?;
 
         tracing::info!("saving subsonic music info");
-        let cache = toml::to_string(self).unwrap();
+        let mut cache = vec![];
+        let mut serializer = rmp_serde::Serializer::new(&mut cache);
+        self.serialize(&mut serializer).unwrap();
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
         let cache_path = xdg_dirs
             .place_cache_file(MUSIC_INFOS)
