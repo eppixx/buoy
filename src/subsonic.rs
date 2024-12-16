@@ -152,7 +152,7 @@ impl Subsonic {
         tracing::info!("loaded subsonic cache");
         let mut reader = content.as_slice();
         let mut deserializer = rmp_serde::Deserializer::new(&mut reader);
-        let result = Self::deserialize(&mut deserializer).unwrap();
+        let result = Self::deserialize(&mut deserializer)?;
         tracing::info!("loaded subsonic cache for real");
 
         Ok(result)
@@ -165,12 +165,12 @@ impl Subsonic {
         tracing::info!("saving subsonic music info");
         let mut cache = vec![];
         let mut serializer = rmp_serde::Serializer::new(&mut cache);
-        self.serialize(&mut serializer).unwrap();
+        self.serialize(&mut serializer)?;
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
         let cache_path = xdg_dirs
             .place_cache_file(MUSIC_INFOS)
             .expect("cannot create cache directory");
-        std::fs::write(cache_path, cache).unwrap();
+        std::fs::write(cache_path, cache)?;
 
         Ok(())
     }
