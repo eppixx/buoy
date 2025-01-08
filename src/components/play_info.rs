@@ -55,7 +55,7 @@ impl relm4::SimpleComponent for PlayInfo {
 
         //init widget
         sender.input(PlayInfoIn::NewState(Box::new(child)));
-        model.covers.model().add_css_class_image("size200");
+        model.covers.model().add_css_class_image("size150");
 
         relm4::ComponentParts { model, widgets }
     }
