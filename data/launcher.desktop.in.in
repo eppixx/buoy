@@ -1,5 +1,6 @@
 [Desktop Entry]
 Name=Buoy
+GenericName=Music Player
 Comment[en]=Play music from a subsonic server
 Comment=Play music from a subsonic server
 Exec=@EXEC_NAME@
