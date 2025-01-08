@@ -126,8 +126,7 @@ impl relm4::component::AsyncComponent for MainWindow {
     ) -> relm4::component::AsyncComponentParts<Self> {
         // decide if dark or white style; also watch if style changes
         let gtk_settings = gtk::Settings::default().expect("Unable to get the GtkSettings object");
-        let granite_settings =
-            granite::Settings::default().expect("Unable to get the Granite settings object");
+        let granite_settings = granite::Settings::default();
         gtk_settings.set_gtk_application_prefer_dark_theme(
             granite_settings.prefers_color_scheme() == granite::SettingsColorScheme::Dark,
         );
