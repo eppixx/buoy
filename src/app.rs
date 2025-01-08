@@ -7,7 +7,10 @@ use relm4::{
     component::{AsyncComponentController, AsyncController},
     gtk::{
         self,
-        prelude::{ApplicationExt, EditableExt, PopoverExt, ToggleButtonExt, WidgetExt},
+        prelude::{
+            ApplicationExt, EditableExt, GtkApplicationExt, GtkWindowExt, PopoverExt,
+            ToggleButtonExt, WidgetExt,
+        },
     },
     Component, ComponentController, Controller, RelmWidgetExt,
 };
@@ -279,8 +282,14 @@ impl relm4::component::AsyncComponent for App {
                 .seekbar
                 .emit(SeekbarIn::SeekTo(settings.queue_seek as i64));
             if model.playback.borrow().is_track_set() {
-                if let Err(e) = model.playback.borrow().set_position(settings.queue_seek as i64) {
-                    sender.input(AppIn::DisplayToast(format!("playback set position error: {e}")));
+                if let Err(e) = model
+                    .playback
+                    .borrow()
+                    .set_position(settings.queue_seek as i64)
+                {
+                    sender.input(AppIn::DisplayToast(format!(
+                        "playback set position error: {e}"
+                    )));
                 }
             }
 
@@ -476,7 +485,7 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::CenterBox {
                                             #[wrap(Some)]
                                             set_start_widget = &gtk::Label {
-                                                set_text: "Send desktop notifications",
+                                                set_text: "Send desktop notifications\nwhen in background",
                                             },
                                             #[wrap(Some)]
                                             set_end_widget = &gtk::Switch {
@@ -721,44 +730,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 QueueOut::DesktopNotification(child) => {
-                    if Settings::get().lock().unwrap().send_notifications {
-                        let image: Option<notify_rust::Image> = {
-                            let client = Client::get().unwrap();
-                            if let Ok(raw) = client
-                                .get_cover_art(child.cover_art.unwrap(), Some(100))
-                                .await
-                            {
-                                let image_buffer = image::load_from_memory(&raw).unwrap().to_rgb8();
-                                let buffer: Vec<u8> = image_buffer.to_vec();
-                                match notify_rust::Image::from_rgb(
-                                    image_buffer.width() as i32,
-                                    image_buffer.height() as i32,
-                                    buffer,
-                                ) {
-                                    Ok(image) => Some(image),
-                                    Err(_) => None,
-                                }
-                            } else {
-                                None
-                            }
-                        };
-
-                        let mut notify = notify_rust::Notification::new();
-                        notify.summary("buoy");
-                        notify.body(&format!(
-                            "{}\n{}",
-                            child.title,
-                            child.artist.unwrap_or(String::from("Unkonwn Artist"))
-                        ));
-                        if let Some(image) = image {
-                            notify.image_data(image);
-                        }
-                        if let Err(e) = notify.show() {
-                            sender.input(AppIn::DisplayToast(format!(
-                                "Could not send desktop notification: {e:?}"
-                            )));
-                        }
-                    }
+                    show_desktop_notification(*child, sender).await
                 }
                 QueueOut::FavoriteClicked(id, state) => {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
@@ -792,64 +764,9 @@ impl relm4::component::AsyncComponent for App {
                 widgets.toasts.send_notification();
             }
             AppIn::DesktopNotification => {
-                if !Settings::get().lock().unwrap().send_notifications {
-                    return;
-                }
-
-                // take current song, then its album, then the album art
                 let song = self.queue.model().current_song();
                 if let Some(song) = song {
-                    if let Some(album) = song.album_id {
-                        let album = self.subsonic.borrow().find_album(album);
-                        if let Some(album) = album {
-                            let image: Option<notify_rust::Image> = {
-                                if let Some(cover_art) = album.cover_art {
-                                    if let Some(buffer) =
-                                        self.subsonic.borrow().cover_raw(&cover_art)
-                                    {
-                                        match image::load_from_memory(&buffer) {
-                                            Err(e) => {
-                                                tracing::error!("converting cached buffer: {e:?}");
-                                                None
-                                            }
-                                            Ok(image_buffer) => {
-                                                let image_buffer = image_buffer.to_rgb8();
-                                                let buffer: Vec<u8> = image_buffer.to_vec();
-                                                match notify_rust::Image::from_rgb(
-                                                    image_buffer.width() as i32,
-                                                    image_buffer.height() as i32,
-                                                    buffer,
-                                                ) {
-                                                    Ok(image) => Some(image),
-                                                    Err(_) => None,
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        None
-                                    }
-                                } else {
-                                    None
-                                }
-                            };
-
-                            let mut notify = notify_rust::Notification::new();
-                            notify.summary("buoy");
-                            notify.body(&format!(
-                                "{}\n{}",
-                                song.title,
-                                song.artist.unwrap_or(String::from("Unkonwn Artist"))
-                            ));
-                            if let Some(image) = image {
-                                notify.image_data(image);
-                            }
-                            if let Err(e) = notify.show() {
-                                sender.input(AppIn::DisplayToast(format!(
-                                    "Could not send desktop notification: {e:?}"
-                                )));
-                            }
-                        }
-                    }
+                    show_desktop_notification(song, sender).await;
                 }
             }
             AppIn::Mpris(msg) => match msg {
@@ -1047,5 +964,60 @@ impl relm4::component::AsyncComponent for App {
         //save window state
         settings.paned_position = widgets.paned.position();
         settings.save();
+    }
+}
+
+async fn show_desktop_notification(
+    child: submarine::data::Child,
+    sender: relm4::component::AsyncComponentSender<App>,
+) {
+    // check if option to send is enabled
+    if !Settings::get().lock().unwrap().send_notifications {
+        return;
+    }
+    // check if app is in background
+    let windows = relm4::main_application().windows();
+    if windows.iter().any(|w| w.is_active()) {
+        return;
+    }
+
+    // get cover image
+    let image: Option<notify_rust::Image> = {
+        let client = Client::get().unwrap();
+        if let Ok(raw) = client
+            .get_cover_art(child.cover_art.unwrap(), Some(100))
+            .await
+        {
+            let image_buffer = image::load_from_memory(&raw).unwrap().to_rgb8();
+            let buffer: Vec<u8> = image_buffer.to_vec();
+            match notify_rust::Image::from_rgb(
+                image_buffer.width() as i32,
+                image_buffer.height() as i32,
+                buffer,
+            ) {
+                Ok(image) => Some(image),
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    };
+
+    // send notification
+    let mut notify = notify_rust::Notification::new();
+    notify.summary("buoy");
+    notify.icon("com.github.eppixx.buoy");
+    notify.body(&format!(
+        "{}\n{}",
+        child.title,
+        child.artist.unwrap_or(String::from("Unkonwn Artist"))
+    ));
+    if let Some(image) = image {
+        notify.image_data(image);
+    }
+    if let Err(e) = notify.show() {
+        sender.input(AppIn::DisplayToast(format!(
+            "Could not send desktop notification: {e:?}"
+        )));
     }
 }
