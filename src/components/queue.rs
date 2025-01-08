@@ -12,7 +12,6 @@ use relm4::{
 };
 
 use crate::{
-    client::Client,
     components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     factory::queue_song::{QueueSong, QueueSongIn, QueueSongOut},
     play_state::PlayState,
@@ -148,13 +147,6 @@ pub enum QueueOut {
     FavoriteClicked(String, bool),
 }
 
-#[derive(Debug)]
-pub enum QueueCmd {
-    Error(String, submarine::SubsonicError),
-    FetchedAppendItems(Vec<submarine::data::Child>),
-    FetchedInsertItems(Vec<submarine::data::Child>),
-}
-
 #[relm4::component(pub)]
 impl relm4::Component for Queue {
     type Init = (
@@ -165,7 +157,7 @@ impl relm4::Component for Queue {
     type Input = QueueIn;
     type Output = QueueOut;
     type Widgets = QueueWidgets;
-    type CommandOutput = QueueCmd;
+    type CommandOutput = ();
 
     fn init(
         (subsonic, songs, index): Self::Init,
@@ -396,66 +388,38 @@ impl relm4::Component for Queue {
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
-                        //TODO load cached info
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            let artist_with_albums = match client.get_artist(artist.id).await {
-                                Err(e) => {
-                                    return QueueCmd::Error(String::from("Could not append"), e)
-                                }
-                                Ok(artist) => artist,
-                            };
-
-                            let mut result = vec![];
-                            for album in artist_with_albums.album {
-                                match client.get_album(album.id).await {
-                                    Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => {
-                                        return QueueCmd::Error(String::from("could not append"), e)
-                                    }
-                                }
-                            }
-                            QueueCmd::FetchedAppendItems(result)
-                        });
-                        return;
+                        let subsonic = self.subsonic.borrow();
+                        let albums = subsonic.albums_from_artist(&artist);
+                        albums
+                            .iter()
+                            .flat_map(|a| subsonic.tracks_from_album(a))
+                            .cloned()
+                            .collect()
                     }
                     Droppable::ArtistWithAlbums(artist) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            let mut result = vec![];
-                            for album in artist.album {
-                                match client.get_album(album.id).await {
-                                    Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => {
-                                        return QueueCmd::Error(String::from("could not append"), e)
-                                    }
-                                }
-                            }
-                            QueueCmd::FetchedAppendItems(result)
-                        });
-                        return;
+                        let subsonic = self.subsonic.borrow();
+                        artist
+                            .album
+                            .iter()
+                            .flat_map(|a| subsonic.tracks_from_album_id3(a))
+                            .cloned()
+                            .collect()
                     }
                     Droppable::Playlist(playlist) => playlist.entry,
-                    Droppable::AlbumChild(child) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            match client.get_album(child.id).await {
-                                Err(e) => QueueCmd::Error(String::from("could not append"), e),
-                                Ok(album) => QueueCmd::FetchedAppendItems(album.song),
-                            }
-                        });
-                        return;
-                    }
-                    Droppable::Album(album) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            match client.get_album(album.id).await {
-                                Err(e) => QueueCmd::Error(String::from("could not append"), e),
-                                Ok(album) => QueueCmd::FetchedAppendItems(album.song),
-                            }
-                        });
-                        return;
-                    }
+                    Droppable::AlbumChild(child) => self
+                        .subsonic
+                        .borrow()
+                        .tracks_from_album(&child)
+                        .into_iter()
+                        .cloned()
+                        .collect(),
+                    Droppable::Album(album) => self
+                        .subsonic
+                        .borrow()
+                        .tracks_from_album_id3(&album)
+                        .into_iter()
+                        .cloned()
+                        .collect(),
                 };
 
                 for song in songs {
@@ -474,65 +438,38 @@ impl relm4::Component for Queue {
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            let artist_with_albums = match client.get_artist(artist.id).await {
-                                Err(e) => {
-                                    return QueueCmd::Error(String::from("could not insert"), e)
-                                }
-                                Ok(artist) => artist,
-                            };
-
-                            let mut result = vec![];
-                            for album in artist_with_albums.album {
-                                match client.get_album(album.id).await {
-                                    Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => {
-                                        return QueueCmd::Error(String::from("could not insert"), e)
-                                    }
-                                }
-                            }
-                            QueueCmd::FetchedInsertItems(result)
-                        });
-                        return;
+                        let subsonic = self.subsonic.borrow();
+                        let albums = subsonic.albums_from_artist(&artist);
+                        albums
+                            .iter()
+                            .flat_map(|a| subsonic.tracks_from_album(a))
+                            .cloned()
+                            .collect()
                     }
                     Droppable::ArtistWithAlbums(artist) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            let mut result = vec![];
-                            for album in artist.album {
-                                match client.get_album(album.id).await {
-                                    Ok(mut album) => result.append(&mut album.song),
-                                    Err(e) => {
-                                        return QueueCmd::Error(String::from("could not insert"), e)
-                                    }
-                                }
-                            }
-                            QueueCmd::FetchedInsertItems(result)
-                        });
-                        return;
+                        let subsonic = self.subsonic.borrow();
+                        artist
+                            .album
+                            .iter()
+                            .flat_map(|a| subsonic.tracks_from_album_id3(a))
+                            .cloned()
+                            .collect()
                     }
                     Droppable::Playlist(playlist) => playlist.entry,
-                    Droppable::AlbumChild(child) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            match client.get_album(child.id).await {
-                                Err(e) => QueueCmd::Error(String::from("could not insert"), e),
-                                Ok(album) => QueueCmd::FetchedInsertItems(album.song),
-                            }
-                        });
-                        return;
-                    }
-                    Droppable::Album(album) => {
-                        sender.oneshot_command(async move {
-                            let client = Client::get().unwrap();
-                            match client.get_album(album.id).await {
-                                Err(e) => QueueCmd::Error(String::from("could not insert"), e),
-                                Ok(album) => QueueCmd::FetchedInsertItems(album.song),
-                            }
-                        });
-                        return;
-                    }
+                    Droppable::AlbumChild(child) => self
+                        .subsonic
+                        .borrow()
+                        .tracks_from_album(&child)
+                        .into_iter()
+                        .cloned()
+                        .collect(),
+                    Droppable::Album(album) => self
+                        .subsonic
+                        .borrow()
+                        .tracks_from_album_id3(&album)
+                        .into_iter()
+                        .cloned()
+                        .collect(),
                 };
 
                 if let Some(index) = &self.playing_index {
@@ -821,49 +758,6 @@ impl relm4::Component for Queue {
                 self.randomized_indices = (0..self.songs.len()).collect();
                 let mut rng = rand::thread_rng();
                 self.randomized_indices.shuffle(&mut rng);
-            }
-        }
-    }
-
-    fn update_cmd(
-        &mut self,
-        message: Self::CommandOutput,
-        sender: relm4::ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        match message {
-            QueueCmd::Error(msg, e) => {
-                sender
-                    .output(QueueOut::DisplayToast(format!("{msg}: {e:?}")))
-                    .unwrap();
-            }
-            QueueCmd::FetchedAppendItems(children) => {
-                for child in children {
-                    self.songs.guard().push_back((self.subsonic.clone(), child));
-                }
-                self.clear_items.set_sensitive(!self.songs.is_empty());
-                sender.input(QueueIn::Rerandomize);
-
-                if !self.songs.is_empty() {
-                    sender.output(QueueOut::QueueNotEmpty).unwrap();
-                }
-            }
-            QueueCmd::FetchedInsertItems(children) => {
-                for (i, child) in children.iter().enumerate() {
-                    let current = match &self.playing_index {
-                        None => 0,
-                        Some(i) => i.current_index(),
-                    };
-                    self.songs
-                        .guard()
-                        .insert(current + i + 1, (self.subsonic.clone(), child.clone()));
-                }
-                self.clear_items.set_sensitive(!self.songs.is_empty());
-                sender.input(QueueIn::Rerandomize);
-
-                if !self.songs.is_empty() {
-                    sender.output(QueueOut::QueueNotEmpty).unwrap();
-                }
             }
         }
     }

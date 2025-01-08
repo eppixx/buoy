@@ -216,6 +216,36 @@ impl Subsonic {
             .cloned()
     }
 
+    pub fn tracks_from_album_id3(
+        &self,
+        album: &submarine::data::AlbumId3,
+    ) -> Vec<&submarine::data::Child> {
+        self.tracks
+            .iter()
+            .filter(|track| track.album_id.as_deref() == Some(&album.id))
+            .collect()
+    }
+
+    pub fn tracks_from_album(
+        &self,
+        album: &submarine::data::Child,
+    ) -> Vec<&submarine::data::Child> {
+        self.tracks
+            .iter()
+            .filter(|track| track.album_id.as_deref() == Some(&album.id))
+            .collect()
+    }
+
+    pub fn albums_from_artist(
+        &self,
+        artist: &submarine::data::ArtistId3,
+    ) -> Vec<&submarine::data::Child> {
+        self.album_list
+            .iter()
+            .filter(|album| album.artist_id.as_deref() == Some(&artist.id))
+            .collect()
+    }
+
     pub fn favorite_song(&mut self, id: impl AsRef<str>, state: bool) {
         for playlist in &mut self.playlists {
             for song in &mut playlist.entry {
