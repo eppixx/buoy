@@ -210,7 +210,10 @@ impl Subsonic {
     }
 
     pub fn find_track(&self, id: impl AsRef<str>) -> Option<submarine::data::Child> {
-        self.tracks.iter().find(|track| track.id == id.as_ref()).cloned()
+        self.tracks
+            .iter()
+            .find(|track| track.id == id.as_ref())
+            .cloned()
     }
 
     pub fn favorite_song(&mut self, id: impl AsRef<str>, state: bool) {

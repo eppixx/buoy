@@ -150,7 +150,9 @@ impl relm4::Component for TracksView {
             info_cover: Cover::builder()
                 .launch((subsonic.clone(), None))
                 .forward(sender.input_sender(), TracksViewIn::Cover),
-            shown_tracks: Rc::new(RefCell::new(Vec::with_capacity(subsonic.borrow().tracks().len()))),
+            shown_tracks: Rc::new(RefCell::new(Vec::with_capacity(
+                subsonic.borrow().tracks().len(),
+            ))),
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
             shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
@@ -685,7 +687,12 @@ impl relm4::Component for TracksView {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
-                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                    let tracks = self
+                        .shown_tracks
+                        .borrow()
+                        .iter()
+                        .filter_map(|id| self.subsonic.borrow().find_track(id))
+                        .collect();
                     let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
                 } else {
@@ -699,7 +706,12 @@ impl relm4::Component for TracksView {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
-                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                    let tracks = self
+                        .shown_tracks
+                        .borrow()
+                        .iter()
+                        .filter_map(|id| self.subsonic.borrow().find_track(id))
+                        .collect();
                     let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
                 } else {
@@ -713,7 +725,12 @@ impl relm4::Component for TracksView {
                     if self.shown_tracks.borrow().is_empty() {
                         return;
                     }
-                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                    let tracks = self
+                        .shown_tracks
+                        .borrow()
+                        .iter()
+                        .filter_map(|id| self.subsonic.borrow().find_track(id))
+                        .collect();
                     let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
                 } else {
@@ -726,7 +743,12 @@ impl relm4::Component for TracksView {
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
-                    let tracks = self.shown_tracks.borrow().iter().filter_map(|id| self.subsonic.borrow().find_track(id)).collect();
+                let tracks = self
+                    .shown_tracks
+                    .borrow()
+                    .iter()
+                    .filter_map(|id| self.subsonic.borrow().find_track(id))
+                    .collect();
                 let drop = Droppable::Queue(tracks);
                 sender.output(TracksViewOut::Download(drop)).unwrap();
             }
@@ -784,12 +806,17 @@ impl relm4::Component for TracksView {
                 const TIMEOUT: u64 = 1;
 
                 //add tracks
-                let tracks: Vec<TrackRow> = candidates.iter().skip(processed).take(CHUNK).map(|track| {
-                    self.shown_tracks.borrow_mut().push(track.id.clone());
-                    self.shown_albums.borrow_mut().insert(track.album.clone());
-                    self.shown_artists.borrow_mut().insert(track.artist.clone());
-                    TrackRow::new_track(&self.subsonic, track.clone(), &sender)
-                }).collect();
+                let tracks: Vec<TrackRow> = candidates
+                    .iter()
+                    .skip(processed)
+                    .take(CHUNK)
+                    .map(|track| {
+                        self.shown_tracks.borrow_mut().push(track.id.clone());
+                        self.shown_albums.borrow_mut().insert(track.album.clone());
+                        self.shown_artists.borrow_mut().insert(track.artist.clone());
+                        TrackRow::new_track(&self.subsonic, track.clone(), &sender)
+                    })
+                    .collect();
                 self.tracks.extend_from_iter(tracks);
 
                 //update labels and buttons
