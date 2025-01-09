@@ -6,7 +6,7 @@
 
 ## Screenshot
 
-![Screenshot of buoy](Screenshot.png)
+![Screenshot of buoy](data/screenshots/dark.png)
 
 ## Install the needed depencies
 
