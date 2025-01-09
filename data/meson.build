@@ -33,6 +33,4 @@ if appstream_util.found()
   test('Validate appstream file', appstream_util, args: ['validate', appstream_file])
 endif
 
-install_data(['buoy.css'], install_dir : 'share/buoy')
-
 subdir('icons')
