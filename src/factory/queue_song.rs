@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, gdk, glib, pango,
@@ -222,7 +223,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
                     },
                     append: artist = &gtk:: Label {
                         set_markup: &format!("<span style=\"italic\">{}</span>"
-                                             , glib::markup_escape_text(self.info.artist.as_deref().unwrap_or("Unknown Artist"))),
+                            , glib::markup_escape_text(self.info.artist.as_deref().unwrap_or(&gettext("Unknown Artist")))),
                         set_width_chars: 3,
                         set_hexpand: true,
                         set_halign: gtk::Align::Start,
@@ -237,7 +238,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
 
                 // favorite
                 self.favorited.clone() {
-                    set_tooltip: "Click to (un)favorite song",
+                    set_tooltip: &gettext("Click to (un)favorite song"),
                     set_focus_on_click: false,
                     connect_clicked => QueueSongIn::FavoriteClicked,
                 },

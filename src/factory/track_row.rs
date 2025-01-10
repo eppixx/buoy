@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self,
@@ -52,7 +53,7 @@ impl TrackRow {
         };
 
         let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
         fav_btn.set_focus_on_click(false);
 
         let artist_label = gtk::Label::builder()
@@ -158,7 +159,8 @@ impl TrackRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         album_label.inline_css("color: inherit");
-        let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        let stock = gettext("Unknown Album");
+        let album = result.item.album.as_deref().unwrap_or(&stock);
         let send = sender.clone();
         if let Some(album_id) = &result.item.album_id {
             let album = gtk::glib::markup_escape_text(album);
@@ -185,7 +187,8 @@ impl TrackRow {
             .build();
         let sender = sender.clone();
         artist_label.inline_css("color: inherit");
-        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
+        let stock = gettext("Unknown Artist");
+        let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
             artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
@@ -238,7 +241,8 @@ impl TrackRow {
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        let stock = gettext("Unknown Album");
+        let album = result.item.album.as_deref().unwrap_or(&stock);
         album_label.set_label(album);
         result.album_box.append(&album_label);
 
@@ -248,7 +252,8 @@ impl TrackRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         artist_label.inline_css("color: inherit");
-        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
+        let stock = gettext("Unknown Album");
+        let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
             artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
@@ -461,7 +466,12 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(item.item.genre.as_deref().unwrap_or("Unknown genre"));
+        label.set_label(
+            item.item
+                .genre
+                .as_deref()
+                .unwrap_or(&gettext("Unknown genre")),
+        );
         b.add_controller(item.get_drag_src());
     }
 

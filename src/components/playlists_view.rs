@@ -1,7 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use relm4::gtk::glib::prelude::ToValue;
+use relm4::RelmWidgetExt;
 use relm4::{
     gtk::{
         self,
@@ -140,12 +142,11 @@ impl relm4::Component for PlaylistsView {
             .add_controller(model.info_cover_controller.clone());
 
         // add playlists to list
+        let mut guard = model.playlists.guard();
         for playlist in model.subsonic.borrow().playlists() {
-            model
-                .playlists
-                .guard()
-                .push_back((model.subsonic.clone(), playlist.clone()));
+            guard.push_back((model.subsonic.clone(), playlist.clone()));
         }
+        drop(guard);
 
         // send signal on selection change
         model
@@ -168,7 +169,7 @@ impl relm4::Component for PlaylistsView {
                 gtk::WindowHandle {
                     gtk::Label {
                         add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                        set_label: "Playlists",
+                        set_label: &gettext("Playlists"),
                     }
                 },
 
@@ -195,7 +196,7 @@ impl relm4::Component for PlaylistsView {
                                     set_icon_name: Some("list-add-symbolic"),
                                 },
                                 gtk::Label {
-                                    set_text: "New Playlist",
+                                    set_text: &gettext("New Playlist"),
                                 }
                             },
 
@@ -214,7 +215,7 @@ impl relm4::Component for PlaylistsView {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
                             set_hexpand: true,
 
-                            set_label: "Select a playlist to show its songs",
+                            set_label: &gettext("Select a playlist to show its songs"),
                         }
                     },
                     add_named[Some("tracks")] = &gtk::Box {
@@ -238,12 +239,12 @@ impl relm4::Component for PlaylistsView {
 
                                     append: info_title = &gtk::Label {
                                         add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                        set_label: "title",
+                                        set_label: &gettext("title"),
                                         set_halign: gtk::Align::Start,
                                     },
 
                                     append: info_details = &gtk::Label {
-                                        set_label: "more info",
+                                        set_label: &gettext("more info"),
                                         set_halign: gtk::Align::Start,
                                     },
 
@@ -255,10 +256,10 @@ impl relm4::Component for PlaylistsView {
                                                     set_icon_name: Some("list-add-symbolic"),
                                                 },
                                                 gtk::Label {
-                                                    set_label: "Append",
+                                                    set_label: &gettext("Append"),
                                                 }
                                             },
-                                            set_tooltip_text: Some("Append Album to end of queue"),
+                                            set_tooltip: &gettext("Append playlist to end of queue"),
                                             connect_clicked => PlaylistsViewIn::AppendToQueue,
                                         },
                                         gtk::Button {
@@ -267,10 +268,10 @@ impl relm4::Component for PlaylistsView {
                                                     set_icon_name: Some("list-add-symbolic"),
                                                 },
                                                 gtk::Label {
-                                                    set_label: "Play next"
+                                                    set_label: &gettext("Play next"),
                                                 }
                                             },
-                                            set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                            set_tooltip_text: Some("Insert playlist after currently played or paused item"),
                                             connect_clicked => PlaylistsViewIn::AddToQueue,
                                         },
                                         gtk::Button {
@@ -279,10 +280,10 @@ impl relm4::Component for PlaylistsView {
                                                     set_icon_name: Some("emblem-symbolic-link-symbolic"),
                                                 },
                                                 gtk::Label {
-                                                    set_label: "Replace queue",
+                                                    set_label: &gettext("Replace queue"),
                                                 }
                                             },
-                                            set_tooltip_text: Some("Replaces current queue with this playlist"),
+                                            set_tooltip: &gettext("Replaces current queue with this playlist"),
                                             connect_clicked => PlaylistsViewIn::ReplaceQueue,
                                         },
                                         gtk::Button {
@@ -291,10 +292,10 @@ impl relm4::Component for PlaylistsView {
                                                     set_icon_name: Some("browser-download-symbolic"),
                                                 },
                                                 gtk::Label {
-                                                    set_label: "Download Playlist",
+                                                    set_label: &gettext("Download Playlist"),
                                                 }
                                             },
-                                            set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                            set_tooltip: &gettext("Click to select a folder to download this album to"),
                                             connect_clicked => PlaylistsViewIn::DownloadClicked,
                                         }
                                     }

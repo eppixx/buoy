@@ -1,8 +1,14 @@
 use std::cmp::Ordering;
 
-use relm4::gtk::{
-    self, gio, glib,
-    prelude::{BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt},
+use gettextrs::gettext;
+use relm4::{
+    gtk::{
+        self, gio, glib,
+        prelude::{
+            BoxExt, ButtonExt, EditableExt, EntryExt, ListBoxRowExt, ListItemExt, WidgetExt,
+        },
+    },
+    RelmWidgetExt,
 };
 
 use crate::components::filter_categories::Category;
@@ -35,15 +41,15 @@ impl BoolRow {
         let data: [BoolRow; 3] = [
             BoolRow {
                 relation: None,
-                label: String::from("both"),
+                label: gettext("both"),
             },
             BoolRow {
                 relation: Some(true),
-                label: String::from("yes"),
+                label: gettext("yes"),
             },
             BoolRow {
                 relation: Some(false),
-                label: String::from("no"),
+                label: gettext("no"),
             },
         ];
         store_from_category(&data)
@@ -55,7 +61,7 @@ impl BoolRow {
 
         let factory = gtk::SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let label = gtk::Label::new(Some("Selection"));
+            let label = gtk::Label::new(Some(&gettext("Selection")));
             list_item
                 .downcast_ref::<gtk::ListItem>()
                 .expect("is not a ListItem")
@@ -77,7 +83,7 @@ impl BoolRow {
                 .and_downcast::<gtk::Label>()
                 .expect("is not a Label");
             // set label from OrderRow
-            label.set_label(&boxed.borrow::<BoolRow>().label);
+            label.set_label(&gettext(&boxed.borrow::<BoolRow>().label));
         });
 
         factory
@@ -103,19 +109,19 @@ impl TextRow {
         let data: [TextRow; 4] = [
             TextRow {
                 relation: TextRelation::Contains,
-                label: String::from("contains"),
+                label: gettext("contains"),
             },
             TextRow {
                 relation: TextRelation::ContainsNot,
-                label: String::from("contains not"),
+                label: gettext("contains not"),
             },
             TextRow {
                 relation: TextRelation::ExactNot,
-                label: String::from("matches not"),
+                label: gettext("matches not"),
             },
             TextRow {
                 relation: TextRelation::Exact,
-                label: String::from("matches"),
+                label: gettext("matches"),
             },
         ];
         store_from_category(&data)
@@ -127,7 +133,7 @@ impl TextRow {
 
         let factory = gtk::SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let label = gtk::Label::new(Some("Selection"));
+            let label = gtk::Label::new(Some(&gettext("Selection")));
             list_item
                 .downcast_ref::<gtk::ListItem>()
                 .expect("is not a ListItem")
@@ -188,7 +194,7 @@ impl OrderRow {
 
         let factory = gtk::SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let label = gtk::Label::new(Some("Selection"));
+            let label = gtk::Label::new(Some(&gettext("Selection")));
             list_item
                 .downcast_ref::<gtk::ListItem>()
                 .expect("is not a ListItem")
@@ -293,7 +299,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Favorites",
+                            set_text: &gettext("Favorites"),
                         },
                     },
                     #[name = "favorites"]
@@ -309,7 +315,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Year",
+                            set_text: &gettext("Year"),
                         },
                     },
 
@@ -328,7 +334,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -338,7 +344,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "CD number",
+                            set_text: &gettext("CD number"),
                         },
                     },
 
@@ -357,7 +363,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -367,7 +373,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Track number",
+                            set_text: &gettext("Track number"),
                         }
                     },
 
@@ -386,7 +392,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -397,7 +403,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Album count",
+                            set_text: &gettext("Album count"),
                         }
                     },
 
@@ -416,7 +422,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -426,7 +432,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Duration (sec)",
+                            set_text: &gettext("Duration (sec)"),
                         },
                     },
 
@@ -445,7 +451,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -455,7 +461,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Duration (min)",
+                            set_text: &gettext("Duration (min)"),
                         },
                     },
 
@@ -474,7 +480,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -484,7 +490,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Bit rate",
+                            set_text: &gettext("Bit rate"),
                         },
                     },
 
@@ -502,7 +508,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -512,7 +518,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Title name",
+                            set_text: &gettext("Title name"),
                         },
                     },
 
@@ -524,12 +530,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "title_entry"]
                     gtk::Entry {
-                        set_placeholder_text: Some("Title"),
+                        set_placeholder_text: Some(&gettext("Title")),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -539,7 +545,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Artist name",
+                            set_text: &gettext("Artist name"),
                         }
                     },
 
@@ -551,12 +557,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "artist_entry"]
                     gtk::Entry {
-                        set_placeholder_text: Some("Artist"),
+                        set_placeholder_text: Some(&gettext("Artist")),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -566,7 +572,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Album name",
+                            set_text: &gettext("Album name"),
                         }
                     },
 
@@ -578,12 +584,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "album_entry"]
                     gtk::Entry {
-                        set_placeholder_text: Some("Album"),
+                        set_placeholder_text: Some(&gettext("Album")),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },
@@ -594,7 +600,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         set_hexpand: true,
 
                         gtk::Label {
-                            set_text: "Genre",
+                            set_text: &gettext("Genre"),
                         }
                     },
 
@@ -606,12 +612,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
                     },
                     #[name = "genre_entry"]
                     gtk::Entry {
-                        set_placeholder_text: Some("Genre"),
+                        set_placeholder_text: Some(&gettext("Genre")),
                         connect_text_notify => Self::Input::ParameterChanged,
                     },
                     gtk::Button {
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip_text: Some("remove this filter"),
+                        set_tooltip: &gettext("remove this filter"),
                         connect_clicked => Self::Input::RemoveFilter,
                     }
                 },

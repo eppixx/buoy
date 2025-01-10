@@ -1,8 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use relm4::gtk::{
-    self,
-    prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
+use gettextrs::gettext;
+use relm4::{
+    gtk::{
+        self,
+        prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
+    },
+    RelmWidgetExt,
 };
 
 use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, types::Droppable};
@@ -13,9 +17,7 @@ pub struct PlaylistElement {
     playlist: submarine::data::PlaylistWithSongs,
     index: relm4::factory::DynamicIndex,
     drag_src: gtk::DragSource,
-
     main_stack: gtk::Stack,
-
     edit_area: gtk::Stack,
 }
 
@@ -126,7 +128,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             playlist: init.clone(),
             index: index.clone(),
             drag_src: gtk::DragSource::default(),
-
             main_stack: gtk::Stack::default(),
             edit_area: gtk::Stack::default(),
         };
@@ -175,7 +176,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         },
                         gtk::Label {
                             set_halign: gtk::Align::Start,
-                            set_text: &format!("{} songs", self.playlist.base.song_count),
+                            set_text: &format!("{} {}", self.playlist.base.song_count, gettext("songs")),
                         }
                     },
 
@@ -191,13 +192,13 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                                     gtk::Button {
                                         set_icon_name: "edit-symbolic",
-                                        set_tooltip_text: Some("Rename Playlist"),
+                                        set_tooltip: &gettext("Rename Playlist"),
                                         connect_clicked => PlaylistElementIn::ChangeState(State::Edit),
                                     },
                                     gtk::Button {
                                         add_css_class: granite::STYLE_CLASS_DESTRUCTIVE_ACTION,
                                         set_icon_name: "edit-delete-symbolic",
-                                        set_tooltip_text: Some("Delete Playlist"),
+                                        set_tooltip: &gettext("Delete Playlist"),
 
                                         connect_clicked => PlaylistElementIn::ChangeState(State::DeleteInProgress),
                                     }
@@ -218,7 +219,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                             #[watch]
                             set_text: &self.playlist.base.name,
-                            set_tooltip_text: Some("Renamed title of the playlist"),
+                            set_tooltip: &gettext("Renamed title of the playlist"),
                         }
                     },
 
@@ -232,12 +233,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             gtk::Button {
                                 set_icon_name: "process-completed-symbolic",
                                 connect_clicked => PlaylistElementIn::ConfirmRename,
-                                set_tooltip_text: Some("Confirm renaming the playlist"),
+                                set_tooltip: &gettext("Confirm renaming the playlist"),
                             },
                             gtk::Button {
                                 set_icon_name: "process-stop",
                                 connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
-                                set_tooltip_text: Some("Don't change the playlist name"),
+                                set_tooltip: &gettext("Don't change the playlist name"),
                             }
                         }
                     }
@@ -247,7 +248,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                     gtk::Label {
                         set_hexpand: true,
-                        set_label: &format!("Really delete \"{}\"?", self.playlist.base.name),
+                        set_label: &format!("{} \"{}\"?", gettext("Realy delete"), self.playlist.base.name),
                         set_halign: gtk::Align::Start,
                     },
 
@@ -261,12 +262,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             gtk::Button {
                                 set_icon_name: "process-completed-symbolic",
                                 connect_clicked => PlaylistElementIn::DeletePressed,
-                                set_tooltip_text: Some("Confirm deletion of the playlist"),
+                                set_tooltip: &gettext("Confirm deletion of the playlist"),
                             },
                             gtk::Button {
                                 set_icon_name: "process-stop",
                                 connect_clicked => PlaylistElementIn::ChangeState(State::Normal),
-                                set_tooltip_text: Some("Don't delete the playlist"),
+                                set_tooltip: &gettext("Don't delete the playlist"),
                             }
                         }
                     }

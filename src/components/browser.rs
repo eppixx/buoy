@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use itertools::Itertools;
 use relm4::{
     gtk::{
@@ -509,7 +510,7 @@ impl relm4::component::AsyncComponent for Browser {
                     }
                 }
                 PlaylistsViewOut::CreatePlaylist => {
-                    sender.input(BrowserIn::NewPlaylist(String::from("New Playlist"), vec![]));
+                    sender.input(BrowserIn::NewPlaylist(gettext("New Playlist"), vec![]));
                 }
                 PlaylistsViewOut::Download(drop) => {
                     sender.output(BrowserOut::Download(drop)).unwrap();

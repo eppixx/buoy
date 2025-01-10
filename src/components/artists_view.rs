@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, glib,
@@ -45,28 +46,28 @@ impl ArtistsView {
             widgets.add_to_queue.set_sensitive(false);
             widgets
                 .add_to_queue
-                .set_tooltip("There are too many artists to add to queue");
+                .set_tooltip(&gettext("There are too many artists to add to queue"));
             widgets.append_to_queue.set_sensitive(false);
             widgets
                 .append_to_queue
-                .set_tooltip("There are too many artists to append to queue");
+                .set_tooltip(&gettext("There are too many artists to append to queue"));
             widgets.replace_queue.set_sensitive(false);
             widgets
                 .replace_queue
-                .set_tooltip("There are too many artists to replace queue");
+                .set_tooltip(&gettext("There are too many artists to replace queue"));
         } else {
             widgets.add_to_queue.set_sensitive(true);
             widgets
                 .add_to_queue
-                .set_tooltip("Append shown artists to end of queue");
+                .set_tooltip(&gettext("Append shown artists to end of queue"));
             widgets.append_to_queue.set_sensitive(true);
-            widgets
-                .append_to_queue
-                .set_tooltip("Insert shown artists after currently played or paused item");
+            widgets.append_to_queue.set_tooltip(&gettext(
+                "Insert shown artists after currently played or paused item",
+            ));
             widgets.replace_queue.set_sensitive(true);
             widgets
                 .replace_queue
-                .set_tooltip("Replaces current queue with shown artists");
+                .set_tooltip(&gettext("Replaces current queue with shown artists"));
         }
     }
 }
@@ -153,7 +154,7 @@ impl relm4::component::Component for ArtistsView {
 
                             gtk::Label {
                                 add_css_class: "h2",
-                                set_label: "Artists",
+                                set_label: &gettext("Artists"),
                                 set_halign: gtk::Align::Center,
                             },
                             append: spinner = &gtk::Spinner {
@@ -168,7 +169,7 @@ impl relm4::component::Component for ArtistsView {
                             set_margin_end: 10,
 
                             gtk::Label {
-                                set_text: "Filters:",
+                                set_text: &gettext("Filters:"),
                             },
                             gtk::Switch {
                                 set_valign: gtk::Align::Center,
@@ -195,7 +196,7 @@ impl relm4::component::Component for ArtistsView {
 
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.shown_artists.borrow().len()),
+                                    set_text: &format!("{}: {}", gettext("Shown artists:"), model.shown_artists.borrow().len()),
                                 },
                                 gtk::Box {
                                     set_spacing: 15,
@@ -207,9 +208,10 @@ impl relm4::component::Component for ArtistsView {
                                                 set_icon_name: Some("list-add-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Append",
+                                                set_label: &gettext("Append"),
                                             }
                                         },
+                                        set_tooltip: &gettext("Append artists to end of queue"),
                                         connect_clicked => ArtistsViewIn::AppendToQueue,
                                     },
                                     #[name = "add_to_queue"]
@@ -219,9 +221,10 @@ impl relm4::component::Component for ArtistsView {
                                                 set_icon_name: Some("list-add-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Play next"
+                                                set_label: &gettext("Play next"),
                                             }
                                         },
+                                        set_tooltip: &gettext("Insert artists after currently played or paused item"),
                                         connect_clicked => ArtistsViewIn::AddToQueue,
                                     },
                                     #[name = "replace_queue"]
@@ -231,9 +234,10 @@ impl relm4::component::Component for ArtistsView {
                                                 set_icon_name: Some("emblem-symbolic-link-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Replace queue",
+                                                set_label: &gettext("Replace queue"),
                                             }
                                         },
+                                        set_tooltip: &gettext("Replaces current queue with artists"),
                                         connect_clicked => ArtistsViewIn::ReplaceQueue,
                                     }
                                 }
@@ -268,7 +272,7 @@ impl relm4::component::Component for ArtistsView {
                     gtk::WindowHandle {
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_text: "Active Filters",
+                            set_text: &gettext("Active Filters"),
                         }
                     },
 
@@ -290,7 +294,7 @@ impl relm4::component::Component for ArtistsView {
                                 set_halign: gtk::Align::Center,
 
                                 gtk::Label {
-                                    set_text: "New filter:",
+                                    set_text: &gettext("New filter:"),
                                 },
 
                                 append: new_filter = &gtk::DropDown {
@@ -322,7 +326,11 @@ impl relm4::component::Component for ArtistsView {
                 self.calc_sensitivity_of_buttons(widgets);
 
                 let update_label = |label: &gtk::Label, counter: &Rc<RefCell<HashSet<String>>>| {
-                    label.set_text(&format!("Shown artists: {}", counter.borrow().len()));
+                    label.set_text(&format!(
+                        "{}: {}",
+                        gettext("Shown artists"),
+                        counter.borrow().len()
+                    ));
                 };
 
                 let shown_artists = self.shown_artists.clone();
@@ -543,7 +551,8 @@ impl relm4::component::Component for ArtistsView {
 
                 //update labels and buttons
                 widgets.shown_artists.set_label(&format!(
-                    "Shown artists: {}",
+                    "{}: {}",
+                    gettext("Shown artists"),
                     self.shown_artists.borrow().len()
                 ));
                 self.calc_sensitivity_of_buttons(widgets);

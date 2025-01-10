@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use rand::prelude::SliceRandom;
 use relm4::{
     gtk::{
@@ -248,7 +249,7 @@ impl relm4::Component for Dashboard {
                 gtk::Label {
                     add_css_class: granite::STYLE_CLASS_H2_LABEL,
                     set_halign: gtk::Align::Center,
-                    set_text: "Dashboard",
+                    set_text: &gettext("Dashboard"),
                 }
             },
 
@@ -269,7 +270,7 @@ impl relm4::Component for Dashboard {
                             set_start_widget = &gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                 set_halign: gtk::Align::Start,
-                                set_text: "Newly added",
+                                set_text: &gettext("Newly added"),
                             },
                             #[wrap(Some)]
                             set_end_widget = &gtk::Box {
@@ -332,7 +333,7 @@ impl relm4::Component for Dashboard {
                             set_start_widget = &gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                 set_halign: gtk::Align::Start,
-                                set_text: "Recently Played",
+                                set_text: &gettext("Recently Played"),
                             },
                             #[wrap(Some)]
                             set_end_widget = &gtk::Box {
@@ -398,11 +399,11 @@ impl relm4::Component for Dashboard {
                                 gtk::Label {
                                     add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                     set_halign: gtk::Align::Start,
-                                    set_text: "Random"
+                                    set_text: &gettext("Random"),
                                 },
                                 gtk::Button {
                                     set_icon_name: "media-playlist-shuffle-symbolic",
-                                    set_tooltip: "Rerandomize albums",
+                                    set_tooltip: &gettext("Rerandomize albums"),
                                     connect_clicked => DashboardIn::ClickedRandomize,
                                 }
                             },
@@ -469,7 +470,7 @@ impl relm4::Component for Dashboard {
                             set_start_widget = &gtk::Label {
                                 set_halign: gtk::Align::Start,
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_text: "Most Played",
+                                set_text: &gettext("Most Played"),
                             },
 
                             #[wrap(Some)]

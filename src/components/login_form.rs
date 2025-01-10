@@ -1,3 +1,4 @@
+use gettextrs::gettext;
 use granite::prelude::ToastExt;
 use relm4::{
     component,
@@ -64,7 +65,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 #[wrap(Some)]
                 set_child = &gtk::Label {
                     add_css_class: "h3",
-                    set_label: "Login to a Subsonic server",
+                    set_label: &gettext("Login to a Subsonic server"),
                     set_halign: gtk::Align::Center,
                 },
                 add_overlay: toasts = &granite::Toast,
@@ -75,7 +76,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 set_column_spacing: 7,
 
                 attach[0, 0, 1, 1] = &gtk::Label {
-                    set_label: "Server address",
+                    set_label: &gettext("Server address"),
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 0, 1, 1]: uri = &gtk::Entry {
@@ -85,14 +86,14 @@ impl relm4::component::AsyncComponent for LoginForm {
                     connect_changed => LoginFormIn::FormChanged,
                 },
                 attach[0, 1, 1, 1] = &gtk::Label {
-                    set_label: "User name",
+                    set_label: &gettext("User name"),
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 1, 1, 1]: user = &gtk::Entry {
                     connect_changed => LoginFormIn::FormChanged,
                 },
                 attach[0, 2, 1, 1] = &gtk::Label {
-                    set_label: "Password",
+                    set_label: &gettext("Password"),
                     set_halign: gtk::Align::End,
                 },
                 attach[1, 2, 1, 1]: password = &gtk::PasswordEntry {
@@ -104,7 +105,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                 #[wrap(Some)]
                 set_start_widget = &gtk::Button {
                     add_css_class: "destructive-action",
-                    set_label: "Reset login data",
+                    set_label: &gettext("Reset login data"),
                     connect_clicked => LoginFormIn::ResetClicked,
                 },
                 #[wrap(Some)]
@@ -113,7 +114,7 @@ impl relm4::component::AsyncComponent for LoginForm {
                     set_spacing: 5,
 
                     append: login_btn = &gtk::Button {
-                        set_label: "Login",
+                        set_label: &gettext("Login"),
                         set_sensitive: false,
                         connect_clicked => LoginFormIn::AuthClicked,
                     }
@@ -153,13 +154,13 @@ impl relm4::component::AsyncComponent for LoginForm {
                         use submarine::SubsonicError;
                         let error_str = match e {
                             SubsonicError::Connection(_) => {
-                                "Connection error. Is the address valid?"
+                                &gettext("Connection error. Is the address valid?")
                             }
                             SubsonicError::NoServerFound => {
-                                "Subsonic server not found. Is the address correct"
+                                &gettext("Subsonic server not found. Is the address correct")
                             }
-                            SubsonicError::Server(_) => "Username or password is wrong",
-                            e => &format!("Login error: {e}"),
+                            SubsonicError::Server(_) => &gettext("Username or password is wrong"),
+                            e => &format!("{}: {e}", &gettext("Login error")),
                         };
                         widgets.toasts.set_title(error_str);
                         widgets.toasts.send_notification();
@@ -184,14 +185,14 @@ impl relm4::component::AsyncComponent for LoginForm {
                 Err(e) => {
                     widgets.uri.set_secondary_icon_name(Some("dialog-error"));
                     let error_str = match e {
-                        url::ParseError::EmptyHost => "Address is empty",
-                        url::ParseError::InvalidPort => "Port is invalid",
-                        url::ParseError::InvalidIpv4Address => "Invalid IPv4 address",
-                        url::ParseError::InvalidIpv6Address => "Invalid IPv6 address",
+                        url::ParseError::EmptyHost => &gettext("Address is empty"),
+                        url::ParseError::InvalidPort => &gettext("Port is invalid"),
+                        url::ParseError::InvalidIpv4Address => &gettext("Invalid IPv4 address"),
+                        url::ParseError::InvalidIpv6Address => &gettext("Invalid IPv6 address"),
                         url::ParseError::InvalidDomainCharacter => {
-                            "Address contains invalid character"
+                            &gettext("Address contains invalid character")
                         }
-                        e => &format!("Address is invalid: {e}"),
+                        e => &format!("{}: {e}", &gettext("Address is invalid")),
                     };
                     widgets.uri.set_secondary_icon_tooltip_text(Some(error_str));
                 }

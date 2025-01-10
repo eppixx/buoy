@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use granite::prelude::ToValue;
 use relm4::{
     gtk::{
@@ -52,7 +53,7 @@ impl AlbumRow {
         cover.model().change_size(75);
 
         let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip("Click to (un)favorite album");
+        fav_btn.set_tooltip(&gettext("Click to (un)favorite album"));
         fav_btn.set_focus_on_click(false);
         let id = item.id.clone();
         let send = sender.clone();
@@ -66,7 +67,8 @@ impl AlbumRow {
             _ => unreachable!("unkown icon name"),
         });
 
-        let artist = item.artist.as_deref().unwrap_or("Unknown Artist");
+        let stock = gettext("Unknown Artist");
+        let artist = item.artist.as_deref().unwrap_or(&stock);
         let send = sender.clone();
         let artist_label = gtk::Label::builder()
             .halign(gtk::Align::Start)
@@ -223,7 +225,12 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(item.item.genre.as_deref().unwrap_or("Unknown genre"));
+        label.set_label(
+            item.item
+                .genre
+                .as_deref()
+                .unwrap_or(&gettext("Unknown genre")),
+        );
         b.add_controller(item.get_drag_src());
     }
 

@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use granite::prelude::ToastExt;
 use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, ScaleButtonExt};
 use relm4::{
@@ -14,7 +15,6 @@ use relm4::{
     },
     Component, ComponentController, Controller, RelmWidgetExt,
 };
-use gettextrs::gettext;
 
 use crate::{
     client::Client,

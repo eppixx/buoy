@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use gtk::prelude::OrientableExt;
 use relm4::{
     gtk::{
@@ -46,7 +47,7 @@ impl relm4::SimpleComponent for PlayInfo {
             covers: Cover::builder()
                 .launch((subsonic, child.clone().and_then(|child| child.cover_art)))
                 .forward(sender.input_sender(), PlayInfoIn::Cover),
-            title: String::from("Nothing is played currently"),
+            title: gettext("Nothing is played currently"),
             artist: String::new(),
             album: String::new(),
         };
@@ -92,7 +93,7 @@ impl relm4::SimpleComponent for PlayInfo {
             PlayInfoIn::NewState(child) => match *child {
                 None => {
                     self.covers.emit(CoverIn::LoadId(None));
-                    self.title = String::from("Nothing is playing");
+                    self.title = gettext("Nothing is playing");
                     self.artist = String::new();
                     self.album = String::new();
                 }

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-10 15:02+0100\n"
+"POT-Creation-Date: 2025-01-10 17:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -187,11 +187,11 @@ msgstr ""
 msgid "Length"
 msgstr ""
 
-#: src/components/album_element.rs:105
+#: src/components/album_element.rs:105 src/components/filter_row.rs:318
 msgid "Year"
 msgstr ""
 
-#: src/components/album_element.rs:106
+#: src/components/album_element.rs:106 src/components/playlist_element.rs:179
 msgid "songs"
 msgstr ""
 
@@ -204,7 +204,8 @@ msgid "Unkown Artist"
 msgstr ""
 
 #: src/components/album_view.rs:221 src/components/albums_view.rs:229
-#: src/components/tracks_view.rs:256
+#: src/components/artist_view.rs:206 src/components/artists_view.rs:211
+#: src/components/playlists_view.rs:259 src/components/tracks_view.rs:256
 msgid "Append"
 msgstr ""
 
@@ -213,20 +214,22 @@ msgid "Append Album to end of queue"
 msgstr ""
 
 #: src/components/album_view.rs:242 src/components/albums_view.rs:241
-#: src/components/tracks_view.rs:268
+#: src/components/artist_view.rs:221 src/components/artists_view.rs:224
+#: src/components/playlists_view.rs:271 src/components/tracks_view.rs:268
 msgid "Play next"
 msgstr ""
 
-#: src/components/album_view.rs:245
+#: src/components/album_view.rs:245 src/components/artist_view.rs:224
 msgid "Insert Album after currently played or paused item"
 msgstr ""
 
 #: src/components/album_view.rs:263 src/components/albums_view.rs:253
-#: src/components/tracks_view.rs:280
+#: src/components/artist_view.rs:235 src/components/artists_view.rs:237
+#: src/components/playlists_view.rs:283 src/components/tracks_view.rs:280
 msgid "Replace queue"
 msgstr ""
 
-#: src/components/album_view.rs:266
+#: src/components/album_view.rs:266 src/components/artist_view.rs:238
 msgid "Replaces current queue with this album"
 msgstr ""
 
@@ -234,7 +237,8 @@ msgstr ""
 msgid "Download Album"
 msgstr ""
 
-#: src/components/album_view.rs:287
+#: src/components/album_view.rs:287 src/components/artist_view.rs:252
+#: src/components/playlists_view.rs:298
 msgid "Click to select a folder to download this album to"
 msgstr ""
 
@@ -254,7 +258,8 @@ msgstr ""
 msgid "times"
 msgstr ""
 
-#: src/components/album_view.rs:504
+#: src/components/album_view.rs:504 src/components/filter_row.rs:603
+#: src/components/filter_row.rs:615
 msgid "Genre"
 msgstr ""
 
@@ -286,7 +291,8 @@ msgstr ""
 msgid "Albums"
 msgstr ""
 
-#: src/components/albums_view.rs:185 src/components/tracks_view.rs:206
+#: src/components/albums_view.rs:185 src/components/artists_view.rs:172
+#: src/components/tracks_view.rs:206
 msgid "Filters:"
 msgstr ""
 
@@ -296,16 +302,411 @@ msgid "Shown albums"
 msgstr ""
 
 #: src/components/albums_view.rs:216 src/components/albums_view.rs:735
+#: src/components/artists_view.rs:331 src/components/artists_view.rs:555
 #: src/components/tracks_view.rs:239 src/components/tracks_view.rs:866
 msgid "Shown artists"
 msgstr ""
 
-#: src/components/albums_view.rs:291 src/components/tracks_view.rs:336
+#: src/components/albums_view.rs:291 src/components/artists_view.rs:275
+#: src/components/tracks_view.rs:336
 msgid "Active Filters"
 msgstr ""
 
-#: src/components/albums_view.rs:313 src/components/tracks_view.rs:358
+#: src/components/albums_view.rs:313 src/components/artists_view.rs:297
+#: src/components/tracks_view.rs:358
 msgid "New filter:"
+msgstr ""
+
+#: src/components/artist_view.rs:209
+msgid "Append Artist to end of queue"
+msgstr ""
+
+#: src/components/artist_view.rs:249
+msgid "Download Artist"
+msgstr ""
+
+#: src/components/artist_view.rs:345
+msgid "No biography found"
+msgstr ""
+
+#: src/components/artists_view.rs:49
+msgid "There are too many artists to add to queue"
+msgstr ""
+
+#: src/components/artists_view.rs:53
+msgid "There are too many artists to append to queue"
+msgstr ""
+
+#: src/components/artists_view.rs:57
+msgid "There are too many artists to replace queue"
+msgstr ""
+
+#: src/components/artists_view.rs:62
+msgid "Append shown artists to end of queue"
+msgstr ""
+
+#: src/components/artists_view.rs:65
+msgid "Insert shown artists after currently played or paused item"
+msgstr ""
+
+#: src/components/artists_view.rs:70
+msgid "Replaces current queue with shown artists"
+msgstr ""
+
+#: src/components/artists_view.rs:157
+msgid "Artists"
+msgstr ""
+
+#: src/components/artists_view.rs:199
+msgid "Shown artists:"
+msgstr ""
+
+#: src/components/artists_view.rs:214
+msgid "Append artists to end of queue"
+msgstr ""
+
+#: src/components/artists_view.rs:227
+msgid "Insert artists after currently played or paused item"
+msgstr ""
+
+#: src/components/artists_view.rs:240
+msgid "Replaces current queue with artists"
+msgstr ""
+
+#: src/components/browser.rs:513 src/components/playlists_view.rs:199
+msgid "New Playlist"
+msgstr ""
+
+#: src/components/dashboard.rs:252
+msgid "Dashboard"
+msgstr ""
+
+#: src/components/dashboard.rs:273
+msgid "Newly added"
+msgstr ""
+
+#: src/components/dashboard.rs:336
+msgid "Recently Played"
+msgstr ""
+
+#: src/components/dashboard.rs:402
+msgid "Random"
+msgstr ""
+
+#: src/components/dashboard.rs:406
+msgid "Rerandomize albums"
+msgstr ""
+
+#: src/components/dashboard.rs:473
+msgid "Most Played"
+msgstr ""
+
+#: src/components/equalizer.rs:97
+msgid "Equalizer"
+msgstr ""
+
+#: src/components/equalizer.rs:104
+msgid "Reset bands"
+msgstr ""
+
+#: src/components/filter_categories.rs:102
+msgid "Category"
+msgstr ""
+
+#: src/components/filter_row.rs:44
+msgid "both"
+msgstr ""
+
+#: src/components/filter_row.rs:48
+msgid "yes"
+msgstr ""
+
+#: src/components/filter_row.rs:52
+msgid "no"
+msgstr ""
+
+#: src/components/filter_row.rs:64 src/components/filter_row.rs:136
+#: src/components/filter_row.rs:197 src/components/sort_by.rs:80
+msgid "Selection"
+msgstr ""
+
+#: src/components/filter_row.rs:112
+msgid "contains"
+msgstr ""
+
+#: src/components/filter_row.rs:116
+msgid "contains not"
+msgstr ""
+
+#: src/components/filter_row.rs:120
+msgid "matches not"
+msgstr ""
+
+#: src/components/filter_row.rs:124
+msgid "matches"
+msgstr ""
+
+#: src/components/filter_row.rs:302
+msgid "Favorites"
+msgstr ""
+
+#: src/components/filter_row.rs:337 src/components/filter_row.rs:366
+#: src/components/filter_row.rs:395 src/components/filter_row.rs:425
+#: src/components/filter_row.rs:454 src/components/filter_row.rs:483
+#: src/components/filter_row.rs:511 src/components/filter_row.rs:538
+#: src/components/filter_row.rs:565 src/components/filter_row.rs:592
+#: src/components/filter_row.rs:620
+msgid "remove this filter"
+msgstr ""
+
+#: src/components/filter_row.rs:347
+msgid "CD number"
+msgstr ""
+
+#: src/components/filter_row.rs:376
+msgid "Track number"
+msgstr ""
+
+#: src/components/filter_row.rs:406
+msgid "Album count"
+msgstr ""
+
+#: src/components/filter_row.rs:435
+msgid "Duration (sec)"
+msgstr ""
+
+#: src/components/filter_row.rs:464
+msgid "Duration (min)"
+msgstr ""
+
+#: src/components/filter_row.rs:493
+msgid "Bit rate"
+msgstr ""
+
+#: src/components/filter_row.rs:521
+msgid "Title name"
+msgstr ""
+
+#: src/components/filter_row.rs:533
+msgid "Title"
+msgstr ""
+
+#: src/components/filter_row.rs:548
+msgid "Artist name"
+msgstr ""
+
+#: src/components/filter_row.rs:560
+msgid "Artist"
+msgstr ""
+
+#: src/components/filter_row.rs:575
+msgid "Album name"
+msgstr ""
+
+#: src/components/filter_row.rs:587
+msgid "Album"
+msgstr ""
+
+#: src/components/login_form.rs:68
+msgid "Login to a Subsonic server"
+msgstr ""
+
+#: src/components/login_form.rs:79
+msgid "Server address"
+msgstr ""
+
+#: src/components/login_form.rs:89
+msgid "User name"
+msgstr ""
+
+#: src/components/login_form.rs:96
+msgid "Password"
+msgstr ""
+
+#: src/components/login_form.rs:108
+msgid "Reset login data"
+msgstr ""
+
+#: src/components/login_form.rs:117
+msgid "Login"
+msgstr ""
+
+#: src/components/login_form.rs:157
+msgid "Connection error. Is the address valid?"
+msgstr ""
+
+#: src/components/login_form.rs:160
+msgid "Subsonic server not found. Is the address correct"
+msgstr ""
+
+#: src/components/login_form.rs:162
+msgid "Username or password is wrong"
+msgstr ""
+
+#: src/components/login_form.rs:163
+msgid "Login error"
+msgstr ""
+
+#: src/components/login_form.rs:188
+msgid "Address is empty"
+msgstr ""
+
+#: src/components/login_form.rs:189
+msgid "Port is invalid"
+msgstr ""
+
+#: src/components/login_form.rs:190
+msgid "Invalid IPv4 address"
+msgstr ""
+
+#: src/components/login_form.rs:191
+msgid "Invalid IPv6 address"
+msgstr ""
+
+#: src/components/login_form.rs:193
+msgid "Address contains invalid character"
+msgstr ""
+
+#: src/components/login_form.rs:195
+msgid "Address is invalid"
+msgstr ""
+
+#: src/components/main_window.rs:236
+msgid "Loading information from server"
+msgstr ""
+
+#: src/components/main_window.rs:281
+msgid "Can't connect to subsonic server"
+msgstr ""
+
+#: src/components/main_window.rs:286
+msgid ""
+"Make sure the connection to the server is available. You might want to try "
+"later or connect to another server"
+msgstr ""
+
+#: src/components/main_window.rs:292
+msgid "Logout"
+msgstr ""
+
+#: src/components/play_info.rs:50
+msgid "Nothing is played currently"
+msgstr ""
+
+#: src/components/play_info.rs:96
+msgid "Nothing is playing"
+msgstr ""
+
+#: src/components/playlist_element.rs:195
+msgid "Rename Playlist"
+msgstr ""
+
+#: src/components/playlist_element.rs:201
+msgid "Delete Playlist"
+msgstr ""
+
+#: src/components/playlist_element.rs:222
+msgid "Renamed title of the playlist"
+msgstr ""
+
+#: src/components/playlist_element.rs:236
+msgid "Confirm renaming the playlist"
+msgstr ""
+
+#: src/components/playlist_element.rs:241
+msgid "Don't change the playlist name"
+msgstr ""
+
+#: src/components/playlist_element.rs:251
+msgid "Realy delete"
+msgstr ""
+
+#: src/components/playlist_element.rs:265
+msgid "Confirm deletion of the playlist"
+msgstr ""
+
+#: src/components/playlist_element.rs:270
+msgid "Don't delete the playlist"
+msgstr ""
+
+#: src/components/playlists_view.rs:172
+msgid "Playlists"
+msgstr ""
+
+#: src/components/playlists_view.rs:218
+msgid "Select a playlist to show its songs"
+msgstr ""
+
+#: src/components/playlists_view.rs:242
+msgid "title"
+msgstr ""
+
+#: src/components/playlists_view.rs:247
+msgid "more info"
+msgstr ""
+
+#: src/components/playlists_view.rs:262
+msgid "Append playlist to end of queue"
+msgstr ""
+
+#: src/components/playlists_view.rs:286
+msgid "Replaces current queue with this playlist"
+msgstr ""
+
+#: src/components/playlists_view.rs:295
+msgid "Download Playlist"
+msgstr ""
+
+#: src/components/queue.rs:244
+msgid "Loading queue"
+msgstr ""
+
+#: src/components/queue.rs:303
+msgid "Queue is empty"
+msgstr ""
+
+#: src/components/queue.rs:307
+msgid "Drag music here to add it"
+msgstr ""
+
+#: src/components/queue.rs:329
+msgid "Remove selected songs from queue"
+msgstr ""
+
+#: src/components/queue.rs:338
+msgid "Clear queue"
+msgstr ""
+
+#: src/components/queue.rs:348
+msgid "Jump to played track in queue"
+msgstr ""
+
+#: src/components/queue.rs:355
+msgid "Create new playlist from queue"
+msgstr ""
+
+#: src/components/tracks_view.rs:59
+msgid "There are too many tracks to add to queue"
+msgstr ""
+
+#: src/components/tracks_view.rs:63
+msgid "There are too many tracks to append to queue"
+msgstr ""
+
+#: src/components/tracks_view.rs:67
+msgid "There are too many tracks to replace queue"
+msgstr ""
+
+#: src/components/tracks_view.rs:72
+msgid "Append shown tracks to end of queue"
+msgstr ""
+
+#: src/components/tracks_view.rs:75
+msgid "Insert shown after currently played or paused item"
+msgstr ""
+
+#: src/components/tracks_view.rs:80
+msgid "Replaces current queue with shown tracks"
 msgstr ""
 
 #: src/components/tracks_view.rs:191
@@ -322,4 +723,36 @@ msgstr ""
 
 #: src/components/tracks_view.rs:294
 msgid "Click to select a folder to download shown tracks to"
+msgstr ""
+
+#: src/factory/album_row.rs:56
+msgid "Click to (un)favorite album"
+msgstr ""
+
+#: src/factory/album_row.rs:70 src/factory/queue_song.rs:226
+#: src/factory/track_row.rs:190
+msgid "Unknown Artist"
+msgstr ""
+
+#: src/factory/album_row.rs:232 src/factory/playlist_row.rs:356
+#: src/factory/track_row.rs:473
+msgid "Unknown genre"
+msgstr ""
+
+#: src/factory/artist_row.rs:54
+msgid "Click to (un)favorite artist"
+msgstr ""
+
+#: src/factory/playlist_row.rs:51 src/factory/queue_song.rs:241
+#: src/factory/track_row.rs:56
+msgid "Click to (un)favorite song"
+msgstr ""
+
+#: src/factory/playlist_row.rs:103 src/factory/playlist_row.rs:130
+msgid "Unkonwn Album"
+msgstr ""
+
+#: src/factory/track_row.rs:162 src/factory/track_row.rs:244
+#: src/factory/track_row.rs:255
+msgid "Unknown Album"
 msgstr ""

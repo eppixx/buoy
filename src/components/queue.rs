@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use rand::prelude::SliceRandom;
 use relm4::{
     factory::FactoryVecDeque,
@@ -240,7 +241,7 @@ impl relm4::Component for Queue {
 
                         gtk::Label {
                             add_css_class: "h3",
-                            set_label: "Loading queue",
+                            set_label: &gettext("Loading queue"),
                         },
                         gtk::Spinner {
                             add_css_class: "size100",
@@ -299,11 +300,11 @@ impl relm4::Component for Queue {
 
                             gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_label: "Queue is empty",
+                                set_label: &gettext("Queue is empty"),
                             },
                             gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_label: "Drag music here to add it",
+                                set_label: &gettext("Drag music here to add it"),
                             },
                         },
 
@@ -325,7 +326,7 @@ impl relm4::Component for Queue {
                 pack_start = &gtk::Box {
                     model.remove_items.clone() {
                         set_icon_name: "list-remove-symbolic",
-                        set_tooltip: "Remove selected songs from queue",
+                        set_tooltip: &gettext("Remove selected songs from queue"),
                         set_sensitive: false,
                         set_focus_on_click: false,
                         connect_clicked => QueueIn::Remove,
@@ -334,7 +335,7 @@ impl relm4::Component for Queue {
                     model.clear_items.clone() {
                         set_margin_start: 15,
                         set_icon_name: "user-trash-symbolic",
-                        set_tooltip: "Clear queue",
+                        set_tooltip: &gettext("Clear queue"),
                         set_sensitive: false,
                         set_focus_on_click: false,
                         connect_clicked => QueueIn::Clear,
@@ -344,14 +345,14 @@ impl relm4::Component for Queue {
                 #[wrap(Some)]
                 set_center_widget = &gtk::Button {
                         set_icon_name: "view-continuous-symbolic",
-                        set_tooltip: "Jump to played track in queue",
+                        set_tooltip: &gettext("Jump to played track in queue"),
                         set_focus_on_click: false,
                         connect_clicked => QueueIn::JumpToCurrent,
                 },
 
                 pack_end = &gtk::Button {
                     set_icon_name: "document-new-symbolic",
-                    set_tooltip: "Create new playlist from queue",
+                    set_tooltip: &gettext("Create new playlist from queue"),
                     set_focus_on_click: false,
                     connect_clicked[sender] => move |_btn| {
                         sender.output(QueueOut::CreatePlaylist).unwrap();

@@ -1,3 +1,4 @@
+use gettextrs::gettext;
 use relm4::gtk::{
     self,
     prelude::{BoxExt, ButtonExt, OrientableExt, RangeExt, WidgetExt},
@@ -93,14 +94,14 @@ impl relm4::SimpleComponent for Equalizer {
 
             gtk::Label {
                 add_css_class: "h3",
-                set_label: "Equalizer",
+                set_label: &gettext("Equalizer"),
             },
 
             gtk::CenterBox {
                 #[wrap(Some)]
                 set_start_widget = &model.reset_btn.clone() -> gtk::Button {
                     add_css_class: "destructive-action",
-                    set_label: "Reset bands",
+                    set_label: &gettext("Reset bands"),
                     connect_clicked => EqualizerIn::Reset,
                 },
 

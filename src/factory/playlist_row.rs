@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self,
@@ -47,7 +48,7 @@ impl PlaylistRow {
         };
 
         let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip("Click to (un)favorite song");
+        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
         fav_btn.set_focus_on_click(false);
 
         let result = Self {
@@ -99,7 +100,8 @@ impl PlaylistRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         album_label.inline_css("color: inherit");
-        let album = result.item.album.as_deref().unwrap_or("Unknown Album");
+        let stock = gettext("Unkonwn Album");
+        let album = result.item.album.as_deref().unwrap_or(&stock);
         let send = sender.clone();
         if let Some(album_id) = &result.item.album_id {
             let album = gtk::glib::markup_escape_text(album);
@@ -125,7 +127,8 @@ impl PlaylistRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         artist_label.inline_css("color: inherit");
-        let artist = result.item.artist.as_deref().unwrap_or("Unknown Artist");
+        let stock = gettext("Unkonwn Album");
+        let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
             artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
@@ -159,8 +162,6 @@ impl PlaylistRow {
 
     pub fn set_drag_src(&mut self, drop: Droppable) {
         for (src, widget) in self.get_widgets() {
-            //TODO add other widgets here
-
             //remove DragSource before add new one
             if self.content_set {
                 widget.remove_controller(src);
@@ -348,7 +349,12 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
     }
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        label.set_label(item.item.genre.as_deref().unwrap_or("Unknown genre"));
+        label.set_label(
+            item.item
+                .genre
+                .as_deref()
+                .unwrap_or(&gettext("Unknown genre")),
+        );
         b.add_controller(item.get_drag_src());
     }
 

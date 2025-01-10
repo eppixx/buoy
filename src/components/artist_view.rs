@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self,
@@ -202,10 +203,10 @@ impl relm4::Component for ArtistView {
                                             set_icon_name: Some("list-add-symbolic"),
                                         },
                                         gtk::Label {
-                                            set_label: "Append",
+                                            set_label: &gettext("Append"),
                                         },
                                     },
-                                    set_tooltip: "Append Artist to end of queue",
+                                    set_tooltip: &gettext("Append Artist to end of queue"),
                                     connect_clicked[sender, init] => move |_btn| {
                                         sender.output(ArtistViewOut::AppendArtist(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                     }
@@ -217,10 +218,10 @@ impl relm4::Component for ArtistView {
                                         set_icon_name: Some("list-add-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Play next"
+                                        set_label: &gettext("Play next"),
                                     }
                                 },
-                                set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                set_tooltip: &gettext("Insert Album after currently played or paused item"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::InsertAfterCurrentPlayed(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }
@@ -231,10 +232,10 @@ impl relm4::Component for ArtistView {
                                         set_icon_name: Some("emblem-symbolic-link-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Replace queue",
+                                        set_label: &gettext("Replace queue"),
                                     }
                                 },
-                                set_tooltip_text: Some("Replaces current queue with this album"),
+                                set_tooltip: &gettext("Replaces current queue with this album"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::ReplaceQueue(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }
@@ -245,10 +246,10 @@ impl relm4::Component for ArtistView {
                                         set_icon_name: Some("browser-download-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Download Artist",
+                                        set_label: &gettext("Download Artist"),
                                     }
                                 },
-                                set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                set_tooltip: &gettext("Click to select a folder to download this album to"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::Download(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }
@@ -341,7 +342,7 @@ impl relm4::Component for ArtistView {
                 if let Some(bio) = artist.base.biography {
                     self.bio = bio;
                 } else {
-                    self.bio = String::from("No biography found");
+                    self.bio = gettext("No biography found");
                 }
 
                 // TODO do smth with similar artists

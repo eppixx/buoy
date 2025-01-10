@@ -56,28 +56,28 @@ impl TracksView {
             widgets.add_to_queue.set_sensitive(false);
             widgets
                 .add_to_queue
-                .set_tooltip("There are too many tracks to add to queue");
+                .set_tooltip(&gettext("There are too many tracks to add to queue"));
             widgets.append_to_queue.set_sensitive(false);
             widgets
                 .append_to_queue
-                .set_tooltip("There are too many tracks to append to queue");
+                .set_tooltip(&gettext("There are too many tracks to append to queue"));
             widgets.replace_queue.set_sensitive(false);
             widgets
                 .replace_queue
-                .set_tooltip("There are too many tracks to replace queue");
+                .set_tooltip(&gettext("There are too many tracks to replace queue"));
         } else {
             widgets.add_to_queue.set_sensitive(true);
             widgets
                 .add_to_queue
-                .set_tooltip("Append shown tracks to end of queue");
+                .set_tooltip(&gettext("Append shown tracks to end of queue"));
             widgets.append_to_queue.set_sensitive(true);
-            widgets
-                .append_to_queue
-                .set_tooltip("Insert shown after currently played or paused item");
+            widgets.append_to_queue.set_tooltip(&gettext(
+                "Insert shown after currently played or paused item",
+            ));
             widgets.replace_queue.set_sensitive(true);
             widgets
                 .replace_queue
-                .set_tooltip("Replaces current queue with shown tracks");
+                .set_tooltip(&gettext("Replaces current queue with shown tracks"));
         }
     }
 }

@@ -1,3 +1,4 @@
+use gettextrs::gettext;
 use relm4::gtk::{self, gio, glib, prelude::ListItemExt};
 
 use crate::common::store_from_category;
@@ -98,7 +99,7 @@ impl Category {
 
         let factory = gtk::SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            let label = gtk::Label::new(Some("Category"));
+            let label = gtk::Label::new(Some(&gettext("Category")));
             list_item
                 .downcast_ref::<gtk::ListItem>()
                 .expect("is not a ListItem")

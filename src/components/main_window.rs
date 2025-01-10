@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use granite::prelude::SettingsExt;
 use relm4::{
     actions::AccelsPlus,
@@ -232,7 +233,7 @@ impl relm4::component::AsyncComponent for MainWindow {
                                 start: ()
                             },
                             gtk::Label {
-                                set_text: "loading information from server",
+                                set_text: &gettext("Loading information from server"),
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                             }
                         }
@@ -277,18 +278,18 @@ impl relm4::component::AsyncComponent for MainWindow {
 
                             gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_text: "Can't connect to subsonic server",
+                                set_text: &gettext("Can't connect to subsonic server"),
                             },
                             gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H3_LABEL,
                                 set_wrap: true,
-                                set_text: "Make sure the connection to the server is available. You might want to try later or connect to another server",
+                                set_text: &gettext("Make sure the connection to the server is available. You might want to try later or connect to another server"),
                             },
                             gtk::CenterBox {
                                 #[wrap(Some)]
                                 set_end_widget = &gtk::Button {
                                     add_css_class: "destructive-action",
-                                    set_label: "Logout",
+                                    set_label: &gettext("Logout"),
                                     connect_clicked => MainWindowIn::Logout,
                                 },
                             }
