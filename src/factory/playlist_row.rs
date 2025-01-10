@@ -100,7 +100,7 @@ impl PlaylistRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         album_label.inline_css("color: inherit");
-        let stock = gettext("Unkonwn Album");
+        let stock = gettext("Unknown Album");
         let album = result.item.album.as_deref().unwrap_or(&stock);
         let send = sender.clone();
         if let Some(album_id) = &result.item.album_id {
@@ -127,7 +127,7 @@ impl PlaylistRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         artist_label.inline_css("color: inherit");
-        let stock = gettext("Unkonwn Album");
+        let stock = gettext("Unknown Artist");
         let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
