@@ -14,6 +14,7 @@ use relm4::{
     },
     Component, ComponentController, Controller, RelmWidgetExt,
 };
+use gettextrs::gettext;
 
 use crate::{
     client::Client,
@@ -374,7 +375,7 @@ impl relm4::component::AsyncComponent for App {
                             append: back_btn = &gtk::Button {
                                 set_icon_name: "go-previous-symbolic",
                                 add_css_class: "destructive-button-spacer",
-                                set_tooltip: "Go back to previous page",
+                                set_tooltip: &gettext("Go back to previous page"),
 
                                 connect_clicked[browser_sender] => move |_| {
                                     browser_sender.emit(BrowserIn::BackClicked);
@@ -392,7 +393,7 @@ impl relm4::component::AsyncComponent for App {
                             append: search_btn = &gtk::ToggleButton {
                                 add_css_class: "browser-navigation-button",
                                 set_icon_name: "system-search-symbolic",
-                                set_tooltip: "Open search bar",
+                                set_tooltip: &gettext("Open search bar"),
 
                                 connect_toggled[sender] => move |button| {
                                     match button.is_active() {
@@ -406,7 +407,7 @@ impl relm4::component::AsyncComponent for App {
                                 gtk::Button {
                                     add_css_class: "browser-navigation-button",
                                     set_icon_name: "go-home-symbolic",
-                                    set_tooltip: "Go to dashboard",
+                                    set_tooltip: &gettext("Go to dashboard"),
                                     connect_clicked[browser_sender] => move |_| {
                                         browser_sender.emit(BrowserIn::DashboardClicked);
                                     }
@@ -414,7 +415,7 @@ impl relm4::component::AsyncComponent for App {
                                 gtk::Button {
                                     add_css_class: "browser-navigation-button",
                                     set_icon_name: "avatar-default-symbolic",
-                                    set_tooltip: "Show artists",
+                                    set_tooltip: &gettext("Show artists"),
                                     connect_clicked[browser_sender] => move |_| {
                                         browser_sender.emit(BrowserIn::ArtistsClicked);
                                     }
@@ -422,7 +423,7 @@ impl relm4::component::AsyncComponent for App {
                                 gtk::Button {
                                     add_css_class: "browser-navigation-button",
                                     set_icon_name: "media-optical-cd-audio-symbolic",
-                                    set_tooltip: "Show albums",
+                                    set_tooltip: &gettext("Show albums"),
                                     connect_clicked[browser_sender] => move |_| {
                                         browser_sender.emit(BrowserIn::AlbumsClicked);
                                     }
@@ -430,7 +431,7 @@ impl relm4::component::AsyncComponent for App {
                                 gtk::Button {
                                     add_css_class: "browser-navigation-button",
                                     set_icon_name: "audio-x-generic-symbolic",
-                                    set_tooltip: "Show tracks",
+                                    set_tooltip: &gettext("Show tracks"),
                                     connect_clicked[browser_sender] => move |_| {
                                         browser_sender.emit(BrowserIn::TracksClicked);
                                     }
@@ -438,7 +439,7 @@ impl relm4::component::AsyncComponent for App {
                                 gtk::Button {
                                     add_css_class: "browser-navigation-button",
                                     set_icon_name: "playlist-symbolic",
-                                    set_tooltip: "Show playlists",
+                                    set_tooltip: &gettext("Show playlists"),
                                     connect_clicked[browser_sender] => move |_| {
                                         browser_sender.emit(BrowserIn::PlaylistsClicked);
                                     }
@@ -454,7 +455,7 @@ impl relm4::component::AsyncComponent for App {
                             gtk::MenuButton {
                                 set_icon_name: "media-eq-symbolic",
                                 set_focus_on_click: false,
-                                set_tooltip: "Open Equalizer",
+                                set_tooltip: &gettext("Open Equalizer"),
                                 #[wrap(Some)]
                                 set_popover = &gtk::Popover {
                                     model.equalizer.widget(),
@@ -471,7 +472,7 @@ impl relm4::component::AsyncComponent for App {
                             gtk::MenuButton {
                                 set_icon_name: "open-menu-symbolic",
                                 set_focus_on_click: false,
-                                set_tooltip: "Open settings",
+                                set_tooltip: &gettext("Open settings"),
 
                                 #[wrap(Some)]
                                 set_popover = &gtk::Popover {
@@ -485,11 +486,11 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::CenterBox {
                                             #[wrap(Some)]
                                             set_start_widget = &gtk::Label {
-                                                set_text: "Send desktop notifications\nwhen in background",
+                                                set_text: &gettext("Send desktop notifications\nwhen in background"),
                                             },
                                             #[wrap(Some)]
                                             set_end_widget = &gtk::Switch {
-                                                set_tooltip: "Wether or not send desktop notifications",
+                                                set_tooltip: &gettext("Wether or not send desktop notifications"),
                                                 set_state: Settings::get().lock().unwrap().send_notifications,
                                                 connect_state_set => move |_switch, value| {
                                                     Settings::get().lock().unwrap().send_notifications = value;
@@ -500,12 +501,12 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::CenterBox {
                                             #[wrap(Some)]
                                             set_start_widget = &gtk::Label {
-                                                set_text: "Scrobble to server",
+                                                set_text: &gettext("Scrobble to server"),
                                             },
                                             #[wrap(Some)]
                                             set_end_widget = &gtk::Switch {
                                                 set_state: Settings::get().lock().unwrap().scrobble,
-                                                set_tooltip: "Updates play count, played timestamp on server and the now playing page in the web app",
+                                                set_tooltip: &gettext("Updates play count, played timestamp on server and the now playing page in the web app"),
 
                                                 connect_state_set => move |_switch, value| {
                                                     Settings::get().lock().unwrap().scrobble = value;
@@ -518,8 +519,8 @@ impl relm4::component::AsyncComponent for App {
                                             set_halign: gtk::Align::End,
                                             gtk::Button {
                                                 add_css_class: "destructive-action",
-                                                set_label: "Delete cache",
-                                                set_tooltip: "Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start",
+                                                set_label: &gettext("Delete cache"),
+                                                set_tooltip: &gettext("Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start"),
                                                 connect_clicked => AppIn::DeleteCache,
                                             }
                                         },
@@ -527,8 +528,8 @@ impl relm4::component::AsyncComponent for App {
                                             set_halign: gtk::Align::End,
                                             gtk::Button {
                                                 add_css_class: "destructive-action",
-                                                set_label: "Logout from Server",
-                                                set_tooltip: "Logging out will delete the cache and also require to login again to listen to music",
+                                                set_label: &gettext("Logout from Server"),
+                                                set_tooltip: &gettext("Logging out will delete the cache and also require to login again to listen to music"),
                                                 connect_clicked => AppIn::ResetLogin,
                                             },
 
@@ -558,9 +559,9 @@ impl relm4::component::AsyncComponent for App {
                                     set_margin_vertical: 2,
 
                                     append: search = &gtk::SearchEntry {
-                                        set_placeholder_text: Some("Search..."),
+                                        set_placeholder_text: Some(&gettext("Search...")),
                                         set_text: &Settings::get().lock().unwrap().search_text,
-                                        set_tooltip: "Enter your search here",
+                                        set_tooltip: &gettext("Enter your search here"),
                                         connect_search_changed => AppIn::SearchChanged,
                                         add_controller = gtk::EventControllerKey {
                                             connect_key_pressed[sender] => move |_, key, _, _modifier| {
@@ -572,8 +573,8 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::CheckButton {
-                                        set_label: Some("Use fuzzy search"),
-                                        set_tooltip: "Shows close and similar search results if activated",
+                                        set_label: Some(&gettext("Use fuzzy search")),
+                                        set_tooltip: &gettext("Shows close and similar search results if activated"),
                                         set_active: Settings::get().lock().unwrap().fuzzy_search,
 
                                         connect_toggled[sender] => move |btn| {
@@ -582,8 +583,8 @@ impl relm4::component::AsyncComponent for App {
                                         }
                                     },
                                     gtk::CheckButton {
-                                        set_label: Some("Use case sensitivity"),
-                                        set_tooltip: "Ignores case sensitivity in search term and results",
+                                        set_label: Some(&gettext("Use case sensitivity")),
+                                        set_tooltip: &gettext("Ignores case sensitivity in search term and results"),
                                         set_active: Settings::get().lock().unwrap().case_sensitive,
 
                                         connect_toggled[sender] => move |btn| {
@@ -724,7 +725,7 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
                 QueueOut::CreatePlaylist => {
                     self.browser.emit(BrowserIn::NewPlaylist(
-                        String::from("Playlist from Queue"),
+                        gettext("New playlist from Queue"),
                         self.queue.model().songs(),
                     ));
                 }
@@ -1010,7 +1011,7 @@ async fn show_desktop_notification(
     notify.body(&format!(
         "{}\n{}",
         child.title,
-        child.artist.unwrap_or(String::from("Unkonwn Artist"))
+        child.artist.unwrap_or(gettext("Unkonwn Artist"))
     ));
     if let Some(image) = image {
         notify.image_data(image);

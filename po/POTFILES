@@ -1,0 +1,8 @@
+data/launcher.desktop.in.in
+data/metadata.appdata.xml.in.in
+src/app.rs
+src/download.rs
+src/components/album_element.rs
+src/components/album_view.rs
+src/components/albums_view.rs
+src/components/tracks_view.rs

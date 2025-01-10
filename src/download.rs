@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use gettextrs::gettext;
 use relm4::gtk::{
     self,
     prelude::{
@@ -21,7 +22,7 @@ impl Download {
         // create dialog
         let builder = gtk::FileChooserDialog::builder();
         let file_dialog = builder
-            .name("Choose location for download")
+            .name(&gettext("Choose location for download"))
             .create_folders(true)
             .modal(true)
             .use_header_bar(1)
@@ -29,8 +30,8 @@ impl Download {
             .transient_for(&relm4::main_application().windows()[0])
             .build();
         file_dialog.add_buttons(&[
-            ("Choose folder", gtk::ResponseType::Accept),
-            ("Cancel", gtk::ResponseType::Cancel),
+            (&gettext("Choose folder"), gtk::ResponseType::Accept),
+            (&gettext("Cancel"), gtk::ResponseType::Cancel),
         ]);
         file_dialog.show();
 
@@ -93,7 +94,8 @@ impl Download {
                 for (name, id) in ids {
                     sender.input(
                         <App as relm4::component::AsyncComponent>::Input::DisplayToast(format!(
-                            "Start downloading: {} {name}",
+                            "{} {} {name}",
+                            gettext("Start downloading:"),
                             id.kind(),
                         )),
                     );
@@ -101,7 +103,12 @@ impl Download {
                     match client.download(id.inner()).await {
                         Err(e) => sender.input(
                             <App as relm4::component::AsyncComponent>::Input::DisplayToast(
-                                format!("Download of {} {name} failed: {e}", id.kind()),
+                                format!(
+                                    "{} {} {name} {}: {e}",
+                                    gettext("Download of"),
+                                    id.kind(),
+                                    gettext("failed")
+                                ),
                             ),
                         ),
                         Ok(buffer) => {
@@ -117,13 +124,22 @@ impl Download {
                             if let Err(e) = file.write_all(&buffer) {
                                 sender.input(
                                     <App as relm4::component::AsyncComponent>::Input::DisplayToast(
-                                        format!("saving of {} {name} failed: {e}", id.kind()),
+                                        format!(
+                                            "{} {} {name} {}: {e}",
+                                            gettext("Saving of"),
+                                            id.kind(),
+                                            gettext("failed")
+                                        ),
                                     ),
                                 );
                             }
                             sender.input(
                                 <App as relm4::component::AsyncComponent>::Input::DisplayToast(
-                                    format!("Finished downloading: {} {name}", id.kind()),
+                                    format!(
+                                        "{}: {} {name}",
+                                        gettext("Finished downloading"),
+                                        id.kind()
+                                    ),
                                 ),
                             );
                         }

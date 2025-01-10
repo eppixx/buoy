@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self,
@@ -100,34 +101,42 @@ impl relm4::factory::FactoryComponent for AlbumElement {
             favorite_ribbon: gtk::Box::default(),
         };
 
+        let length_tr = gettext("Length");
+        let year_tr = gettext("Year");
+        let songs_tr = gettext("songs");
+
         // tooltip string
         let tooltip = match &init {
             AlbumElementInit::AlbumId3(album) => {
                 let mut info = String::new();
                 if let Some(year) = album.year {
-                    info.push_str("Year: ");
-                    info.push_str(&year.to_string());
-                    info.push_str(" • ");
+                    info.push_str(&format!("{year_tr}: {} • ", year))
                 }
                 info.push_str(&album.song_count.to_string());
-                info.push_str(" songs • Length: ");
+                info.push_str(&songs_tr);
+                info.push_str(" • ");
+                info.push_str(&length_tr);
+                info.push_str(": ");
                 info.push_str(&convert_for_label(i64::from(album.duration) * 1000));
                 info
             }
             AlbumElementInit::Child(child) => {
                 let mut info = String::new();
                 if let Some(year) = child.year {
-                    info.push_str("Year: ");
+                    info.push_str(&year_tr);
+                    info.push_str(": ");
                     info.push_str(&year.to_string());
                 }
                 match child.duration {
                     Some(duration) if !info.is_empty() => {
                         info.push_str(" • ");
-                        info.push_str("Length: ");
+                        info.push_str(&length_tr);
+                        info.push_str(": ");
                         info.push_str(&convert_for_label(i64::from(duration) * 1000));
                     }
                     Some(duration) => {
-                        info.push_str("Length: ");
+                        info.push_str(&length_tr);
+                        info.push_str(": ");
                         info.push_str(&convert_for_label(i64::from(duration) * 1000));
                     }
                     None => {}

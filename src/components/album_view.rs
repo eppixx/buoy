@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, glib,
@@ -110,7 +111,7 @@ impl relm4::Component for AlbumView {
                 .launch((subsonic.clone(), cover))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             favorite: gtk::Button::default(),
-            title: String::from("Unkonwn Title"),
+            title: gettext("Unkonwn Title"),
             artist: None,
             info: String::new(),
             artist_id,
@@ -195,8 +196,8 @@ impl relm4::Component for AlbumView {
                         gtk::Label {
                             #[watch]
                             set_markup: &format!("by <span style=\"italic\"><a href=\"{}\">{}</a></span>",
-                                                 model.artist_id.as_deref().unwrap_or("")
-                                                 ,glib::markup_escape_text(model.artist.as_deref().unwrap_or("Unkown Artist"))),
+                                model.artist_id.as_deref().unwrap_or("")
+                                , glib::markup_escape_text(model.artist.as_deref().unwrap_or(&gettext("Unkown Artist")))),
                             inline_css: "color: inherit",
                             set_halign: gtk::Align::Start,
                             connect_activate_link[sender] => move |_label, text| {
@@ -217,10 +218,10 @@ impl relm4::Component for AlbumView {
                                         set_icon_name: Some("list-add-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Append",
+                                        set_label: &gettext("Append"),
                                     }
                                 },
-                                set_tooltip_text: Some("Append Album to end of queue"),
+                                set_tooltip_text: Some(&gettext("Append Album to end of queue")),
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
@@ -238,10 +239,10 @@ impl relm4::Component for AlbumView {
                                         set_icon_name: Some("list-add-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Play next"
+                                        set_label: &gettext("Play next")
                                     }
                                 },
-                                set_tooltip_text: Some("Insert Album after currently played or paused item"),
+                                set_tooltip_text: Some(&gettext("Insert Album after currently played or paused item")),
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
@@ -259,10 +260,10 @@ impl relm4::Component for AlbumView {
                                         set_icon_name: Some("emblem-symbolic-link-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Replace queue",
+                                        set_label: &gettext("Replace queue"),
                                     }
                                 },
-                                set_tooltip_text: Some("Replaces current queue with this album"),
+                                set_tooltip_text: Some(&gettext("Replaces current queue with this album")),
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
@@ -280,10 +281,10 @@ impl relm4::Component for AlbumView {
                                         set_icon_name: Some("browser-download-symbolic"),
                                     },
                                     gtk::Label {
-                                        set_label: "Download Album",
+                                        set_label: &gettext("Download Album"),
                                     }
                                 },
-                                set_tooltip_text: Some("Click to select a folder to download this album to"),
+                                set_tooltip_text: Some(&gettext("Click to select a folder to download this album to")),
                                 connect_clicked[sender, init] => move |_btn| {
                                     let drop = match &init {
                                         AlbumViewInit::Child(child) => Droppable::Child(child.clone()),
@@ -477,21 +478,31 @@ impl relm4::Component for AlbumView {
 }
 
 fn build_info_string(child: &submarine::data::AlbumWithSongsId3) -> String {
-    let mut result = String::from("Songs: ");
+    let mut result = gettext("Songs");
+    result.push_str(": ");
     result.push_str(&child.song.len().to_string());
-    result.push_str(" • Length: ");
+    result.push_str(" • ");
+    result.push_str(&gettext("Length"));
+    result.push_str(": ");
     result.push_str(&convert_for_label(i64::from(child.base.duration) * 1000));
     if let Some(year) = child.base.year {
-        result.push_str(" • Release: ");
+        result.push_str(" • ");
+        result.push_str(&gettext("Release"));
+        result.push_str(": ");
         result.push_str(&year.to_string());
     }
     if let Some(played) = child.base.play_count {
-        result.push_str(" • played ");
+        result.push_str(" • ");
+        result.push_str(&gettext("played"));
+        result.push_str(" ");
         result.push_str(&played.to_string());
-        result.push_str(" times");
+        result.push_str(" ");
+        result.push_str(&gettext("times"));
     }
     if let Some(genre) = &child.base.genre {
-        result.push_str(" • Genre: ");
+        result.push_str(" • ");
+        result.push_str(&gettext("Genre"));
+        result.push_str(": ");
         result.push_str(&genre.to_string());
     }
     result

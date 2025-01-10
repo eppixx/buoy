@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, glib,
@@ -52,28 +53,28 @@ impl AlbumsView {
             widgets.add_to_queue.set_sensitive(false);
             widgets
                 .add_to_queue
-                .set_tooltip("There are too many albums to add to queue");
+                .set_tooltip(&gettext("There are too many albums to add to queue"));
             widgets.append_to_queue.set_sensitive(false);
             widgets
                 .append_to_queue
-                .set_tooltip("There are too many albums to append to queue");
+                .set_tooltip(&gettext("There are too many albums to append to queue"));
             widgets.replace_queue.set_sensitive(false);
             widgets
                 .replace_queue
-                .set_tooltip("There are too many albums to replace queue");
+                .set_tooltip(&gettext("There are too many albums to replace queue"));
         } else {
             widgets.add_to_queue.set_sensitive(true);
             widgets
                 .add_to_queue
-                .set_tooltip("Append shown albums to end of queue");
+                .set_tooltip(&gettext("Append shown albums to end of queue"));
             widgets.append_to_queue.set_sensitive(true);
-            widgets
-                .append_to_queue
-                .set_tooltip("Insert shown albums after currently played or paused item");
+            widgets.append_to_queue.set_tooltip(&gettext(
+                "Insert shown albums after currently played or paused item",
+            ));
             widgets.replace_queue.set_sensitive(true);
             widgets
                 .replace_queue
-                .set_tooltip("Replaces current queue with shown albums");
+                .set_tooltip(&gettext("Replaces current queue with shown albums"));
         }
     }
 }
@@ -166,7 +167,7 @@ impl relm4::component::Component for AlbumsView {
 
                             gtk::Label {
                                 add_css_class: "h2",
-                                set_label: "Albums",
+                                set_label: &gettext("Albums"),
                                 set_halign: gtk::Align::Center,
                             },
                             append: spinner = &gtk::Spinner {
@@ -181,7 +182,7 @@ impl relm4::component::Component for AlbumsView {
                             set_margin_end: 10,
 
                             gtk::Label {
-                                set_text: "Filters:",
+                                set_text: &gettext("Filters:"),
                             },
                             gtk::Switch {
                                 set_valign: gtk::Align::Center,
@@ -208,11 +209,11 @@ impl relm4::component::Component for AlbumsView {
 
                                 append: shown_albums = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown albums: {}", model.shown_albums.borrow().len()),
+                                    set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
                                 },
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.shown_artists.borrow().len()),
+                                    set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
                                 },
 
                                 gtk::Box {
@@ -225,7 +226,7 @@ impl relm4::component::Component for AlbumsView {
                                                 set_icon_name: Some("list-add-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Append",
+                                                set_label: &gettext("Append"),
                                             }
                                         },
                                         connect_clicked => AlbumsViewIn::AppendToQueue,
@@ -237,7 +238,7 @@ impl relm4::component::Component for AlbumsView {
                                                 set_icon_name: Some("list-add-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Play next"
+                                                set_label: &gettext("Play next"),
                                             }
                                         },
                                         connect_clicked => AlbumsViewIn::AddToQueue,
@@ -249,7 +250,7 @@ impl relm4::component::Component for AlbumsView {
                                                 set_icon_name: Some("emblem-symbolic-link-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Replace queue",
+                                                set_label: &gettext("Replace queue"),
                                             }
                                         },
                                         connect_clicked => AlbumsViewIn::ReplaceQueue,
@@ -287,7 +288,7 @@ impl relm4::component::Component for AlbumsView {
                     gtk::WindowHandle {
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_text: "Active Filters",
+                            set_text: &gettext("Active Filters"),
                         }
                     },
 
@@ -309,7 +310,7 @@ impl relm4::component::Component for AlbumsView {
                                 set_halign: gtk::Align::Center,
 
                                 gtk::Label {
-                                    set_text: "New filter:",
+                                    set_text: &gettext("New filter:"),
                                 },
 
                                 append: new_filter = &gtk::DropDown {
@@ -339,18 +340,16 @@ impl relm4::component::Component for AlbumsView {
         match msg {
             AlbumsViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);
-
-                let update_label =
-                    |label: &gtk::Label, name: &str, counter: &Rc<RefCell<HashSet<_>>>| {
-                        label.set_text(&format!("Shown {name}: {}", counter.borrow().len()));
-                    };
-
                 let shown_albums = self.shown_albums.clone();
                 let shown_artists = self.shown_artists.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
                 let shown_albums_widget = widgets.shown_albums.clone();
-                update_label(&shown_artists_widget, "artists", &shown_artists);
-                update_label(&shown_albums_widget, "albums", &shown_albums);
+                update_labels(
+                    &shown_albums_widget,
+                    &shown_albums,
+                    &shown_artists_widget,
+                    &shown_artists,
+                );
 
                 self.entries.pop_filter();
                 let filters: Vec<Filter> = self
@@ -362,8 +361,12 @@ impl relm4::component::Component for AlbumsView {
                 if (filters.is_empty() || !widgets.filters.reveals_child())
                     && !Settings::get().lock().unwrap().search_active
                 {
-                    update_label(&shown_artists_widget, "artists", &shown_artists);
-                    update_label(&shown_albums_widget, "albums", &shown_albums);
+                    update_labels(
+                        &shown_albums_widget,
+                        &shown_albums,
+                        &shown_artists_widget,
+                        &shown_artists,
+                    );
                     return;
                 }
 
@@ -510,8 +513,12 @@ impl relm4::component::Component for AlbumsView {
                     if !Settings::get().lock().unwrap().search_active {
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        update_label(&shown_artists_widget, "artists", &shown_artists);
-                        update_label(&shown_albums_widget, "albums", &shown_albums);
+                        update_labels(
+                            &shown_albums_widget,
+                            &shown_albums,
+                            &shown_artists_widget,
+                            &shown_artists,
+                        );
                         return true;
                     }
 
@@ -534,8 +541,12 @@ impl relm4::component::Component for AlbumsView {
                         if score.is_some() {
                             shown_artists.borrow_mut().insert(track.item.artist.clone());
                             shown_albums.borrow_mut().insert(track.item.album.clone());
-                            update_label(&shown_artists_widget, "artists", &shown_artists);
-                            update_label(&shown_albums_widget, "albums", &shown_albums);
+                            update_labels(
+                                &shown_albums_widget,
+                                &shown_albums,
+                                &shown_artists_widget,
+                                &shown_artists,
+                            );
                             true
                         } else {
                             false
@@ -543,8 +554,12 @@ impl relm4::component::Component for AlbumsView {
                     } else if title_artist_album.contains(&search) {
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        update_label(&shown_artists_widget, "artists", &shown_artists);
-                        update_label(&shown_albums_widget, "albums", &shown_albums);
+                        update_labels(
+                            &shown_albums_widget,
+                            &shown_albums,
+                            &shown_artists_widget,
+                            &shown_artists,
+                        );
                         true
                     } else {
                         false
@@ -680,14 +695,12 @@ impl relm4::component::Component for AlbumsView {
                 }
 
                 //update labels and buttons
-                widgets.shown_albums.set_label(&format!(
-                    "Shown albums: {}",
-                    self.shown_albums.borrow().len()
-                ));
-                widgets.shown_artists.set_label(&format!(
-                    "Shown artists: {}",
-                    self.shown_artists.borrow().len()
-                ));
+                update_labels(
+                    &widgets.shown_albums,
+                    &self.shown_albums,
+                    &widgets.shown_artists,
+                    &self.shown_artists,
+                );
                 self.calc_sensitivity_of_buttons(widgets);
 
                 // recursion anchor
@@ -704,4 +717,22 @@ impl relm4::component::Component for AlbumsView {
             }
         }
     }
+}
+
+fn update_labels(
+    album_label: &gtk::Label,
+    albums: &Rc<RefCell<HashSet<Option<String>>>>,
+    artist_label: &gtk::Label,
+    artists: &Rc<RefCell<HashSet<Option<String>>>>,
+) {
+    album_label.set_text(&format!(
+        "{}: {}",
+        gettext("Shown albums"),
+        albums.borrow().len()
+    ));
+    artist_label.set_text(&format!(
+        "{}: {}",
+        gettext("Shown artists"),
+        artists.borrow().len()
+    ));
 }

@@ -1,0 +1,361 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-10 15:02+0100\n"
+"PO-Revision-Date: 2025-01-10 00:23+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
+
+#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:4
+msgid "Buoy"
+msgstr "Buoy"
+
+#: data/launcher.desktop.in.in:4
+msgid "Music Player"
+msgstr "Musik Player"
+
+#: data/launcher.desktop.in.in:6
+msgid "Play music from a subsonic server"
+msgstr "Spielt Musik von einem Subsonic Server"
+
+#: data/metadata.appdata.xml.in.in:5
+msgid "A Subsonic music client"
+msgstr "Ein Subsonic Musik Client"
+
+#: data/metadata.appdata.xml.in.in:9
+msgid ""
+"Buoy is a client for playing music off of a subsonic server. It is written "
+"in Rust with GTK for elementary OS."
+msgstr ""
+"Buoy ist ein Client um Musik von einem Subsonic Server zu spielen. Er ist in "
+"Rust mit GTK für elementary OS geschrieben."
+
+#: data/metadata.appdata.xml.in.in:15
+msgid "Initial Release"
+msgstr "Initiale Veröffentlichung"
+
+#: src/app.rs:378
+msgid "Go back to previous page"
+msgstr "Eine Seite zurück gehen"
+
+#: src/app.rs:396
+msgid "Open search bar"
+msgstr "Öffne die Suchleiste"
+
+#: src/app.rs:410
+msgid "Go to dashboard"
+msgstr "Zeige Übersicht"
+
+#: src/app.rs:418
+msgid "Show artists"
+msgstr "Zeige Artisten"
+
+#: src/app.rs:426
+msgid "Show albums"
+msgstr "Zeige Alben"
+
+#: src/app.rs:434
+msgid "Show tracks"
+msgstr "Zeige Titel"
+
+#: src/app.rs:442
+msgid "Show playlists"
+msgstr "Zeige Playlisten"
+
+#: src/app.rs:458
+msgid "Open Equalizer"
+msgstr "Öffne Equalizer"
+
+#: src/app.rs:475
+msgid "Open settings"
+msgstr "Öffne Einstellungen"
+
+#: src/app.rs:489
+msgid ""
+"Send desktop notifications\n"
+"when in background"
+msgstr ""
+"Sende Desktop Nachrichten\n"
+"wenn im Hintergrund"
+
+#: src/app.rs:493
+msgid "Wether or not send desktop notifications"
+msgstr "Ob Nachrichten auf dem Desktop gezeigt werden sollen"
+
+#: src/app.rs:504
+msgid "Scrobble to server"
+msgstr "Scrobbeln an den Subsonic Server"
+
+#: src/app.rs:509
+msgid ""
+"Updates play count, played timestamp on server and the now playing page in "
+"the web app"
+msgstr ""
+"Aktualisiert den Spielzähler, den \"zuletzt gespielt am\" Zeitstempel und "
+"den \"derzeit gespielt\" Status auf der Webapplikation"
+
+#: src/app.rs:522
+msgid "Delete cache"
+msgstr "Lokalen Speicher leeren"
+
+#: src/app.rs:523
+msgid ""
+"Deletes the local cache of Covers and Metadata of music. They will be "
+"redownloaded from the server on the next start"
+msgstr ""
+"Löscht den lokalen Speicher und die Metadaten der Musik. Sie werden bei "
+"einem Neustart erneut heruntergeladen"
+
+#: src/app.rs:531
+msgid "Logout from Server"
+msgstr "Vom Server ausloggen"
+
+#: src/app.rs:532
+msgid ""
+"Logging out will delete the cache and also require to login again to listen "
+"to music"
+msgstr ""
+"Ausloggen wird den lokalen Speicher löschen. Ein erneuter Login wird "
+"benötigt um Musik hören zu können"
+
+#: src/app.rs:562
+msgid "Search..."
+msgstr "Suche nach..."
+
+#: src/app.rs:564
+msgid "Enter your search here"
+msgstr "Gebe deine Suche hier ein"
+
+#: src/app.rs:576
+msgid "Use fuzzy search"
+msgstr "Benutze Fuzzy-Suche"
+
+#: src/app.rs:577
+msgid "Shows close and similar search results if activated"
+msgstr "Zeige ähnliche Suchresultate an, wenn aktiviert"
+
+#: src/app.rs:586
+msgid "Use case sensitivity"
+msgstr "Beachte Groß-/Kleinschreibung"
+
+#: src/app.rs:587
+msgid "Ignores case sensitivity in search term and results"
+msgstr "Ignoriert Groß-/Kleinschreibung in der Sucheingabe und Resultate"
+
+#: src/app.rs:728
+msgid "New playlist from Queue"
+msgstr "Neue Playlist von Warteschlange"
+
+#: src/app.rs:1014
+msgid "Unkonwn Artist"
+msgstr "Unbekannter Artist"
+
+#: src/download.rs:25
+msgid "Choose location for download"
+msgstr "Wähle Ort für download"
+
+#: src/download.rs:33
+msgid "Choose folder"
+msgstr "Wähle Ordner"
+
+#: src/download.rs:34
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: src/download.rs:98
+msgid "Start downloading:"
+msgstr "Starte download:"
+
+# Usage in:
+# Download of Album.zip failed
+# Saving of Album.zip failed
+#: src/download.rs:108
+msgid "Download of"
+msgstr "Download von"
+
+# Usage in:
+# Download of Album.zip failed
+# Saving of Album.zip failed
+#: src/download.rs:110 src/download.rs:131
+msgid "failed"
+msgstr "fehlgeschlagen"
+
+#: src/download.rs:129
+msgid "Saving of"
+msgstr "Speichern von"
+
+#: src/download.rs:140
+msgid "Finished downloading"
+msgstr "Fertiger download von"
+
+# Kontext: Albuminfo
+# Beispiel:
+# Length: 1 • Year: 2000 • 5 songs
+#: src/components/album_element.rs:104 src/components/album_view.rs:485
+msgid "Length"
+msgstr "Länge"
+
+# Kontext: Albuminfo
+# Beispiel:
+# Length: 1 • Year: 2000 • 5 songs
+#: src/components/album_element.rs:105
+msgid "Year"
+msgstr "Jahr"
+
+# Kontext: Albuminfo
+# Beispiel:
+# Length: 1 • Year: 2000 • 5 songs
+#: src/components/album_element.rs:106
+msgid "songs"
+msgstr "Titel"
+
+#: src/components/album_view.rs:114
+msgid "Unkonwn Title"
+msgstr "Unbekannter Titel"
+
+#: src/components/album_view.rs:200
+msgid "Unkown Artist"
+msgstr "Unbekannter Artist"
+
+#: src/components/album_view.rs:221 src/components/albums_view.rs:229
+#: src/components/tracks_view.rs:256
+msgid "Append"
+msgstr "Anhängen"
+
+#: src/components/album_view.rs:224
+msgid "Append Album to end of queue"
+msgstr "Album an Warteschlange anhängen"
+
+#: src/components/album_view.rs:242 src/components/albums_view.rs:241
+#: src/components/tracks_view.rs:268
+msgid "Play next"
+msgstr "Als nächstes spielen"
+
+#: src/components/album_view.rs:245
+msgid "Insert Album after currently played or paused item"
+msgstr "Nach derzeitigen Titel einfügen"
+
+#: src/components/album_view.rs:263 src/components/albums_view.rs:253
+#: src/components/tracks_view.rs:280
+msgid "Replace queue"
+msgstr "Warteschlange ersetzen"
+
+#: src/components/album_view.rs:266
+msgid "Replaces current queue with this album"
+msgstr "Warteschlange mit Album ersetzen"
+
+#: src/components/album_view.rs:284
+msgid "Download Album"
+msgstr "Album downloaden"
+
+#: src/components/album_view.rs:287
+msgid "Click to select a folder to download this album to"
+msgstr "Klicken um Ordner zum downloaden des Albums zu wählen"
+
+#: src/components/album_view.rs:481
+msgid "Songs"
+msgstr "Titel"
+
+#: src/components/album_view.rs:490
+msgid "Release"
+msgstr "Veröffentlichung"
+
+# usage:
+# played 5 times
+#: src/components/album_view.rs:496
+msgid "played"
+msgstr ""
+
+# usage:
+# played 5 times
+#: src/components/album_view.rs:500
+msgid "times"
+msgstr "mal gespielt"
+
+#: src/components/album_view.rs:504
+msgid "Genre"
+msgstr "Genre"
+
+#: src/components/albums_view.rs:56
+msgid "There are too many albums to add to queue"
+msgstr "Zu viele Alben um sie zur Warteschlange einzufügen"
+
+#: src/components/albums_view.rs:60
+msgid "There are too many albums to append to queue"
+msgstr "Zu viele Alben um sie zur Warteschlange anzufügen"
+
+#: src/components/albums_view.rs:64
+msgid "There are too many albums to replace queue"
+msgstr "Zu viele Alben um die zu Warteschlange zu ersetzen"
+
+#: src/components/albums_view.rs:69
+msgid "Append shown albums to end of queue"
+msgstr "Gezeigte Alben an Warteschlange anhängen"
+
+#: src/components/albums_view.rs:72
+msgid "Insert shown albums after currently played or paused item"
+msgstr "Gezeigte Alben in Warteschlange einfügen"
+
+#: src/components/albums_view.rs:77
+msgid "Replaces current queue with shown albums"
+msgstr "Warteschlange mit gezeigten Alben ersetzen"
+
+#: src/components/albums_view.rs:170
+msgid "Albums"
+msgstr "Alben"
+
+#: src/components/albums_view.rs:185 src/components/tracks_view.rs:206
+msgid "Filters:"
+msgstr "Filter:"
+
+#: src/components/albums_view.rs:212 src/components/albums_view.rs:730
+#: src/components/tracks_view.rs:243 src/components/tracks_view.rs:871
+msgid "Shown albums"
+msgstr "Gezeigte Alben"
+
+#: src/components/albums_view.rs:216 src/components/albums_view.rs:735
+#: src/components/tracks_view.rs:239 src/components/tracks_view.rs:866
+msgid "Shown artists"
+msgstr "Gezeigte Artisten"
+
+#: src/components/albums_view.rs:291 src/components/tracks_view.rs:336
+msgid "Active Filters"
+msgstr "Filter"
+
+#: src/components/albums_view.rs:313 src/components/tracks_view.rs:358
+msgid "New filter:"
+msgstr "Neuer Filter:"
+
+#: src/components/tracks_view.rs:191
+msgid "Tracks"
+msgstr "Titel"
+
+#: src/components/tracks_view.rs:235 src/components/tracks_view.rs:861
+msgid "Shown tracks"
+msgstr "Gezeigte Titel"
+
+# Usage in:
+# Download of Album.zip failed
+# Saving of Album.zip failed
+#: src/components/tracks_view.rs:291
+msgid "Download Tracks"
+msgstr "Download Titel"
+
+#: src/components/tracks_view.rs:294
+msgid "Click to select a folder to download shown tracks to"
+msgstr "Klicken um einen Ordner zum downloaden der gezeigten Titel zu wählen"
+
+#~ msgid "Download Playlist"
+#~ msgstr "Playlist downloaden"

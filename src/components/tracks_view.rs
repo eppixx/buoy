@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
+use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, glib,
@@ -187,7 +188,7 @@ impl relm4::Component for TracksView {
                             set_spacing: 5,
                             gtk::Label {
                                 add_css_class: "h2",
-                                set_label: "Tracks",
+                                set_label: &gettext("Tracks"),
                                 set_halign: gtk::Align::Center,
                             },
                             append: spinner = &gtk::Spinner {
@@ -202,7 +203,7 @@ impl relm4::Component for TracksView {
                             set_margin_end: 10,
 
                             gtk::Label {
-                                set_text: "Filters:",
+                                set_text: &gettext("Filters:"),
                             },
                             gtk::Switch {
                                 set_valign: gtk::Align::Center,
@@ -231,15 +232,15 @@ impl relm4::Component for TracksView {
 
                                 append: shown_tracks = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown tracks: {}", model.shown_tracks.borrow().len()),
+                                    set_text: &format!("{}: {}", gettext("Shown tracks"), model.shown_tracks.borrow().len()),
                                 },
                                 append: shown_artists = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown artists: {}", model.shown_artists.borrow().len()),
+                                    set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
                                 },
                                 append: shown_albums = &gtk::Label {
                                     set_halign: gtk::Align::Start,
-                                    set_text: &format!("Shown albums: {}", model.shown_albums.borrow().len()),
+                                    set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
                                 },
 
                                 gtk::Box {
@@ -252,7 +253,7 @@ impl relm4::Component for TracksView {
                                                 set_icon_name: Some("list-add-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Append",
+                                                set_label: &gettext("Append"),
                                             }
                                         },
                                         connect_clicked => TracksViewIn::AppendToQueue,
@@ -264,7 +265,7 @@ impl relm4::Component for TracksView {
                                                 set_icon_name: Some("list-add-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Play next"
+                                                set_label: &gettext("Play next"),
                                             }
                                         },
                                         connect_clicked => TracksViewIn::AddToQueue,
@@ -276,7 +277,7 @@ impl relm4::Component for TracksView {
                                                 set_icon_name: Some("emblem-symbolic-link-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Replace queue",
+                                                set_label: &gettext("Replace queue"),
                                             }
                                         },
                                         connect_clicked => TracksViewIn::ReplaceQueue,
@@ -287,10 +288,10 @@ impl relm4::Component for TracksView {
                                                 set_icon_name: Some("browser-download-symbolic"),
                                             },
                                             gtk::Label {
-                                                set_label: "Download Playlist",
+                                                set_label: &gettext("Download Tracks"),
                                             }
                                         },
-                                        set_tooltip: "Click to select a folder to download shown tracks to",
+                                        set_tooltip: &gettext("Click to select a folder to download shown tracks to"),
                                         connect_clicked => TracksViewIn::DownloadClicked,
                                     }
                                 }
@@ -332,7 +333,7 @@ impl relm4::Component for TracksView {
                     gtk::WindowHandle {
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_text: "Active Filters",
+                            set_text: &gettext("Active Filters"),
                         }
                     },
 
@@ -354,7 +355,7 @@ impl relm4::Component for TracksView {
                                 set_halign: gtk::Align::Center,
 
                                 gtk::Label {
-                                    set_text: "New filter:",
+                                    set_text: &gettext("New filter:"),
                                 },
 
                                 #[name = "new_filter"]
@@ -404,12 +405,14 @@ impl relm4::Component for TracksView {
                 let shown_tracks_widget = widgets.shown_tracks.clone();
                 let shown_artists_widget = widgets.shown_artists.clone();
                 let shown_albums_widget = widgets.shown_albums.clone();
-                shown_tracks_widget
-                    .set_text(&format!("Shown tracks: {}", shown_tracks.borrow().len()));
-                shown_artists_widget
-                    .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                shown_albums_widget
-                    .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                set_count_labels(
+                    &shown_tracks,
+                    &shown_tracks_widget,
+                    &shown_albums,
+                    &shown_albums_widget,
+                    &shown_artists,
+                    &shown_artists_widget,
+                );
 
                 self.tracks.pop_filter();
                 let filters: Vec<Filter> = self
@@ -421,15 +424,14 @@ impl relm4::Component for TracksView {
                 if (filters.is_empty() || !widgets.filters.reveals_child())
                     && !Settings::get().lock().unwrap().search_active
                 {
-                    shown_tracks_widget.set_text(&format!("Shown tracks: {}", self.tracks.len()));
-                    shown_artists_widget.set_text(&format!(
-                        "Shown artists: {}",
-                        self.subsonic.borrow().artists().len()
-                    ));
-                    shown_albums_widget.set_text(&format!(
-                        "Shown albums: {}",
-                        self.subsonic.borrow().albums().len()
-                    ));
+                    set_count_labels(
+                        &shown_tracks,
+                        &shown_tracks_widget,
+                        &shown_albums,
+                        &shown_albums_widget,
+                        &shown_artists,
+                        &shown_artists_widget,
+                    );
                     return;
                 }
 
@@ -595,12 +597,14 @@ impl relm4::Component for TracksView {
                         shown_tracks.borrow_mut().push(track.item.id.clone());
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        shown_tracks_widget
-                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow().len()));
-                        shown_artists_widget
-                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                        shown_albums_widget
-                            .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                        set_count_labels(
+                            &shown_tracks,
+                            &shown_tracks_widget,
+                            &shown_albums,
+                            &shown_albums_widget,
+                            &shown_artists,
+                            &shown_artists_widget,
+                        );
                         return true;
                     }
 
@@ -624,18 +628,14 @@ impl relm4::Component for TracksView {
                             shown_tracks.borrow_mut().push(track.item.id.clone());
                             shown_artists.borrow_mut().insert(track.item.artist.clone());
                             shown_albums.borrow_mut().insert(track.item.album.clone());
-                            shown_tracks_widget.set_text(&format!(
-                                "Shown tracks: {}",
-                                shown_tracks.borrow().len()
-                            ));
-                            shown_artists_widget.set_text(&format!(
-                                "Shown artists: {}",
-                                shown_artists.borrow().len()
-                            ));
-                            shown_albums_widget.set_text(&format!(
-                                "Shown albums: {}",
-                                shown_albums.borrow().len()
-                            ));
+                            set_count_labels(
+                                &shown_tracks,
+                                &shown_tracks_widget,
+                                &shown_albums,
+                                &shown_albums_widget,
+                                &shown_artists,
+                                &shown_artists_widget,
+                            );
                             true
                         } else {
                             false
@@ -644,12 +644,14 @@ impl relm4::Component for TracksView {
                         shown_tracks.borrow_mut().push(track.item.id.clone());
                         shown_artists.borrow_mut().insert(track.item.artist.clone());
                         shown_albums.borrow_mut().insert(track.item.album.clone());
-                        shown_tracks_widget
-                            .set_text(&format!("Shown tracks: {}", shown_tracks.borrow().len()));
-                        shown_artists_widget
-                            .set_text(&format!("Shown artists: {}", shown_artists.borrow().len()));
-                        shown_albums_widget
-                            .set_text(&format!("Shown albums: {}", shown_albums.borrow().len()));
+                        set_count_labels(
+                            &shown_tracks,
+                            &shown_tracks_widget,
+                            &shown_albums,
+                            &shown_albums_widget,
+                            &shown_artists,
+                            &shown_artists_widget,
+                        );
                         true
                     } else {
                         false
@@ -820,18 +822,14 @@ impl relm4::Component for TracksView {
                 self.tracks.extend_from_iter(tracks);
 
                 //update labels and buttons
-                widgets.shown_tracks.set_label(&format!(
-                    "Shown tracks: {}",
-                    self.shown_tracks.borrow().len()
-                ));
-                widgets.shown_albums.set_label(&format!(
-                    "Shown albums: {}",
-                    self.shown_albums.borrow().len()
-                ));
-                widgets.shown_artists.set_label(&format!(
-                    "Shown artists: {}",
-                    self.shown_artists.borrow().len()
-                ));
+                set_count_labels(
+                    &self.shown_tracks,
+                    &widgets.shown_tracks,
+                    &self.shown_albums,
+                    &widgets.shown_albums,
+                    &self.shown_artists,
+                    &widgets.shown_artists,
+                );
                 self.calc_sensitivity_of_buttons(widgets);
 
                 // recursion anchor
@@ -848,4 +846,29 @@ impl relm4::Component for TracksView {
             }
         }
     }
+}
+
+fn set_count_labels(
+    tracks: &Rc<RefCell<Vec<String>>>,
+    track_label: &gtk::Label,
+    albums: &Rc<RefCell<HashSet<Option<String>>>>,
+    album_label: &gtk::Label,
+    artists: &Rc<RefCell<HashSet<Option<String>>>>,
+    artist_label: &gtk::Label,
+) {
+    track_label.set_text(&format!(
+        "{}: {}",
+        gettext("Shown tracks"),
+        tracks.borrow().len()
+    ));
+    artist_label.set_text(&format!(
+        "{}: {}",
+        gettext("Shown artists"),
+        artists.borrow().len()
+    ));
+    album_label.set_text(&format!(
+        "{}: {}",
+        gettext("Shown albums"),
+        albums.borrow().len()
+    ));
 }

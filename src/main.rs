@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use clap::Parser;
 use components::main_window::MainWindow;
+use config::GETTEXT_PACKAGE;
 use relm4::{gtk, RelmApp};
 
 mod app;
@@ -66,6 +67,13 @@ fn main() -> anyhow::Result<()> {
         };
         tracing_subscriber::fmt().with_env_filter(filter).init();
     }
+
+    // setup of gettext translations
+    gettextrs::bindtextdomain(GETTEXT_PACKAGE, config::LOCALEDIR)
+        .expect("Unable to bind the text domain");
+    gettextrs::bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8")
+        .expect("Unable to set the text domain encoding");
+    gettextrs::textdomain(GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
 
     let app = RelmApp::new(&args.borrow().alternative_id);
     load_css();
