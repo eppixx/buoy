@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-10 17:50+0100\n"
+"POT-Creation-Date: 2025-01-10 18:45+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -729,8 +729,8 @@ msgstr ""
 msgid "Click to (un)favorite album"
 msgstr ""
 
-#: src/factory/album_row.rs:70 src/factory/queue_song.rs:226
-#: src/factory/track_row.rs:190
+#: src/factory/album_row.rs:70 src/factory/playlist_row.rs:130
+#: src/factory/queue_song.rs:226 src/factory/track_row.rs:190
 msgid "Unknown Artist"
 msgstr ""
 
@@ -748,11 +748,7 @@ msgstr ""
 msgid "Click to (un)favorite song"
 msgstr ""
 
-#: src/factory/playlist_row.rs:103 src/factory/playlist_row.rs:130
-msgid "Unkonwn Album"
-msgstr ""
-
-#: src/factory/track_row.rs:162 src/factory/track_row.rs:244
-#: src/factory/track_row.rs:255
+#: src/factory/playlist_row.rs:103 src/factory/track_row.rs:162
+#: src/factory/track_row.rs:244 src/factory/track_row.rs:255
 msgid "Unknown Album"
 msgstr ""

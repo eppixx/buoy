@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-10 17:50+0100\n"
-"PO-Revision-Date: 2025-01-10 16:27+0100\n"
+"POT-Creation-Date: 2025-01-10 18:45+0100\n"
+"PO-Revision-Date: 2025-01-10 18:45+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -400,7 +400,6 @@ msgid "Insert artists after currently played or paused item"
 msgstr "Nach derzeitigen Artisten einfügen"
 
 #: src/components/artists_view.rs:240
-#, fuzzy
 msgid "Replaces current queue with artists"
 msgstr "Warteschlange mit Artisten ersetzen"
 
@@ -463,23 +462,23 @@ msgstr "Auswahl"
 
 #: src/components/filter_row.rs:112
 msgid "contains"
-msgstr ""
+msgstr "beinhaltet"
 
 #: src/components/filter_row.rs:116
 msgid "contains not"
-msgstr ""
+msgstr "beinhaltet nicht"
 
 #: src/components/filter_row.rs:120
 msgid "matches not"
-msgstr ""
+msgstr "nicht gleich"
 
 #: src/components/filter_row.rs:124
 msgid "matches"
-msgstr ""
+msgstr "gleich"
 
 #: src/components/filter_row.rs:302
 msgid "Favorites"
-msgstr ""
+msgstr "Favoriten"
 
 #: src/components/filter_row.rs:337 src/components/filter_row.rs:366
 #: src/components/filter_row.rs:395 src/components/filter_row.rs:425
@@ -488,195 +487,187 @@ msgstr ""
 #: src/components/filter_row.rs:565 src/components/filter_row.rs:592
 #: src/components/filter_row.rs:620
 msgid "remove this filter"
-msgstr ""
+msgstr "entferne diesen Filter"
 
 #: src/components/filter_row.rs:347
 msgid "CD number"
-msgstr ""
+msgstr "CD Nummer"
 
 #: src/components/filter_row.rs:376
 msgid "Track number"
-msgstr ""
+msgstr "Titelnummer"
 
 #: src/components/filter_row.rs:406
 msgid "Album count"
-msgstr ""
+msgstr "Albumnummber"
 
 #: src/components/filter_row.rs:435
 msgid "Duration (sec)"
-msgstr ""
+msgstr "Dauer (Sek)"
 
 #: src/components/filter_row.rs:464
 msgid "Duration (min)"
-msgstr ""
+msgstr "Dauer (Min)"
 
 #: src/components/filter_row.rs:493
 msgid "Bit rate"
-msgstr ""
+msgstr "Bitrate"
 
 #: src/components/filter_row.rs:521
 msgid "Title name"
-msgstr ""
+msgstr "Titelname"
 
 #: src/components/filter_row.rs:533
 msgid "Title"
-msgstr ""
+msgstr "Titel"
 
 #: src/components/filter_row.rs:548
-#, fuzzy
 msgid "Artist name"
-msgstr "Artisten"
+msgstr "Artistname"
 
 #: src/components/filter_row.rs:560
-#, fuzzy
 msgid "Artist"
-msgstr "Artisten"
+msgstr "Artist"
 
 #: src/components/filter_row.rs:575
-#, fuzzy
 msgid "Album name"
-msgstr "Alben"
+msgstr "Albumname"
 
 #: src/components/filter_row.rs:587
-#, fuzzy
 msgid "Album"
-msgstr "Alben"
+msgstr "Album"
 
 #: src/components/login_form.rs:68
-#, fuzzy
 msgid "Login to a Subsonic server"
-msgstr "Spielt Musik von einem Subsonic Server"
+msgstr "In Subsonic Server einloggen"
 
 #: src/components/login_form.rs:79
 msgid "Server address"
-msgstr ""
+msgstr "Serveradresse"
 
 #: src/components/login_form.rs:89
 msgid "User name"
-msgstr ""
+msgstr "Benutzername"
 
 #: src/components/login_form.rs:96
 msgid "Password"
-msgstr ""
+msgstr "Passwort"
 
 #: src/components/login_form.rs:108
 msgid "Reset login data"
-msgstr ""
+msgstr "Logindaten zurücksetzen"
 
 #: src/components/login_form.rs:117
 msgid "Login"
-msgstr ""
+msgstr "Einloggen"
 
 #: src/components/login_form.rs:157
 msgid "Connection error. Is the address valid?"
-msgstr ""
+msgstr "Verbindungsfehler. Ist die Adresse valide?"
 
 #: src/components/login_form.rs:160
 msgid "Subsonic server not found. Is the address correct"
-msgstr ""
+msgstr "Subsonic Server nicht gefunden. Ist die Adresse korrekt"
 
 #: src/components/login_form.rs:162
 msgid "Username or password is wrong"
-msgstr ""
+msgstr "Benutzername oder Passwort sind falsch"
 
 #: src/components/login_form.rs:163
 msgid "Login error"
-msgstr ""
+msgstr "Fehler beim Einloggen"
 
 #: src/components/login_form.rs:188
 msgid "Address is empty"
-msgstr ""
+msgstr "Adresse ist leer"
 
 #: src/components/login_form.rs:189
 msgid "Port is invalid"
-msgstr ""
+msgstr "Port ist ungültig"
 
 #: src/components/login_form.rs:190
 msgid "Invalid IPv4 address"
-msgstr ""
+msgstr "Ungültige IPv4 Adresse"
 
 #: src/components/login_form.rs:191
 msgid "Invalid IPv6 address"
-msgstr ""
+msgstr "Ungültige IPv6 Adresse"
 
 #: src/components/login_form.rs:193
 msgid "Address contains invalid character"
-msgstr ""
+msgstr "Adresse enthält einen ungültiges Zeichen"
 
 #: src/components/login_form.rs:195
 msgid "Address is invalid"
-msgstr ""
+msgstr "Adresse ist ungültig"
 
 #: src/components/main_window.rs:236
-#, fuzzy
 msgid "Loading information from server"
-msgstr "Vom Server ausloggen"
+msgstr "Lade Informationen vom Server"
 
 #: src/components/main_window.rs:281
-#, fuzzy
 msgid "Can't connect to subsonic server"
-msgstr "Spielt Musik von einem Subsonic Server"
+msgstr "Keine Verbindung zum Subsonic Server möglich"
 
 #: src/components/main_window.rs:286
 msgid ""
 "Make sure the connection to the server is available. You might want to try "
 "later or connect to another server"
 msgstr ""
+"Stelle sicher, dass die Verbindung zum Server möglich ist. Versuche es "
+"später nochmal oder verbinde dich mit einem anderen Server"
 
 #: src/components/main_window.rs:292
 msgid "Logout"
-msgstr ""
+msgstr "Ausloggen"
 
 #: src/components/play_info.rs:50
 msgid "Nothing is played currently"
-msgstr ""
+msgstr "Nichts zu spielen"
 
 #: src/components/play_info.rs:96
 msgid "Nothing is playing"
-msgstr ""
+msgstr "Nichts wird gespielt"
 
 #: src/components/playlist_element.rs:195
-#, fuzzy
 msgid "Rename Playlist"
-msgstr "Neue Playlist"
+msgstr "Playlist umbenennen"
 
 #: src/components/playlist_element.rs:201
-#, fuzzy
 msgid "Delete Playlist"
-msgstr "Neue Playlist"
+msgstr "Playlist löschen"
 
 #: src/components/playlist_element.rs:222
 msgid "Renamed title of the playlist"
-msgstr ""
+msgstr "Umbenannter Titel der Playliste"
 
 #: src/components/playlist_element.rs:236
 msgid "Confirm renaming the playlist"
-msgstr ""
+msgstr "Bestätige das Umbenennen der Playlist"
 
 #: src/components/playlist_element.rs:241
 msgid "Don't change the playlist name"
-msgstr ""
+msgstr "Den Namen der Playlist nicht ändern"
 
 #: src/components/playlist_element.rs:251
 msgid "Realy delete"
-msgstr ""
+msgstr "Wirklich löschen"
 
 #: src/components/playlist_element.rs:265
 msgid "Confirm deletion of the playlist"
-msgstr ""
+msgstr "Bestätige das Löschen der Playlist"
 
 #: src/components/playlist_element.rs:270
 msgid "Don't delete the playlist"
-msgstr ""
+msgstr "Playlist nicht löschen"
 
 #: src/components/playlists_view.rs:172
-#, fuzzy
 msgid "Playlists"
-msgstr "Neue Playlist"
+msgstr "Playlisten"
 
 #: src/components/playlists_view.rs:218
 msgid "Select a playlist to show its songs"
-msgstr ""
+msgstr "Wähle eine Playliste um dessen Inhalt zu zeigen"
 
 #: src/components/playlists_view.rs:242
 msgid "title"
@@ -687,79 +678,72 @@ msgid "more info"
 msgstr ""
 
 #: src/components/playlists_view.rs:262
-#, fuzzy
 msgid "Append playlist to end of queue"
-msgstr "Artisten an Warteschlange anhängen"
+msgstr "Playlist an Warteschlange anhängen"
 
 #: src/components/playlists_view.rs:286
-#, fuzzy
 msgid "Replaces current queue with this playlist"
-msgstr "Warteschlange mit Album ersetzen"
+msgstr "Warteschlange mit Playlist ersetzen"
 
 #: src/components/playlists_view.rs:295
-#, fuzzy
 msgid "Download Playlist"
-msgstr "Artist downloaden"
+msgstr "Playlist downloaden"
 
 #: src/components/queue.rs:244
 msgid "Loading queue"
-msgstr ""
+msgstr "Lade Playlist"
 
 #: src/components/queue.rs:303
 msgid "Queue is empty"
 msgstr ""
+"Warteschlange\n"
+"ist leer"
 
 #: src/components/queue.rs:307
 msgid "Drag music here to add it"
 msgstr ""
+"Ziehe Musik hierhin\n"
+"um sie hinzuzufügen"
 
 #: src/components/queue.rs:329
 msgid "Remove selected songs from queue"
-msgstr ""
+msgstr "Entferne ausgewählte Titel von Warteschlange"
 
 #: src/components/queue.rs:338
-#, fuzzy
 msgid "Clear queue"
-msgstr "Warteschlange ersetzen"
+msgstr "Warteschlange leeren"
 
 #: src/components/queue.rs:348
 msgid "Jump to played track in queue"
-msgstr ""
+msgstr "Springe zu gespielten Titel"
 
 #: src/components/queue.rs:355
-#, fuzzy
 msgid "Create new playlist from queue"
-msgstr "Neue Playlist von Warteschlange"
+msgstr "Neue Playlist von Warteschlange erstellen"
 
 #: src/components/tracks_view.rs:59
-#, fuzzy
 msgid "There are too many tracks to add to queue"
-msgstr "Zu viele Alben um sie zur Warteschlange einzufügen"
+msgstr "Zu viele Titel um sie zur Warteschlange einzufügen"
 
 #: src/components/tracks_view.rs:63
-#, fuzzy
 msgid "There are too many tracks to append to queue"
-msgstr "Zu viele Alben um sie zur Warteschlange anzufügen"
+msgstr "Zu viele Titel um sie zur Warteschlange anzufügen"
 
 #: src/components/tracks_view.rs:67
-#, fuzzy
 msgid "There are too many tracks to replace queue"
-msgstr "Zu viele Alben um die zu Warteschlange zu ersetzen"
+msgstr "Zu viele Titel um die zu Warteschlange zu ersetzen"
 
 #: src/components/tracks_view.rs:72
-#, fuzzy
 msgid "Append shown tracks to end of queue"
-msgstr "Gezeigte Alben an Warteschlange anhängen"
+msgstr "Gezeigte Titel an Warteschlange anhängen"
 
 #: src/components/tracks_view.rs:75
-#, fuzzy
 msgid "Insert shown after currently played or paused item"
-msgstr "Gezeigte Alben in Warteschlange einfügen"
+msgstr "Gezeigte Titel in Warteschlange einfügen"
 
 #: src/components/tracks_view.rs:80
-#, fuzzy
 msgid "Replaces current queue with shown tracks"
-msgstr "Warteschlange mit gezeigten Alben ersetzen"
+msgstr "Warteschlange mit gezeigten Titel ersetzen"
 
 #: src/components/tracks_view.rs:191
 msgid "Tracks"
@@ -782,36 +766,32 @@ msgstr "Klicken um einen Ordner zum downloaden der gezeigten Titel zu wählen"
 
 #: src/factory/album_row.rs:56
 msgid "Click to (un)favorite album"
-msgstr ""
+msgstr "Kicken um Album (nicht) zu favorisieren"
 
-#: src/factory/album_row.rs:70 src/factory/queue_song.rs:226
-#: src/factory/track_row.rs:190
-#, fuzzy
+#: src/factory/album_row.rs:70 src/factory/playlist_row.rs:130
+#: src/factory/queue_song.rs:226 src/factory/track_row.rs:190
 msgid "Unknown Artist"
 msgstr "Unbekannter Artist"
 
 #: src/factory/album_row.rs:232 src/factory/playlist_row.rs:356
 #: src/factory/track_row.rs:473
-#, fuzzy
 msgid "Unknown genre"
-msgstr "Unbekannter Artist"
+msgstr "Unbekanntes Genre"
 
 #: src/factory/artist_row.rs:54
 msgid "Click to (un)favorite artist"
-msgstr ""
+msgstr "Klicken um Artisten (nicht) zu favorisieren"
 
 #: src/factory/playlist_row.rs:51 src/factory/queue_song.rs:241
 #: src/factory/track_row.rs:56
 msgid "Click to (un)favorite song"
-msgstr ""
+msgstr "Klicken um Titel (nicht) zu favorisieren"
 
-#: src/factory/playlist_row.rs:103 src/factory/playlist_row.rs:130
-#, fuzzy
-msgid "Unkonwn Album"
-msgstr "Unbekannter Titel"
-
-#: src/factory/track_row.rs:162 src/factory/track_row.rs:244
-#: src/factory/track_row.rs:255
+#: src/factory/playlist_row.rs:103 src/factory/track_row.rs:162
+#: src/factory/track_row.rs:244 src/factory/track_row.rs:255
 #, fuzzy
 msgid "Unknown Album"
 msgstr "Album downloaden"
+
+#~ msgid "Unkonwn Album"
+#~ msgstr "Unbekanntes Album"
