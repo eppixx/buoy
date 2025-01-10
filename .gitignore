@@ -5,3 +5,5 @@
 /cargo-sources.json
 /src/config.rs
 flatpak-cargo-generator.py
+/po/*.mo
+/po/extras/*.mo
