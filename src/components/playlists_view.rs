@@ -239,12 +239,12 @@ impl relm4::Component for PlaylistsView {
 
                                     append: info_title = &gtk::Label {
                                         add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                        set_label: &gettext("title"),
+                                        set_label: "title", // overwritten later
                                         set_halign: gtk::Align::Start,
                                     },
 
                                     append: info_details = &gtk::Label {
-                                        set_label: &gettext("more info"),
+                                        set_label: "more info", // overwritten later
                                         set_halign: gtk::Align::Start,
                                     },
 

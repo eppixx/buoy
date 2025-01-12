@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-12 14:28+0100\n"
+"POT-Creation-Date: 2025-01-12 14:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -657,14 +657,6 @@ msgstr ""
 
 #: src/components/playlists_view.rs:218
 msgid "Select a playlist to show its songs"
-msgstr ""
-
-#: src/components/playlists_view.rs:242
-msgid "title"
-msgstr ""
-
-#: src/components/playlists_view.rs:247
-msgid "more info"
 msgstr ""
 
 #: src/components/playlists_view.rs:262
