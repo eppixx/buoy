@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-12 14:33+0100\n"
+"POT-Creation-Date: 2025-01-12 15:10+0100\n"
 "PO-Revision-Date: 2025-01-12 14:32+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -625,15 +625,15 @@ msgstr "Adresse enthält einen ungültiges Zeichen"
 msgid "Address is invalid"
 msgstr "Adresse ist ungültig"
 
-#: src/components/main_window.rs:236
+#: src/components/main_window.rs:237
 msgid "Loading information from server"
 msgstr "Lade Informationen vom Server"
 
-#: src/components/main_window.rs:281
+#: src/components/main_window.rs:282
 msgid "Can't connect to subsonic server"
 msgstr "Keine Verbindung zum Subsonic Server möglich"
 
-#: src/components/main_window.rs:286
+#: src/components/main_window.rs:287
 msgid ""
 "Make sure the connection to the server is available. You might want to try "
 "later or connect to another server"
@@ -641,7 +641,7 @@ msgstr ""
 "Stelle sicher, dass die Verbindung zum Server möglich ist. Versuche es "
 "später nochmal oder verbinde dich mit einem anderen Server"
 
-#: src/components/main_window.rs:292
+#: src/components/main_window.rs:293
 msgid "Logout"
 msgstr "Ausloggen"
 

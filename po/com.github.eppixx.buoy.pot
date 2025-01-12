@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-12 14:33+0100\n"
+"POT-Creation-Date: 2025-01-12 15:10+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -593,21 +593,21 @@ msgstr ""
 msgid "Address is invalid"
 msgstr ""
 
-#: src/components/main_window.rs:236
+#: src/components/main_window.rs:237
 msgid "Loading information from server"
 msgstr ""
 
-#: src/components/main_window.rs:281
+#: src/components/main_window.rs:282
 msgid "Can't connect to subsonic server"
 msgstr ""
 
-#: src/components/main_window.rs:286
+#: src/components/main_window.rs:287
 msgid ""
 "Make sure the connection to the server is available. You might want to try "
 "later or connect to another server"
 msgstr ""
 
-#: src/components/main_window.rs:292
+#: src/components/main_window.rs:293
 msgid "Logout"
 msgstr ""
 
