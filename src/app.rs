@@ -18,6 +18,7 @@ use relm4::{
 
 use crate::{
     client::Client,
+    config,
     download::Download,
     mpris::{Mpris, MprisOut},
     play_state::PlayState,
@@ -1006,8 +1007,8 @@ async fn show_desktop_notification(
 
     // send notification
     let mut notify = notify_rust::Notification::new();
-    notify.summary("buoy");
-    notify.icon("com.github.eppixx.buoy");
+    notify.summary(config::APP_NAME);
+    notify.icon(config::APP_ID);
     notify.body(&format!(
         "{}\n{}",
         child.title,

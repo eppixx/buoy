@@ -12,6 +12,7 @@ gnome = import('gnome')
 pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
 
 conf = configuration_data()
+conf.set_quoted('APP_NAME', 'Buoy')
 conf.set_quoted('APP_ID', meson.project_name())
 conf.set('APP_ID_UNQUOTED', meson.project_name())
 conf.set_quoted('SLASHED_APP_ID', '/' + meson.project_name().replace('.', '/') + '/')
