@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-12 15:10+0100\n"
+"POT-Creation-Date: 2025-01-12 17:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -198,7 +198,8 @@ msgstr ""
 msgid "Length"
 msgstr ""
 
-#: src/components/album_element.rs:105 src/components/filter_row.rs:318
+#: src/components/album_element.rs:105 src/components/filter_categories.rs:27
+#: src/components/filter_row.rs:318
 msgid "Year"
 msgstr ""
 
@@ -268,8 +269,8 @@ msgstr ""
 msgid "times"
 msgstr ""
 
-#: src/components/album_view.rs:504 src/components/filter_row.rs:603
-#: src/components/filter_row.rs:615
+#: src/components/album_view.rs:504 src/components/filter_categories.rs:32
+#: src/components/filter_row.rs:603 src/components/filter_row.rs:615
 msgid "Genre"
 msgstr ""
 
@@ -431,7 +432,47 @@ msgstr ""
 msgid "Reset bands"
 msgstr ""
 
-#: src/components/filter_categories.rs:102
+#: src/components/filter_categories.rs:25
+msgid "Favorite"
+msgstr ""
+
+#: src/components/filter_categories.rs:26 src/components/filter_row.rs:533
+msgid "Title"
+msgstr ""
+
+#: src/components/filter_categories.rs:28
+msgid "CD"
+msgstr ""
+
+#: src/components/filter_categories.rs:29
+msgid "Track Number"
+msgstr ""
+
+#: src/components/filter_categories.rs:30 src/components/filter_row.rs:560
+msgid "Artist"
+msgstr ""
+
+#: src/components/filter_categories.rs:31 src/components/filter_row.rs:587
+msgid "Album"
+msgstr ""
+
+#: src/components/filter_categories.rs:33
+msgid "Length (min)"
+msgstr ""
+
+#: src/components/filter_categories.rs:34
+msgid "Length (sec)"
+msgstr ""
+
+#: src/components/filter_categories.rs:35
+msgid "Bit Rate"
+msgstr ""
+
+#: src/components/filter_categories.rs:36
+msgid "Album Count"
+msgstr ""
+
+#: src/components/filter_categories.rs:121
 msgid "Category"
 msgstr ""
 
@@ -509,24 +550,12 @@ msgstr ""
 msgid "Title name"
 msgstr ""
 
-#: src/components/filter_row.rs:533
-msgid "Title"
-msgstr ""
-
 #: src/components/filter_row.rs:548
 msgid "Artist name"
 msgstr ""
 
-#: src/components/filter_row.rs:560
-msgid "Artist"
-msgstr ""
-
 #: src/components/filter_row.rs:575
 msgid "Album name"
-msgstr ""
-
-#: src/components/filter_row.rs:587
-msgid "Album"
 msgstr ""
 
 #: src/components/login_form.rs:68
@@ -705,6 +734,38 @@ msgstr ""
 
 #: src/components/queue.rs:355
 msgid "Create new playlist from queue"
+msgstr ""
+
+#: src/components/sort_by.rs:21
+msgid "A-Z"
+msgstr ""
+
+#: src/components/sort_by.rs:22
+msgid "Z-A"
+msgstr ""
+
+#: src/components/sort_by.rs:23
+msgid "Newest Release"
+msgstr ""
+
+#: src/components/sort_by.rs:24
+msgid "Oldest Release"
+msgstr ""
+
+#: src/components/sort_by.rs:25
+msgid "Recently added"
+msgstr ""
+
+#: src/components/sort_by.rs:26
+msgid "Longest available"
+msgstr ""
+
+#: src/components/sort_by.rs:27
+msgid "Most Albums"
+msgstr ""
+
+#: src/components/sort_by.rs:28
+msgid "Least Albums"
 msgstr ""
 
 #: src/components/tracks_view.rs:59

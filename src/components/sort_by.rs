@@ -15,17 +15,17 @@ pub enum SortBy {
     MostAlbumsRev,
 }
 
-impl std::fmt::Display for SortBy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl SortBy {
+    fn translate(&self) -> String {
         match self {
-            Self::Alphabetical => write!(f, "A-Z"),
-            Self::AlphabeticalRev => write!(f, "Z-A"),
-            Self::Release => write!(f, "Newest Release"),
-            Self::ReleaseRev => write!(f, "Oldest Release"),
-            Self::RecentlyAdded => write!(f, "Recently added"),
-            Self::RecentlyAddedRev => write!(f, "Longest available"),
-            Self::MostAlbums => write!(f, "Most Albums"),
-            Self::MostAlbumsRev => write!(f, "Least Albums"),
+            Self::Alphabetical => gettext("A-Z"),
+            Self::AlphabeticalRev => gettext("Z-A"),
+            Self::Release => gettext("Newest Release"),
+            Self::ReleaseRev => gettext("Oldest Release"),
+            Self::RecentlyAdded => gettext("Recently added"),
+            Self::RecentlyAddedRev => gettext("Longest available"),
+            Self::MostAlbums => gettext("Most Albums"),
+            Self::MostAlbumsRev => gettext("Least Albums"),
         }
     }
 }
@@ -100,7 +100,7 @@ impl SortBy {
                 .expect("is not a Label");
 
             // set label from String
-            let s = boxed.borrow::<Self>().to_string();
+            let s = boxed.borrow::<Self>().translate();
             label.set_label(&s);
         });
 
@@ -111,7 +111,10 @@ impl SortBy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gtk_helper::stack::test_self;
+
+    fn test_self(state: SortBy) {
+        assert_eq!(Ok(&state), SortBy::try_from(state.translate()).as_ref());
+    }
 
     #[test]
     fn sort_by_enum_conversion() {

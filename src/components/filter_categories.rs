@@ -19,6 +19,25 @@ pub enum Category {
     AlbumCount,
 }
 
+impl Category {
+    fn translate(&self) -> String {
+        match self {
+            Self::Favorite => gettext("Favorite"),
+            Self::Title => gettext("Title"),
+            Self::Year => gettext("Year"),
+            Self::Cd => gettext("CD"),
+            Self::TrackNumber => gettext("Track Number"),
+            Self::Artist => gettext("Artist"),
+            Self::Album => gettext("Album"),
+            Self::Genre => gettext("Genre"),
+            Self::DurationMin => gettext("Length (min)"),
+            Self::DurationSec => gettext("Length (sec)"),
+            Self::BitRate => gettext("Bit Rate"),
+            Self::AlbumCount => gettext("Album Count"),
+        }
+    }
+}
+
 impl std::fmt::Display for Category {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -121,7 +140,7 @@ impl Category {
                 .and_downcast::<gtk::Label>()
                 .expect("child has to be a Label");
             // set label from category
-            label.set_label(&boxed.borrow::<Category>().to_string());
+            label.set_label(&boxed.borrow::<Category>().translate());
         });
 
         factory
@@ -131,7 +150,10 @@ impl Category {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gtk_helper::stack::test_self;
+
+    fn test_self(state: Category) {
+        assert_eq!(Ok(&state), Category::try_from(state.translate()).as_ref());
+    }
 
     #[test]
     fn category_enum_conversion() {
