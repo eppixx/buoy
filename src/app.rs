@@ -683,7 +683,7 @@ impl relm4::component::AsyncComponent for App {
                     // playback play
                     if let Err(e) = self.playback.borrow_mut().play() {
                         sender.input(AppIn::DisplayToast(format!(
-                            "could set playback to play: {e:?}"
+                            "could not set playback to play: {e:?}"
                         )));
                     }
 
