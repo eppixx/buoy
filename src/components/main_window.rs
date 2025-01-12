@@ -15,6 +15,7 @@ use relm4::{
 use crate::{
     app::{App, AppIn, AppOut},
     components::login_form::LoginForm,
+    config,
     gtk_helper::stack::StackExt,
     mpris::{Mpris, MprisOut},
     playback::{Playback, PlaybackOut},
@@ -154,7 +155,7 @@ impl relm4::component::AsyncComponent for MainWindow {
             app: None,
         };
         let widgets = view_output!();
-        gtk::Window::set_default_icon_name("com.github.eppixx.buoy");
+        gtk::Window::set_default_icon_name(config::APP_ID);
 
         // set window shortcuts
         let application = relm4::main_application();
