@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-12 15:10+0100\n"
-"PO-Revision-Date: 2025-01-12 14:32+0100\n"
+"POT-Creation-Date: 2025-01-12 17:24+0100\n"
+"PO-Revision-Date: 2025-01-12 17:29+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -223,7 +223,8 @@ msgstr "Länge"
 # Kontext: Albuminfo
 # Beispiel:
 # Length: 1 • Year: 2000 • 5 songs
-#: src/components/album_element.rs:105 src/components/filter_row.rs:318
+#: src/components/album_element.rs:105 src/components/filter_categories.rs:27
+#: src/components/filter_row.rs:318
 msgid "Year"
 msgstr "Jahr"
 
@@ -300,8 +301,8 @@ msgstr ""
 msgid "times"
 msgstr "mal gespielt"
 
-#: src/components/album_view.rs:504 src/components/filter_row.rs:603
-#: src/components/filter_row.rs:615
+#: src/components/album_view.rs:504 src/components/filter_categories.rs:32
+#: src/components/filter_row.rs:603 src/components/filter_row.rs:615
 msgid "Genre"
 msgstr "Genre"
 
@@ -463,7 +464,53 @@ msgstr "Equalizer"
 msgid "Reset bands"
 msgstr "Frequenzbänder zurücksetzen"
 
-#: src/components/filter_categories.rs:102
+#: src/components/filter_categories.rs:25
+msgid "Favorite"
+msgstr "Favorit"
+
+#: src/components/filter_categories.rs:26 src/components/filter_row.rs:533
+msgid "Title"
+msgstr "Titel"
+
+#: src/components/filter_categories.rs:28
+msgid "CD"
+msgstr "CD"
+
+#: src/components/filter_categories.rs:29
+msgid "Track Number"
+msgstr "Titelnummer"
+
+#: src/components/filter_categories.rs:30 src/components/filter_row.rs:560
+msgid "Artist"
+msgstr "Artist"
+
+#: src/components/filter_categories.rs:31 src/components/filter_row.rs:587
+msgid "Album"
+msgstr "Album"
+
+# Kontext: Albuminfo
+# Beispiel:
+# Length: 1 • Year: 2000 • 5 songs
+#: src/components/filter_categories.rs:33
+msgid "Length (min)"
+msgstr "Länge (Min)"
+
+# Kontext: Albuminfo
+# Beispiel:
+# Length: 1 • Year: 2000 • 5 songs
+#: src/components/filter_categories.rs:34
+msgid "Length (sec)"
+msgstr "Länge (Sek)"
+
+#: src/components/filter_categories.rs:35
+msgid "Bit Rate"
+msgstr "Bitrate"
+
+#: src/components/filter_categories.rs:36
+msgid "Album Count"
+msgstr "Albumanzahl"
+
+#: src/components/filter_categories.rs:121
 msgid "Category"
 msgstr "Kategorien"
 
@@ -523,7 +570,7 @@ msgstr "Titelnummer"
 
 #: src/components/filter_row.rs:406
 msgid "Album count"
-msgstr "Albumnummber"
+msgstr "Albumnummer"
 
 #: src/components/filter_row.rs:435
 msgid "Duration (sec)"
@@ -541,25 +588,13 @@ msgstr "Bitrate"
 msgid "Title name"
 msgstr "Titelname"
 
-#: src/components/filter_row.rs:533
-msgid "Title"
-msgstr "Titel"
-
 #: src/components/filter_row.rs:548
 msgid "Artist name"
 msgstr "Artistname"
 
-#: src/components/filter_row.rs:560
-msgid "Artist"
-msgstr "Artist"
-
 #: src/components/filter_row.rs:575
 msgid "Album name"
 msgstr "Albumname"
-
-#: src/components/filter_row.rs:587
-msgid "Album"
-msgstr "Album"
 
 #: src/components/login_form.rs:68
 msgid "Login to a Subsonic server"
@@ -744,6 +779,38 @@ msgstr "Springe zu gespielten Titel"
 #: src/components/queue.rs:355
 msgid "Create new playlist from queue"
 msgstr "Neue Playlist von Warteschlange erstellen"
+
+#: src/components/sort_by.rs:21
+msgid "A-Z"
+msgstr "A-Z"
+
+#: src/components/sort_by.rs:22
+msgid "Z-A"
+msgstr "Z-A"
+
+#: src/components/sort_by.rs:23
+msgid "Newest Release"
+msgstr "Neuer"
+
+#: src/components/sort_by.rs:24
+msgid "Oldest Release"
+msgstr "Älter"
+
+#: src/components/sort_by.rs:25
+msgid "Recently added"
+msgstr "Zuletzt hinzugefügt"
+
+#: src/components/sort_by.rs:26
+msgid "Longest available"
+msgstr "Länger Verfügbar"
+
+#: src/components/sort_by.rs:27
+msgid "Most Albums"
+msgstr "Meiste Alben"
+
+#: src/components/sort_by.rs:28
+msgid "Least Albums"
+msgstr "Wenigste Alben"
 
 #: src/components/tracks_view.rs:59
 msgid "There are too many tracks to add to queue"
