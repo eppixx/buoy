@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-10 18:45+0100\n"
-"PO-Revision-Date: 2025-01-10 18:45+0100\n"
+"POT-Creation-Date: 2025-01-12 14:28+0100\n"
+"PO-Revision-Date: 2025-01-12 14:32+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -46,43 +46,47 @@ msgstr ""
 msgid "Initial Release"
 msgstr "Initiale Veröffentlichung"
 
-#: src/app.rs:378
+#: src/app.rs:135
+msgid "loading information from server"
+msgstr "Lade Informationen vom Server"
+
+#: src/app.rs:379
 msgid "Go back to previous page"
 msgstr "Eine Seite zurück gehen"
 
-#: src/app.rs:396
+#: src/app.rs:397
 msgid "Open search bar"
 msgstr "Öffne die Suchleiste"
 
-#: src/app.rs:410
+#: src/app.rs:411
 msgid "Go to dashboard"
 msgstr "Zeige Übersicht"
 
-#: src/app.rs:418
+#: src/app.rs:419
 msgid "Show artists"
 msgstr "Zeige Artisten"
 
-#: src/app.rs:426
+#: src/app.rs:427
 msgid "Show albums"
 msgstr "Zeige Alben"
 
-#: src/app.rs:434
+#: src/app.rs:435
 msgid "Show tracks"
 msgstr "Zeige Titel"
 
-#: src/app.rs:442
+#: src/app.rs:443
 msgid "Show playlists"
 msgstr "Zeige Playlisten"
 
-#: src/app.rs:458
+#: src/app.rs:459
 msgid "Open Equalizer"
 msgstr "Öffne Equalizer"
 
-#: src/app.rs:475
+#: src/app.rs:476
 msgid "Open settings"
 msgstr "Öffne Einstellungen"
 
-#: src/app.rs:489
+#: src/app.rs:490
 msgid ""
 "Send desktop notifications\n"
 "when in background"
@@ -90,15 +94,15 @@ msgstr ""
 "Sende Desktop Nachrichten\n"
 "wenn im Hintergrund"
 
-#: src/app.rs:493
+#: src/app.rs:494
 msgid "Wether or not send desktop notifications"
 msgstr "Ob Nachrichten auf dem Desktop gezeigt werden sollen"
 
-#: src/app.rs:504
+#: src/app.rs:505
 msgid "Scrobble to server"
 msgstr "Scrobbeln an den Subsonic Server"
 
-#: src/app.rs:509
+#: src/app.rs:510
 msgid ""
 "Updates play count, played timestamp on server and the now playing page in "
 "the web app"
@@ -106,11 +110,11 @@ msgstr ""
 "Aktualisiert den Spielzähler, den \"zuletzt gespielt am\" Zeitstempel und "
 "den \"derzeit gespielt\" Status auf der Webapplikation"
 
-#: src/app.rs:522
+#: src/app.rs:523
 msgid "Delete cache"
 msgstr "Lokalen Speicher leeren"
 
-#: src/app.rs:523
+#: src/app.rs:524
 msgid ""
 "Deletes the local cache of Covers and Metadata of music. They will be "
 "redownloaded from the server on the next start"
@@ -118,11 +122,11 @@ msgstr ""
 "Löscht den lokalen Speicher und die Metadaten der Musik. Sie werden bei "
 "einem Neustart erneut heruntergeladen"
 
-#: src/app.rs:531
+#: src/app.rs:532
 msgid "Logout from Server"
 msgstr "Vom Server ausloggen"
 
-#: src/app.rs:532
+#: src/app.rs:533
 msgid ""
 "Logging out will delete the cache and also require to login again to listen "
 "to music"
@@ -130,35 +134,43 @@ msgstr ""
 "Ausloggen wird den lokalen Speicher löschen. Ein erneuter Login wird "
 "benötigt um Musik hören zu können"
 
-#: src/app.rs:562
+#: src/app.rs:563
 msgid "Search..."
 msgstr "Suche nach..."
 
-#: src/app.rs:564
+#: src/app.rs:565
 msgid "Enter your search here"
 msgstr "Gebe deine Suche hier ein"
 
-#: src/app.rs:576
+#: src/app.rs:577
 msgid "Use fuzzy search"
 msgstr "Benutze Fuzzy-Suche"
 
-#: src/app.rs:577
+#: src/app.rs:578
 msgid "Shows close and similar search results if activated"
 msgstr "Zeige ähnliche Suchresultate an, wenn aktiviert"
 
-#: src/app.rs:586
+#: src/app.rs:587
 msgid "Use case sensitivity"
 msgstr "Beachte Groß-/Kleinschreibung"
 
-#: src/app.rs:587
+#: src/app.rs:588
 msgid "Ignores case sensitivity in search term and results"
 msgstr "Ignoriert Groß-/Kleinschreibung in der Sucheingabe und Resultate"
 
-#: src/app.rs:728
+#: src/app.rs:648
+msgid ""
+"Deleted cache\n"
+"Please restart to reload the cache"
+msgstr ""
+"Lokalen Speicher gelöscht\n"
+"Bitte starten sie die App neu"
+
+#: src/app.rs:729
 msgid "New playlist from Queue"
 msgstr "Neue Playlist von Warteschlange"
 
-#: src/app.rs:1014
+#: src/app.rs:1015
 msgid "Unkonwn Artist"
 msgstr "Unbekannter Artist"
 
@@ -204,6 +216,7 @@ msgstr "Fertiger download von"
 # Beispiel:
 # Length: 1 • Year: 2000 • 5 songs
 #: src/components/album_element.rs:104 src/components/album_view.rs:485
+#: src/components/playlists_view.rs:548
 msgid "Length"
 msgstr "Länge"
 
@@ -245,9 +258,9 @@ msgstr "Album an Warteschlange anhängen"
 msgid "Play next"
 msgstr "Als nächstes spielen"
 
-#: src/components/album_view.rs:245 src/components/artist_view.rs:224
+#: src/components/album_view.rs:245
 msgid "Insert Album after currently played or paused item"
-msgstr "Nach derzeitigen Titel einfügen"
+msgstr "Album nach derzeitigen Titel einfügen"
 
 #: src/components/album_view.rs:263 src/components/albums_view.rs:253
 #: src/components/artist_view.rs:235 src/components/artists_view.rs:237
@@ -255,7 +268,7 @@ msgstr "Nach derzeitigen Titel einfügen"
 msgid "Replace queue"
 msgstr "Warteschlange ersetzen"
 
-#: src/components/album_view.rs:266 src/components/artist_view.rs:238
+#: src/components/album_view.rs:266
 msgid "Replaces current queue with this album"
 msgstr "Warteschlange mit Album ersetzen"
 
@@ -263,12 +276,11 @@ msgstr "Warteschlange mit Album ersetzen"
 msgid "Download Album"
 msgstr "Album downloaden"
 
-#: src/components/album_view.rs:287 src/components/artist_view.rs:252
-#: src/components/playlists_view.rs:298
+#: src/components/album_view.rs:287 src/components/playlists_view.rs:298
 msgid "Click to select a folder to download this album to"
 msgstr "Klicken um Ordner zum downloaden des Albums zu wählen"
 
-#: src/components/album_view.rs:481
+#: src/components/album_view.rs:481 src/components/playlists_view.rs:546
 msgid "Songs"
 msgstr "Titel"
 
@@ -351,9 +363,21 @@ msgstr "Neuer Filter:"
 msgid "Append Artist to end of queue"
 msgstr "Artist an Warteschlange anhängen"
 
+#: src/components/artist_view.rs:224
+msgid "Insert Artist after currently played or paused item"
+msgstr "Artist nach derzeitigen Titel einfügen"
+
+#: src/components/artist_view.rs:238
+msgid "Replaces current queue with this artist"
+msgstr "Warteschlange mit Artist ersetzen"
+
 #: src/components/artist_view.rs:249
 msgid "Download Artist"
 msgstr "Artist downloaden"
+
+#: src/components/artist_view.rs:252
+msgid "Click to select a folder to download this artist to"
+msgstr "Klicken um Ordner zum downloaden des Artisten zu wählen"
 
 #: src/components/artist_view.rs:345
 msgid "No biography found"
@@ -397,7 +421,7 @@ msgstr "Artisten an Warteschlange anhängen"
 
 #: src/components/artists_view.rs:227
 msgid "Insert artists after currently played or paused item"
-msgstr "Nach derzeitigen Artisten einfügen"
+msgstr "Artisten nach derzeitigen Titel einfügen"
 
 #: src/components/artists_view.rs:240
 msgid "Replaces current queue with artists"
@@ -681,6 +705,10 @@ msgstr ""
 msgid "Append playlist to end of queue"
 msgstr "Playlist an Warteschlange anhängen"
 
+#: src/components/playlists_view.rs:274
+msgid "Insert playlist after currently played or paused item"
+msgstr "Playlist nach derzeitigen Titel einfügen"
+
 #: src/components/playlists_view.rs:286
 msgid "Replaces current queue with this playlist"
 msgstr "Warteschlange mit Playlist ersetzen"
@@ -688,6 +716,10 @@ msgstr "Warteschlange mit Playlist ersetzen"
 #: src/components/playlists_view.rs:295
 msgid "Download Playlist"
 msgstr "Playlist downloaden"
+
+#: src/components/playlists_view.rs:542
+msgid "Created at: %d.%m.%Y, %H:%M"
+msgstr "Erstellt am: %d.%m.%Y, %H:%M"
 
 #: src/components/queue.rs:244
 msgid "Loading queue"
@@ -789,9 +821,8 @@ msgstr "Klicken um Titel (nicht) zu favorisieren"
 
 #: src/factory/playlist_row.rs:103 src/factory/track_row.rs:162
 #: src/factory/track_row.rs:244 src/factory/track_row.rs:255
-#, fuzzy
 msgid "Unknown Album"
-msgstr "Album downloaden"
+msgstr "Unbekanntes Album"
 
 #~ msgid "Unkonwn Album"
 #~ msgstr "Unbekanntes Album"
