@@ -8,7 +8,7 @@ use relm4::{
     },
 };
 
-use crate::settings::Settings;
+use crate::{config, settings::Settings};
 
 #[derive(Debug, Default, Clone)]
 pub struct LoginForm {}
@@ -133,7 +133,7 @@ impl relm4::component::AsyncComponent for LoginForm {
         match msg {
             LoginFormIn::AuthClicked => {
                 let auth = submarine::auth::AuthBuilder::new(widgets.user.text(), "0.16.1")
-                    .client_name("Bouy")
+                    .client_name(config::APP_NAME)
                     .hashed(&widgets.password.text());
                 let hash = auth.hash.clone();
                 let salt = auth.salt.clone();
