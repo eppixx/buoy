@@ -221,7 +221,7 @@ impl relm4::Component for ArtistView {
                                         set_label: &gettext("Play next"),
                                     }
                                 },
-                                set_tooltip: &gettext("Insert Album after currently played or paused item"),
+                                set_tooltip: &gettext("Insert Artist after currently played or paused item"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::InsertAfterCurrentPlayed(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }
@@ -235,7 +235,7 @@ impl relm4::Component for ArtistView {
                                         set_label: &gettext("Replace queue"),
                                     }
                                 },
-                                set_tooltip: &gettext("Replaces current queue with this album"),
+                                set_tooltip: &gettext("Replaces current queue with this artist"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::ReplaceQueue(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }
@@ -249,7 +249,7 @@ impl relm4::Component for ArtistView {
                                         set_label: &gettext("Download Artist"),
                                     }
                                 },
-                                set_tooltip: &gettext("Click to select a folder to download this album to"),
+                                set_tooltip: &gettext("Click to select a folder to download this artist to"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     sender.output(ArtistViewOut::Download(Droppable::Artist(Box::new(init.clone())))).unwrap();
                                 }

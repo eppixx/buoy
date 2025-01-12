@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-10 18:45+0100\n"
+"POT-Creation-Date: 2025-01-12 14:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,111 +43,121 @@ msgstr ""
 msgid "Initial Release"
 msgstr ""
 
-#: src/app.rs:378
+#: src/app.rs:135
+msgid "loading information from server"
+msgstr ""
+
+#: src/app.rs:379
 msgid "Go back to previous page"
 msgstr ""
 
-#: src/app.rs:396
+#: src/app.rs:397
 msgid "Open search bar"
 msgstr ""
 
-#: src/app.rs:410
+#: src/app.rs:411
 msgid "Go to dashboard"
 msgstr ""
 
-#: src/app.rs:418
+#: src/app.rs:419
 msgid "Show artists"
 msgstr ""
 
-#: src/app.rs:426
+#: src/app.rs:427
 msgid "Show albums"
 msgstr ""
 
-#: src/app.rs:434
+#: src/app.rs:435
 msgid "Show tracks"
 msgstr ""
 
-#: src/app.rs:442
+#: src/app.rs:443
 msgid "Show playlists"
 msgstr ""
 
-#: src/app.rs:458
+#: src/app.rs:459
 msgid "Open Equalizer"
 msgstr ""
 
-#: src/app.rs:475
+#: src/app.rs:476
 msgid "Open settings"
 msgstr ""
 
-#: src/app.rs:489
+#: src/app.rs:490
 msgid ""
 "Send desktop notifications\n"
 "when in background"
 msgstr ""
 
-#: src/app.rs:493
+#: src/app.rs:494
 msgid "Wether or not send desktop notifications"
 msgstr ""
 
-#: src/app.rs:504
+#: src/app.rs:505
 msgid "Scrobble to server"
 msgstr ""
 
-#: src/app.rs:509
+#: src/app.rs:510
 msgid ""
 "Updates play count, played timestamp on server and the now playing page in "
 "the web app"
 msgstr ""
 
-#: src/app.rs:522
+#: src/app.rs:523
 msgid "Delete cache"
 msgstr ""
 
-#: src/app.rs:523
+#: src/app.rs:524
 msgid ""
 "Deletes the local cache of Covers and Metadata of music. They will be "
 "redownloaded from the server on the next start"
 msgstr ""
 
-#: src/app.rs:531
+#: src/app.rs:532
 msgid "Logout from Server"
 msgstr ""
 
-#: src/app.rs:532
+#: src/app.rs:533
 msgid ""
 "Logging out will delete the cache and also require to login again to listen "
 "to music"
 msgstr ""
 
-#: src/app.rs:562
+#: src/app.rs:563
 msgid "Search..."
 msgstr ""
 
-#: src/app.rs:564
+#: src/app.rs:565
 msgid "Enter your search here"
 msgstr ""
 
-#: src/app.rs:576
+#: src/app.rs:577
 msgid "Use fuzzy search"
 msgstr ""
 
-#: src/app.rs:577
+#: src/app.rs:578
 msgid "Shows close and similar search results if activated"
 msgstr ""
 
-#: src/app.rs:586
+#: src/app.rs:587
 msgid "Use case sensitivity"
 msgstr ""
 
-#: src/app.rs:587
+#: src/app.rs:588
 msgid "Ignores case sensitivity in search term and results"
 msgstr ""
 
-#: src/app.rs:728
+#: src/app.rs:648
+msgid ""
+"Deleted cache\n"
+"Please restart to reload the cache"
+msgstr ""
+
+#: src/app.rs:729
 msgid "New playlist from Queue"
 msgstr ""
 
-#: src/app.rs:1014
+#: src/app.rs:1015
 msgid "Unkonwn Artist"
 msgstr ""
 
@@ -184,6 +194,7 @@ msgid "Finished downloading"
 msgstr ""
 
 #: src/components/album_element.rs:104 src/components/album_view.rs:485
+#: src/components/playlists_view.rs:548
 msgid "Length"
 msgstr ""
 
@@ -219,7 +230,7 @@ msgstr ""
 msgid "Play next"
 msgstr ""
 
-#: src/components/album_view.rs:245 src/components/artist_view.rs:224
+#: src/components/album_view.rs:245
 msgid "Insert Album after currently played or paused item"
 msgstr ""
 
@@ -229,7 +240,7 @@ msgstr ""
 msgid "Replace queue"
 msgstr ""
 
-#: src/components/album_view.rs:266 src/components/artist_view.rs:238
+#: src/components/album_view.rs:266
 msgid "Replaces current queue with this album"
 msgstr ""
 
@@ -237,12 +248,11 @@ msgstr ""
 msgid "Download Album"
 msgstr ""
 
-#: src/components/album_view.rs:287 src/components/artist_view.rs:252
-#: src/components/playlists_view.rs:298
+#: src/components/album_view.rs:287 src/components/playlists_view.rs:298
 msgid "Click to select a folder to download this album to"
 msgstr ""
 
-#: src/components/album_view.rs:481
+#: src/components/album_view.rs:481 src/components/playlists_view.rs:546
 msgid "Songs"
 msgstr ""
 
@@ -321,8 +331,20 @@ msgstr ""
 msgid "Append Artist to end of queue"
 msgstr ""
 
+#: src/components/artist_view.rs:224
+msgid "Insert Artist after currently played or paused item"
+msgstr ""
+
+#: src/components/artist_view.rs:238
+msgid "Replaces current queue with this artist"
+msgstr ""
+
 #: src/components/artist_view.rs:249
 msgid "Download Artist"
+msgstr ""
+
+#: src/components/artist_view.rs:252
+msgid "Click to select a folder to download this artist to"
 msgstr ""
 
 #: src/components/artist_view.rs:345
@@ -649,12 +671,20 @@ msgstr ""
 msgid "Append playlist to end of queue"
 msgstr ""
 
+#: src/components/playlists_view.rs:274
+msgid "Insert playlist after currently played or paused item"
+msgstr ""
+
 #: src/components/playlists_view.rs:286
 msgid "Replaces current queue with this playlist"
 msgstr ""
 
 #: src/components/playlists_view.rs:295
 msgid "Download Playlist"
+msgstr ""
+
+#: src/components/playlists_view.rs:542
+msgid "Created at: %d.%m.%Y, %H:%M"
 msgstr ""
 
 #: src/components/queue.rs:244

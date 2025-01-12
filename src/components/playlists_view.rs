@@ -271,7 +271,7 @@ impl relm4::Component for PlaylistsView {
                                                     set_label: &gettext("Play next"),
                                                 }
                                             },
-                                            set_tooltip_text: Some("Insert playlist after currently played or paused item"),
+                                            set_tooltip: &gettext("Insert playlist after currently played or paused item"),
                                             connect_clicked => PlaylistsViewIn::AddToQueue,
                                         },
                                         gtk::Button {
@@ -539,11 +539,13 @@ fn build_info_string(list: &submarine::data::PlaylistWithSongs) -> String {
     let created = list
         .base
         .created
-        .format("Created at: %d.%m.%Y, %H:%M")
+        .format(&gettext("Created at: %d.%m.%Y, %H:%M"))
         .to_string();
     format!(
-        "Songs: {} • Length: {} • {}",
+        "{}: {} • {}: {} • {}",
+        gettext("Songs"),
         list.base.song_count,
+        gettext("Length"),
         convert_for_label(i64::from(list.base.duration) * 1000),
         created
     )

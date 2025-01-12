@@ -132,7 +132,7 @@ impl relm4::component::AsyncComponent for App {
                                 start: ()
                             },
                             gtk::Label {
-                                set_text: "loading information from server",
+                                set_text: &gettext("loading information from server"),
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                             }
                         }
@@ -644,7 +644,7 @@ impl relm4::component::AsyncComponent for App {
                         "error while deleting cache: {e:?}"
                     )));
                 } else {
-                    sender.input(AppIn::DisplayToast(String::from(
+                    sender.input(AppIn::DisplayToast(gettext(
                         "Deleted cache\nPlease restart to reload the cache",
                     )));
                 }

@@ -221,7 +221,7 @@ impl relm4::Component for AlbumView {
                                         set_label: &gettext("Append"),
                                     }
                                 },
-                                set_tooltip_text: Some(&gettext("Append Album to end of queue")),
+                                set_tooltip: &gettext("Append Album to end of queue"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
@@ -242,7 +242,7 @@ impl relm4::Component for AlbumView {
                                         set_label: &gettext("Play next")
                                     }
                                 },
-                                set_tooltip_text: Some(&gettext("Insert Album after currently played or paused item")),
+                                set_tooltip: &gettext("Insert Album after currently played or paused item"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
@@ -263,7 +263,7 @@ impl relm4::Component for AlbumView {
                                         set_label: &gettext("Replace queue"),
                                     }
                                 },
-                                set_tooltip_text: Some(&gettext("Replaces current queue with this album")),
+                                set_tooltip: &gettext("Replaces current queue with this album"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     match &init {
                                         AlbumViewInit::Child(child) => {
@@ -284,7 +284,7 @@ impl relm4::Component for AlbumView {
                                         set_label: &gettext("Download Album"),
                                     }
                                 },
-                                set_tooltip_text: Some(&gettext("Click to select a folder to download this album to")),
+                                set_tooltip: &gettext("Click to select a folder to download this album to"),
                                 connect_clicked[sender, init] => move |_btn| {
                                     let drop = match &init {
                                         AlbumViewInit::Child(child) => Droppable::Child(child.clone()),
