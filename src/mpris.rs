@@ -5,13 +5,13 @@ use std::sync::{Arc, Mutex};
 
 use zbus::interface;
 
-use crate::Args;
 use crate::{
     client::Client,
     components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     play_state::PlayState,
     player::Command,
 };
+use crate::{config, Args};
 
 /// converts the internally used values to the mpris used ones and vice versa
 pub trait MprisString {
@@ -186,12 +186,12 @@ impl Root {
 
     #[zbus(property)]
     fn identity(&self) -> &str {
-        "Buoy"
+        config::APP_NAME
     }
 
     #[zbus(property)]
     fn desktop_entry(&self) -> &str {
-        "buoy"
+        config::EXEC_NAME
     }
 
     #[zbus(property)]

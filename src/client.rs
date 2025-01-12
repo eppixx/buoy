@@ -1,6 +1,6 @@
 use std::sync::{Mutex, OnceLock};
 
-use crate::settings::Settings;
+use crate::{config, settings::Settings};
 
 #[derive(Debug, Default)]
 pub struct Client {
@@ -24,7 +24,7 @@ impl Client {
                 let auth = submarine::auth::Auth {
                     user: user.clone(),
                     version: String::from("0.16.1"),
-                    client_name: String::from("Bouy"),
+                    client_name: String::from(config::APP_NAME),
                     hash: hash.clone(),
                     salt: salt.clone(),
                 };
@@ -56,7 +56,7 @@ impl Client {
                 let auth = submarine::auth::Auth {
                     user: user.clone(),
                     version: String::from("0.16.1"),
-                    client_name: String::from("Bouy"),
+                    client_name: String::from(config::APP_NAME),
                     hash: hash.clone(),
                     salt: salt.clone(),
                 };

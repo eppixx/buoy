@@ -1,5 +1,6 @@
 pub static APP_ID: &str = @APP_ID@;
 pub static APP_NAME: &str = @APP_NAME@;
+pub static EXEC_NAME: &str = @EXEC_NAME_QUOTED@;
 pub static SLASHED_APP_ID: &str = @SLASHED_APP_ID@;
 pub static GETTEXT_PACKAGE: &str = @GETTEXT_PACKAGE@;
 pub static LOCALEDIR: &str = @LOCALEDIR@;
