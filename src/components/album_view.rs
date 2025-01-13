@@ -61,7 +61,7 @@ pub enum AlbumViewIn {
     Cover(CoverOut),
     FavoritedAlbum(String, bool),
     FavoritedSong(String, bool),
-    SearchChanged(String),
+    FilterChanged(String),
     HoverCover(bool),
     RecalcDragSource,
 }
@@ -330,7 +330,7 @@ impl relm4::Component for AlbumView {
                     sender.output(AlbumViewOut::DisplayToast(title)).unwrap();
                 }
             },
-            AlbumViewIn::SearchChanged(search) => {
+            AlbumViewIn::FilterChanged(search) => {
                 self.tracks.clear_filters();
                 self.tracks.add_filter(move |row| {
                     let mut search = search.clone();

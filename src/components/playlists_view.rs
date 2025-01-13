@@ -84,7 +84,7 @@ pub enum PlaylistsViewOut {
 
 #[derive(Debug)]
 pub enum PlaylistsViewIn {
-    SearchChanged(String),
+    FilterChanged(String),
     ReplaceQueue,
     AddToQueue,
     AppendToQueue,
@@ -331,7 +331,7 @@ impl relm4::Component for PlaylistsView {
         _root: &Self::Root,
     ) {
         match msg {
-            PlaylistsViewIn::SearchChanged(search) => {
+            PlaylistsViewIn::FilterChanged(search) => {
                 self.tracks.clear_filters();
                 self.tracks.add_filter(move |row| {
                     let mut search = search.clone();

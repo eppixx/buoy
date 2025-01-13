@@ -32,7 +32,7 @@ pub struct ArtistView {
 pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
     Cover(CoverOut),
-    SearchChanged(String),
+    FilterChanged(String),
     FavoritedArtist(String, bool),
     FavoritedAlbum(String, bool),
     HoverCover(bool),
@@ -291,7 +291,7 @@ impl relm4::Component for ArtistView {
                     sender.output(ArtistViewOut::DisplayToast(title)).unwrap();
                 }
             },
-            ArtistViewIn::SearchChanged(search) => {
+            ArtistViewIn::FilterChanged(search) => {
                 self.albums.widget().set_filter_func(move |element| {
                     let (title, _artist) = get_info_of_flowboxchild(element);
 
