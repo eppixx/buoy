@@ -422,9 +422,11 @@ impl relm4::Component for Queue {
                         .collect(),
                 };
 
+                let mut guard = self.songs.guard();
                 for song in songs {
-                    self.songs.guard().push_back((self.subsonic.clone(), song));
+                    guard.push_back((self.subsonic.clone(), song));
                 }
+                drop(guard);
                 sender.input(QueueIn::Rerandomize);
 
                 if !self.songs.is_empty() {
@@ -472,17 +474,17 @@ impl relm4::Component for Queue {
                         .collect(),
                 };
 
+                let mut guard = self.songs.guard();
                 if let Some(index) = &self.playing_index {
                     for song in songs.into_iter().rev() {
-                        self.songs
-                            .guard()
-                            .insert(index.current_index() + 1, (self.subsonic.clone(), song));
+                        guard.insert(index.current_index() + 1, (self.subsonic.clone(), song));
                     }
                 } else {
                     for song in songs.into_iter().rev() {
-                        self.songs.guard().push_back((self.subsonic.clone(), song));
+                        guard.push_back((self.subsonic.clone(), song));
                     }
                 }
+                std::mem::drop(guard);
                 sender.input(QueueIn::Rerandomize);
 
                 if !self.songs.is_empty() {
@@ -511,10 +513,11 @@ impl relm4::Component for Queue {
                         }
                     })
                     .collect();
+                let mut guard = self.songs.guard();
                 for index in selected_indices.iter().rev() {
-                    let mut guard = self.songs.guard();
                     guard.remove(*index);
                 }
+                drop(guard);
                 sender.input(QueueIn::Rerandomize);
 
                 //set new state when deleting played index

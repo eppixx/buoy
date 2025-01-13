@@ -140,12 +140,11 @@ impl relm4::Component for PlaylistsView {
             .add_controller(model.info_cover_controller.clone());
 
         // add playlists to list
+        let mut guard = model.playlists.guard();
         for playlist in model.subsonic.borrow().playlists() {
-            model
-                .playlists
-                .guard()
-                .push_back((model.subsonic.clone(), playlist.clone()));
+            guard.push_back((model.subsonic.clone(), playlist.clone()));
         }
+        drop(guard);
 
         // send signal on selection change
         model
