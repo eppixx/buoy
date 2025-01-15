@@ -16,6 +16,7 @@ use crate::{
     client::Client,
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
+    factory::track_row::BitRateColumn,
     subsonic::Subsonic,
     types::Droppable,
 };
@@ -97,6 +98,7 @@ impl relm4::Component for AlbumView {
         tracks.append_column::<ArtistColumn>();
         tracks.append_column::<AlbumColumn>();
         tracks.append_column::<LengthColumn>();
+        tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
         let (id, artist_id) = match &init {
