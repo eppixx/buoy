@@ -132,6 +132,37 @@ impl relm4::component::Component for AlbumsView {
         entries.append_column::<CdColumn>();
         entries.append_column::<FavColumn>();
 
+        let columns = entries.get_columns();
+        columns
+            .get("Cover")
+            .unwrap()
+            .set_title(Some(&gettext("Cover")));
+        columns
+            .get("Title")
+            .unwrap()
+            .set_title(Some(&gettext("Title")));
+        columns
+            .get("Artist")
+            .unwrap()
+            .set_title(Some(&gettext("Artist")));
+        columns
+            .get("Genre")
+            .unwrap()
+            .set_title(Some(&gettext("Genre")));
+        columns
+            .get("Length")
+            .unwrap()
+            .set_title(Some(&gettext("Length")));
+        columns
+            .get("Year")
+            .unwrap()
+            .set_title(Some(&gettext("Year")));
+        columns.get("CDs").unwrap().set_title(Some(&gettext("CDs")));
+        columns
+            .get("Favorite")
+            .unwrap()
+            .set_title(Some(&gettext("Favorite")));
+
         let mut model = Self {
             subsonic: init.clone(),
             entries,

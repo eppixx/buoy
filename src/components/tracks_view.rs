@@ -138,6 +138,36 @@ impl relm4::Component for TracksView {
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
+        let columns = tracks.get_columns();
+        columns
+            .get("Title")
+            .unwrap()
+            .set_title(Some(&gettext("Title")));
+        columns
+            .get("Artist")
+            .unwrap()
+            .set_title(Some(&gettext("Artist")));
+        columns
+            .get("Album")
+            .unwrap()
+            .set_title(Some(&gettext("Album")));
+        columns
+            .get("Genre")
+            .unwrap()
+            .set_title(Some(&gettext("Genre")));
+        columns
+            .get("Length")
+            .unwrap()
+            .set_title(Some(&gettext("Length")));
+        columns
+            .get("Bitrate")
+            .unwrap()
+            .set_title(Some(&gettext("Bitrate")));
+        columns
+            .get("Favorite")
+            .unwrap()
+            .set_title(Some(&gettext("Favorite")));
+
         // add tracks in chunks to not overwhelm the app
         let list = subsonic.borrow().tracks().to_vec();
         sender.oneshot_command(async move { TracksViewCmd::AddTracks(list, 0) });

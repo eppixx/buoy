@@ -101,6 +101,58 @@ impl relm4::Component for AlbumView {
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
+        let columns = tracks.get_columns();
+        columns
+            .get("Title")
+            .unwrap()
+            .set_title(Some(&gettext("Title")));
+        columns
+            .get("Artist")
+            .unwrap()
+            .set_title(Some(&gettext("Artist")));
+        columns
+            .get("Album")
+            .unwrap()
+            .set_title(Some(&gettext("Album")));
+        columns
+            .get("Length")
+            .unwrap()
+            .set_title(Some(&gettext("Length")));
+        columns
+            .get("Bitrate")
+            .unwrap()
+            .set_title(Some(&gettext("Bitrate")));
+        columns
+            .get("Favorite")
+            .unwrap()
+            .set_title(Some(&gettext("Favorite")));
+
+        let columns = tracks.get_columns();
+        columns
+            .get("Title")
+            .unwrap()
+            .set_title(Some(&gettext("Title")));
+        columns
+            .get("Artist")
+            .unwrap()
+            .set_title(Some(&gettext("Artist")));
+        columns
+            .get("Album")
+            .unwrap()
+            .set_title(Some(&gettext("Album")));
+        columns
+            .get("Length")
+            .unwrap()
+            .set_title(Some(&gettext("Length")));
+        columns
+            .get("Bitrate")
+            .unwrap()
+            .set_title(Some(&gettext("Bitrate")));
+        columns
+            .get("Favorite")
+            .unwrap()
+            .set_title(Some(&gettext("Favorite")));
+
         let (id, artist_id) = match &init {
             AlbumViewInit::Child(child) => (&child.id, child.artist_id.clone()),
             AlbumViewInit::AlbumId3(album) => (&album.id, album.artist_id.clone()),

@@ -120,6 +120,24 @@ impl relm4::component::Component for ArtistsView {
         entries.append_column::<AlbumCountColumn>();
         entries.append_column::<FavColumn>();
 
+        let columns = entries.get_columns();
+        columns
+            .get("Cover")
+            .unwrap()
+            .set_title(Some(&gettext("Cover")));
+        columns
+            .get("Name")
+            .unwrap()
+            .set_title(Some(&gettext("Name")));
+        columns
+            .get("Albums")
+            .unwrap()
+            .set_title(Some(&gettext("Albums")));
+        columns
+            .get("Favorite")
+            .unwrap()
+            .set_title(Some(&gettext("Favorite")));
+
         let mut model = Self {
             subsonic: init.clone(),
             entries,
