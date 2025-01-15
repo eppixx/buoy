@@ -166,13 +166,13 @@ impl relm4::component::AsyncComponent for Browser {
                 }
                 //TODO change to filter changed
                 for view in &self.album_views {
-                    view.emit(AlbumViewIn::SearchChanged(search.clone()));
+                    view.emit(AlbumViewIn::FilterChanged(search.clone()));
                 }
                 for view in &self.artist_views {
-                    view.emit(ArtistViewIn::SearchChanged(search.clone()));
+                    view.emit(ArtistViewIn::FilterChanged(search.clone()));
                 }
                 for view in &self.playlists_views {
-                    view.emit(PlaylistsViewIn::SearchChanged(search.clone()));
+                    view.emit(PlaylistsViewIn::FilterChanged(search.clone()));
                 }
             }
             BrowserIn::BackClicked => {
