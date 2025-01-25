@@ -120,6 +120,24 @@ impl relm4::Component for PlaylistsView {
         tracks.append_column::<LengthColumn>();
         tracks.append_column::<FavColumn>();
 
+        let columns = tracks.get_columns();
+        columns
+            .get("Title")
+            .unwrap()
+            .set_title(Some(&gettext("Title")));
+        columns
+            .get("Artist")
+            .unwrap()
+            .set_title(Some(&gettext("Artist")));
+        columns
+            .get("Album")
+            .unwrap()
+            .set_title(Some(&gettext("Album")));
+        columns
+            .get("Length")
+            .unwrap()
+            .set_title(Some(&gettext("Length")));
+
         let mut model = PlaylistsView {
             subsonic: subsonic.clone(),
             playlists: relm4::factory::FactoryVecDeque::builder()
