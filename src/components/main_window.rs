@@ -78,6 +78,7 @@ pub enum MainWindowIn {
     App(AppOut),
     LoginForm(LoginFormOut),
     Logout,
+    RetryLogin,
 }
 
 relm4::new_action_group!(WindowActionGroup, "win");
@@ -288,10 +289,18 @@ impl relm4::component::AsyncComponent for MainWindow {
                             },
                             gtk::CenterBox {
                                 #[wrap(Some)]
-                                set_end_widget = &gtk::Button {
-                                    add_css_class: "destructive-action",
-                                    set_label: &gettext("Logout"),
-                                    connect_clicked => MainWindowIn::Logout,
+                                set_end_widget = &gtk::Box {
+                                    set_spacing: 10,
+
+                                    gtk::Button {
+                                        set_label: &gettext("Retry connecting"),
+                                        connect_clicked => MainWindowIn::RetryLogin,
+                                    },
+                                    gtk::Button {
+                                        add_css_class: "destructive-action",
+                                        set_label: &gettext("Logout"),
+                                        connect_clicked => MainWindowIn::Logout,
+                                    }
                                 },
                             }
                         },
@@ -345,6 +354,26 @@ impl relm4::component::AsyncComponent for MainWindow {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
                 sender.input(MainWindowIn::ShowLogin);
+            }
+            MainWindowIn::RetryLogin => {
+                tracing::info!("retry login");
+                widgets.stack.set_visible_child_enum(&Content::Loading);
+                {
+                    let settings = Settings::get().lock().unwrap().clone();
+                    widgets.main_window.set_maximized(settings.window_maximized);
+
+                    // decide which content to show
+                    if !settings.login_set() {
+                        tracing::info!("show login form");
+                        sender.input(MainWindowIn::ShowLogin);
+                    } else if settings.valid_login().await {
+                        tracing::info!("show app");
+                        sender.input(MainWindowIn::ShowApp);
+                    } else {
+                        tracing::info!("show error screen");
+                        sender.input(MainWindowIn::ShowErrorScreen);
+                    }
+                }
             }
         }
     }
