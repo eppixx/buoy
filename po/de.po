@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-15 11:49+0100\n"
-"PO-Revision-Date: 2025-01-15 11:49+0100\n"
+"POT-Creation-Date: 2025-02-03 11:49+0100\n"
+"PO-Revision-Date: 2025-02-03 11:50+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -215,17 +215,17 @@ msgstr "Fertiger download von"
 # Kontext: Albuminfo
 # Beispiel:
 # Length: 1 • Year: 2000 • 5 songs
-#: src/components/album_element.rs:104 src/components/album_view.rs:108
-#: src/components/album_view.rs:128 src/components/album_view.rs:521
-#: src/components/albums_view.rs:140 src/components/playlists_view.rs:548
-#: src/components/tracks_view.rs:146
+#: src/components/album_element.rs:104 src/components/album_view.rs:120
+#: src/components/album_view.rs:146 src/components/album_view.rs:539
+#: src/components/albums_view.rs:155 src/components/playlists_view.rs:139
+#: src/components/playlists_view.rs:566 src/components/tracks_view.rs:161
 msgid "Length"
 msgstr "Länge"
 
 # Kontext: Albuminfo
 # Beispiel:
 # Length: 1 • Year: 2000 • 5 songs
-#: src/components/album_element.rs:105 src/components/albums_view.rs:141
+#: src/components/album_element.rs:105 src/components/albums_view.rs:159
 #: src/components/filter_categories.rs:27 src/components/filter_row.rs:318
 msgid "Year"
 msgstr "Jahr"
@@ -237,104 +237,106 @@ msgstr "Jahr"
 msgid "songs"
 msgstr "Titel"
 
-#: src/components/album_view.rs:105 src/components/album_view.rs:116
-#: src/components/albums_view.rs:137 src/components/filter_categories.rs:26
-#: src/components/filter_row.rs:533 src/components/tracks_view.rs:142
+#: src/components/album_view.rs:108 src/components/album_view.rs:134
+#: src/components/albums_view.rs:143 src/components/filter_categories.rs:26
+#: src/components/filter_row.rs:533 src/components/playlists_view.rs:127
+#: src/components/tracks_view.rs:145
 msgid "Title"
 msgstr "Titel"
 
-#: src/components/album_view.rs:106 src/components/album_view.rs:120
-#: src/components/albums_view.rs:138 src/components/filter_categories.rs:30
-#: src/components/filter_row.rs:560 src/components/tracks_view.rs:143
+#: src/components/album_view.rs:112 src/components/album_view.rs:138
+#: src/components/albums_view.rs:147 src/components/filter_categories.rs:30
+#: src/components/filter_row.rs:560 src/components/playlists_view.rs:131
+#: src/components/tracks_view.rs:149
 msgid "Artist"
 msgstr "Artist"
 
-#: src/components/album_view.rs:107 src/components/album_view.rs:124
+#: src/components/album_view.rs:116 src/components/album_view.rs:142
 #: src/components/filter_categories.rs:31 src/components/filter_row.rs:587
-#: src/components/tracks_view.rs:144
+#: src/components/playlists_view.rs:135 src/components/tracks_view.rs:153
 msgid "Album"
 msgstr "Album"
 
-#: src/components/album_view.rs:109 src/components/album_view.rs:132
-#: src/components/tracks_view.rs:147
+#: src/components/album_view.rs:124 src/components/album_view.rs:150
+#: src/components/tracks_view.rs:165
 msgid "Bitrate"
 msgstr "Bitrate"
 
-#: src/components/album_view.rs:110 src/components/album_view.rs:136
-#: src/components/albums_view.rs:143 src/components/artists_view.rs:127
-#: src/components/filter_categories.rs:25 src/components/tracks_view.rs:148
+#: src/components/album_view.rs:128 src/components/album_view.rs:154
+#: src/components/albums_view.rs:164 src/components/artists_view.rs:139
+#: src/components/filter_categories.rs:25 src/components/tracks_view.rs:169
 msgid "Favorite"
 msgstr "Favorit"
 
-#: src/components/album_view.rs:150
+#: src/components/album_view.rs:168
 msgid "Unkonwn Title"
 msgstr "Unbekannter Titel"
 
-#: src/components/album_view.rs:236
+#: src/components/album_view.rs:254
 msgid "Unkown Artist"
 msgstr "Unbekannter Artist"
 
-#: src/components/album_view.rs:257 src/components/albums_view.rs:239
-#: src/components/artist_view.rs:206 src/components/artists_view.rs:217
-#: src/components/playlists_view.rs:259 src/components/tracks_view.rs:265
+#: src/components/album_view.rs:275 src/components/albums_view.rs:260
+#: src/components/artist_view.rs:206 src/components/artists_view.rs:229
+#: src/components/playlists_view.rs:277 src/components/tracks_view.rs:286
 msgid "Append"
 msgstr "Anhängen"
 
-#: src/components/album_view.rs:260
+#: src/components/album_view.rs:278
 msgid "Append Album to end of queue"
 msgstr "Album an Warteschlange anhängen"
 
-#: src/components/album_view.rs:278 src/components/albums_view.rs:251
-#: src/components/artist_view.rs:221 src/components/artists_view.rs:230
-#: src/components/playlists_view.rs:271 src/components/tracks_view.rs:277
+#: src/components/album_view.rs:296 src/components/albums_view.rs:272
+#: src/components/artist_view.rs:221 src/components/artists_view.rs:242
+#: src/components/playlists_view.rs:289 src/components/tracks_view.rs:298
 msgid "Play next"
 msgstr "Als nächstes spielen"
 
-#: src/components/album_view.rs:281
+#: src/components/album_view.rs:299
 msgid "Insert Album after currently played or paused item"
 msgstr "Album nach derzeitigen Titel einfügen"
 
-#: src/components/album_view.rs:299 src/components/albums_view.rs:263
-#: src/components/artist_view.rs:235 src/components/artists_view.rs:243
-#: src/components/playlists_view.rs:283 src/components/tracks_view.rs:289
+#: src/components/album_view.rs:317 src/components/albums_view.rs:284
+#: src/components/artist_view.rs:235 src/components/artists_view.rs:255
+#: src/components/playlists_view.rs:301 src/components/tracks_view.rs:310
 msgid "Replace queue"
 msgstr "Warteschlange ersetzen"
 
-#: src/components/album_view.rs:302
+#: src/components/album_view.rs:320
 msgid "Replaces current queue with this album"
 msgstr "Warteschlange mit Album ersetzen"
 
-#: src/components/album_view.rs:320
+#: src/components/album_view.rs:338
 msgid "Download Album"
 msgstr "Album downloaden"
 
-#: src/components/album_view.rs:323 src/components/playlists_view.rs:298
+#: src/components/album_view.rs:341 src/components/playlists_view.rs:316
 msgid "Click to select a folder to download this album to"
 msgstr "Klicken um Ordner zum downloaden des Albums zu wählen"
 
-#: src/components/album_view.rs:517 src/components/playlists_view.rs:546
+#: src/components/album_view.rs:535 src/components/playlists_view.rs:564
 msgid "Songs"
 msgstr "Titel"
 
-#: src/components/album_view.rs:526
+#: src/components/album_view.rs:544
 msgid "Release"
 msgstr "Veröffentlichung"
 
 # usage:
 # played 5 times
-#: src/components/album_view.rs:532
+#: src/components/album_view.rs:550
 msgid "played"
 msgstr ""
 
 # usage:
 # played 5 times
-#: src/components/album_view.rs:536
+#: src/components/album_view.rs:554
 msgid "times"
 msgstr "mal gespielt"
 
-#: src/components/album_view.rs:540 src/components/albums_view.rs:139
+#: src/components/album_view.rs:558 src/components/albums_view.rs:151
 #: src/components/filter_categories.rs:32 src/components/filter_row.rs:603
-#: src/components/filter_row.rs:615 src/components/tracks_view.rs:145
+#: src/components/filter_row.rs:615 src/components/tracks_view.rs:157
 msgid "Genre"
 msgstr "Genre"
 
@@ -362,41 +364,41 @@ msgstr "Gezeigte Alben in Warteschlange einfügen"
 msgid "Replaces current queue with shown albums"
 msgstr "Warteschlange mit gezeigten Alben ersetzen"
 
-#: src/components/albums_view.rs:136 src/components/artists_view.rs:124
+#: src/components/albums_view.rs:139 src/components/artists_view.rs:127
 msgid "Cover"
 msgstr "Cover"
 
-#: src/components/albums_view.rs:142
+#: src/components/albums_view.rs:160
 msgid "CDs"
 msgstr "CDs"
 
-#: src/components/albums_view.rs:180 src/components/artists_view.rs:126
+#: src/components/albums_view.rs:201 src/components/artists_view.rs:135
 msgid "Albums"
 msgstr "Alben"
 
-#: src/components/albums_view.rs:195 src/components/artists_view.rs:178
-#: src/components/tracks_view.rs:215
+#: src/components/albums_view.rs:216 src/components/artists_view.rs:190
+#: src/components/tracks_view.rs:236
 msgid "Filters:"
 msgstr "Filter:"
 
-#: src/components/albums_view.rs:222 src/components/albums_view.rs:740
-#: src/components/tracks_view.rs:252 src/components/tracks_view.rs:880
+#: src/components/albums_view.rs:243 src/components/albums_view.rs:761
+#: src/components/tracks_view.rs:273 src/components/tracks_view.rs:901
 msgid "Shown albums"
 msgstr "Gezeigte Alben"
 
-#: src/components/albums_view.rs:226 src/components/albums_view.rs:745
-#: src/components/artists_view.rs:337 src/components/artists_view.rs:561
-#: src/components/tracks_view.rs:248 src/components/tracks_view.rs:875
+#: src/components/albums_view.rs:247 src/components/albums_view.rs:766
+#: src/components/artists_view.rs:349 src/components/artists_view.rs:573
+#: src/components/tracks_view.rs:269 src/components/tracks_view.rs:896
 msgid "Shown artists"
 msgstr "Gezeigte Artisten"
 
-#: src/components/albums_view.rs:301 src/components/artists_view.rs:281
-#: src/components/tracks_view.rs:345
+#: src/components/albums_view.rs:322 src/components/artists_view.rs:293
+#: src/components/tracks_view.rs:366
 msgid "Active Filters"
 msgstr "Filter"
 
-#: src/components/albums_view.rs:323 src/components/artists_view.rs:303
-#: src/components/tracks_view.rs:367
+#: src/components/albums_view.rs:344 src/components/artists_view.rs:315
+#: src/components/tracks_view.rs:388
 msgid "New filter:"
 msgstr "Neuer Filter:"
 
@@ -448,31 +450,31 @@ msgstr "Gezeigte Artisten in Warteschlange einfügen"
 msgid "Replaces current queue with shown artists"
 msgstr "Warteschlange mit gezeigten Artisten ersetzen"
 
-#: src/components/artists_view.rs:125
+#: src/components/artists_view.rs:131
 msgid "Name"
 msgstr "Name"
 
-#: src/components/artists_view.rs:163
+#: src/components/artists_view.rs:175
 msgid "Artists"
 msgstr "Artisten"
 
-#: src/components/artists_view.rs:205
+#: src/components/artists_view.rs:217
 msgid "Shown artists:"
 msgstr "Gezeigte Artisten:"
 
-#: src/components/artists_view.rs:220
+#: src/components/artists_view.rs:232
 msgid "Append artists to end of queue"
 msgstr "Artisten an Warteschlange anhängen"
 
-#: src/components/artists_view.rs:233
+#: src/components/artists_view.rs:245
 msgid "Insert artists after currently played or paused item"
 msgstr "Artisten nach derzeitigen Titel einfügen"
 
-#: src/components/artists_view.rs:246
+#: src/components/artists_view.rs:258
 msgid "Replaces current queue with artists"
 msgstr "Warteschlange mit Artisten ersetzen"
 
-#: src/components/browser.rs:513 src/components/playlists_view.rs:199
+#: src/components/browser.rs:513 src/components/playlists_view.rs:217
 msgid "New Playlist"
 msgstr "Neue Playlist"
 
@@ -688,15 +690,15 @@ msgstr "Adresse enthält einen ungültiges Zeichen"
 msgid "Address is invalid"
 msgstr "Adresse ist ungültig"
 
-#: src/components/main_window.rs:237
+#: src/components/main_window.rs:238
 msgid "Loading information from server"
 msgstr "Lade Informationen vom Server"
 
-#: src/components/main_window.rs:282
+#: src/components/main_window.rs:283
 msgid "Can't connect to subsonic server"
 msgstr "Keine Verbindung zum Subsonic Server möglich"
 
-#: src/components/main_window.rs:287
+#: src/components/main_window.rs:288
 msgid ""
 "Make sure the connection to the server is available. You might want to try "
 "later or connect to another server"
@@ -704,7 +706,11 @@ msgstr ""
 "Stelle sicher, dass die Verbindung zum Server möglich ist. Versuche es "
 "später nochmal oder verbinde dich mit einem anderen Server"
 
-#: src/components/main_window.rs:293
+#: src/components/main_window.rs:296
+msgid "Retry connecting"
+msgstr "Erneuter Verbindungsversuch"
+
+#: src/components/main_window.rs:301
 msgid "Logout"
 msgstr "Ausloggen"
 
@@ -748,31 +754,31 @@ msgstr "Bestätige das Löschen der Playlist"
 msgid "Don't delete the playlist"
 msgstr "Playlist nicht löschen"
 
-#: src/components/playlists_view.rs:172
+#: src/components/playlists_view.rs:190
 msgid "Playlists"
 msgstr "Playlisten"
 
-#: src/components/playlists_view.rs:218
+#: src/components/playlists_view.rs:236
 msgid "Select a playlist to show its songs"
 msgstr "Wähle eine Playliste um dessen Inhalt zu zeigen"
 
-#: src/components/playlists_view.rs:262
+#: src/components/playlists_view.rs:280
 msgid "Append playlist to end of queue"
 msgstr "Playlist an Warteschlange anhängen"
 
-#: src/components/playlists_view.rs:274
+#: src/components/playlists_view.rs:292
 msgid "Insert playlist after currently played or paused item"
 msgstr "Playlist nach derzeitigen Titel einfügen"
 
-#: src/components/playlists_view.rs:286
+#: src/components/playlists_view.rs:304
 msgid "Replaces current queue with this playlist"
 msgstr "Warteschlange mit Playlist ersetzen"
 
-#: src/components/playlists_view.rs:295
+#: src/components/playlists_view.rs:313
 msgid "Download Playlist"
 msgstr "Playlist downloaden"
 
-#: src/components/playlists_view.rs:542
+#: src/components/playlists_view.rs:560
 msgid "Created at: %d.%m.%Y, %H:%M"
 msgstr "Erstellt am: %d.%m.%Y, %H:%M"
 
@@ -864,22 +870,22 @@ msgstr "Gezeigte Titel in Warteschlange einfügen"
 msgid "Replaces current queue with shown tracks"
 msgstr "Warteschlange mit gezeigten Titel ersetzen"
 
-#: src/components/tracks_view.rs:200
+#: src/components/tracks_view.rs:221
 msgid "Tracks"
 msgstr "Titel"
 
-#: src/components/tracks_view.rs:244 src/components/tracks_view.rs:870
+#: src/components/tracks_view.rs:265 src/components/tracks_view.rs:891
 msgid "Shown tracks"
 msgstr "Gezeigte Titel"
 
 # Usage in:
 # Download of Album.zip failed
 # Saving of Album.zip failed
-#: src/components/tracks_view.rs:300
+#: src/components/tracks_view.rs:321
 msgid "Download Tracks"
 msgstr "Download Titel"
 
-#: src/components/tracks_view.rs:303
+#: src/components/tracks_view.rs:324
 msgid "Click to select a folder to download shown tracks to"
 msgstr "Klicken um einen Ordner zum downloaden der gezeigten Titel zu wählen"
 
