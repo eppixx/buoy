@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-03 11:49+0100\n"
-"PO-Revision-Date: 2025-02-03 11:50+0100\n"
+"POT-Creation-Date: 2025-02-11 15:39+0100\n"
+"PO-Revision-Date: 2025-02-11 15:41+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -721,6 +721,16 @@ msgstr "Nichts zu spielen"
 #: src/components/play_info.rs:96
 msgid "Nothing is playing"
 msgstr "Nichts wird gespielt"
+
+# by {artists} on {album}
+#: src/components/play_info.rs:126
+msgid "by"
+msgstr "von"
+
+# by {artists} on {album}
+#: src/components/play_info.rs:135
+msgid "on"
+msgstr "auf"
 
 #: src/components/playlist_element.rs:195
 msgid "Rename Playlist"

@@ -122,7 +122,8 @@ fn style_label(title: &str, artist: &str, album: &str) -> String {
         result.push('\n');
     } else {
         result.push_str(&format!(
-            "\nby <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            "\n{} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            gettext("by"),
             glib::markup_escape_text(artist)
         ));
     }
@@ -130,7 +131,8 @@ fn style_label(title: &str, artist: &str, album: &str) -> String {
         result.push('\n');
     } else {
         result.push_str(&format!(
-            " on <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            " {} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+            gettext("on"),
             glib::markup_escape_text(album)
         ));
     }

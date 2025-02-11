@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-03 11:49+0100\n"
+"POT-Creation-Date: 2025-02-11 15:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -680,6 +680,14 @@ msgstr ""
 
 #: src/components/play_info.rs:96
 msgid "Nothing is playing"
+msgstr ""
+
+#: src/components/play_info.rs:126
+msgid "by"
+msgstr ""
+
+#: src/components/play_info.rs:135
+msgid "on"
 msgstr ""
 
 #: src/components/playlist_element.rs:195
