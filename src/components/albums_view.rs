@@ -138,9 +138,9 @@ impl relm4::component::Component for AlbumsView {
             .unwrap()
             .set_title(Some(&gettext("Cover")));
         columns
-            .get("Title")
+            .get("Album")
             .unwrap()
-            .set_title(Some(&gettext("Title")));
+            .set_title(Some(&gettext("Album")));
         columns
             .get("Artist")
             .unwrap()
