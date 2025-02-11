@@ -22,6 +22,7 @@ pub mod settings;
 pub mod subsonic;
 pub mod subsonic_cover;
 pub mod types;
+pub mod views;
 
 const LOG_PARA: &str = "info,bouy:trace,submarine:info";
 

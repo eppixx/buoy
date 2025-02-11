@@ -27,6 +27,7 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
     types::Droppable,
+    views::{ClickableViews, Views},
 };
 use crate::{
     components::{
@@ -88,6 +89,7 @@ pub enum AppIn {
     SearchActivate(bool),
     SearchChanged,
     Download(Droppable),
+    ClickedNavigationBtn(ClickableViews),
 }
 
 #[derive(Debug)]
@@ -405,44 +407,154 @@ impl relm4::component::AsyncComponent for App {
                             },
 
                             gtk::Box {
-                                gtk::Button {
+                                append: dashboard_btn = &gtk::ToggleButton {
                                     add_css_class: "browser-navigation-button",
-                                    set_icon_name: "go-home-symbolic",
+                                    add_css_class: "flat",
                                     set_tooltip: &gettext("Go to dashboard"),
-                                    connect_clicked[browser_sender] => move |_| {
-                                        browser_sender.emit(BrowserIn::DashboardClicked);
+                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Dashboard),
+
+                                    gtk::Box {
+                                        set_spacing: 3,
+
+                                        gtk::Image {
+                                            set_icon_name: Some("go-home-symbolic"),
+                                        },
+                                        append: dashboard_rvl = &gtk::Revealer {
+                                            set_transition_duration: 200,
+                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                            gtk::Label {
+                                                set_text: &gettext("Dashboard"),
+                                            }
+                                        }
                                     }
                                 },
-                                gtk::Button {
+                                append: artists_btn = &gtk::ToggleButton {
                                     add_css_class: "browser-navigation-button",
-                                    set_icon_name: "avatar-default-symbolic",
+                                    add_css_class: "flat",
                                     set_tooltip: &gettext("Show artists"),
-                                    connect_clicked[browser_sender] => move |_| {
-                                        browser_sender.emit(BrowserIn::ArtistsClicked);
+                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Artists),
+
+                                    gtk::Box {
+                                        set_spacing: 3,
+
+                                        gtk::Image {
+                                            set_icon_name: Some("avatar-default-symbolic"),
+                                        },
+                                        append: artists_rvl = &gtk::Revealer {
+                                            set_transition_duration: 200,
+                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                            gtk::Label {
+                                                set_text: &gettext("Artists"),
+                                            }
+                                        }
                                     }
                                 },
-                                gtk::Button {
+                                append: artist_rvl = &gtk::Revealer {
+                                    set_transition_duration: 200,
+                                    set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                    #[wrap(Some)]
+                                    set_child: artist_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("avatar-default-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_text: &gettext("Artist"),
+                                            }
+                                        }
+                                    }
+                                },
+                                append: albums_btn = &gtk::ToggleButton {
                                     add_css_class: "browser-navigation-button",
-                                    set_icon_name: "media-optical-cd-audio-symbolic",
+                                    add_css_class: "flat",
                                     set_tooltip: &gettext("Show albums"),
-                                    connect_clicked[browser_sender] => move |_| {
-                                        browser_sender.emit(BrowserIn::AlbumsClicked);
+                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Albums),
+
+                                    gtk::Box {
+                                        set_spacing: 3,
+
+                                        gtk::Image {
+                                            set_icon_name: Some("media-optical-cd-audio-symbolic"),
+                                        },
+                                        append: albums_rvl = &gtk::Revealer {
+                                            set_transition_duration: 200,
+                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                            gtk::Label {
+                                                set_text: &gettext("Albums"),
+                                            }
+                                        }
                                     }
                                 },
-                                gtk::Button {
+                                append: album_rvl = &gtk::Revealer {
+                                    set_transition_duration: 200,
+                                    set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                    #[wrap(Some)]
+                                    set_child: album_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("media-optical-cd-audio-symbolic"),
+                                            },
+                                            gtk::Label {
+                                                set_text: &gettext("Album"),
+                                            }
+                                        }
+                                    }
+                                },
+                                append: tracks_btn = &gtk::ToggleButton {
                                     add_css_class: "browser-navigation-button",
-                                    set_icon_name: "audio-x-generic-symbolic",
+                                    add_css_class: "flat",
                                     set_tooltip: &gettext("Show tracks"),
-                                    connect_clicked[browser_sender] => move |_| {
-                                        browser_sender.emit(BrowserIn::TracksClicked);
+                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Tracks),
+
+                                    gtk::Box {
+                                        set_spacing: 3,
+
+                                        gtk::Image {
+                                            set_icon_name: Some("audio-x-generic-symbolic"),
+                                        },
+                                        append: tracks_rvl = &gtk::Revealer {
+                                            set_transition_duration: 200,
+                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                            gtk::Label {
+                                                set_text: &gettext("Tracks"),
+                                            }
+                                        }
                                     }
                                 },
-                                gtk::Button {
+                                append: playlists_btn = &gtk::ToggleButton {
                                     add_css_class: "browser-navigation-button",
-                                    set_icon_name: "playlist-symbolic",
+                                    add_css_class: "flat",
                                     set_tooltip: &gettext("Show playlists"),
-                                    connect_clicked[browser_sender] => move |_| {
-                                        browser_sender.emit(BrowserIn::PlaylistsClicked);
+                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Playlists),
+
+                                    gtk::Box {
+                                        set_spacing: 3,
+
+                                        gtk::Image {
+                                            set_icon_name: Some("playlist-symbolic"),
+                                        },
+                                        append: playlists_rvl = &gtk::Revealer {
+                                            set_transition_duration: 200,
+                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                            gtk::Label {
+                                                set_text: &gettext("Playlists"),
+                                            }
+                                        }
                                     }
                                 },
                             }
@@ -756,6 +868,19 @@ impl relm4::component::AsyncComponent for App {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
                 BrowserOut::Download(drop) => sender.input(AppIn::Download(drop)),
+                BrowserOut::ChangedViewTo(view) => match view {
+                    Views::Clickable(view) => sender.input(AppIn::ClickedNavigationBtn(view)),
+                    Views::Artist => {
+                        reset_navigation_btns(widgets);
+                        widgets.artist_rvl.set_reveal_child(true);
+                        widgets.artist_btn.set_active(true);
+                    }
+                    Views::Album => {
+                        reset_navigation_btns(widgets);
+                        widgets.album_rvl.set_reveal_child(true);
+                        widgets.album_btn.set_active(true);
+                    }
+                },
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
@@ -942,8 +1067,37 @@ impl relm4::component::AsyncComponent for App {
                         .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
                 }
             }
-            AppIn::Download(drop) => {
-                Download::download(sender.clone(), drop);
+            AppIn::Download(drop) => Download::download(sender.clone(), drop),
+            AppIn::ClickedNavigationBtn(view) => {
+                reset_navigation_btns(widgets);
+
+                match view {
+                    ClickableViews::Dashboard => {
+                        self.browser.emit(BrowserIn::DashboardClicked);
+                        widgets.dashboard_rvl.set_reveal_child(true);
+                        widgets.dashboard_btn.set_active(true);
+                    }
+                    ClickableViews::Artists => {
+                        self.browser.emit(BrowserIn::ArtistsClicked);
+                        widgets.artists_rvl.set_reveal_child(true);
+                        widgets.artists_btn.set_active(true);
+                    }
+                    ClickableViews::Albums => {
+                        self.browser.emit(BrowserIn::AlbumsClicked);
+                        widgets.albums_rvl.set_reveal_child(true);
+                        widgets.albums_btn.set_active(true);
+                    }
+                    ClickableViews::Tracks => {
+                        self.browser.emit(BrowserIn::TracksClicked);
+                        widgets.tracks_rvl.set_reveal_child(true);
+                        widgets.tracks_btn.set_active(true);
+                    }
+                    ClickableViews::Playlists => {
+                        self.browser.emit(BrowserIn::PlaylistsClicked);
+                        widgets.playlists_rvl.set_reveal_child(true);
+                        widgets.playlists_btn.set_active(true);
+                    }
+                }
             }
         }
     }
@@ -1022,4 +1176,22 @@ async fn show_desktop_notification(
             "Could not send desktop notification: {e:?}"
         )));
     }
+}
+
+fn reset_navigation_btns(widgets: &mut <App as relm4::component::AsyncComponent>::Widgets) {
+    widgets.dashboard_rvl.set_reveal_child(false);
+    widgets.artists_rvl.set_reveal_child(false);
+    widgets.artist_rvl.set_reveal_child(false);
+    widgets.albums_rvl.set_reveal_child(false);
+    widgets.album_rvl.set_reveal_child(false);
+    widgets.tracks_rvl.set_reveal_child(false);
+    widgets.playlists_rvl.set_reveal_child(false);
+
+    widgets.dashboard_btn.set_active(false);
+    widgets.artists_btn.set_active(false);
+    widgets.artist_btn.set_active(false);
+    widgets.albums_btn.set_active(false);
+    widgets.album_btn.set_active(false);
+    widgets.tracks_btn.set_active(false);
+    widgets.playlists_btn.set_active(false);
 }

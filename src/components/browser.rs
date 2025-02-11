@@ -10,17 +10,20 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::components::{
-    album_element::AlbumElementInit,
-    album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
-    albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
-    artist_view::{ArtistView, ArtistViewIn, ArtistViewOut},
-    artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
-    dashboard::{Dashboard, DashboardIn, DashboardOut},
-    playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
-    tracks_view::{TracksView, TracksViewIn, TracksViewOut},
-};
 use crate::{client::Client, subsonic::Subsonic, types::Droppable};
+use crate::{
+    components::{
+        album_element::AlbumElementInit,
+        album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
+        albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
+        artist_view::{ArtistView, ArtistViewIn, ArtistViewOut},
+        artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
+        dashboard::{Dashboard, DashboardIn, DashboardOut},
+        playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
+        tracks_view::{TracksView, TracksViewIn, TracksViewOut},
+    },
+    views,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Views {
@@ -98,6 +101,7 @@ pub enum BrowserOut {
     FavoriteArtistClicked(String, bool),
     FavoriteSongClicked(String, bool),
     Download(Droppable),
+    ChangedViewTo(views::Views),
 }
 
 #[relm4::component(async, pub)]
@@ -196,6 +200,9 @@ impl relm4::component::AsyncComponent for Browser {
                     //change view
                     if let Some(view) = self.history_widget.last() {
                         self.content.set_child(Some(view.widget()));
+                        sender
+                            .output(BrowserOut::ChangedViewTo(view.into()))
+                            .unwrap();
                     }
                 }
 
@@ -211,6 +218,11 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Clickable(
+                        views::ClickableViews::Dashboard,
+                    )))
+                    .unwrap();
                 self.history_widget
                     .push(Views::Dashboard(self.dashboard.widget().clone()));
                 self.content
@@ -246,6 +258,11 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Clickable(
+                        views::ClickableViews::Albums,
+                    )))
+                    .unwrap();
                 if self.albums.is_none() {
                     self.albums = Some(
                         AlbumsView::builder()
@@ -267,7 +284,6 @@ impl relm4::component::AsyncComponent for Browser {
                 let Some(child) = self.subsonic.borrow().find_album(&id) else {
                     return;
                 };
-
                 let init = AlbumViewInit::Child(Box::new(child));
                 let album: relm4::Controller<AlbumView> = AlbumView::builder()
                     .launch((self.subsonic.clone(), init))
@@ -275,6 +291,9 @@ impl relm4::component::AsyncComponent for Browser {
                         BrowserIn::AlbumView(Box::new(msg))
                     });
 
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Album))
+                    .unwrap();
                 self.history_widget
                     .push(Views::Album(album.widget().clone()));
                 self.album_views.push(album);
@@ -349,6 +368,9 @@ impl relm4::component::AsyncComponent for Browser {
                             BrowserIn::AlbumView(Box::new(msg))
                         });
 
+                    sender
+                        .output(BrowserOut::ChangedViewTo(views::Views::Album))
+                        .unwrap();
                     self.history_widget
                         .push(Views::Album(album.widget().clone()));
                     self.album_views.push(album);
@@ -426,6 +448,9 @@ impl relm4::component::AsyncComponent for Browser {
                             BrowserIn::AlbumView(Box::new(msg))
                         });
 
+                    sender
+                        .output(BrowserOut::ChangedViewTo(views::Views::Album))
+                        .unwrap();
                     self.history_widget
                         .push(Views::Album(album.widget().clone()));
                     self.album_views.push(album);
@@ -674,6 +699,9 @@ impl relm4::component::AsyncComponent for Browser {
                         BrowserIn::ArtistView(Box::new(msg))
                     });
 
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Artist))
+                    .unwrap();
                 self.history_widget
                     .push(Views::Artist(artist.widget().clone()));
                 self.artist_views.push(artist);
