@@ -548,9 +548,9 @@ fn build_info_string(child: &submarine::data::AlbumWithSongsId3) -> String {
     if let Some(played) = child.base.play_count {
         result.push_str(" • ");
         result.push_str(&gettext("played"));
-        result.push_str(" ");
+        result.push(' ');
         result.push_str(&played.to_string());
-        result.push_str(" ");
+        result.push(' ');
         result.push_str(&gettext("times"));
     }
     if let Some(genre) = &child.base.genre {

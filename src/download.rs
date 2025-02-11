@@ -22,7 +22,7 @@ impl Download {
         // create dialog
         let builder = gtk::FileChooserDialog::builder();
         let file_dialog = builder
-            .name(&gettext("Choose location for download"))
+            .name(gettext("Choose location for download"))
             .create_folders(true)
             .modal(true)
             .use_header_bar(1)
