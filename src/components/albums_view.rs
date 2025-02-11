@@ -190,102 +190,89 @@ impl relm4::component::Component for AlbumsView {
                 add_css_class: "albums-view",
                 set_orientation: gtk::Orientation::Vertical,
 
-                gtk::WindowHandle {
-                    gtk::CenterBox {
-                        #[wrap(Some)]
-                        set_center_widget = &gtk::Box {
-                            set_spacing: 5,
-
-                            gtk::Label {
-                                add_css_class: "h2",
-                                set_label: &gettext("Albums"),
-                                set_halign: gtk::Align::Center,
-                            },
-                            append: spinner = &gtk::Spinner {
-                                set_spinning: true,
-                                start: (),
-                            }
-                        },
-
-                        #[wrap(Some)]
-                        set_end_widget = &gtk::Box {
-                            set_spacing: 10,
-                            set_margin_end: 10,
-
-                            gtk::Label {
-                                set_text: &gettext("Filters:"),
-                            },
-                            gtk::Switch {
-                                set_valign: gtk::Align::Center,
-                                connect_active_notify => AlbumsViewIn::ToggleFilters,
-                            }
-                        }
-                    }
-                },
-
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
 
                     // info
                     gtk::WindowHandle {
-                        gtk::Box {
-                            set_spacing: 15,
-                            set_margin_horizontal: 7,
+                        gtk::CenterBox {
+                            #[wrap(Some)]
+                            set_start_widget = &gtk::Box {
+                                set_spacing: 15,
+                                set_margin_horizontal: 7,
 
-                            //tracks info
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 8,
-
-                                append: shown_albums = &gtk::Label {
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
-                                },
-                                append: shown_artists = &gtk::Label {
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
-                                },
-
+                                //tracks info
                                 gtk::Box {
-                                    set_spacing: 15,
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_spacing: 8,
 
-                                    #[name = "append_to_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("list-add-symbolic"),
-                                            },
-                                            gtk::Label {
-                                                set_label: &gettext("Append"),
-                                            }
-                                        },
-                                        connect_clicked => AlbumsViewIn::AppendToQueue,
+                                    append: shown_albums = &gtk::Label {
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
                                     },
-                                    #[name = "add_to_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("list-add-symbolic"),
-                                            },
-                                            gtk::Label {
-                                                set_label: &gettext("Play next"),
-                                            }
-                                        },
-                                        connect_clicked => AlbumsViewIn::AddToQueue,
+                                    append: shown_artists = &gtk::Label {
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
                                     },
-                                    #[name = "replace_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("emblem-symbolic-link-symbolic"),
+
+                                    gtk::Box {
+                                        set_spacing: 15,
+
+                                        #[name = "append_to_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Append"),
+                                                }
                                             },
-                                            gtk::Label {
-                                                set_label: &gettext("Replace queue"),
-                                            }
+                                            connect_clicked => AlbumsViewIn::AppendToQueue,
                                         },
-                                        connect_clicked => AlbumsViewIn::ReplaceQueue,
+                                        #[name = "add_to_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Play next"),
+                                                }
+                                            },
+                                            connect_clicked => AlbumsViewIn::AddToQueue,
+                                        },
+                                        #[name = "replace_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Replace queue"),
+                                                }
+                                            },
+                                            connect_clicked => AlbumsViewIn::ReplaceQueue,
+                                        }
                                     }
+                                }
+                            },
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
+                                set_spacing: 10,
+                                set_margin_end: 10,
+
+                                append: spinner = &gtk::Spinner {
+                                    set_spinning: true,
+                                    start: (),
+                                },
+                                gtk::Label {
+                                    set_text: &gettext("Filters:"),
+                                },
+                                gtk::Switch {
+                                    set_valign: gtk::Align::Center,
+                                    connect_active_notify => AlbumsViewIn::ToggleFilters,
                                 }
                             }
                         }

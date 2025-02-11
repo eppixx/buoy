@@ -241,22 +241,11 @@ impl relm4::Component for Dashboard {
 
     view! {
         gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-            add_css_class: "dashboard-view",
-            set_margin_horizontal: 7,
-
-            gtk::WindowHandle {
-                gtk::Label {
-                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                    set_halign: gtk::Align::Center,
-                    set_text: &gettext("Dashboard"),
-                }
-            },
-
-            #[name = "outer_scroll"]
-            gtk::ScrolledWindow {
+            append: outer_scroll = &gtk::ScrolledWindow {
+                add_css_class: "dashboard-view",
                 set_hexpand: true,
                 set_vexpand: true,
+
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_halign: gtk::Align::Fill,
@@ -270,6 +259,7 @@ impl relm4::Component for Dashboard {
                             set_start_widget = &gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                 set_halign: gtk::Align::Start,
+                                set_margin_horizontal: 7,
                                 set_text: &gettext("Newly added"),
                             },
                             #[wrap(Some)]
@@ -333,6 +323,7 @@ impl relm4::Component for Dashboard {
                             set_start_widget = &gtk::Label {
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                 set_halign: gtk::Align::Start,
+                                set_margin_horizontal: 7,
                                 set_text: &gettext("Recently Played"),
                             },
                             #[wrap(Some)]
@@ -399,6 +390,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Label {
                                     add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                     set_halign: gtk::Align::Start,
+                                    set_margin_horizontal: 7,
                                     set_text: &gettext("Random"),
                                 },
                                 gtk::Button {
@@ -470,6 +462,7 @@ impl relm4::Component for Dashboard {
                             set_start_widget = &gtk::Label {
                                 set_halign: gtk::Align::Start,
                                 add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_margin_horizontal: 7,
                                 set_text: &gettext("Most Played"),
                             },
 

@@ -164,100 +164,87 @@ impl relm4::component::Component for ArtistsView {
                 add_css_class: "tracks-view",
                 set_orientation: gtk::Orientation::Vertical,
 
-                gtk::WindowHandle {
-                    gtk::CenterBox {
-                        #[wrap(Some)]
-                        set_center_widget = &gtk::Box {
-                            set_spacing: 5,
-
-                            gtk::Label {
-                                add_css_class: "h2",
-                                set_label: &gettext("Artists"),
-                                set_halign: gtk::Align::Center,
-                            },
-                            append: spinner = &gtk::Spinner {
-                                set_spinning: true,
-                                start: (),
-                            }
-                        },
-
-                        #[wrap(Some)]
-                        set_end_widget = &gtk::Box {
-                            set_spacing: 10,
-                            set_margin_end: 10,
-
-                            gtk::Label {
-                                set_text: &gettext("Filters:"),
-                            },
-                            gtk::Switch {
-                                set_valign: gtk::Align::Center,
-                                connect_active_notify => ArtistsViewIn::ToggleFilters,
-                            }
-                        }
-                    }
-                },
-
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
 
                     // info
                     gtk::WindowHandle {
-                        gtk::Box {
-                            set_spacing: 15,
-                            set_margin_horizontal: 7,
+                        gtk::CenterBox {
+                            #[wrap(Some)]
+                            set_start_widget = &gtk::Box {
+                                set_spacing: 15,
+                                set_margin_horizontal: 7,
 
-                            //tracks info
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 8,
-
-                                append: shown_artists = &gtk::Label {
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &format!("{}: {}", gettext("Shown artists:"), model.shown_artists.borrow().len()),
-                                },
+                                //tracks info
                                 gtk::Box {
-                                    set_spacing: 15,
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_spacing: 8,
 
-                                    #[name = "append_to_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("list-add-symbolic"),
-                                            },
-                                            gtk::Label {
-                                                set_label: &gettext("Append"),
-                                            }
-                                        },
-                                        set_tooltip: &gettext("Append artists to end of queue"),
-                                        connect_clicked => ArtistsViewIn::AppendToQueue,
+                                    append: shown_artists = &gtk::Label {
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &format!("{}: {}", gettext("Shown artists:"), model.shown_artists.borrow().len()),
                                     },
-                                    #[name = "add_to_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("list-add-symbolic"),
+                                    gtk::Box {
+                                        set_spacing: 15,
+
+                                        #[name = "append_to_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Append"),
+                                                }
                                             },
-                                            gtk::Label {
-                                                set_label: &gettext("Play next"),
-                                            }
+                                            set_tooltip: &gettext("Append artists to end of queue"),
+                                            connect_clicked => ArtistsViewIn::AppendToQueue,
                                         },
-                                        set_tooltip: &gettext("Insert artists after currently played or paused item"),
-                                        connect_clicked => ArtistsViewIn::AddToQueue,
-                                    },
-                                    #[name = "replace_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                        #[name = "add_to_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Play next"),
+                                                }
                                             },
-                                            gtk::Label {
-                                                set_label: &gettext("Replace queue"),
-                                            }
+                                            set_tooltip: &gettext("Insert artists after currently played or paused item"),
+                                            connect_clicked => ArtistsViewIn::AddToQueue,
                                         },
-                                        set_tooltip: &gettext("Replaces current queue with artists"),
-                                        connect_clicked => ArtistsViewIn::ReplaceQueue,
+                                        #[name = "replace_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Replace queue"),
+                                                }
+                                            },
+                                            set_tooltip: &gettext("Replaces current queue with artists"),
+                                            connect_clicked => ArtistsViewIn::ReplaceQueue,
+                                        }
                                     }
+                                }
+                            },
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
+                                set_spacing: 10,
+                                set_margin_end: 10,
+
+                                append: spinner = &gtk::Spinner {
+                                    set_spinning: true,
+                                    start: (),
+                                },
+                                gtk::Label {
+                                    set_text: &gettext("Filters:"),
+                                },
+                                gtk::Switch {
+                                    set_valign: gtk::Align::Center,
+                                    connect_active_notify => ArtistsViewIn::ToggleFilters,
                                 }
                             }
                         }

@@ -211,119 +211,107 @@ impl relm4::Component for TracksView {
                 add_css_class: "tracks-view",
                 set_orientation: gtk::Orientation::Vertical,
 
-                gtk::WindowHandle {
-                    gtk::CenterBox {
-                        #[wrap(Some)]
-                        set_center_widget = &gtk::Box {
-                            set_spacing: 5,
-                            gtk::Label {
-                                add_css_class: "h2",
-                                set_label: &gettext("Tracks"),
-                                set_halign: gtk::Align::Center,
-                            },
-                            append: spinner = &gtk::Spinner {
-                                set_spinning: true,
-                                start: (),
-                            }
-                        },
-
-                        #[wrap(Some)]
-                        set_end_widget = &gtk::Box {
-                            set_spacing: 10,
-                            set_margin_end: 10,
-
-                            gtk::Label {
-                                set_text: &gettext("Filters:"),
-                            },
-                            gtk::Switch {
-                                set_valign: gtk::Align::Center,
-                                connect_active_notify => TracksViewIn::ToggleFilters,
-                            }
-                        }
-                    }
-                },
-
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 8,
 
                     // info
                     gtk::WindowHandle {
-                        gtk::Box {
-                            set_spacing: 15,
-                            set_margin_horizontal: 7,
+                        gtk::CenterBox {
+                            #[wrap(Some)]
+                            set_start_widget = &gtk::Box {
+                                set_spacing: 15,
+                                set_margin_horizontal: 7,
 
-                            model.info_cover.widget().clone() -> gtk::Box {},
+                                model.info_cover.widget().clone() -> gtk::Box {},
 
-                            //tracks info
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 8,
-
-                                append: shown_tracks = &gtk::Label {
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &format!("{}: {}", gettext("Shown tracks"), model.shown_tracks.borrow().len()),
-                                },
-                                append: shown_artists = &gtk::Label {
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
-                                },
-                                append: shown_albums = &gtk::Label {
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
-                                },
-
+                                //tracks info
                                 gtk::Box {
-                                    set_spacing: 15,
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_spacing: 8,
 
-                                    #[name = "append_to_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("list-add-symbolic"),
-                                            },
-                                            gtk::Label {
-                                                set_label: &gettext("Append"),
-                                            }
-                                        },
-                                        connect_clicked => TracksViewIn::AppendToQueue,
+                                    append: shown_tracks = &gtk::Label {
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &format!("{}: {}", gettext("Shown tracks"), model.shown_tracks.borrow().len()),
                                     },
-                                    #[name = "add_to_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("list-add-symbolic"),
-                                            },
-                                            gtk::Label {
-                                                set_label: &gettext("Play next"),
-                                            }
-                                        },
-                                        connect_clicked => TracksViewIn::AddToQueue,
+                                    append: shown_artists = &gtk::Label {
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
                                     },
-                                    #[name = "replace_queue"]
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("emblem-symbolic-link-symbolic"),
-                                            },
-                                            gtk::Label {
-                                                set_label: &gettext("Replace queue"),
-                                            }
-                                        },
-                                        connect_clicked => TracksViewIn::ReplaceQueue,
+                                    append: shown_albums = &gtk::Label {
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
                                     },
-                                    gtk::Button {
-                                        gtk::Box {
-                                            gtk::Image {
-                                                set_icon_name: Some("browser-download-symbolic"),
+
+                                    gtk::Box {
+                                        set_spacing: 15,
+
+                                        #[name = "append_to_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Append"),
+                                                }
                                             },
-                                            gtk::Label {
-                                                set_label: &gettext("Download Tracks"),
-                                            }
+                                            connect_clicked => TracksViewIn::AppendToQueue,
                                         },
-                                        set_tooltip: &gettext("Click to select a folder to download shown tracks to"),
-                                        connect_clicked => TracksViewIn::DownloadClicked,
+                                        #[name = "add_to_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("list-add-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Play next"),
+                                                }
+                                            },
+                                            connect_clicked => TracksViewIn::AddToQueue,
+                                        },
+                                        #[name = "replace_queue"]
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Replace queue"),
+                                                }
+                                            },
+                                            connect_clicked => TracksViewIn::ReplaceQueue,
+                                        },
+                                        gtk::Button {
+                                            gtk::Box {
+                                                gtk::Image {
+                                                    set_icon_name: Some("browser-download-symbolic"),
+                                                },
+                                                gtk::Label {
+                                                    set_label: &gettext("Download Tracks"),
+                                                }
+                                            },
+                                            set_tooltip: &gettext("Click to select a folder to download shown tracks to"),
+                                            connect_clicked => TracksViewIn::DownloadClicked,
+                                        }
                                     }
+                                }
+                            },
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
+                                set_spacing: 10,
+                                set_margin_end: 10,
+
+                                append: spinner = &gtk::Spinner {
+                                    set_spinning: true,
+                                    start: (),
+                                },
+                                gtk::Label {
+                                    set_text: &gettext("Filters:"),
+                                },
+                                gtk::Switch {
+                                    set_valign: gtk::Align::Center,
+                                    connect_active_notify => TracksViewIn::ToggleFilters,
                                 }
                             }
                         }
