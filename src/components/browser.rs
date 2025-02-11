@@ -181,10 +181,14 @@ impl relm4::component::AsyncComponent for Browser {
                     match self.history_widget.pop() {
                         None => {}
                         Some(view) => match view {
-                            Views::Dashboard(_) | Views::Artists(_) | Views::Albums(_) => {}
+                            // these are singletons
+                            Views::Dashboard(_)
+                            | Views::Artists(_)
+                            | Views::Albums(_)
+                            | Views::Tracks(_) => {}
+                            // these are not
                             Views::Artist(_) => _ = self.artist_views.pop(),
                             Views::Album(_) => _ = self.album_views.pop(),
-                            Views::Tracks(_) => todo!(),
                             Views::Playlists(_) => _ = self.playlists_views.pop(),
                         },
                     }
