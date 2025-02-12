@@ -209,7 +209,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
                         set_height_request: 24,
                         set_icon_name: "non-starred-symbolic",
 
-                        connect_clicked => AlbumElementIn::Clicked,
+                        connect_clicked => AlbumElementIn::FavoriteClicked,
                     }
                 },
 
