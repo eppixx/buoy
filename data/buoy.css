@@ -45,6 +45,10 @@ contents > box {
     min-width: 24px;
 }
 
+.browser-navigation-button:checked {
+    margin-right: 5px;
+}
+
 .equalizer {
    margin: 15px;
 }
