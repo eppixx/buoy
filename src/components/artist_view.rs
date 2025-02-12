@@ -10,13 +10,14 @@ use relm4::{
     ComponentController, RelmWidgetExt,
 };
 
-use crate::components::{
-    album_element::{
-        get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
-    },
-    cover::{Cover, CoverIn, CoverOut},
-};
 use crate::{client::Client, subsonic::Subsonic, types::Droppable};
+use crate::{
+    components::{
+        album_element::{get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut},
+        cover::{Cover, CoverIn, CoverOut},
+    },
+    types::Id,
+};
 
 #[derive(Debug)]
 pub struct ArtistView {
@@ -41,7 +42,7 @@ pub enum ArtistViewIn {
 
 #[derive(Debug)]
 pub enum ArtistViewOut {
-    AlbumClicked(AlbumElementInit),
+    AlbumClicked(Id),
     AppendArtist(Droppable),
     InsertAfterCurrentPlayed(Droppable),
     ReplaceQueue(Droppable),
@@ -53,8 +54,7 @@ pub enum ArtistViewOut {
 
 #[derive(Debug)]
 pub enum ArtistViewCmd {
-    LoadedAlbums(Result<submarine::data::ArtistWithAlbumsId3, submarine::SubsonicError>),
-    LoadedArtist(Result<submarine::data::ArtistInfo, submarine::SubsonicError>),
+    LoadedArtistInfo(Result<submarine::data::ArtistInfo, submarine::SubsonicError>),
 }
 
 #[relm4::component(pub)]
@@ -70,7 +70,7 @@ impl relm4::Component for ArtistView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Self {
+        let mut model = Self {
             subsonic: subsonic.clone(),
             init: init.clone(),
             cover: Cover::builder()
@@ -86,8 +86,8 @@ impl relm4::Component for ArtistView {
         let widgets = view_output!();
 
         //setup DropSource
-        let drop = Droppable::Artist(Box::new(init.clone()));
-        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        let droppable = Droppable::Artist(Box::new(init.clone()));
+        let content = gtk::gdk::ContentProvider::for_value(&droppable.to_value());
         let drag_src = gtk::DragSource::new();
         drag_src.set_actions(gtk::gdk::DragAction::COPY);
         drag_src.set_content(Some(&content));
@@ -114,18 +114,18 @@ impl relm4::Component for ArtistView {
         }
 
         // load albums
-        let id = init.id.clone();
-        sender.oneshot_command(async move {
-            let client = Client::get().unwrap();
-            ArtistViewCmd::LoadedAlbums(client.get_artist(id).await)
-        });
+        let mut guard = model.albums.guard();
+        for album in model.subsonic.borrow().albums_from_artist(&init) {
+            guard.push_back((model.subsonic.clone(), Id::album(&album.id)));
+        }
+        drop(guard);
 
         // load metainfo on artist
         let id = init.id.clone();
         sender.oneshot_command(async move {
             let client = Client::get().unwrap();
             let info = client.get_artist_info2(id, Some(5), Some(false)).await;
-            ArtistViewCmd::LoadedArtist(info)
+            ArtistViewCmd::LoadedArtistInfo(info)
         });
 
         relm4::ComponentParts { model, widgets }
@@ -332,12 +332,12 @@ impl relm4::Component for ArtistView {
         _root: &Self::Root,
     ) {
         match msg {
-            ArtistViewCmd::LoadedArtist(Err(e)) | ArtistViewCmd::LoadedAlbums(Err(e)) => sender
+            ArtistViewCmd::LoadedArtistInfo(Err(e)) => sender
                 .output(ArtistViewOut::DisplayToast(format!(
                     "error loading artist: {e}"
                 )))
                 .unwrap(),
-            ArtistViewCmd::LoadedArtist(Ok(artist)) => {
+            ArtistViewCmd::LoadedArtistInfo(Ok(artist)) => {
                 if let Some(bio) = artist.base.biography {
                     self.bio = bio;
                 } else {
@@ -345,15 +345,6 @@ impl relm4::Component for ArtistView {
                 }
 
                 // TODO do smth with similar artists
-            }
-            ArtistViewCmd::LoadedAlbums(Ok(artist)) => {
-                let mut guard = self.albums.guard();
-                for album in artist.album {
-                    guard.push_back((
-                        self.subsonic.clone(),
-                        AlbumElementInit::AlbumId3(Box::new(album)),
-                    ));
-                }
             }
         }
     }

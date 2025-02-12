@@ -15,22 +15,19 @@ use crate::{
     common::convert_for_label,
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
 pub struct AlbumElement {
+    subsonic: Rc<RefCell<Subsonic>>,
     cover: relm4::Controller<DescriptiveCover>,
-    init: AlbumElementInit,
+    id: Id,
     favorite: gtk::Button,
     favorite_ribbon: gtk::Box,
 }
 
 impl AlbumElement {
-    pub fn info(&self) -> &AlbumElementInit {
-        &self.init
-    }
-
     pub fn change_size(&self, size: i32) {
         self.cover.model().change_size(size);
     }
@@ -47,20 +44,14 @@ pub enum AlbumElementIn {
 
 #[derive(Debug)]
 pub enum AlbumElementOut {
-    Clicked(AlbumElementInit),
+    Clicked(Id),
     FavoriteClicked(String, bool),
     DisplayToast(String),
 }
 
-#[derive(Debug, Clone)]
-pub enum AlbumElementInit {
-    Child(Box<submarine::data::Child>),
-    AlbumId3(Box<submarine::data::AlbumId3>),
-}
-
 #[relm4::factory(pub)]
 impl relm4::factory::FactoryComponent for AlbumElement {
-    type Init = (Rc<RefCell<Subsonic>>, AlbumElementInit);
+    type Init = (Rc<RefCell<Subsonic>>, Id);
     type Input = AlbumElementIn;
     type Output = AlbumElementOut;
     type CommandOutput = ();
@@ -71,78 +62,48 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         _index: &relm4::factory::DynamicIndex,
         sender: relm4::factory::FactorySender<Self>,
     ) -> Self {
-        // init cover
-        let (builder, drop) = match &init {
-            AlbumElementInit::AlbumId3(id3) => {
-                let builder = DescriptiveCoverInit::new(
-                    id3.name.clone(),
-                    id3.cover_art.clone(),
-                    id3.artist.clone(),
-                );
-                (builder, Droppable::Album(id3.clone()))
-            }
-            AlbumElementInit::Child(child) => {
-                let builder = DescriptiveCoverInit::new(
-                    child.title.clone(),
-                    child.cover_art.clone(),
-                    child.artist.clone(),
-                );
-                (builder, Droppable::AlbumChild(child.clone()))
-            }
-        };
+        let album = subsonic.borrow().find_album(init.as_ref()).unwrap();
+        let drop = Droppable::AlbumChild(Box::new(album.clone()));
+        let builder = DescriptiveCoverInit::new(
+            album.title.clone(),
+            album.cover_art.clone(),
+            album.artist.clone(),
+        );
 
         let cover: relm4::Controller<DescriptiveCover> = DescriptiveCover::builder()
             .launch((subsonic.clone(), builder))
             .forward(sender.input_sender(), AlbumElementIn::DescriptiveCover);
         let model = Self {
+            subsonic,
             cover,
-            init: init.clone(),
+            id: init,
             favorite: gtk::Button::default(),
             favorite_ribbon: gtk::Box::default(),
         };
 
         let length_tr = gettext("Length");
         let year_tr = gettext("Year");
-        let songs_tr = gettext("songs");
 
         // tooltip string
-        let tooltip = match &init {
-            AlbumElementInit::AlbumId3(album) => {
-                let mut info = String::new();
-                if let Some(year) = album.year {
-                    info.push_str(&format!("{year_tr}: {} • ", year))
-                }
-                info.push_str(&album.song_count.to_string());
-                info.push_str(&songs_tr);
-                info.push_str(" • ");
-                info.push_str(&length_tr);
-                info.push_str(": ");
-                info.push_str(&convert_for_label(i64::from(album.duration) * 1000));
-                info
+        let mut tooltip = String::new();
+        if let Some(year) = album.year {
+            tooltip.push_str(&year_tr);
+            tooltip.push_str(": ");
+            tooltip.push_str(&year.to_string());
+        }
+        match album.duration {
+            Some(duration) if !tooltip.is_empty() => {
+                tooltip.push_str(" • ");
+                tooltip.push_str(&length_tr);
+                tooltip.push_str(": ");
+                tooltip.push_str(&convert_for_label(i64::from(duration) * 1000));
             }
-            AlbumElementInit::Child(child) => {
-                let mut info = String::new();
-                if let Some(year) = child.year {
-                    info.push_str(&year_tr);
-                    info.push_str(": ");
-                    info.push_str(&year.to_string());
-                }
-                match child.duration {
-                    Some(duration) if !info.is_empty() => {
-                        info.push_str(" • ");
-                        info.push_str(&length_tr);
-                        info.push_str(": ");
-                        info.push_str(&convert_for_label(i64::from(duration) * 1000));
-                    }
-                    Some(duration) => {
-                        info.push_str(&length_tr);
-                        info.push_str(": ");
-                        info.push_str(&convert_for_label(i64::from(duration) * 1000));
-                    }
-                    None => {}
-                };
-                info
+            Some(duration) => {
+                tooltip.push_str(&length_tr);
+                tooltip.push_str(": ");
+                tooltip.push_str(&convert_for_label(i64::from(duration) * 1000));
             }
+            None => {}
         };
         model.cover.widget().set_tooltip(&tooltip);
 
@@ -151,12 +112,9 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         let drag_src = gtk::DragSource::new();
         drag_src.set_actions(gtk::gdk::DragAction::COPY);
         drag_src.set_content(Some(&content));
-        let cover_art = match &init {
-            AlbumElementInit::AlbumId3(album) => album.cover_art.clone(),
-            AlbumElementInit::Child(album) => album.cover_art.clone(),
-        };
+        let subsonic = model.subsonic.clone();
         drag_src.connect_drag_begin(move |src, _drag| {
-            if let Some(cover_id) = &cover_art {
+            if let Some(cover_id) = &album.cover_art {
                 let cover = subsonic.borrow().cover_icon(cover_id);
                 if let Some(tex) = cover {
                     src.set_icon(Some(&tex), 0, 0);
@@ -168,16 +126,9 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         // set favorite icon
         model.favorite.set_visible(false);
         model.favorite_ribbon.set_visible(false);
-        match &init {
-            AlbumElementInit::AlbumId3(id3) if id3.starred.is_some() => {
-                model.favorite.set_icon_name("starred-symbolic");
-                model.favorite_ribbon.set_visible(true);
-            }
-            AlbumElementInit::Child(child) if child.starred.is_some() => {
-                model.favorite.set_icon_name("starred-symbolic");
-                model.favorite_ribbon.set_visible(true);
-            }
-            _ => {} // default is not favorited
+        if album.starred.is_some() {
+            model.favorite.set_icon_name("starred-symbolic");
+            model.favorite_ribbon.set_visible(true);
         }
 
         model
@@ -253,11 +204,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
                 }
             },
             AlbumElementIn::Favorited(id, state) => {
-                let local_id = match &self.init {
-                    AlbumElementInit::AlbumId3(album) => album.id.clone(),
-                    AlbumElementInit::Child(child) => child.id.clone(),
-                };
-                if local_id == id {
+                if self.id.as_ref() == id {
                     match state {
                         true => {
                             self.favorite.set_icon_name("starred-symbolic");
@@ -276,24 +223,18 @@ impl relm4::factory::FactoryComponent for AlbumElement {
             AlbumElementIn::Hover(true) => {
                 self.favorite.set_visible(true);
             }
-            AlbumElementIn::FavoriteClicked => {
-                let id = match &self.init {
-                    AlbumElementInit::AlbumId3(album) => album.id.clone(),
-                    AlbumElementInit::Child(child) => child.id.clone(),
-                };
-                match widgets.favorite.icon_name().as_deref() {
-                    Some("starred-symbolic") => sender
-                        .output(AlbumElementOut::FavoriteClicked(id, false))
-                        .unwrap(),
-                    Some("non-starred-symbolic") => sender
-                        .output(AlbumElementOut::FavoriteClicked(id, true))
-                        .unwrap(),
-                    name => unreachable!("unkonwn icon name: {name:?}"),
-                }
-            }
+            AlbumElementIn::FavoriteClicked => match widgets.favorite.icon_name().as_deref() {
+                Some("starred-symbolic") => sender
+                    .output(AlbumElementOut::FavoriteClicked(self.id.to_string(), false))
+                    .unwrap(),
+                Some("non-starred-symbolic") => sender
+                    .output(AlbumElementOut::FavoriteClicked(self.id.to_string(), true))
+                    .unwrap(),
+                name => unreachable!("unkonwn icon name: {name:?}"),
+            },
             AlbumElementIn::Clicked => {
                 sender
-                    .output(AlbumElementOut::Clicked(self.init.clone()))
+                    .output(AlbumElementOut::Clicked(self.id.clone()))
                     .unwrap();
             }
         }

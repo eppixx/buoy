@@ -12,10 +12,10 @@ use relm4::{
     RelmWidgetExt,
 };
 
-use crate::{client::Client, subsonic::Subsonic};
+use crate::{client::Client, subsonic::Subsonic, types::Id};
 use crate::{
     components::album_element::{
-        get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementInit, AlbumElementOut,
+        get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
     settings::Settings,
 };
@@ -52,7 +52,7 @@ pub struct Dashboard {
 
 #[derive(Debug)]
 pub enum DashboardOut {
-    ClickedAlbum(AlbumElementInit),
+    ClickedAlbum(Id),
     DisplayToast(String),
     FavoriteClicked(String, bool),
 }
@@ -111,20 +111,13 @@ impl relm4::Component for Dashboard {
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
         albums.sort_by(|a, b| b.created.cmp(&a.created));
-        let list: Vec<(Rc<RefCell<Subsonic>>, AlbumElementInit)> = albums
+        let list: Vec<(Rc<RefCell<Subsonic>>, Id)> = albums
             .iter()
             .take(10)
-            .map(|album| {
-                (
-                    subsonic.clone(),
-                    AlbumElementInit::Child(Box::new(album.clone())),
-                )
-            })
+            .map(|album| (subsonic.clone(), Id::album(&album.id)))
             .collect();
         let mut guard = model.recently_added_list.guard();
-        for infos in list {
-            guard.push_back(infos);
-        }
+        list.into_iter().for_each(|info| _ = guard.push_back(info));
         drop(guard);
 
         //load recently played albums
@@ -150,15 +143,14 @@ impl relm4::Component for Dashboard {
 
         //load most played albums
         albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
-        let list: Vec<AlbumElementInit> = albums
+        let ids: Vec<Id> = albums
             .iter()
             .take(10)
-            .map(|album| AlbumElementInit::Child(Box::new(album.clone())))
+            .map(|album| Id::album(&album.id))
             .collect();
         let mut guard = model.most_played_list.guard();
-        for infos in list {
-            guard.push_back((model.subsonic.clone(), infos));
-        }
+        ids.into_iter()
+            .for_each(|id| _ = guard.push_back((model.subsonic.clone(), id)));
         drop(guard);
 
         let (scroll_sender, receiver) = async_channel::unbounded::<Scrolling>();
@@ -583,15 +575,14 @@ impl relm4::Component for Dashboard {
                 let mut albums = self.subsonic.borrow().albums().clone();
                 albums.shuffle(&mut rng);
 
-                let infos: Vec<AlbumElementInit> = albums
+                let ids: Vec<Id> = albums
                     .iter()
                     .take(10)
-                    .map(|album| AlbumElementInit::Child(Box::new(album.clone())))
+                    .map(|album| Id::album(&album.id))
                     .collect();
                 let mut guard = self.random_album_list.guard();
-                for info in infos {
-                    guard.push_back((self.subsonic.clone(), info));
-                }
+                ids.into_iter()
+                    .for_each(|id| _ = guard.push_back((self.subsonic.clone(), id)));
             }
             DashboardIn::FavoritedAlbum(id, state) => {
                 self.recently_added_list
@@ -627,14 +618,10 @@ impl relm4::Component for Dashboard {
             DashboardCmd::Error(msg) => sender.output(DashboardOut::DisplayToast(msg)).unwrap(),
             DashboardCmd::LoadedRecentlyPlayed(Err(_e)) => {}
             DashboardCmd::LoadedRecentlyPlayed(Ok(list)) => {
-                let infos: Vec<AlbumElementInit> = list
-                    .iter()
-                    .map(|album| AlbumElementInit::Child(Box::new(album.clone())))
-                    .collect();
+                let ids: Vec<Id> = list.iter().map(|album| Id::album(&album.id)).collect();
                 let mut guard = self.recently_played_list.guard();
-                for info in infos {
-                    guard.push_back((self.subsonic.clone(), info));
-                }
+                ids.into_iter()
+                    .for_each(|id| _ = guard.push_back((self.subsonic.clone(), id)));
             }
         }
     }

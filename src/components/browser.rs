@@ -13,7 +13,6 @@ use relm4::{
 use crate::{client::Client, subsonic::Subsonic, types::Droppable};
 use crate::{
     components::{
-        album_element::AlbumElementInit,
         album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
         albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
         artist_view::{ArtistView, ArtistViewIn, ArtistViewOut},
@@ -342,13 +341,10 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
-                    if let AlbumElementInit::Child(child) = id {
-                        sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(
-                            Box::new(*child),
-                        )));
-                    } else {
-                        unimplemented!("encountered not child");
-                    }
+                    let album = self.subsonic.borrow().find_album(id.as_ref()).unwrap();
+                    sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(
+                        Box::new(album),
+                    )));
                 }
                 DashboardOut::DisplayToast(title) => {
                     sender.output(BrowserOut::DisplayToast(title)).unwrap();
@@ -436,10 +432,8 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
-                    let init: AlbumViewInit = match id {
-                        AlbumElementInit::Child(c) => AlbumViewInit::Child(c),
-                        AlbumElementInit::AlbumId3(a) => AlbumViewInit::AlbumId3(a),
-                    };
+                    let album = self.subsonic.borrow().find_album(id.as_ref()).unwrap();
+                    let init = AlbumViewInit::Child(Box::new(album));
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
                         .launch((self.subsonic.clone(), init))
                         .forward(sender.input_sender(), |msg| {
