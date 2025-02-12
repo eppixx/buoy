@@ -95,7 +95,7 @@ impl relm4::component::AsyncComponent for MainWindow {
         relm4::view! {
             #[local]
             root {
-                add_css_class: "main-window",
+                set_widget_name: "main-window",
                 set_default_width: Settings::get().lock().unwrap().window_width,
                 set_default_height: Settings::get().lock().unwrap().window_height,
                 set_maximized: Settings::get().lock().unwrap().window_maximized,

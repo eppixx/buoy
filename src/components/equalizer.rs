@@ -88,7 +88,7 @@ impl relm4::SimpleComponent for Equalizer {
 
     view! {
         gtk::Box {
-            add_css_class: "equalizer",
+            set_widget_name: "equalizer",
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 30,
 
@@ -100,7 +100,7 @@ impl relm4::SimpleComponent for Equalizer {
             gtk::CenterBox {
                 #[wrap(Some)]
                 set_start_widget = &model.reset_btn.clone() -> gtk::Button {
-                    add_css_class: "destructive-action",
+                    set_widget_name: "destructive-action",
                     set_label: &gettext("Reset bands"),
                     connect_clicked => EqualizerIn::Reset,
                 },
@@ -115,7 +115,6 @@ impl relm4::SimpleComponent for Equalizer {
             },
 
             gtk::Box {
-                add_css_class: "equalizer-bands",
                 set_vexpand: true,
                 set_spacing: 7,
 

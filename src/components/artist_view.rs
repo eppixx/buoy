@@ -133,12 +133,11 @@ impl relm4::Component for ArtistView {
 
     view! {
         gtk::Box {
-            add_css_class: "artist-view",
+            set_widget_name: "artist-view",
             set_orientation: gtk::Orientation::Vertical,
 
             gtk::Box {
                 set_spacing: 15,
-                add_css_class: "artist-view-info",
 
                 gtk::Overlay {
                     add_overlay = &model.favorite.clone() {
@@ -314,13 +313,13 @@ impl relm4::Component for ArtistView {
                 self.albums.broadcast(AlbumElementIn::Favorited(id, state));
             }
             ArtistViewIn::HoverCover(false) => {
-                self.favorite.remove_css_class("cover-favorite");
+                self.favorite.remove_css_class("neutral-color");
                 if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
                     self.favorite.set_visible(false);
                 }
             }
             ArtistViewIn::HoverCover(true) => {
-                self.favorite.add_css_class("cover-favorite");
+                self.favorite.add_css_class("neutral-color");
                 self.favorite.set_visible(true);
             }
         }

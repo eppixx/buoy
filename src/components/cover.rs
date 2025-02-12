@@ -118,7 +118,8 @@ impl relm4::Component for Cover {
         gtk::Box {
             model.stack.clone() -> gtk::Stack {
                 add_enumed[State::Stock] = &gtk::Box {
-                    add_css_class: "cover",
+                    add_css_class: "bordered",
+                    add_css_class: "stock-cover",
                 },
                 add_enumed[State::Image] = &model.cover.clone() -> gtk::Image {
                     add_css_class: "card",

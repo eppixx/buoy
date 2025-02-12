@@ -57,7 +57,7 @@ impl relm4::component::AsyncComponent for LoginForm {
 
     view! {
         gtk::Box {
-            add_css_class: "login-form",
+            set_widget_name: "login-form",
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 30,
 

@@ -185,7 +185,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
 
     view! {
         self.root_widget.clone() -> gtk::ListBoxRow {
-            add_css_class: "queue-song",
+            set_widget_name: "queue-song",
 
             gtk::Box {
                 set_spacing: 10,
@@ -200,11 +200,11 @@ impl relm4::factory::FactoryComponent for QueueSong {
 
                         add_enumed[PlayState::Stop] = &self.cover.widget().clone(),
                         add_enumed[PlayState::Play] = &gtk::Image {
-                            add_css_class: "queue-song-state",
+                            add_css_class: "borderd",
                             set_icon_name: Some("audio-volume-high-symbolic"),
                         },
                         add_enumed[PlayState::Pause] = &gtk::Image {
-                            add_css_class: "queue-song-state",
+                            add_css_class: "bordered",
                             set_icon_name: Some("media-playback-pause-symbolic"),
                         },
                     },

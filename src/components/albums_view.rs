@@ -282,7 +282,7 @@ impl relm4::component::Component for AlbumsView {
                         set_vexpand: true,
 
                         model.entries.view.clone() {
-                            add_css_class: "albums-view-tracks-row",
+                            set_widget_name: "albums-view-tracks",
                             set_vexpand: true,
                             set_single_click_activate: true,
 

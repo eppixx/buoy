@@ -326,11 +326,10 @@ impl relm4::component::AsyncComponent for App {
     view! {
         #[root]
         main_window = gtk::Box {
-            add_css_class: "main-box",
+            set_widget_name: "app",
             set_orientation: gtk::Orientation::Vertical,
 
             append: paned = &gtk::Paned {
-                add_css_class: "main-paned",
                 set_position: Settings::get().lock().unwrap().paned_position,
                 set_shrink_start_child: false,
                 set_resize_start_child: false,
@@ -389,12 +388,12 @@ impl relm4::component::AsyncComponent for App {
 
                         #[wrap(Some)]
                         set_title_widget = &gtk::Box {
+                            set_widget_name: "navigation-buttons",
                             set_hexpand: true,
                             set_halign: gtk::Align::Center,
                             set_spacing: 15,
 
                             append: search_btn = &gtk::ToggleButton {
-                                add_css_class: "browser-navigation-button",
                                 set_icon_name: "system-search-symbolic",
                                 set_tooltip: &gettext("Open search bar"),
 
@@ -408,7 +407,6 @@ impl relm4::component::AsyncComponent for App {
 
                             gtk::Box {
                                 append: dashboard_btn = &gtk::ToggleButton {
-                                    add_css_class: "browser-navigation-button",
                                     add_css_class: "flat",
                                     set_tooltip: &gettext("Go to dashboard"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Dashboard),
@@ -430,7 +428,6 @@ impl relm4::component::AsyncComponent for App {
                                     }
                                 },
                                 append: artists_btn = &gtk::ToggleButton {
-                                    add_css_class: "browser-navigation-button",
                                     add_css_class: "flat",
                                     set_tooltip: &gettext("Show artists"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Artists),
@@ -472,7 +469,6 @@ impl relm4::component::AsyncComponent for App {
                                     }
                                 },
                                 append: albums_btn = &gtk::ToggleButton {
-                                    add_css_class: "browser-navigation-button",
                                     add_css_class: "flat",
                                     set_tooltip: &gettext("Show albums"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Albums),
@@ -514,7 +510,6 @@ impl relm4::component::AsyncComponent for App {
                                     }
                                 },
                                 append: tracks_btn = &gtk::ToggleButton {
-                                    add_css_class: "browser-navigation-button",
                                     add_css_class: "flat",
                                     set_tooltip: &gettext("Show tracks"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Tracks),
@@ -536,7 +531,6 @@ impl relm4::component::AsyncComponent for App {
                                     }
                                 },
                                 append: playlists_btn = &gtk::ToggleButton {
-                                    add_css_class: "browser-navigation-button",
                                     add_css_class: "flat",
                                     set_tooltip: &gettext("Show playlists"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Playlists),
@@ -592,7 +586,7 @@ impl relm4::component::AsyncComponent for App {
                                     set_position: gtk::PositionType::Right,
 
                                     gtk::Box {
-                                        add_css_class: "config-menu",
+                                        set_widget_name: "config-menu",
                                         set_orientation: gtk::Orientation::Vertical,
                                         set_spacing: 15,
 

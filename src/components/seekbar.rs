@@ -4,6 +4,7 @@ use relm4::{
         self,
         prelude::{BoxExt, RangeExt, WidgetExt},
     },
+    RelmWidgetExt,
 };
 
 use crate::common::convert_for_label;
@@ -81,17 +82,16 @@ impl relm4::SimpleComponent for Seekbar {
     view! {
         #[root]
         gtk::Box {
-            add_css_class: "seekbar",
+            set_widget_name: "seekbar",
 
             #[name = "current"]
             gtk::Label {
-                add_css_class: "seekbar-current",
                 #[watch]
                 set_label: &convert_for_label(model.current),
             },
 
             append = &model.scale.clone() -> gtk::Scale {
-                add_css_class: "seekbar-scale",
+                set_margin_horizontal: 7,
                 set_hexpand: true,
                 connect_change_value[sender] => move |_scale, _, value| {
                     sender.input(SeekbarIn::SeekbarDragged(value));
@@ -101,7 +101,6 @@ impl relm4::SimpleComponent for Seekbar {
 
             #[name = "total"]
             gtk::Label {
-                add_css_class: "seekbar-total",
                 #[watch]
                 set_label: &convert_for_label(model.total),
             },

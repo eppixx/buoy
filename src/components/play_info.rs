@@ -64,19 +64,17 @@ impl relm4::SimpleComponent for PlayInfo {
     view! {
         #[root]
         gtk::Box {
-            add_css_class: "play-info",
+            set_widget_name: "play-info",
             set_hexpand: true,
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 10,
 
             append = &model.covers.widget().clone() {
-                add_css_class: "play-info-cover",
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
             },
 
             gtk::Label {
-                add_css_class: "play-info-info",
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
                 set_justify: gtk::Justification::Center,

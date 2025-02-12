@@ -185,7 +185,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
 
     view! {
         gtk::FlowBoxChild {
-            add_css_class: "album-element",
+            set_widget_name: "album-element",
             set_halign: gtk::Align::Center,
 
             add_controller = gtk::EventControllerMotion {
@@ -204,7 +204,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
 
                     #[name = "favorite"]
                     self.favorite.clone() -> gtk::Button {
-                        add_css_class: "cover-favorite",
+                        add_css_class: "neutral-color",
                         set_width_request: 24,
                         set_height_request: 24,
                         set_icon_name: "non-starred-symbolic",

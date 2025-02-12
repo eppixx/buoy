@@ -227,7 +227,7 @@ impl relm4::Component for Queue {
 
     view! {
         gtk::Box {
-            add_css_class: "queue",
+            set_widget_name: "queue",
             set_orientation: gtk::Orientation::Vertical,
 
             model.scrolled.clone() -> gtk::ScrolledWindow {

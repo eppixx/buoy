@@ -179,9 +179,10 @@ impl relm4::Component for PlaylistsView {
 
     view! {
         gtk::Box {
+            set_widget_name: "playlists-view",
+
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
-                add_css_class: "playlist-view-info",
                 set_spacing: 7,
 
                 gtk::WindowHandle {
@@ -192,7 +193,6 @@ impl relm4::Component for PlaylistsView {
                 },
 
                 model.playlists.widget().clone() -> gtk::ListBox {
-                    add_css_class: "playlist-view-playlist-list",
                     add_css_class: granite::STYLE_CLASS_FRAME,
                     add_css_class: granite::STYLE_CLASS_RICH_LIST,
                     set_vexpand: true,
@@ -204,8 +204,6 @@ impl relm4::Component for PlaylistsView {
                     },
 
                     gtk::ListBoxRow {
-                        add_css_class: "playlist-view-add-playlist",
-
                         gtk::Button {
                             gtk::Box {
                                 set_halign: gtk::Align::Center,
@@ -327,7 +325,7 @@ impl relm4::Component for PlaylistsView {
                             set_vexpand: true,
 
                             model.tracks.view.clone() -> gtk::ColumnView {
-                                add_css_class: "playlist-view-tracks-row",
+                                set_widget_name: "playlist-view-tracks",
 
                                 add_controller = gtk::DragSource {
                                     connect_prepare[sender] => move |_drag_src, _x, _y| {

@@ -95,7 +95,7 @@ impl relm4::SimpleComponent for DescriptiveCover {
 
     view! {
         gtk::Box {
-            add_css_class: "descriptive-cover",
+            set_widget_name: "descriptive-cover",
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 5,
 

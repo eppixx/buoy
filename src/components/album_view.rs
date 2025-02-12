@@ -199,12 +199,11 @@ impl relm4::Component for AlbumView {
 
     view! {
         gtk::Box {
-            add_css_class: "album-view",
+            set_widget_name: "album-view",
             set_orientation: gtk::Orientation::Vertical,
 
             gtk::Box {
                 set_spacing: 15,
-                add_css_class: "album-view-info",
 
                 gtk::Overlay {
                     #[wrap(Some)]
@@ -358,7 +357,7 @@ impl relm4::Component for AlbumView {
                 set_vexpand: true,
 
                 model.tracks.view.clone() {
-                    add_css_class: "album-view-tracks-row",
+                    set_widget_name: "album-view-tracks",
                     set_vexpand: true,
 
                     add_controller = gtk::DragSource {
@@ -437,13 +436,13 @@ impl relm4::Component for AlbumView {
                     });
             }
             AlbumViewIn::HoverCover(false) => {
-                self.favorite.remove_css_class("cover-favorite");
+                self.favorite.remove_css_class("neutral-color");
                 if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
                     self.favorite.set_visible(false);
                 }
             }
             AlbumViewIn::HoverCover(true) => {
-                self.favorite.add_css_class("cover-favorite");
+                self.favorite.add_css_class("neutral-color");
                 self.favorite.set_visible(true);
             }
             AlbumViewIn::RecalcDragSource => {

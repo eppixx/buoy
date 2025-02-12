@@ -153,7 +153,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
     view! {
         gtk::ListBoxRow {
-            add_css_class: "playlist-element",
+            set_widget_name: "playlist-element",
 
             self.main_stack.clone() -> gtk::Stack {
                 add_enumed[State::Normal] = &gtk::Box {

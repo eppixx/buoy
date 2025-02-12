@@ -254,7 +254,7 @@ impl relm4::component::Component for ArtistsView {
                         set_vexpand: true,
 
                         model.entries.view.clone() {
-                            add_css_class: "artists-view-tracks-row",
+                            set_widget_name: "artists-view-tracks",
                             set_vexpand: true,
                             set_single_click_activate: true,
 

@@ -6,6 +6,7 @@ use relm4::{
         self,
         prelude::{BoxExt, ButtonExt, WidgetExt},
     },
+    RelmWidgetExt,
 };
 
 use crate::{
@@ -70,9 +71,10 @@ impl relm4::SimpleComponent for PlayControl {
     view! {
         #[root]
         gtk::Box {
-            add_css_class: "play-control",
+            set_widget_name: "play-control",
             set_halign: gtk::Align::Center,
             set_spacing: 20,
+            set_margin_all: 3,
 
             append = &gtk::Box {
                 set_valign: gtk::Align::End,
@@ -94,7 +96,7 @@ impl relm4::SimpleComponent for PlayControl {
             },
 
             append = &model.prev_btn.clone() {
-                add_css_class: "play-control-previous",
+                add_css_class: "play-control-main-button",
                 add_css_class: "circular",
                 set_icon_name: "media-skip-backward-symbolic",
                 set_focus_on_click: false,
@@ -104,7 +106,7 @@ impl relm4::SimpleComponent for PlayControl {
             },
 
             append = &model.play_btn.clone() {
-                add_css_class: "play-control-play-pause",
+                add_css_class: "play-control-main-button",
                 add_css_class: "circular",
                 set_icon_name: "media-playback-stop-symbolic",
                 set_focus_on_click: false,
@@ -122,7 +124,7 @@ impl relm4::SimpleComponent for PlayControl {
             },
 
             append = &model.next_btn.clone() {
-                add_css_class: "play-control-next",
+                add_css_class: "play-control-main-button",
                 add_css_class: "circular",
                 set_icon_name: "media-skip-forward-symbolic",
                 set_focus_on_click: false,

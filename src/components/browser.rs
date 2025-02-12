@@ -141,12 +141,10 @@ impl relm4::component::AsyncComponent for Browser {
 
     view! {
         gtk::Box {
-            add_css_class: "browser",
+            set_widget_name: "browser",
             set_orientation: gtk::Orientation::Vertical,
 
-            append = &model.content.clone() -> gtk::Viewport {
-                add_css_class: "browser-content",
-            }
+            append = &model.content.clone() -> gtk::Viewport {}
         }
     }
 

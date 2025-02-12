@@ -321,7 +321,7 @@ impl relm4::Component for TracksView {
                         set_vexpand: true,
 
                         model.tracks.view.clone() {
-                            add_css_class: "tracks-view-tracks-row",
+                            set_widget_name: "tracks-view-tracks",
                             set_vexpand: true,
 
                             connect_activate[sender] => move |_column_view, index| {
