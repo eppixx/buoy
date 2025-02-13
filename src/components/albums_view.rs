@@ -21,7 +21,7 @@ use crate::{
     },
     settings::Settings,
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 use super::{
@@ -81,7 +81,7 @@ impl AlbumsView {
 
 #[derive(Debug)]
 pub enum AlbumsViewOut {
-    ClickedAlbum(Box<submarine::data::Child>),
+    ClickedAlbum(Id),
     DisplayToast(String),
     FavoriteClicked(String, bool),
     AddToQueue(Droppable),
@@ -676,11 +676,8 @@ impl relm4::component::Component for AlbumsView {
             }
             AlbumsViewIn::ClickedAlbum(index) => {
                 if let Some(clicked_album) = self.entries.get_visible(index) {
-                    sender
-                        .output(AlbumsViewOut::ClickedAlbum(Box::new(
-                            clicked_album.borrow().item.clone(),
-                        )))
-                        .unwrap();
+                    let id = Id::album(&clicked_album.borrow().item.id);
+                    sender.output(AlbumsViewOut::ClickedAlbum(id)).unwrap();
                 }
             }
             AlbumsViewIn::ToggleFilters => {

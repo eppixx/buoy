@@ -343,7 +343,7 @@ impl relm4::component::AsyncComponent for Browser {
                 DashboardOut::ClickedAlbum(id) => {
                     let album = self.subsonic.borrow().find_album(id.as_ref()).unwrap();
                     sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(
-                        Box::new(album),
+                        Id::album(&album.id),
                     )));
                 }
                 DashboardOut::DisplayToast(title) => {
@@ -354,9 +354,9 @@ impl relm4::component::AsyncComponent for Browser {
                     .unwrap(),
             },
             BrowserIn::AlbumsView(msg) => match msg {
-                AlbumsViewOut::ClickedAlbum(child) => {
+                AlbumsViewOut::ClickedAlbum(id) => {
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch((self.subsonic.clone(), Id::album(child.id)))
+                        .launch((self.subsonic.clone(), id))
                         .forward(sender.input_sender(), |msg| {
                             BrowserIn::AlbumView(Box::new(msg))
                         });
