@@ -70,6 +70,10 @@ impl relm4::Component for ArtistView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        //check id
+        let Id::Artist(_) = &id else {
+            panic!("given id: '{id}' is not an artist");
+        };
         let artist = subsonic.borrow().find_artist(id.as_ref()).unwrap();
 
         let mut model = Self {

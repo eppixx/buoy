@@ -58,11 +58,16 @@ impl relm4::factory::FactoryComponent for AlbumElement {
     type ParentWidget = gtk::FlowBox;
 
     fn init_model(
-        (subsonic, init): Self::Init,
+        (subsonic, id): Self::Init,
         _index: &relm4::factory::DynamicIndex,
         sender: relm4::factory::FactorySender<Self>,
     ) -> Self {
-        let album = subsonic.borrow().find_album(init.as_ref()).unwrap();
+        //check id
+        let Id::Album(_) = &id else {
+            panic!("given id: '{id}' is not an album");
+        };
+
+        let album = subsonic.borrow().find_album(id.as_ref()).unwrap();
         let drop = Droppable::AlbumChild(Box::new(album.clone()));
         let builder = DescriptiveCoverInit::new(
             album.title.clone(),
@@ -76,7 +81,7 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         let model = Self {
             subsonic,
             cover,
-            id: init,
+            id,
             favorite: gtk::Button::default(),
             favorite_ribbon: gtk::Box::default(),
         };

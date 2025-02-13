@@ -80,6 +80,10 @@ impl relm4::Component for AlbumView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        //check id
+        let Id::Album(_) = &id else {
+            panic!("given id: '{id}' is not an album");
+        };
         let album = subsonic.borrow().find_album(id.as_ref()).unwrap();
 
         let mut tracks =
