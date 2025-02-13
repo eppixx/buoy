@@ -56,16 +56,6 @@ impl TrackRow {
         fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
         fav_btn.set_focus_on_click(false);
 
-        let artist_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-
-        let album_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-
         let result = Self {
             subsonic: subsonic.clone(),
             item,
