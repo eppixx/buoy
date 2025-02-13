@@ -10,7 +10,11 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::{client::Client, subsonic::Subsonic, types::Droppable};
+use crate::{
+    client::Client,
+    subsonic::Subsonic,
+    types::{Droppable, Id},
+};
 use crate::{
     components::{
         album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
@@ -686,7 +690,7 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 };
                 let artist: relm4::Controller<ArtistView> = ArtistView::builder()
-                    .launch((self.subsonic.clone(), artist.clone()))
+                    .launch((self.subsonic.clone(), Id::artist(&artist.id)))
                     .forward(sender.input_sender(), |msg| {
                         BrowserIn::ArtistView(Box::new(msg))
                     });

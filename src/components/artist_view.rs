@@ -22,7 +22,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ArtistView {
     subsonic: Rc<RefCell<Subsonic>>,
-    init: submarine::data::ArtistId3,
+    id: Id,
     cover: relm4::Controller<Cover>,
     favorite: gtk::Button,
     title: String,
@@ -59,25 +59,27 @@ pub enum ArtistViewCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for ArtistView {
-    type Init = (Rc<RefCell<Subsonic>>, submarine::data::ArtistId3);
+    type Init = (Rc<RefCell<Subsonic>>, Id);
     type Input = ArtistViewIn;
     type Output = ArtistViewOut;
     type Widgets = ArtistViewWidgets;
     type CommandOutput = ArtistViewCmd;
 
     fn init(
-        (subsonic, init): Self::Init,
+        (subsonic, id): Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let artist = subsonic.borrow().find_artist(id.as_ref()).unwrap();
+
         let mut model = Self {
             subsonic: subsonic.clone(),
-            init: init.clone(),
+            id,
             cover: Cover::builder()
-                .launch((subsonic.clone(), init.clone().cover_art))
+                .launch((subsonic.clone(), artist.clone().cover_art))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             favorite: gtk::Button::default(),
-            title: init.name.clone(),
+            title: artist.name.clone(),
             bio: String::new(),
             albums: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::FlowBox::default())
@@ -86,14 +88,14 @@ impl relm4::Component for ArtistView {
         let widgets = view_output!();
 
         //setup DropSource
-        let droppable = Droppable::Artist(Box::new(init.clone()));
+        let droppable = Droppable::Artist(Box::new(artist.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&droppable.to_value());
         let drag_src = gtk::DragSource::new();
         drag_src.set_actions(gtk::gdk::DragAction::COPY);
         drag_src.set_content(Some(&content));
-        let artist = init.clone();
+        let cover = artist.cover_art.clone();
         drag_src.connect_drag_begin(move |src, _drag| {
-            if let Some(cover_id) = &artist.cover_art {
+            if let Some(cover_id) = &cover {
                 let cover = subsonic.borrow().cover_icon(cover_id);
                 if let Some(tex) = cover {
                     src.set_icon(Some(&tex), 0, 0);
@@ -105,23 +107,23 @@ impl relm4::Component for ArtistView {
         // load cover
         model
             .cover
-            .emit(CoverIn::LoadArtist(Box::new(init.clone())));
+            .emit(CoverIn::LoadArtist(Box::new(artist.clone())));
         model.cover.model().add_css_class_image("size150");
 
         // set favorite icon
-        if init.starred.is_some() {
+        if artist.starred.is_some() {
             model.favorite.set_icon_name("starred-symbolic");
         }
 
         // load albums
         let mut guard = model.albums.guard();
-        for album in model.subsonic.borrow().albums_from_artist(&init) {
+        for album in model.subsonic.borrow().albums_from_artist(&artist) {
             guard.push_back((model.subsonic.clone(), Id::album(&album.id)));
         }
         drop(guard);
 
         // load metainfo on artist
-        let id = init.id.clone();
+        let id = artist.id.clone();
         sender.oneshot_command(async move {
             let client = Client::get().unwrap();
             let info = client.get_artist_info2(id, Some(5), Some(false)).await;
@@ -147,13 +149,13 @@ impl relm4::Component for ArtistView {
                         set_height_request: 24,
                         set_icon_name: "non-starred-symbolic",
 
-                        connect_clicked[sender, init] => move |btn| {
+                        connect_clicked[sender, artist] => move |btn| {
                             let state = match btn.icon_name().as_deref() {
                                 Some("starred-symbolic") => false,
                                 Some("non-starred-symbolic") => true,
                                 name => unreachable!("unknown icon name: {name:?}"),
                             };
-                            sender.output(ArtistViewOut::FavoriteArtistClicked(init.id.clone(), state)).unwrap();
+                            sender.output(ArtistViewOut::FavoriteArtistClicked(artist.id.clone(), state)).unwrap();
                         }
                     },
 
@@ -206,8 +208,8 @@ impl relm4::Component for ArtistView {
                                         },
                                     },
                                     set_tooltip: &gettext("Append Artist to end of queue"),
-                                    connect_clicked[sender, init] => move |_btn| {
-                                        sender.output(ArtistViewOut::AppendArtist(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                    connect_clicked[sender, artist] => move |_btn| {
+                                        sender.output(ArtistViewOut::AppendArtist(Droppable::Artist(Box::new(artist.clone())))).unwrap();
                                     }
                                 }
                             },
@@ -221,8 +223,8 @@ impl relm4::Component for ArtistView {
                                     }
                                 },
                                 set_tooltip: &gettext("Insert Artist after currently played or paused item"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    sender.output(ArtistViewOut::InsertAfterCurrentPlayed(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                connect_clicked[sender, artist] => move |_btn| {
+                                    sender.output(ArtistViewOut::InsertAfterCurrentPlayed(Droppable::Artist(Box::new(artist.clone())))).unwrap();
                                 }
                             },
                             gtk::Button {
@@ -235,8 +237,8 @@ impl relm4::Component for ArtistView {
                                     }
                                 },
                                 set_tooltip: &gettext("Replaces current queue with this artist"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    sender.output(ArtistViewOut::ReplaceQueue(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                connect_clicked[sender, artist] => move |_btn| {
+                                    sender.output(ArtistViewOut::ReplaceQueue(Droppable::Artist(Box::new(artist.clone())))).unwrap();
                                 }
                             },
                             gtk::Button {
@@ -249,8 +251,8 @@ impl relm4::Component for ArtistView {
                                     }
                                 },
                                 set_tooltip: &gettext("Click to select a folder to download this artist to"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    sender.output(ArtistViewOut::Download(Droppable::Artist(Box::new(init.clone())))).unwrap();
+                                connect_clicked[sender, artist] => move |_btn| {
+                                    sender.output(ArtistViewOut::Download(Droppable::Artist(Box::new(artist.clone())))).unwrap();
                                 }
                             }
                         }
@@ -302,7 +304,7 @@ impl relm4::Component for ArtistView {
                 });
             }
             ArtistViewIn::FavoritedArtist(id, state) => {
-                if self.init.id == id {
+                if self.id.as_ref() == id {
                     match state {
                         true => self.favorite.set_icon_name("starred-symbolic"),
                         false => self.favorite.set_icon_name("non-starred-symbolic"),
