@@ -200,7 +200,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
 
                         add_enumed[PlayState::Stop] = &self.cover.widget().clone(),
                         add_enumed[PlayState::Play] = &gtk::Image {
-                            add_css_class: "borderd",
+                            add_css_class: "bordered",
                             set_icon_name: Some("audio-volume-high-symbolic"),
                         },
                         add_enumed[PlayState::Pause] = &gtk::Image {
