@@ -18,7 +18,7 @@ use crate::{
     components::cover::{Cover, CoverIn, CoverOut},
     factory::track_row::BitRateColumn,
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 use crate::{
     factory::track_row::{
@@ -30,7 +30,7 @@ use crate::{
 #[derive(Debug)]
 pub struct AlbumView {
     subsonic: Rc<RefCell<Subsonic>>,
-    init: AlbumViewInit,
+    id: Id,
     cover: relm4::Controller<Cover>,
     favorite: gtk::Button,
     title: String,
@@ -38,12 +38,6 @@ pub struct AlbumView {
     info: String,
     artist_id: Option<String>,
     tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::MultiSelection>,
-}
-
-#[derive(Debug, Clone)]
-pub enum AlbumViewInit {
-    Child(Box<submarine::data::Child>),
-    AlbumId3(Box<submarine::data::AlbumId3>),
 }
 
 #[derive(Debug)]
@@ -75,21 +69,18 @@ pub enum AlbumViewCmd {
 
 #[relm4::component(pub)]
 impl relm4::Component for AlbumView {
-    type Init = (Rc<RefCell<Subsonic>>, AlbumViewInit);
+    type Init = (Rc<RefCell<Subsonic>>, Id);
     type Input = AlbumViewIn;
     type Output = AlbumViewOut;
     type Widgets = AlbumViewWidgets;
     type CommandOutput = AlbumViewCmd;
 
     fn init(
-        (subsonic, init): Self::Init,
+        (subsonic, id): Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let cover = match init.clone() {
-            AlbumViewInit::Child(child) => child.cover_art,
-            AlbumViewInit::AlbumId3(album) => album.cover_art,
-        };
+        let album = subsonic.borrow().find_album(id.as_ref()).unwrap();
 
         let mut tracks =
             relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::MultiSelection>::new();
@@ -153,22 +144,17 @@ impl relm4::Component for AlbumView {
             .unwrap()
             .set_title(Some(&gettext("Favorite")));
 
-        let (id, artist_id) = match &init {
-            AlbumViewInit::Child(child) => (&child.id, child.artist_id.clone()),
-            AlbumViewInit::AlbumId3(album) => (&album.id, album.artist_id.clone()),
-        };
-
         let model = Self {
             subsonic: subsonic.clone(),
-            init: init.clone(),
+            id: id.clone(),
             cover: Cover::builder()
-                .launch((subsonic.clone(), cover))
+                .launch((subsonic.clone(), album.cover_art.clone()))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
             favorite: gtk::Button::default(),
             title: gettext("Unkonwn Title"),
             artist: None,
             info: String::new(),
-            artist_id,
+            artist_id: album.artist_id.clone(),
             tracks,
         };
 
@@ -176,14 +162,10 @@ impl relm4::Component for AlbumView {
         model.cover.model().add_css_class_image("size150");
 
         //load album
+        let id = model.id.clone();
         sender.oneshot_command(async move {
-            let id = match &init {
-                AlbumViewInit::Child(child) => &child.id,
-                AlbumViewInit::AlbumId3(album) => &album.id,
-            };
-
             let client = Client::get().unwrap();
-            AlbumViewCmd::LoadedAlbum(client.get_album(id).await)
+            AlbumViewCmd::LoadedAlbum(client.get_album(id.as_ref()).await)
         });
 
         // send signal on selection change
@@ -221,7 +203,7 @@ impl relm4::Component for AlbumView {
                                 Some("non-starred-symbolic") => true,
                                 name => unreachable!("unkonwn icon name: {name:?}"),
                             };
-                            sender.output(AlbumViewOut::FavoriteClicked(id.clone(), state)).unwrap();
+                            sender.output(AlbumViewOut::FavoriteClicked(String::from(id.inner()), state)).unwrap();
                         }
                     },
 
@@ -275,15 +257,9 @@ impl relm4::Component for AlbumView {
                                     }
                                 },
                                 set_tooltip: &gettext("Append Album to end of queue"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    match &init {
-                                        AlbumViewInit::Child(child) => {
-                                            sender.output(AlbumViewOut::AppendAlbum(Droppable::AlbumChild(child.clone()))).unwrap();
-                                        }
-                                        AlbumViewInit::AlbumId3(album) => {
-                                            sender.output(AlbumViewOut::AppendAlbum(Droppable::Album(album.clone()))).unwrap();
-                                        }
-                                    }
+                                connect_clicked[sender, album] => move |_btn| {
+                                    let drop = Droppable::AlbumChild(Box::new(album.clone()));
+                                    sender.output(AlbumViewOut::AppendAlbum(drop)).unwrap();
                                 }
                             },
                             gtk::Button {
@@ -296,15 +272,9 @@ impl relm4::Component for AlbumView {
                                     }
                                 },
                                 set_tooltip: &gettext("Insert Album after currently played or paused item"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    match &init {
-                                        AlbumViewInit::Child(child) => {
-                                            sender.output(AlbumViewOut::InsertAfterCurrentPlayed(Droppable::AlbumChild(child.clone()))).unwrap();
-                                        }
-                                        AlbumViewInit::AlbumId3(album) => {
-                                            sender.output(AlbumViewOut::InsertAfterCurrentPlayed(Droppable::Album(album.clone()))).unwrap();
-                                        }
-                                    }
+                                connect_clicked[sender, album] => move |_btn| {
+                                    let drop = Droppable::AlbumChild(Box::new(album.clone()));
+                                    sender.output(AlbumViewOut::InsertAfterCurrentPlayed(drop)).unwrap();
                                 }
                             },
                             gtk::Button {
@@ -317,15 +287,9 @@ impl relm4::Component for AlbumView {
                                     }
                                 },
                                 set_tooltip: &gettext("Replaces current queue with this album"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    match &init {
-                                        AlbumViewInit::Child(child) => {
-                                            sender.output(AlbumViewOut::ReplaceQueue(Droppable::AlbumChild(child.clone()))).unwrap();
-                                        }
-                                        AlbumViewInit::AlbumId3(album) => {
-                                            sender.output(AlbumViewOut::ReplaceQueue(Droppable::Album(album.clone()))).unwrap();
-                                        }
-                                    }
+                                connect_clicked[sender, album] => move |_btn| {
+                                    let drop = Droppable::AlbumChild(Box::new(album.clone()));
+                                    sender.output(AlbumViewOut::ReplaceQueue(drop)).unwrap();
                                 }
                             },
                             gtk::Button {
@@ -338,11 +302,8 @@ impl relm4::Component for AlbumView {
                                     }
                                 },
                                 set_tooltip: &gettext("Click to select a folder to download this album to"),
-                                connect_clicked[sender, init] => move |_btn| {
-                                    let drop = match &init {
-                                        AlbumViewInit::Child(child) => Droppable::Child(child.clone()),
-                                        AlbumViewInit::AlbumId3(id3) => Droppable::Album(id3.clone()),
-                                    };
+                                connect_clicked[sender, album] => move |_btn| {
+                                    let drop =  Droppable::Child(Box::new(album.clone()));
                                     sender.output(AlbumViewOut::Download(drop)).unwrap();
                                 }
                             }
@@ -413,14 +374,12 @@ impl relm4::Component for AlbumView {
                 });
             }
             AlbumViewIn::FavoritedAlbum(id, state) => {
-                let matched = match &self.init {
-                    AlbumViewInit::AlbumId3(album) => album.id == id,
-                    AlbumViewInit::Child(child) => child.id == id,
-                };
-                match state {
-                    true if matched => self.favorite.set_icon_name("starred-symbolic"),
-                    false if matched => self.favorite.set_icon_name("non-starred-symbolic"),
-                    _ => {} // already in the right state
+                let album = self.subsonic.borrow().find_album(self.id.as_ref()).unwrap();
+
+                match (state, album.id == id) {
+                    (true, true) => self.favorite.set_icon_name("starred-symbolic"),
+                    (false, true) => self.favorite.set_icon_name("non-starred-symbolic"),
+                    (_, false) => {} // signal is not for this album
                 }
             }
             AlbumViewIn::FavoritedSong(id, state) => {

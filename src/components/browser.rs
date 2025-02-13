@@ -17,7 +17,7 @@ use crate::{
 };
 use crate::{
     components::{
-        album_view::{AlbumView, AlbumViewIn, AlbumViewInit, AlbumViewOut},
+        album_view::{AlbumView, AlbumViewIn, AlbumViewOut},
         albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
         artist_view::{ArtistView, ArtistViewIn, ArtistViewOut},
         artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
@@ -282,12 +282,8 @@ impl relm4::component::AsyncComponent for Browser {
                     .expect("main window gone");
             }
             BrowserIn::AlbumClicked(id) => {
-                let Some(child) = self.subsonic.borrow().find_album(&id) else {
-                    return;
-                };
-                let init = AlbumViewInit::Child(Box::new(child));
                 let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                    .launch((self.subsonic.clone(), init))
+                    .launch((self.subsonic.clone(), Id::album(id)))
                     .forward(sender.input_sender(), |msg| {
                         BrowserIn::AlbumView(Box::new(msg))
                     });
@@ -359,9 +355,8 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::AlbumsView(msg) => match msg {
                 AlbumsViewOut::ClickedAlbum(child) => {
-                    let init = AlbumViewInit::Child(child);
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch((self.subsonic.clone(), init))
+                        .launch((self.subsonic.clone(), Id::album(child.id)))
                         .forward(sender.input_sender(), |msg| {
                             BrowserIn::AlbumView(Box::new(msg))
                         });
@@ -436,10 +431,8 @@ impl relm4::component::AsyncComponent for Browser {
             },
             BrowserIn::ArtistView(msg) => match *msg {
                 ArtistViewOut::AlbumClicked(id) => {
-                    let album = self.subsonic.borrow().find_album(id.as_ref()).unwrap();
-                    let init = AlbumViewInit::Child(Box::new(album));
                     let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                        .launch((self.subsonic.clone(), init))
+                        .launch((self.subsonic.clone(), id))
                         .forward(sender.input_sender(), |msg| {
                             BrowserIn::AlbumView(Box::new(msg))
                         });
