@@ -270,12 +270,12 @@ impl relm4::factory::FactoryComponent for FilterRow {
     type CommandOutput = ();
 
     fn init_model(
-        init: Self::Init,
+        category: Self::Init,
         index: &relm4::factory::DynamicIndex,
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         Self {
-            category: init.clone(),
+            category,
             filter: None,
             index: index.clone(),
             stack: gtk::Stack::default(),

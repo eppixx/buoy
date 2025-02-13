@@ -57,7 +57,7 @@ impl relm4::SimpleComponent for Seekbar {
     type Output = SeekbarOut;
 
     fn init(
-        init: Self::Init,
+        current_seek: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -65,12 +65,12 @@ impl relm4::SimpleComponent for Seekbar {
         let widgets = view_output!();
 
         //init widgets
-        if let Some(init) = init {
-            model.scale.set_range(0.0, init.total_in_ms as f64);
-            model.scale.set_value(init.seek_in_ms.unwrap_or(0) as f64);
-            model.total = init.total_in_ms;
+        if let Some(current_seek) = current_seek {
+            model.scale.set_range(0.0, current_seek.total_in_ms as f64);
+            model.scale.set_value(current_seek.seek_in_ms.unwrap_or(0) as f64);
+            model.total = current_seek.total_in_ms;
             widgets.total.set_label(&convert_for_label(model.total));
-            if let Some(seek) = init.seek_in_ms {
+            if let Some(seek) = current_seek.seek_in_ms {
                 model.current = seek;
                 widgets.current.set_label(&convert_for_label(model.current));
             }

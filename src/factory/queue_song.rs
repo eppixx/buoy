@@ -136,24 +136,24 @@ impl relm4::factory::FactoryComponent for QueueSong {
     type CommandOutput = QueueSongCmd;
 
     fn init_model(
-        (subsonic, init): Self::Init,
+        (subsonic, child): Self::Init,
         index: &relm4::factory::DynamicIndex,
         sender: relm4::factory::FactorySender<Self>,
     ) -> Self {
         let cover = Cover::builder()
-            .launch((subsonic.clone(), init.cover_art.clone()))
+            .launch((subsonic.clone(), child.cover_art.clone()))
             .forward(sender.input_sender(), QueueSongIn::Cover);
         cover.model().add_css_class_image("size32");
-        cover.emit(CoverIn::LoadSong(Box::new(init.clone())));
+        cover.emit(CoverIn::LoadSong(Box::new(child.clone())));
 
-        let icon_name = match init.starred {
+        let icon_name = match child.starred {
             Some(_) => "starred-symbolic",
             None => "non-starred-symbolic",
         };
 
         let mut model = Self {
             root_widget: gtk::ListBoxRow::new(),
-            info: init.clone(),
+            info: child,
             cover,
             favorited: gtk::Button::from_icon_name(icon_name),
             index: index.clone(),
@@ -168,7 +168,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
         let content = gdk::ContentProvider::for_value(&index.to_value());
         model.drag_src.set_content(Some(&content));
         model.drag_src.set_actions(gdk::DragAction::MOVE);
-        let album = subsonic.borrow().album_of_song(&init);
+        let album = subsonic.borrow().album_of_song(&model.info.clone());
         model.drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(album) = &album {
                 if let Some(cover_id) = &album.cover_art {

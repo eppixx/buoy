@@ -115,17 +115,17 @@ impl relm4::component::AsyncComponent for Browser {
     type CommandOutput = ();
 
     async fn init(
-        init: Self::Init,
+        subsonic: Self::Init,
         root: Self::Root,
         sender: relm4::AsyncComponentSender<Self>,
     ) -> relm4::component::AsyncComponentParts<Self> {
         let model = Self {
-            subsonic: init.clone(),
+            subsonic: subsonic.clone(),
             history_widget: vec![],
             content: gtk::Viewport::default(),
 
             dashboard: Dashboard::builder()
-                .launch(init.clone())
+                .launch(subsonic)
                 .forward(sender.input_sender(), BrowserIn::Dashboard),
             artists: None,
             albums: None,

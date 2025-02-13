@@ -117,7 +117,7 @@ impl relm4::component::Component for AlbumsView {
     type CommandOutput = AlbumsViewCmd;
 
     fn init(
-        init: Self::Init,
+        subsonic: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::component::ComponentParts<Self> {
@@ -164,7 +164,7 @@ impl relm4::component::Component for AlbumsView {
             .set_title(Some(&gettext("Favorite")));
 
         let mut model = Self {
-            subsonic: init.clone(),
+            subsonic,
             entries,
             filters: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::ListBox::default())

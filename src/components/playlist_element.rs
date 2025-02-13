@@ -119,13 +119,13 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
     type CommandOutput = ();
 
     fn init_model(
-        (subsonic, init): Self::Init,
+        (subsonic, playlist): Self::Init,
         index: &relm4::factory::DynamicIndex,
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         let model = Self {
             subsonic,
-            playlist: init.clone(),
+            playlist,
             index: index.clone(),
             drag_src: gtk::DragSource::default(),
             main_stack: gtk::Stack::default(),
@@ -133,11 +133,11 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         };
 
         //setup content for DropSource
-        let drop = Droppable::Playlist(Box::new(init.clone()));
+        let drop = Droppable::Playlist(Box::new(model.playlist.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         model.drag_src.set_content(Some(&content));
         model.drag_src.set_actions(gtk::gdk::DragAction::COPY);
-        let cover_art = init.base.cover_art.clone();
+        let cover_art = model.playlist.base.cover_art.clone();
         let subsonic = model.subsonic.clone();
         model.drag_src.connect_drag_begin(move |src, _drag| {
             if let Some(art) = &cover_art {
