@@ -237,7 +237,6 @@ impl relm4::Component for AlbumView {
                             set_markup: &format!("by <span style=\"italic\"><a href=\"{}\">{}</a></span>",
                                 model.artist_id.as_deref().unwrap_or("")
                                 , glib::markup_escape_text(model.artist.as_deref().unwrap_or(&gettext("Unkown Artist")))),
-                            inline_css: "color: inherit",
                             set_halign: gtk::Align::Start,
                             connect_activate_link[sender] => move |_label, text| {
                                 sender.output(AlbumViewOut::ArtistClicked(Id::artist(text.to_string()))).unwrap();

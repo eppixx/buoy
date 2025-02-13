@@ -89,7 +89,6 @@ impl AlbumRow {
         } else {
             artist_label.label(artist).build()
         };
-        artist_label.inline_css("color: inherit");
 
         Self {
             subsonic: subsonic.clone(),

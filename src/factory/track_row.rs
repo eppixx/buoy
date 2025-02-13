@@ -60,13 +60,11 @@ impl TrackRow {
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        artist_label.inline_css("color: inherit");
 
         let album_label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        album_label.inline_css("color: inherit");
 
         let result = Self {
             subsonic: subsonic.clone(),
@@ -158,7 +156,6 @@ impl TrackRow {
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        album_label.inline_css("color: inherit");
         let stock = gettext("Unknown Album");
         let album = result.item.album.as_deref().unwrap_or(&stock);
         let send = sender.clone();
@@ -186,7 +183,6 @@ impl TrackRow {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
         let sender = sender.clone();
-        artist_label.inline_css("color: inherit");
         let stock = gettext("Unknown Artist");
         let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
@@ -250,7 +246,6 @@ impl TrackRow {
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        artist_label.inline_css("color: inherit");
         let stock = gettext("Unknown Album");
         let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
