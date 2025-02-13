@@ -329,10 +329,14 @@ impl relm4::component::AsyncComponent for MainWindow {
                 }
             }
             MainWindowIn::ShowApp => {
+                //reset app
+                self.app = None;
+                self.content.set_child(None::<&gtk::Box>);
+
+                //load app
                 let app = App::builder()
                     .launch((self.args.clone(), self.mpris.clone(), self.playback.clone()))
                     .forward(sender.input_sender(), MainWindowIn::App);
-                self.content.set_child(None::<&gtk::Box>);
                 self.content.set_child(Some(app.widget()));
                 self.app = Some(app);
                 widgets.stack.set_visible_child_enum(&Content::App);
