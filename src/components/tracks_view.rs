@@ -16,7 +16,7 @@ use crate::{
         filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
     },
     factory::track_row::{BitRateColumn, GenreColumn},
-    types::Droppable,
+    types::{Droppable, Id},
 };
 use crate::{
     components::{filter_categories::Category, filter_row::FilterRowIn},
@@ -106,8 +106,8 @@ pub enum TracksViewOut {
     ReplaceQueue(Droppable),
     Download(Droppable),
     FavoriteClicked(String, bool),
-    ClickedArtist(String),
-    ClickedAlbum(String),
+    ClickedArtist(Id),
+    ClickedAlbum(Id),
 }
 
 #[derive(Debug)]

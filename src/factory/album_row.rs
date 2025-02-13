@@ -17,7 +17,7 @@ use crate::{
         cover::Cover,
     },
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -81,8 +81,8 @@ impl AlbumRow {
                 .use_markup(true)
                 .build();
             artist_label.connect_activate_link(move |_label, _id| {
-                send.output(AlbumsViewOut::ClickedArtist(artist_id.clone()))
-                    .unwrap();
+                let id = Id::artist(&artist_id);
+                send.output(AlbumsViewOut::ClickedArtist(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
             artist_label

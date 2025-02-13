@@ -48,7 +48,7 @@ pub enum AlbumViewOut {
     FavoriteClicked(String, bool),
     DisplayToast(String),
     Download(Droppable),
-    ArtistClicked(String),
+    ArtistClicked(Id),
 }
 
 #[derive(Debug)]
@@ -236,7 +236,7 @@ impl relm4::Component for AlbumView {
                             inline_css: "color: inherit",
                             set_halign: gtk::Align::Start,
                             connect_activate_link[sender] => move |_label, text| {
-                                sender.output(AlbumViewOut::ArtistClicked(text.to_string())).unwrap();
+                                sender.output(AlbumViewOut::ArtistClicked(Id::artist(text.to_string()))).unwrap();
                                 gtk::glib::signal::Propagation::Stop
                             }
                         },

@@ -15,7 +15,7 @@ use crate::{
     factory::artist_row::{AlbumCountColumn, ArtistRow, CoverColumn, FavColumn, TitleColumn},
     settings::Settings,
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 use super::{
@@ -74,7 +74,7 @@ impl ArtistsView {
 
 #[derive(Debug)]
 pub enum ArtistsViewOut {
-    ClickedArtist(submarine::data::ArtistId3),
+    ClickedArtist(Id),
     DisplayToast(String),
     FavoriteClicked(String, bool),
     AddToQueue(Droppable),
@@ -519,11 +519,8 @@ impl relm4::component::Component for ArtistsView {
             }
             ArtistsViewIn::ArtistClicked(index) => {
                 if let Some(clicked_artist) = self.entries.get_visible(index) {
-                    sender
-                        .output(ArtistsViewOut::ClickedArtist(
-                            clicked_artist.borrow().item.clone(),
-                        ))
-                        .unwrap();
+                    let id = Id::artist(clicked_artist.borrow().item.id.clone());
+                    sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap();
                 }
             }
             ArtistsViewIn::ToggleFilters => {

@@ -77,7 +77,7 @@ pub enum BrowserIn {
     AlbumsClicked,
     TracksClicked,
     PlaylistsClicked,
-    AlbumClicked(String),
+    AlbumClicked(Id),
     Dashboard(DashboardOut),
     AlbumsView(AlbumsViewOut),
     AlbumView(Box<AlbumViewOut>),
@@ -90,7 +90,7 @@ pub enum BrowserIn {
     FavoriteAlbum(String, bool),
     FavoriteArtist(String, bool),
     FavoriteSong(String, bool),
-    ShowArtist(String),
+    ShowArtist(Id),
 }
 
 #[derive(Debug)]
@@ -283,7 +283,7 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::AlbumClicked(id) => {
                 let album: relm4::Controller<AlbumView> = AlbumView::builder()
-                    .launch((self.subsonic.clone(), Id::album(id)))
+                    .launch((self.subsonic.clone(), id))
                     .forward(sender.input_sender(), |msg| {
                         BrowserIn::AlbumView(Box::new(msg))
                     });
@@ -391,9 +391,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumsViewOut::ClickedArtist(id) => sender.input(BrowserIn::ShowArtist(id)),
             },
             BrowserIn::ArtistsView(msg) => match msg {
-                ArtistsViewOut::ClickedArtist(artist) => {
-                    sender.input(BrowserIn::ShowArtist(artist.id))
-                }
+                ArtistsViewOut::ClickedArtist(id) => sender.input(BrowserIn::ShowArtist(id)),
                 ArtistsViewOut::DisplayToast(msg) => {
                     sender.output(BrowserOut::DisplayToast(msg)).unwrap();
                 }

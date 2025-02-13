@@ -16,7 +16,7 @@ use crate::{
         tracks_view::{TracksView, TracksViewOut},
     },
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -167,8 +167,8 @@ impl TrackRow {
             album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
             let album_id = album_id.clone();
             album_label.connect_activate_link(move |_label, _id| {
-                send.output(TracksViewOut::ClickedAlbum(album_id.clone()))
-                    .unwrap();
+                let id = Id::album(&album_id);
+                send.output(TracksViewOut::ClickedAlbum(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
@@ -194,9 +194,8 @@ impl TrackRow {
             artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
             let artist_id = artist_id.clone();
             artist_label.connect_activate_link(move |_label, _id| {
-                sender
-                    .output(TracksViewOut::ClickedArtist(artist_id.clone()))
-                    .unwrap();
+                let id = Id::artist(&artist_id);
+                sender.output(TracksViewOut::ClickedArtist(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
@@ -259,9 +258,8 @@ impl TrackRow {
             artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
             let artist_id = artist_id.clone();
             artist_label.connect_activate_link(move |_label, _id| {
-                sender
-                    .output(AlbumViewOut::ArtistClicked(artist_id.clone())) //TODO rename to be uniform to ClickedArtist
-                    .unwrap();
+                let id = Id::artist(&artist_id);
+                sender.output(AlbumViewOut::ArtistClicked(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {

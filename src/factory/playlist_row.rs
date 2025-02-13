@@ -13,7 +13,7 @@ use crate::{
     common::convert_for_label,
     components::playlists_view::{PlaylistsView, PlaylistsViewOut},
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
 
 #[derive(Debug)]
@@ -108,8 +108,8 @@ impl PlaylistRow {
             album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
             let album_id = album_id.clone();
             album_label.connect_activate_link(move |_label, _id| {
-                send.output(PlaylistsViewOut::ClickedAlbum(album_id.clone()))
-                    .unwrap();
+                let id = Id::album(&album_id);
+                send.output(PlaylistsViewOut::ClickedAlbum(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
@@ -134,9 +134,8 @@ impl PlaylistRow {
             artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
             let artist_id = artist_id.clone();
             artist_label.connect_activate_link(move |_label, _id| {
-                sender
-                    .output(PlaylistsViewOut::ClickedArtist(artist_id.clone()))
-                    .unwrap();
+                let id = Id::artist(&artist_id);
+                sender.output(PlaylistsViewOut::ClickedArtist(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {

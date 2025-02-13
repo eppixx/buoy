@@ -19,6 +19,7 @@ use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, TitleColumn,
 };
 use crate::settings::Settings;
+use crate::types::Id;
 use crate::{
     common::convert_for_label,
     components::{
@@ -80,8 +81,8 @@ pub enum PlaylistsViewOut {
     DisplayToast(String),
     Download(Droppable),
     FavoriteClicked(String, bool),
-    ClickedArtist(String),
-    ClickedAlbum(String),
+    ClickedArtist(Id),
+    ClickedAlbum(Id),
 }
 
 #[derive(Debug)]

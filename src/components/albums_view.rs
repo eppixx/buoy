@@ -82,12 +82,12 @@ impl AlbumsView {
 #[derive(Debug)]
 pub enum AlbumsViewOut {
     ClickedAlbum(Id),
+    ClickedArtist(Id),
     DisplayToast(String),
     FavoriteClicked(String, bool),
     AddToQueue(Droppable),
     AppendToQueue(Droppable),
     ReplaceQueue(Droppable),
-    ClickedArtist(String),
 }
 
 #[derive(Debug)]
