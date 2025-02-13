@@ -67,7 +67,9 @@ impl relm4::SimpleComponent for Seekbar {
         //init widgets
         if let Some(current_seek) = current_seek {
             model.scale.set_range(0.0, current_seek.total_in_ms as f64);
-            model.scale.set_value(current_seek.seek_in_ms.unwrap_or(0) as f64);
+            model
+                .scale
+                .set_value(current_seek.seek_in_ms.unwrap_or(0) as f64);
             model.total = current_seek.total_in_ms;
             widgets.total.set_label(&convert_for_label(model.total));
             if let Some(seek) = current_seek.seek_in_ms {

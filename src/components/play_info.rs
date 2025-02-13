@@ -7,18 +7,19 @@ use relm4::{
         self, glib, pango,
         prelude::{BoxExt, WidgetExt},
     },
-    Component, ComponentController,
+    ComponentController,
 };
 
-use crate::components::cover::{Cover, CoverIn, CoverOut};
 use crate::subsonic::Subsonic;
+use crate::{
+    components::cover::{Cover, CoverIn, CoverOut},
+    types::Id,
+};
 
 #[derive(Debug)]
 pub struct PlayInfo {
     covers: relm4::Controller<Cover>,
-    title: String,
-    artist: String,
-    album: String,
+    child: Option<submarine::data::Child>,
 }
 
 #[derive(Debug)]
@@ -30,13 +31,16 @@ pub enum PlayInfoIn {
 #[derive(Debug)]
 pub enum PlayInfoOut {
     DisplayToast(String),
+    ShowArtist(Id),
+    ShowAlbum(Id),
 }
 
 #[relm4::component(pub)]
-impl relm4::SimpleComponent for PlayInfo {
+impl relm4::component::Component for PlayInfo {
     type Init = (Rc<RefCell<Subsonic>>, Option<submarine::data::Child>);
     type Input = PlayInfoIn;
     type Output = PlayInfoOut;
+    type CommandOutput = ();
 
     fn init(
         (subsonic, child): Self::Init,
@@ -47,9 +51,7 @@ impl relm4::SimpleComponent for PlayInfo {
             covers: Cover::builder()
                 .launch((subsonic, child.clone().and_then(|child| child.cover_art)))
                 .forward(sender.input_sender(), PlayInfoIn::Cover),
-            title: gettext("Nothing is played currently"),
-            artist: String::new(),
-            album: String::new(),
+            child: None,
         };
 
         let widgets = view_output!();
@@ -74,34 +76,49 @@ impl relm4::SimpleComponent for PlayInfo {
                 set_halign: gtk::Align::Center,
             },
 
-            gtk::Label {
+            append: info = &gtk::Label {
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
                 set_justify: gtk::Justification::Center,
                 set_ellipsize: pango::EllipsizeMode::End,
 
-                #[watch]
-                set_markup: &style_label(&model.title, &model.artist, &model.album),
+                set_text: &gettext("Nothing is playing"),
+
+                connect_activate_link[sender] => move |_label, text| {
+                    let id = Id::try_from(text);
+                    match &id {
+                        Err(e) => unreachable!("text is not an id: {e:?}"),
+                        Ok(Id::Playlist(id)) | Ok(Id::Song(id)) => unreachable!("found wrong id: {id}"),
+                        Ok(Id::Artist(_)) => sender.output(PlayInfoOut::ShowArtist(id.unwrap())).unwrap(),
+                        Ok(Id::Album(_)) => sender.output(PlayInfoOut::ShowAlbum(id.unwrap())).unwrap(),
+                    }
+                    gtk::glib::signal::Propagation::Stop
+                },
             },
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
-            PlayInfoIn::NewState(child) => match *child {
-                None => {
-                    self.covers.emit(CoverIn::LoadId(None));
-                    self.title = gettext("Nothing is playing");
-                    self.artist = String::new();
-                    self.album = String::new();
+            PlayInfoIn::NewState(child) => {
+                self.child = *child;
+                widgets
+                    .info
+                    .set_markup(&style_label_from_child(&self.child));
+
+                match &self.child {
+                    None => self.covers.emit(CoverIn::LoadId(None)),
+                    Some(child) => {
+                        self.covers.emit(CoverIn::LoadSong(Box::new(child.clone())));
+                    }
                 }
-                Some(child) => {
-                    self.covers.emit(CoverIn::LoadSong(Box::new(child.clone())));
-                    self.title = child.title;
-                    self.artist = child.artist.unwrap_or_default();
-                    self.album = child.album.unwrap_or_default();
-                }
-            },
+            }
             PlayInfoIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => {
                     sender.output(PlayInfoOut::DisplayToast(title)).unwrap();
@@ -111,28 +128,60 @@ impl relm4::SimpleComponent for PlayInfo {
     }
 }
 
-fn style_label(title: &str, artist: &str, album: &str) -> String {
+fn style_label_from_child(child: &Option<submarine::data::Child>) -> String {
+    let Some(child) = &child else {
+        return gettext("Nothing is playing");
+    };
+
     let mut result = format!(
         "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
-        glib::markup_escape_text(title)
+        glib::markup_escape_text(&child.title)
     );
-    if artist.is_empty() {
-        result.push('\n');
-    } else {
-        result.push_str(&format!(
-            "\n{} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
-            gettext("by"),
-            glib::markup_escape_text(artist)
-        ));
+
+    match &child.artist {
+        None => result.push('\n'),
+        Some(artist) => {
+            // insert link if artist_id exists for child
+            let artist = match &child.artist_id {
+                None => glib::markup_escape_text(artist),
+                Some(id) => format!(
+                    "<a href=\"{}\">{}</a>",
+                    Id::artist(id).serialize(),
+                    glib::markup_escape_text(artist)
+                )
+                .into(),
+            };
+
+            // build artist markup string
+            result.push_str(&format!(
+                "\n{} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+                gettext("by"),
+                artist
+            ));
+        }
     }
-    if album.is_empty() {
-        result.push('\n');
-    } else {
-        result.push_str(&format!(
-            " {} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
-            gettext("on"),
-            glib::markup_escape_text(album)
-        ));
+
+    match &child.album {
+        None => result.push('\n'),
+        Some(album) => {
+            // insert link if album_id exists for child
+            let album = match &child.album_id {
+                None => glib::markup_escape_text(album),
+                Some(id) => format!(
+                    "<a href=\"{}\">{}</a>",
+                    Id::album(id).serialize(),
+                    glib::markup_escape_text(album)
+                )
+                .into(),
+            };
+
+            // build album markup string
+            result.push_str(&format!(
+                " {} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
+                gettext("on"),
+                album
+            ));
+        }
     }
     result
 }

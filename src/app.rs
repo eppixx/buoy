@@ -878,6 +878,8 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
+                PlayInfoOut::ShowAlbum(id) => self.browser.emit(BrowserIn::AlbumClicked(id)),
+                PlayInfoOut::ShowArtist(id) => self.browser.emit(BrowserIn::ShowArtist(id)),
             },
             AppIn::DisplayToast(title) => {
                 tracing::error!(title);
