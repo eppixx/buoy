@@ -67,6 +67,7 @@ impl Download {
                     )
                 })
                 .collect(),
+            Droppable::PlaylistItems(_items) => todo!(),
         };
 
         //TODO sanitize file names, e.g "/"

@@ -1,5 +1,7 @@
 use relm4::gtk::glib;
 
+use crate::factory::playlist_row::PlaylistIndex;
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, glib::Boxed)]
 #[boxed_type(name = "MediaId")]
 pub enum Id {
@@ -64,6 +66,7 @@ pub enum Droppable {
     ArtistWithAlbums(Box<submarine::data::ArtistWithAlbumsId3>),
     Artist(Box<submarine::data::ArtistId3>),
     Playlist(Box<submarine::data::PlaylistWithSongs>),
+    PlaylistItems(Vec<PlaylistIndex>),
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]

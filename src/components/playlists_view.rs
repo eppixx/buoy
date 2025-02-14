@@ -2,11 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
+use relm4::gtk::gdk;
 use relm4::gtk::glib::prelude::ToValue;
 use relm4::RelmWidgetExt;
 use relm4::{
     gtk::{
-        self,
+        self, glib,
         prelude::{
             BoxExt, ButtonExt, ListBoxRowExt, ListModelExt, OrientableExt, SelectionModelExt,
             WidgetExt,
@@ -16,8 +17,9 @@ use relm4::{
 };
 
 use crate::factory::playlist_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistIndex, PlaylistRow, TitleColumn,
 };
+use crate::factory::queue_song::QueueIndex;
 use crate::settings::Settings;
 use crate::types::Id;
 use crate::{
@@ -29,6 +31,11 @@ use crate::{
     subsonic::Subsonic,
     types::Droppable,
 };
+
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "PlaylistDrop")]
+pub struct PlaylistDrop {
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TracksState {
@@ -99,6 +106,11 @@ pub enum PlaylistsViewIn {
     DownloadClicked,
     Selected(i32),
     RecalcDragSource,
+    MoveSong { src: usize, dest: usize, y: f64 },
+    DraggedOver { uid: usize, y: f64 },
+    DragLeave,
+    Drop(PlaylistDrop, f64),
+    Motion(f64),
 }
 
 #[relm4::component(pub)]
@@ -535,18 +547,108 @@ impl relm4::Component for PlaylistsView {
                     .for_each(|row| row.borrow_mut().remove_drag_src());
 
                 // get selected children
-                let children: Vec<submarine::data::Child> = selected_rows
+                let children: Vec<PlaylistIndex> = selected_rows
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
-                    .map(|row| row.borrow().item.clone())
+                    .map(|row| PlaylistIndex {
+                        uid: row.borrow().uid().clone(),
+                        child: row.borrow().item.clone(),
+                    })
                     .collect();
 
                 // set children as content for DragSource
-                let drop = Droppable::Queue(children);
+                let drop = Droppable::PlaylistItems(children);
                 selected_rows
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
                     .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
+            }
+            PlaylistsViewIn::MoveSong { src, dest, y } => {
+                let len = self.tracks.selection_model.n_items();
+
+                //remove drag indicators
+                (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
+
+                // do nothing when src is dest
+                if src == dest {
+                    return;
+                }
+
+                //find src and dest row
+                let src_index: u32 = (0..len)
+                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &src)
+                    .unwrap();
+                let dest_index: u32 = (0..len)
+                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &dest)
+                    .unwrap();
+
+                //remove src
+                let src = self.tracks.get(src_index).unwrap();
+                let src_row =
+                    PlaylistRow::new(&self.subsonic, src.borrow().item.clone(), sender.clone());
+                self.tracks.remove(src_index);
+
+                //insert dest
+                let widget_height = self
+                    .tracks
+                    .get(src_index)
+                    .unwrap()
+                    .borrow()
+                    .title_box
+                    .height();
+                // insert based on cursor position and order of src and dest
+                match (
+                    y < f64::from(widget_height) * 0.5f64,
+                    src_index <= dest_index,
+                ) {
+                    (true, true) => self.tracks.insert(dest_index - 1, src_row),
+                    (true, false) | (false, true) => self.tracks.insert(dest_index, src_row),
+                    (false, false) => self.tracks.insert(dest_index + 1, src_row),
+                }
+            }
+            PlaylistsViewIn::DraggedOver { uid, y } => {
+                let len = self.tracks.selection_model.n_items();
+                let src_index: u32 = (0..len)
+                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid)
+                    .unwrap();
+
+                let widget_height = self
+                    .tracks
+                    .get(src_index)
+                    .unwrap()
+                    .borrow()
+                    .title_box
+                    .height();
+                if y < f64::from(widget_height) * 0.5f64 {
+                    self.tracks
+                        .get(src_index)
+                        .unwrap()
+                        .borrow()
+                        .add_drag_indicator_top();
+                } else {
+                    self.tracks
+                        .get(src_index)
+                        .unwrap()
+                        .borrow()
+                        .add_drag_indicator_bottom();
+                }
+            }
+            PlaylistsViewIn::DragLeave => {
+                let len = self.tracks.selection_model.n_items();
+                //remove drag indicators
+                (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
+            }
+            PlaylistsViewIn::Motion(y) => {
+                // let len = self.tracks.selection_model.n_items();
+                // (0..len).for_each(|i| {
+                //     if self.tracks.get(i).unwrap().borrow().title_box.contains(-1, y) {
+                //         println!("inside {i}");
+                //     }
+                // });
+                todo!();
+            }
+            PlaylistsViewIn::Drop(_, _) => {
+                todo!();
             }
         }
     }

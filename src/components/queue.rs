@@ -421,6 +421,7 @@ impl relm4::Component for Queue {
                         .into_iter()
                         .cloned()
                         .collect(),
+                    Droppable::PlaylistItems(items) => todo!(),
                 };
 
                 let mut guard = self.songs.guard();
@@ -473,6 +474,7 @@ impl relm4::Component for Queue {
                         .into_iter()
                         .cloned()
                         .collect(),
+                    Droppable::PlaylistItems(_items) => todo!(),
                 };
 
                 let mut guard = self.songs.guard();

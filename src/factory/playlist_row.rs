@@ -3,31 +3,39 @@ use std::{cell::RefCell, rc::Rc};
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self,
+        self, gdk, glib,
         prelude::{BoxExt, ButtonExt, ToValue, WidgetExt},
     },
     RelmWidgetExt,
 };
 
 use crate::{
-    common::convert_for_label,
-    components::playlists_view::{PlaylistsView, PlaylistsViewOut},
-    subsonic::Subsonic,
-    types::{Droppable, Id},
+    common::convert_for_label, components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut}, css::DragState, factory::queue_song::QueueIndex, subsonic::Subsonic, types::{Droppable, Id}
 };
+
+static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(42);
+
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "PlaylistIndex")]
+pub struct PlaylistIndex {
+    pub uid: usize,
+    pub child: submarine::data::Child,
+}
 
 #[derive(Debug)]
 pub struct PlaylistRow {
+    uid: usize,
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     fav_btn: gtk::Button,
-    title_box: gtk::Box,
+    pub title_box: gtk::Box,
     title_box_drag: gtk::DragSource,
     artist_box: gtk::Box,
     artist_box_drag: gtk::DragSource,
     album_box: gtk::Box,
     album_box_drag: gtk::DragSource,
     content_set: bool,
+    sender: relm4::ComponentSender<PlaylistsView>,
 }
 
 impl PartialEq for PlaylistRow {
@@ -52,6 +60,7 @@ impl PlaylistRow {
         fav_btn.set_focus_on_click(false);
 
         let result = Self {
+            uid: UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
             subsonic: subsonic.clone(),
             item,
             fav_btn,
@@ -62,6 +71,7 @@ impl PlaylistRow {
             album_box: gtk::Box::default(),
             album_box_drag: gtk::DragSource::default(),
             content_set: false,
+            sender: sender.clone(),
         };
 
         let id = result.item.id.clone();
@@ -148,6 +158,10 @@ impl PlaylistRow {
         result
     }
 
+    pub fn uid(&self) -> &usize {
+        &self.uid
+    }
+
     fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 3] {
         //add new widgets here
         [
@@ -194,7 +208,7 @@ impl PlaylistRow {
 
     fn get_drag_src(&self) -> gtk::DragSource {
         let src = gtk::DragSource::default();
-        let drop = Droppable::Child(Box::new(self.item.clone()));
+        let drop = PlaylistIndex{ uid: self.uid, child: self.item.clone()};
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
         src.set_actions(gtk::gdk::DragAction::COPY);
@@ -213,41 +227,77 @@ impl PlaylistRow {
         });
         src
     }
-}
 
-pub struct PositionColumn;
+    fn create_drop_target(&self) -> gtk::DropTarget {
+        let actions = gdk::DragAction::MOVE | gdk::DragAction::COPY;
+        let target = gtk::DropTarget::new(gtk::glib::types::Type::INVALID, actions);
+        target.set_types(&[
+            <PlaylistIndex as gtk::prelude::StaticType>::static_type(),
+            <Droppable as gtk::prelude::StaticType>::static_type(),
+        ]);
 
-impl relm4::typed_view::column::RelmColumn for PositionColumn {
-    type Root = gtk::Box;
-    type Item = PlaylistRow;
-    type Widgets = gtk::Label;
+        let sender = self.sender.clone();
+        let uid = self.uid.clone();
+        target.connect_drop(move |_target, value, _x, y| {
+            if let Ok(index) = value.get::<PlaylistIndex>() {
+                let src_uid = index.uid;
+                sender.input(PlaylistsViewIn::MoveSong { src: src_uid, dest: uid, y });
+            }
+            if let Ok(index) = value.get::<QueueIndex>() {
+                todo!()//
+            }
+            if let Ok(drop) = value.get::<Droppable>() {
+                if let Droppable::PlaylistItems(items) = drop {
+                    for item in items.iter().rev() {
+                        let src_uid = item.uid;
+                        sender.input(PlaylistsViewIn::MoveSong { src: src_uid, dest: uid, y });
+                    }
+                } else {
+                    todo!()
+                }
+            }
+            true
+        });
 
-    const COLUMN_NAME: &'static str = "#";
-    const ENABLE_RESIZE: bool = false;
-    const ENABLE_EXPAND: bool = false;
+        //sending motion for added indicators
+        let uid = self.uid.clone();
+        let sender = self.sender.clone();
+        target.connect_motion(move |_drop, _x, y| {
+            sender.input(PlaylistsViewIn::DraggedOver{uid, y});
+            gdk::DragAction::MOVE
+        });
 
-    fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
-        let label = gtk::Label::builder().build();
-        b.append(&label);
-        (b, (label))
+        //remove indicator on leave
+        let sender = self.sender.clone();
+        target.connect_leave(move |_drop| {
+            sender.input(PlaylistsViewIn::DragLeave);
+        });
+
+        target
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
-        let mut text = String::new();
-        if let Some(cd) = item.item.disc_number {
-            text.push_str(&cd.to_string());
-            text.push('.');
-        }
-        if let Some(track) = item.item.track {
-            text = format!("{text}{track:02}");
-        }
-        label.set_label(&text);
-        b.add_controller(item.get_drag_src());
+    fn get_list_item_widget(widget: &impl glib::object::IsA<gtk::Widget>) -> Option<gtk::Widget> {
+        let b = widget.parent()?;
+        let column_view_cell = b.parent()?;
+        column_view_cell.parent()
     }
 
-    fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
-        Some(Box::new(|a, b| a.item.track.cmp(&b.item.track)))
+    pub fn add_drag_indicator_top(&self) {
+        let list_item = Self::get_list_item_widget(&self.title_box).unwrap();
+        list_item.remove_css_class("drag-indicator-bottom");
+        list_item.add_css_class("drag-indicator-top");
+    }
+
+    pub fn add_drag_indicator_bottom(&self) {
+        let list_item = Self::get_list_item_widget(&self.title_box).unwrap();
+        list_item.add_css_class("drag-indicator-bottom");
+        list_item.remove_css_class("drag-indicator-top");
+    }
+
+    pub fn reset_drag_indicators(&self) {
+        let list_item = Self::get_list_item_widget(&self.title_box).unwrap();
+        list_item.remove_css_class("drag-indicator-bottom");
+        list_item.remove_css_class("drag-indicator-top");
     }
 }
 
@@ -268,6 +318,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.title_box));
+        view.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -292,6 +343,7 @@ impl relm4::typed_view::column::RelmColumn for ArtistColumn {
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.artist_box));
+        view.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -316,6 +368,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.album_box));
+        view.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -353,6 +406,7 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
                 .unwrap_or(&gettext("Unknown genre")),
         );
         b.add_controller(item.get_drag_src());
+        b.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -383,6 +437,7 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
         let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
         label.set_label(&length);
         b.add_controller(item.get_drag_src());
+        b.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -414,6 +469,7 @@ impl relm4::typed_view::column::RelmColumn for BitRateColumn {
         let bitrate = bitrate.map(|n| n.to_string());
         label.set_label(&bitrate.unwrap_or(String::from("-")));
         b.add_controller(item.get_drag_src());
+        b.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -437,6 +493,7 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.fav_btn));
+        view.add_controller(item.create_drop_target());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
