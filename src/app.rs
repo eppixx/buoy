@@ -459,9 +459,9 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::Box {
                                             set_spacing: 3,
 
-                                            gtk::Image {
-                                                set_icon_name: Some("avatar-default-symbolic"),
-                                            },
+                                            // gtk::Image {
+                                            //     set_icon_name: Some("avatar-default-symbolic"),
+                                            // },
                                             gtk::Label {
                                                 set_text: &gettext("Artist"),
                                             }
@@ -500,9 +500,9 @@ impl relm4::component::AsyncComponent for App {
                                         gtk::Box {
                                             set_spacing: 3,
 
-                                            gtk::Image {
-                                                set_icon_name: Some("media-optical-cd-audio-symbolic"),
-                                            },
+                                            // gtk::Image {
+                                            //     set_icon_name: Some("media-optical-cd-audio-symbolic"),
+                                            // },
                                             gtk::Label {
                                                 set_text: &gettext("Album"),
                                             }
