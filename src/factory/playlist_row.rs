@@ -10,7 +10,7 @@ use relm4::{
 };
 
 use crate::{
-    common::convert_for_label, components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut}, css::DragState, factory::queue_song::QueueIndex, subsonic::Subsonic, types::{Droppable, Id}
+    common::convert_for_label, components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut}, factory::queue_song::QueueIndex, subsonic::Subsonic, types::{Droppable, Id}
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(42);
@@ -61,7 +61,7 @@ impl PlaylistRow {
 
         let uid = UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let result = Self {
-            uid: uid.clone(),
+            uid,
             subsonic: subsonic.clone(),
             item,
             fav_btn,
@@ -330,7 +330,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         if !finished.0 {
             finished.0 = true;
             let list_item = PlaylistRow::get_list_item_widget(&item.title_box).unwrap();
-            let drop_target = PlaylistRow::create_drop_target(item.sender.clone(), &cell);
+            let drop_target = PlaylistRow::create_drop_target(item.sender.clone(), cell);
             list_item.add_controller(drop_target);
         }
     }

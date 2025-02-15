@@ -2,7 +2,6 @@ use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
-use relm4::gtk::gdk;
 use relm4::gtk::glib::prelude::ToValue;
 use relm4::RelmWidgetExt;
 use relm4::{
@@ -19,7 +18,6 @@ use relm4::{
 use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistIndex, PlaylistRow, TitleColumn,
 };
-use crate::factory::queue_song::QueueIndex;
 use crate::settings::Settings;
 use crate::types::Id;
 use crate::{
@@ -109,8 +107,6 @@ pub enum PlaylistsViewIn {
     MoveSong { src: usize, dest: usize, y: f64 },
     DraggedOver { uid: usize, y: f64 },
     DragLeave,
-    Drop(PlaylistDrop, f64),
-    Motion(f64),
 }
 
 #[relm4::component(pub)]
@@ -551,7 +547,7 @@ impl relm4::Component for PlaylistsView {
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
                     .map(|row| PlaylistIndex {
-                        uid: row.borrow().uid().clone(),
+                        uid: *row.borrow().uid(),
                         child: row.borrow().item.clone(),
                     })
                     .collect();
@@ -605,6 +601,8 @@ impl relm4::Component for PlaylistsView {
                     (true, false) | (false, true) => self.tracks.insert(dest_index, src_row),
                     (false, false) => self.tracks.insert(dest_index + 1, src_row),
                 }
+
+                //TODO update server
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
                 let len = self.tracks.selection_model.n_items();
@@ -637,18 +635,6 @@ impl relm4::Component for PlaylistsView {
                 let len = self.tracks.selection_model.n_items();
                 //remove drag indicators
                 (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
-            }
-            PlaylistsViewIn::Motion(y) => {
-                // let len = self.tracks.selection_model.n_items();
-                // (0..len).for_each(|i| {
-                //     if self.tracks.get(i).unwrap().borrow().title_box.contains(-1, y) {
-                //         println!("inside {i}");
-                //     }
-                // });
-                todo!();
-            }
-            PlaylistsViewIn::Drop(_, _) => {
-                todo!();
             }
         }
     }
