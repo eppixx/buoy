@@ -597,6 +597,8 @@ impl relm4::Component for PlaylistsView {
                 }
 
                 //TODO update server
+                // subsonic does not allow moving songs, so we need to remove songs
+                // and then readd them
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
                 let len = self.tracks.selection_model.n_items();
