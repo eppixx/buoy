@@ -16,24 +16,19 @@ use crate::{
     types::{Droppable, Id},
 };
 
+use super::SetupFinished;
+
 #[derive(Debug)]
 pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
-    fav_btn: gtk::Button,
+    fav_btn: Option<gtk::Button>,
     position_box: gtk::Box,
     position_box_drag: gtk::DragSource,
     title_box: gtk::Box,
     title_box_drag: gtk::DragSource,
-    artist_box: gtk::Box,
-    artist_box_drag: gtk::DragSource,
-    album_box: gtk::Box,
-    album_box_drag: gtk::DragSource,
-    length_box: gtk::Box,
-    length_box_drag: gtk::DragSource,
-    bitrate_box: gtk::Box,
-    bitrate_box_drag: gtk::DragSource,
     content_set: bool,
+    sender: relm4::ComponentSender<TracksView>,
 }
 
 impl PartialEq for TrackRow {
@@ -48,32 +43,16 @@ impl TrackRow {
         item: submarine::data::Child,
         sender: &relm4::ComponentSender<TracksView>,
     ) -> Self {
-        let fav = match item.starred.is_some() {
-            true => String::from("starred-symbolic"),
-            false => String::from("non-starred-symbolic"),
-        };
-
-        let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
-        fav_btn.set_focus_on_click(false);
-
         let result = Self {
             subsonic: subsonic.clone(),
             item,
-            fav_btn,
+            fav_btn: None,
             position_box: gtk::Box::default(),
             position_box_drag: gtk::DragSource::default(),
             title_box: gtk::Box::default(),
             title_box_drag: gtk::DragSource::default(),
-            album_box: gtk::Box::default(),
-            album_box_drag: gtk::DragSource::default(),
-            artist_box: gtk::Box::default(),
-            artist_box_drag: gtk::DragSource::default(),
-            length_box: gtk::Box::default(),
-            length_box_drag: gtk::DragSource::default(),
-            bitrate_box: gtk::Box::default(),
-            bitrate_box_drag: gtk::DragSource::default(),
             content_set: false,
+            sender: sender.clone(),
         };
 
         //setup position label
@@ -101,101 +80,14 @@ impl TrackRow {
             .title_box_drag
             .set_actions(gtk::gdk::DragAction::COPY);
 
-        //setup length_box
-        let length = convert_for_label(i64::from(result.item.duration.unwrap_or(0)) * 1000);
-        let length_label = gtk::Label::new(Some(&length));
-        result.length_box.append(&length_label);
-        result.length_box.add_controller(result.get_drag_src());
-
-        //setup bitrate_box
-        let bitrate = result.item.bit_rate;
-        let bitrate = bitrate.map(|n| n.to_string());
-        let bitrate_label = gtk::Label::new(Some(&bitrate.unwrap_or(String::from("-"))));
-        result.bitrate_box.append(&bitrate_label);
-        result.bitrate_box.add_controller(result.get_drag_src());
-
-        let id = result.item.id.clone();
-        let send = sender.clone();
-        result
-            .fav_btn
-            .connect_clicked(move |btn| match btn.icon_name().as_deref() {
-                Some("starred-symbolic") => {
-                    btn.set_icon_name("non-starred-symbolic");
-                    send.output(TracksViewOut::FavoriteClicked(id.clone(), false))
-                        .unwrap();
-                }
-                Some("non-starred-symbolic") => {
-                    btn.set_icon_name("starred-symbolic");
-                    send.output(TracksViewOut::FavoriteClicked(id.clone(), true))
-                        .unwrap();
-                }
-                _ => unreachable!("unkown icon name"),
-            });
-
-        // setup album label
-        let album_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        let stock = gettext("Unknown Album");
-        let album = result.item.album.as_deref().unwrap_or(&stock);
-        let send = sender.clone();
-        if let Some(album_id) = &result.item.album_id {
-            let album = gtk::glib::markup_escape_text(album);
-            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
-            let album_id = album_id.clone();
-            album_label.connect_activate_link(move |_label, _id| {
-                let id = Id::album(&album_id);
-                send.output(TracksViewOut::ClickedAlbum(id)).unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
-        } else {
-            album_label.set_text(album);
-        }
-        result.album_box.append(&album_label);
-        result.album_box.add_controller(result.get_drag_src());
-        result
-            .album_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
-
-        // setup artist label
-        let artist_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        let sender = sender.clone();
-        let stock = gettext("Unknown Artist");
-        let artist = result.item.artist.as_deref().unwrap_or(&stock);
-        if let Some(artist_id) = &result.item.artist_id {
-            let artist = gtk::glib::markup_escape_text(artist);
-            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
-            let artist_id = artist_id.clone();
-            artist_label.connect_activate_link(move |_label, _id| {
-                let id = Id::artist(&artist_id);
-                sender.output(TracksViewOut::ClickedArtist(id)).unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
-        } else {
-            artist_label.set_text(artist);
-        }
-        result.artist_box.append(&artist_label);
-        result.artist_box.add_controller(result.get_drag_src());
-        result
-            .artist_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
-
         result
     }
 
-    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 6] {
+    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 2] {
         //add new widgets here
         [
             (&self.position_box_drag, &self.position_box),
             (&self.title_box_drag, &self.title_box),
-            (&self.artist_box_drag, &self.artist_box),
-            (&self.album_box_drag, &self.album_box),
-            (&self.length_box_drag, &self.length_box),
-            (&self.bitrate_box_drag, &self.bitrate_box),
         ]
     }
 
@@ -311,18 +203,44 @@ pub struct ArtistColumn;
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Artist";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let artist_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        (gtk::Viewport::default(), artist_label)
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.artist_box));
+    fn bind(item: &mut Self::Item, artist_label: &mut Self::Widgets, view: &mut Self::Root) {
+        let stock = gettext("Unknown Artist");
+        let artist = item.item.artist.as_deref().unwrap_or(&stock);
+        if let Some(artist_id) = &item.item.artist_id {
+            // set text with link
+            let artist = gtk::glib::markup_escape_text(artist);
+            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
+            let artist_id = artist_id.clone();
+            let sender = item.sender.clone();
+            artist_label.connect_activate_link(move |_label, _id| {
+                let id = Id::artist(&artist_id);
+                sender.output(TracksViewOut::ClickedArtist(id)).unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
+        } else {
+            // set plain text
+            artist_label.set_text(artist);
+        }
+        view.set_child(Some(artist_label));
+    }
+
+    fn unbind(_item: &mut Self::Item, artist_label: &mut Self::Widgets, view: &mut Self::Root) {
+        artist_label.set_text("");
+        view.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -335,18 +253,45 @@ pub struct AlbumColumn;
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Album";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let album_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        (gtk::Viewport::default(), album_label)
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.album_box));
+    fn bind(item: &mut Self::Item, album_label: &mut Self::Widgets, view: &mut Self::Root) {
+        let stock = gettext("Unknown Album");
+        let album = item.item.album.as_deref().unwrap_or(&stock);
+        if let Some(album_id) = &item.item.album_id {
+            // set text with link
+            let album = gtk::glib::markup_escape_text(album);
+            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
+            let album_id = album_id.clone();
+            let sender = item.sender.clone();
+            album_label.connect_activate_link(move |_label, _id| {
+                let id = Id::album(&album_id);
+                sender.output(TracksViewOut::ClickedAlbum(id)).unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
+        } else {
+            // set plain text
+            album_label.set_text(album);
+        }
+
+        view.set_child(Some(album_label));
+    }
+
+    fn unbind(_item: &mut Self::Item, album_label: &mut Self::Widgets, view: &mut Self::Root) {
+        album_label.set_text("");
+        view.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -376,14 +321,13 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
         (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
         label.set_label(
             item.item
                 .genre
                 .as_deref()
                 .unwrap_or(&gettext("Unknown genre")),
         );
-        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -394,20 +338,25 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
 pub struct LengthColumn;
 
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
-    type Root = gtk::Viewport;
+    type Root = gtk::Box;
     type Item = TrackRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Length";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let b = gtk::Box::default();
+        let label = gtk::Label::default();
+        b.set_hexpand(true);
+        b.append(&label);
+        (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.length_box));
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
+        let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
+        label.set_label(&length);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -418,20 +367,26 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
 pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {
-    type Root = gtk::Viewport;
+    type Root = gtk::Box;
     type Item = TrackRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Bitrate";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let b = gtk::Box::default();
+        let label = gtk::Label::default();
+        b.set_hexpand(true);
+        b.append(&label);
+        (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.bitrate_box));
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
+        let bitrate = item.item.bit_rate;
+        let bitrate = bitrate.map(|n| n.to_string());
+        label.set_label(&bitrate.unwrap_or(String::from("-")));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -444,17 +399,62 @@ pub struct FavColumn;
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = ();
+    type Widgets = (Rc<RefCell<String>>, gtk::Button, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Favorite";
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let fav_btn = gtk::Button::new();
+        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
+        fav_btn.set_focus_on_click(false);
+
+        let cell = Rc::new(RefCell::new(String::new()));
+        (
+            gtk::Viewport::default(),
+            (cell, fav_btn, SetupFinished(false)),
+        )
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.fav_btn));
+    fn bind(
+        item: &mut Self::Item,
+        (cell, fav_btn, finished): &mut Self::Widgets,
+        view: &mut Self::Root,
+    ) {
+        match item.item.starred.is_some() {
+            true => fav_btn.set_icon_name("starred-symbolic"),
+            false => fav_btn.set_icon_name("non-starred-symbolic"),
+        }
+
+        cell.replace(item.item.id.clone());
+
+        if !finished.0 {
+            finished.0 = true;
+            let sender = item.sender.clone();
+            let cell = cell.clone();
+            fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    sender
+                        .output(TracksViewOut::FavoriteClicked(cell.borrow().clone(), false))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    sender
+                        .output(TracksViewOut::FavoriteClicked(cell.borrow().clone(), true))
+                        .unwrap();
+                }
+                _ => unreachable!("unkown icon name"),
+            });
+        }
+
+        item.fav_btn = Some(fav_btn.clone());
+        view.set_child(Some(fav_btn));
+    }
+
+    fn unbind(item: &mut Self::Item, _widgets: &mut Self::Widgets, _root: &mut Self::Root) {
+        item.fav_btn = None;
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
