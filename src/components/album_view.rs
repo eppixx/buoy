@@ -12,19 +12,17 @@ use relm4::{
     ComponentController, RelmWidgetExt,
 };
 
+use crate::settings::Settings;
 use crate::{
     client::Client,
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
-    factory::track_row::BitRateColumn,
+    factory::album_track_row::{
+        AlbumColumn, AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, LengthColumn,
+        PositionColumn, TitleColumn,
+    },
     subsonic::Subsonic,
     types::{Droppable, Id},
-};
-use crate::{
-    factory::track_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PositionColumn, TitleColumn, TrackRow,
-    },
-    settings::Settings,
 };
 
 #[derive(Debug)]
@@ -37,7 +35,7 @@ pub struct AlbumView {
     artist: Option<String>,
     info: String,
     artist_id: Option<String>,
-    tracks: relm4::typed_view::column::TypedColumnView<TrackRow, gtk::MultiSelection>,
+    tracks: relm4::typed_view::column::TypedColumnView<AlbumTrackRow, gtk::MultiSelection>,
 }
 
 #[derive(Debug)]
@@ -87,7 +85,7 @@ impl relm4::Component for AlbumView {
         let album = subsonic.borrow().find_album(id.as_ref()).unwrap();
 
         let mut tracks =
-            relm4::typed_view::column::TypedColumnView::<TrackRow, gtk::MultiSelection>::new();
+            relm4::typed_view::column::TypedColumnView::<AlbumTrackRow, gtk::MultiSelection>::new();
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
@@ -451,7 +449,7 @@ impl relm4::Component for AlbumView {
             AlbumViewCmd::LoadedAlbum(Ok(album)) => {
                 //load tracks
                 for track in &album.song {
-                    self.tracks.append(TrackRow::new_album_track(
+                    self.tracks.append(AlbumTrackRow::new(
                         &self.subsonic,
                         track.clone(),
                         sender.clone(),

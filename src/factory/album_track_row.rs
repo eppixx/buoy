@@ -11,13 +11,13 @@ use relm4::{
 
 use crate::{
     common::convert_for_label,
-    components::tracks_view::{TracksView, TracksViewOut},
+    components::album_view::{AlbumView, AlbumViewOut},
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
 
 #[derive(Debug)]
-pub struct TrackRow {
+pub struct AlbumTrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     fav_btn: gtk::Button,
@@ -36,14 +36,18 @@ pub struct TrackRow {
     content_set: bool,
 }
 
-impl PartialEq for TrackRow {
+impl PartialEq for AlbumTrackRow {
     fn eq(&self, other: &Self) -> bool {
         self.item == other.item
     }
 }
 
-impl TrackRow {
-    pub fn new(subsonic: &Rc<RefCell<Subsonic>>, item: submarine::data::Child) -> Self {
+impl AlbumTrackRow {
+    pub fn new(
+        subsonic: &Rc<RefCell<Subsonic>>,
+        item: submarine::data::Child,
+        sender: relm4::ComponentSender<AlbumView>,
+    ) -> Self {
         let fav = match item.starred.is_some() {
             true => String::from("starred-symbolic"),
             false => String::from("non-starred-symbolic"),
@@ -110,16 +114,6 @@ impl TrackRow {
         result.bitrate_box.append(&bitrate_label);
         result.bitrate_box.add_controller(result.get_drag_src());
 
-        result
-    }
-
-    pub fn new_track(
-        subsonic: &Rc<RefCell<Subsonic>>,
-        item: submarine::data::Child,
-        sender: &relm4::ComponentSender<TracksView>,
-    ) -> Self {
-        let result = Self::new(subsonic, item);
-
         let id = result.item.id.clone();
         let send = sender.clone();
         result
@@ -127,12 +121,12 @@ impl TrackRow {
             .connect_clicked(move |btn| match btn.icon_name().as_deref() {
                 Some("starred-symbolic") => {
                     btn.set_icon_name("non-starred-symbolic");
-                    send.output(TracksViewOut::FavoriteClicked(id.clone(), false))
+                    send.output(AlbumViewOut::FavoriteClicked(id.clone(), false))
                         .unwrap();
                 }
                 Some("non-starred-symbolic") => {
                     btn.set_icon_name("starred-symbolic");
-                    send.output(TracksViewOut::FavoriteClicked(id.clone(), true))
+                    send.output(AlbumViewOut::FavoriteClicked(id.clone(), true))
                         .unwrap();
                 }
                 _ => unreachable!("unkown icon name"),
@@ -145,32 +139,15 @@ impl TrackRow {
             .build();
         let stock = gettext("Unknown Album");
         let album = result.item.album.as_deref().unwrap_or(&stock);
-        let send = sender.clone();
-        if let Some(album_id) = &result.item.album_id {
-            let album = gtk::glib::markup_escape_text(album);
-            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
-            let album_id = album_id.clone();
-            album_label.connect_activate_link(move |_label, _id| {
-                let id = Id::album(&album_id);
-                send.output(TracksViewOut::ClickedAlbum(id)).unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
-        } else {
-            album_label.set_text(album);
-        }
+        album_label.set_label(album);
         result.album_box.append(&album_label);
-        result.album_box.add_controller(result.get_drag_src());
-        result
-            .album_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
 
         // setup artist label
         let artist_label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        let sender = sender.clone();
-        let stock = gettext("Unknown Artist");
+        let stock = gettext("Unknown Album");
         let artist = result.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &result.item.artist_id {
             let artist = gtk::glib::markup_escape_text(artist);
@@ -178,7 +155,7 @@ impl TrackRow {
             let artist_id = artist_id.clone();
             artist_label.connect_activate_link(move |_label, _id| {
                 let id = Id::artist(&artist_id);
-                sender.output(TracksViewOut::ClickedArtist(id)).unwrap();
+                sender.output(AlbumViewOut::ArtistClicked(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
@@ -268,7 +245,7 @@ pub struct PositionColumn;
 
 impl relm4::typed_view::column::RelmColumn for PositionColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "#";
@@ -292,7 +269,7 @@ pub struct TitleColumn;
 
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Title";
@@ -316,7 +293,7 @@ pub struct ArtistColumn;
 
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Artist";
@@ -340,7 +317,7 @@ pub struct AlbumColumn;
 
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Album";
@@ -364,7 +341,7 @@ pub struct GenreColumn;
 
 impl relm4::typed_view::column::RelmColumn for GenreColumn {
     type Root = gtk::Box;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Genre";
@@ -401,7 +378,7 @@ pub struct LengthColumn;
 
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Length";
@@ -425,7 +402,7 @@ pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Bitrate";
@@ -449,7 +426,7 @@ pub struct FavColumn;
 
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Viewport;
-    type Item = TrackRow;
+    type Item = AlbumTrackRow;
     type Widgets = ();
 
     const COLUMN_NAME: &'static str = "Favorite";
