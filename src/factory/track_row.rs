@@ -22,7 +22,7 @@ use super::SetupFinished;
 pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
-    fav_btn: Option<gtk::Button>,
+    pub fav_btn: Option<gtk::Button>,
     title_box: gtk::Viewport,
     sender: relm4::ComponentSender<TracksView>,
     multiple_drag_src: Option<gtk::DragSource>,
@@ -40,16 +40,14 @@ impl TrackRow {
         item: submarine::data::Child,
         sender: &relm4::ComponentSender<TracksView>,
     ) -> Self {
-        let result = Self {
+        Self {
             subsonic: subsonic.clone(),
             item,
             fav_btn: None,
             title_box: gtk::Viewport::default(),
             sender: sender.clone(),
             multiple_drag_src: None,
-        };
-
-        result
+        }
     }
 
     pub fn set_drag_src(&mut self, drop: Droppable) {
@@ -186,8 +184,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         }
     }
 
-
-    fn unbind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, view: &mut Self::Root) {
+    fn unbind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(None::<&gtk::Widget>);
         item.title_box.set_child(None::<&gtk::Widget>);
     }

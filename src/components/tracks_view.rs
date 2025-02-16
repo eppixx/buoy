@@ -110,17 +110,12 @@ pub enum TracksViewOut {
     ClickedAlbum(Id),
 }
 
-#[derive(Debug)]
-pub enum TracksViewCmd {
-    AddTracks(Vec<submarine::data::Child>, usize),
-}
-
 #[relm4::component(pub)]
 impl relm4::Component for TracksView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = TracksViewIn;
     type Output = TracksViewOut;
-    type CommandOutput = TracksViewCmd;
+    type CommandOutput = ();
 
     fn init(
         subsonic: Self::Init,
@@ -168,10 +163,6 @@ impl relm4::Component for TracksView {
             .unwrap()
             .set_title(Some(&gettext("Favorite")));
 
-        // add tracks in chunks to not overwhelm the app
-        let list = subsonic.borrow().tracks().to_vec();
-        sender.oneshot_command(async move { TracksViewCmd::AddTracks(list, 0) });
-
         let mut model = Self {
             subsonic: subsonic.clone(),
             tracks,
@@ -189,7 +180,31 @@ impl relm4::Component for TracksView {
         };
         model.info_cover.model().add_css_class_image("size100");
 
+        // add tracks
+        let list = subsonic.borrow().tracks().to_vec();
+        let tracks: Vec<TrackRow> = list
+            .iter()
+            .map(|track| {
+                model.shown_tracks.borrow_mut().push(track.id.clone());
+                model.shown_albums.borrow_mut().insert(track.album.clone());
+                model.shown_artists.borrow_mut().insert(track.artist.clone());
+                TrackRow::new(&model.subsonic, track.clone(), &sender)
+            })
+            .collect();
+        model.tracks.extend_from_iter(tracks);
+
         let widgets = view_output!();
+
+        //update labels and buttons
+        set_count_labels(
+            &model.shown_tracks,
+            &widgets.shown_tracks,
+            &model.shown_albums,
+            &widgets.shown_albums,
+            &model.shown_artists,
+            &widgets.shown_artists,
+        );
+
         model.filters.guard().push_back(Category::Favorite);
         model.calc_sensitivity_of_buttons(&widgets);
 
@@ -410,8 +425,16 @@ impl relm4::Component for TracksView {
                         true => {
                             track.borrow_mut().item.starred =
                                 Some(chrono::offset::Local::now().into());
+                            if let Some(fav) = &track.borrow().fav_btn {
+                                fav.set_icon_name("starred-symbolic");
+                            }
                         }
-                        false => track.borrow_mut().item.starred = None,
+                        false => {
+                            track.borrow_mut().item.starred = None;
+                            if let Some(fav) = &track.borrow().fav_btn {
+                                fav.set_icon_name("non-starred-symbolic");
+                            }
+                        }
                     });
             }
             TracksViewIn::FilterChanged => {
@@ -809,58 +832,6 @@ impl relm4::Component for TracksView {
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
                     .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
-            }
-        }
-    }
-
-    fn update_cmd_with_view(
-        &mut self,
-        widgets: &mut Self::Widgets,
-        msg: Self::CommandOutput,
-        sender: relm4::ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        match msg {
-            TracksViewCmd::AddTracks(candidates, processed) => {
-                const CHUNK: usize = 20000;
-                const TIMEOUT: u64 = 1;
-
-                //add tracks
-                let tracks: Vec<TrackRow> = candidates
-                    .iter()
-                    .skip(processed)
-                    .take(CHUNK)
-                    .map(|track| {
-                        self.shown_tracks.borrow_mut().push(track.id.clone());
-                        self.shown_albums.borrow_mut().insert(track.album.clone());
-                        self.shown_artists.borrow_mut().insert(track.artist.clone());
-                        TrackRow::new(&self.subsonic, track.clone(), &sender)
-                    })
-                    .collect();
-                self.tracks.extend_from_iter(tracks);
-
-                //update labels and buttons
-                set_count_labels(
-                    &self.shown_tracks,
-                    &widgets.shown_tracks,
-                    &self.shown_albums,
-                    &widgets.shown_albums,
-                    &self.shown_artists,
-                    &widgets.shown_artists,
-                );
-                self.calc_sensitivity_of_buttons(widgets);
-
-                // recursion anchor
-                if processed >= candidates.len() {
-                    widgets.spinner.set_visible(false);
-                    return;
-                }
-
-                //recursion the rest of the list
-                sender.oneshot_command(async move {
-                    tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
-                    TracksViewCmd::AddTracks(candidates, processed + CHUNK)
-                });
             }
         }
     }
