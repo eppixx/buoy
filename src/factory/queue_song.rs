@@ -13,7 +13,15 @@ use relm4::{
 };
 
 use crate::{
-    client::Client, common::convert_for_label, components::cover::{Cover, CoverIn, CoverOut}, css::DragState, factory::playlist_row::PlaylistIndex, gtk_helper::stack::StackExt, play_state::PlayState, subsonic::Subsonic, types::{Droppable, Id}
+    client::Client,
+    common::convert_for_label,
+    components::cover::{Cover, CoverIn, CoverOut},
+    css::DragState,
+    factory::playlist_row::PlaylistIndex,
+    gtk_helper::stack::StackExt,
+    play_state::PlayState,
+    subsonic::Subsonic,
+    types::{Droppable, Id},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]

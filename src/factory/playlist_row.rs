@@ -10,7 +10,10 @@ use relm4::{
 };
 
 use crate::{
-    common::convert_for_label, components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut}, factory::queue_song::QueueIndex, subsonic::Subsonic, types::{Droppable, Id}
+    common::convert_for_label,
+    components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
+    subsonic::Subsonic,
+    types::{Droppable, Id},
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(42);
@@ -27,10 +30,7 @@ pub struct PlaylistRow {
     uid: usize,
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
-    fav_btn: gtk::Button,
     pub title_box: gtk::Box,
-    artist_box: gtk::Box,
-    album_box: gtk::Box,
     sender: relm4::ComponentSender<PlaylistsView>,
     multiple_drag_sources: Option<gtk::DragSource>,
 }
@@ -47,45 +47,15 @@ impl PlaylistRow {
         item: submarine::data::Child,
         sender: relm4::ComponentSender<PlaylistsView>,
     ) -> Self {
-        let fav = match item.starred.is_some() {
-            true => String::from("starred-symbolic"),
-            false => String::from("non-starred-symbolic"),
-        };
-
-        let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
-        fav_btn.set_focus_on_click(false);
-
         let uid = UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let result = Self {
             uid,
             subsonic: subsonic.clone(),
             item,
-            fav_btn,
             title_box: gtk::Box::default(),
-            artist_box: gtk::Box::default(),
-            album_box: gtk::Box::default(),
             sender: sender.clone(),
             multiple_drag_sources: None,
         };
-
-        let id = result.item.id.clone();
-        let send = sender.clone();
-        result
-            .fav_btn
-            .connect_clicked(move |btn| match btn.icon_name().as_deref() {
-                Some("starred-symbolic") => {
-                    btn.set_icon_name("non-starred-symbolic");
-                    send.output(PlaylistsViewOut::FavoriteClicked(id.clone(), false))
-                        .unwrap();
-                }
-                Some("non-starred-symbolic") => {
-                    btn.set_icon_name("starred-symbolic");
-                    send.output(PlaylistsViewOut::FavoriteClicked(id.clone(), true))
-                        .unwrap();
-                }
-                _ => unreachable!("unkown icon name"),
-            });
 
         // setup title label
         let title_label = gtk::Label::builder()
@@ -94,49 +64,6 @@ impl PlaylistRow {
             .label(&result.item.title)
             .build();
         result.title_box.append(&title_label);
-
-        // setup album label
-        let album_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        let stock = gettext("Unknown Album");
-        let album = result.item.album.as_deref().unwrap_or(&stock);
-        let send = sender.clone();
-        if let Some(album_id) = &result.item.album_id {
-            let album = gtk::glib::markup_escape_text(album);
-            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
-            let album_id = album_id.clone();
-            album_label.connect_activate_link(move |_label, _id| {
-                let id = Id::album(&album_id);
-                send.output(PlaylistsViewOut::ClickedAlbum(id)).unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
-        } else {
-            album_label.set_text(album);
-        }
-        result.album_box.append(&album_label);
-
-        // setup artist label
-        let artist_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        let stock = gettext("Unknown Artist");
-        let artist = result.item.artist.as_deref().unwrap_or(&stock);
-        if let Some(artist_id) = &result.item.artist_id {
-            let artist = gtk::glib::markup_escape_text(artist);
-            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
-            let artist_id = artist_id.clone();
-            artist_label.connect_activate_link(move |_label, _id| {
-                let id = Id::artist(&artist_id);
-                sender.output(PlaylistsViewOut::ClickedArtist(id)).unwrap();
-                gtk::glib::signal::Propagation::Stop
-            });
-        } else {
-            artist_label.set_text(artist);
-        }
-        result.artist_box.append(&artist_label);
 
         result
     }
@@ -197,10 +124,16 @@ impl PlaylistRow {
     }
 
     fn create_drag_src(&self, uid: &Rc<RefCell<usize>>) -> gtk::DragSource {
-        let src = gtk::DragSource::default();
-        let drop = PlaylistIndex{ uid: *uid.borrow(), child: self.item.clone()};
+        // prepare content
+        let drop = PlaylistIndex {
+            uid: *uid.borrow(),
+            child: self.item.clone(),
+        };
         let drop = Droppable::PlaylistItems(vec![drop]);
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+
+        // create DragSource
+        let src = gtk::DragSource::default();
         src.set_content(Some(&content));
         src.set_actions(gtk::gdk::DragAction::COPY);
 
@@ -223,9 +156,7 @@ impl PlaylistRow {
     fn create_drop_target(&self, uid: &Rc<RefCell<usize>>) -> gtk::DropTarget {
         let actions = gdk::DragAction::MOVE | gdk::DragAction::COPY;
         let target = gtk::DropTarget::new(gtk::glib::types::Type::INVALID, actions);
-        target.set_types(&[
-            <Droppable as gtk::prelude::StaticType>::static_type(),
-        ]);
+        target.set_types(&[<Droppable as gtk::prelude::StaticType>::static_type()]);
 
         let sender = self.sender.clone();
         let cell = uid.clone();
@@ -235,10 +166,14 @@ impl PlaylistRow {
                     Droppable::PlaylistItems(items) => {
                         for item in items.iter().rev() {
                             let src_uid = item.uid;
-                            sender.input(PlaylistsViewIn::MoveSong { src: src_uid, dest: *cell.borrow(), y });
+                            sender.input(PlaylistsViewIn::MoveSong {
+                                src: src_uid,
+                                dest: *cell.borrow(),
+                                y,
+                            });
                         }
                     }
-                    _=> todo!() //TODO handle other soures
+                    _ => todo!(), //TODO handle other soures
                 }
                 return true;
             }
@@ -249,7 +184,10 @@ impl PlaylistRow {
         let sender = self.sender.clone();
         let cell = uid.clone();
         target.connect_motion(move |_drop, _x, y| {
-            sender.input(PlaylistsViewIn::DraggedOver{uid: *cell.borrow(), y});
+            sender.input(PlaylistsViewIn::DraggedOver {
+                uid: *cell.borrow(),
+                y,
+            });
             gdk::DragAction::MOVE
         });
 
@@ -304,14 +242,17 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), (Rc::new(RefCell::new(0)), SetupFinished(false)))
+        (
+            gtk::Viewport::default(),
+            (Rc::new(RefCell::new(0)), SetupFinished(false)),
+        )
     }
 
     fn bind(item: &mut Self::Item, (cell, finished): &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.title_box));
         cell.replace(item.uid);
 
-        // the following creates DropTarget for the list_item once and is updated by replacing the refcell
+        // we need only 1 DragSource for the ListItem as it is updated by updating cell
         if !finished.0 {
             finished.0 = true;
             let list_item = PlaylistRow::get_list_item_widget(&item.title_box).unwrap();
@@ -332,18 +273,44 @@ pub struct ArtistColumn;
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Artist";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let artist_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        (gtk::Viewport::default(), artist_label)
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.artist_box));
+    fn bind(item: &mut Self::Item, artist_label: &mut Self::Widgets, view: &mut Self::Root) {
+        let stock = gettext("Unknown Artist");
+        let artist = item.item.artist.as_deref().unwrap_or(&stock);
+        if let Some(artist_id) = &item.item.artist_id {
+            // set text with link
+            let artist = gtk::glib::markup_escape_text(artist);
+            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
+            let artist_id = artist_id.clone();
+            let sender = item.sender.clone();
+            artist_label.connect_activate_link(move |_label, _id| {
+                let id = Id::artist(&artist_id);
+                sender.output(PlaylistsViewOut::ClickedArtist(id)).unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
+        } else {
+            // set plain text
+            artist_label.set_text(artist);
+        }
+        view.set_child(Some(artist_label));
+    }
+
+    fn unbind(_item: &mut Self::Item, artist_label: &mut Self::Widgets, view: &mut Self::Root) {
+        artist_label.set_text("");
+        view.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -356,18 +323,45 @@ pub struct AlbumColumn;
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = ();
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Album";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let album_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        (gtk::Viewport::default(), album_label)
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.album_box));
+    fn bind(item: &mut Self::Item, album_label: &mut Self::Widgets, view: &mut Self::Root) {
+        let stock = gettext("Unknown Album");
+        let album = item.item.album.as_deref().unwrap_or(&stock);
+        if let Some(album_id) = &item.item.album_id {
+            // set text with link
+            let album = gtk::glib::markup_escape_text(album);
+            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
+            let album_id = album_id.clone();
+            let sender = item.sender.clone();
+            album_label.connect_activate_link(move |_label, _id| {
+                let id = Id::album(&album_id);
+                sender.output(PlaylistsViewOut::ClickedAlbum(id)).unwrap();
+                gtk::glib::signal::Propagation::Stop
+            });
+        } else {
+            // set plain text
+            album_label.set_text(album);
+        }
+
+        view.set_child(Some(album_label));
+    }
+
+    fn unbind(_item: &mut Self::Item, album_label: &mut Self::Widgets, view: &mut Self::Root) {
+        album_label.set_text("");
+        view.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -475,17 +469,63 @@ pub struct FavColumn;
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = ();
+    type Widgets = (Rc<RefCell<String>>, gtk::Button, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Favorite";
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let fav_btn = gtk::Button::new();
+        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
+        fav_btn.set_focus_on_click(false);
+
+        let cell = Rc::new(RefCell::new(String::new()));
+        (
+            gtk::Viewport::default(),
+            (cell, fav_btn, SetupFinished(false)),
+        )
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.fav_btn));
+    fn bind(
+        item: &mut Self::Item,
+        (cell, fav_btn, finished): &mut Self::Widgets,
+        view: &mut Self::Root,
+    ) {
+        match item.item.starred.is_some() {
+            true => fav_btn.set_icon_name("starred-symbolic"),
+            false => fav_btn.set_icon_name("non-starred-symbolic"),
+        }
+
+        cell.replace(item.item.id.clone());
+
+        if !finished.0 {
+            finished.0 = true;
+            let sender = item.sender.clone();
+            let cell = cell.clone();
+            fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    sender
+                        .output(PlaylistsViewOut::FavoriteClicked(
+                            cell.borrow().clone(),
+                            false,
+                        ))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    sender
+                        .output(PlaylistsViewOut::FavoriteClicked(
+                            cell.borrow().clone(),
+                            true,
+                        ))
+                        .unwrap();
+                }
+                _ => unreachable!("unkown icon name"),
+            });
+        }
+
+        view.set_child(Some(fav_btn));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

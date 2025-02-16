@@ -6,7 +6,7 @@ use relm4::gtk::glib::prelude::ToValue;
 use relm4::RelmWidgetExt;
 use relm4::{
     gtk::{
-        self, glib,
+        self,
         prelude::{
             BoxExt, ButtonExt, ListBoxRowExt, ListModelExt, OrientableExt, SelectionModelExt,
             WidgetExt,
@@ -29,11 +29,6 @@ use crate::{
     subsonic::Subsonic,
     types::Droppable,
 };
-
-#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
-#[boxed_type(name = "PlaylistDrop")]
-pub struct PlaylistDrop {
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TracksState {
