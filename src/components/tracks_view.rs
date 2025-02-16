@@ -834,7 +834,7 @@ impl relm4::Component for TracksView {
                         self.shown_tracks.borrow_mut().push(track.id.clone());
                         self.shown_albums.borrow_mut().insert(track.album.clone());
                         self.shown_artists.borrow_mut().insert(track.artist.clone());
-                        TrackRow::new_track(&self.subsonic, track.clone(), &sender)
+                        TrackRow::new(&self.subsonic, track.clone(), &sender)
                     })
                     .collect();
                 self.tracks.extend_from_iter(tracks);

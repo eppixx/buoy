@@ -43,7 +43,11 @@ impl PartialEq for TrackRow {
 }
 
 impl TrackRow {
-    pub fn new(subsonic: &Rc<RefCell<Subsonic>>, item: submarine::data::Child) -> Self {
+    pub fn new(
+        subsonic: &Rc<RefCell<Subsonic>>,
+        item: submarine::data::Child,
+        sender: &relm4::ComponentSender<TracksView>,
+    ) -> Self {
         let fav = match item.starred.is_some() {
             true => String::from("starred-symbolic"),
             false => String::from("non-starred-symbolic"),
@@ -109,16 +113,6 @@ impl TrackRow {
         let bitrate_label = gtk::Label::new(Some(&bitrate.unwrap_or(String::from("-"))));
         result.bitrate_box.append(&bitrate_label);
         result.bitrate_box.add_controller(result.get_drag_src());
-
-        result
-    }
-
-    pub fn new_track(
-        subsonic: &Rc<RefCell<Subsonic>>,
-        item: submarine::data::Child,
-        sender: &relm4::ComponentSender<TracksView>,
-    ) -> Self {
-        let result = Self::new(subsonic, item);
 
         let id = result.item.id.clone();
         let send = sender.clone();
