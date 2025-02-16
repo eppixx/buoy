@@ -18,7 +18,7 @@ use crate::{
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
     factory::album_track_row::{
-        AlbumColumn, AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, LengthColumn,
+        AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
         PositionColumn, TitleColumn,
     },
     subsonic::Subsonic,
@@ -89,7 +89,7 @@ impl relm4::Component for AlbumView {
         tracks.append_column::<PositionColumn>();
         tracks.append_column::<TitleColumn>();
         tracks.append_column::<ArtistColumn>();
-        tracks.append_column::<AlbumColumn>();
+        tracks.append_column::<GenreColumn>();
         tracks.append_column::<LengthColumn>();
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
@@ -104,35 +104,9 @@ impl relm4::Component for AlbumView {
             .unwrap()
             .set_title(Some(&gettext("Artist")));
         columns
-            .get("Album")
+            .get("Genre")
             .unwrap()
-            .set_title(Some(&gettext("Album")));
-        columns
-            .get("Length")
-            .unwrap()
-            .set_title(Some(&gettext("Length")));
-        columns
-            .get("Bitrate")
-            .unwrap()
-            .set_title(Some(&gettext("Bitrate")));
-        columns
-            .get("Favorite")
-            .unwrap()
-            .set_title(Some(&gettext("Favorite")));
-
-        let columns = tracks.get_columns();
-        columns
-            .get("Title")
-            .unwrap()
-            .set_title(Some(&gettext("Title")));
-        columns
-            .get("Artist")
-            .unwrap()
-            .set_title(Some(&gettext("Artist")));
-        columns
-            .get("Album")
-            .unwrap()
-            .set_title(Some(&gettext("Album")));
+            .set_title(Some(&gettext("Genre")));
         columns
             .get("Length")
             .unwrap()
@@ -391,8 +365,16 @@ impl relm4::Component for AlbumView {
                         true => {
                             track.borrow_mut().item.starred =
                                 Some(chrono::offset::Local::now().into());
+                            if let Some(fav) = &track.borrow().fav_btn {
+                                fav.set_icon_name("starred-symbolic");
+                            }
                         }
-                        false => track.borrow_mut().item.starred = None,
+                        false => {
+                            track.borrow_mut().item.starred = None;
+                            if let Some(fav) = &track.borrow().fav_btn {
+                                fav.set_icon_name("non-starred-symbolic");
+                            }
+                        }
                     });
             }
             AlbumViewIn::HoverCover(false) => {
