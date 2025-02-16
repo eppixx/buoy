@@ -16,7 +16,7 @@ use crate::{
     types::{Droppable, Id},
 };
 
-static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(42);
+static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 #[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
 #[boxed_type(name = "PlaylistIndex")]
