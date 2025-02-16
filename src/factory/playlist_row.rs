@@ -16,6 +16,8 @@ use crate::{
     types::{Droppable, Id},
 };
 
+use super::SetupFinished;
+
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 #[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
@@ -106,7 +108,7 @@ impl PlaylistRow {
         });
 
         //add this DragSource
-        if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
             list_item.add_controller(src.clone());
         }
 
@@ -116,7 +118,7 @@ impl PlaylistRow {
 
     pub fn remove_drag_src(&mut self) {
         if let Some(src) = &self.multiple_drag_sources {
-            if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+            if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
                 list_item.remove_controller(src);
             }
         }
@@ -200,35 +202,27 @@ impl PlaylistRow {
         target
     }
 
-    fn get_list_item_widget(widget: &impl glib::object::IsA<gtk::Widget>) -> Option<gtk::Widget> {
-        let b = widget.parent()?;
-        let column_view_cell = b.parent()?;
-        column_view_cell.parent()
-    }
-
     pub fn add_drag_indicator_top(&self) {
-        if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
             list_item.remove_css_class("drag-indicator-bottom");
             list_item.add_css_class("drag-indicator-top");
         }
     }
 
     pub fn add_drag_indicator_bottom(&self) {
-        if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
             list_item.add_css_class("drag-indicator-bottom");
             list_item.remove_css_class("drag-indicator-top");
         }
     }
 
     pub fn reset_drag_indicators(&self) {
-        if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
             list_item.remove_css_class("drag-indicator-bottom");
             list_item.remove_css_class("drag-indicator-top");
         }
     }
 }
-
-pub struct SetupFinished(bool);
 
 pub struct TitleColumn;
 
@@ -255,7 +249,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         // we need only 1 DragSource for the ListItem as it is updated by updating cell
         if !finished.0 {
             finished.0 = true;
-            let list_item = PlaylistRow::get_list_item_widget(&item.title_box).unwrap();
+            let list_item = super::get_list_item_widget(&item.title_box).unwrap();
             let drop_target = item.create_drop_target(cell);
             list_item.add_controller(drop_target);
             let drag_src = item.create_drag_src(cell);
