@@ -553,11 +553,10 @@ impl relm4::Component for PlaylistsView {
                     .collect();
 
                 // set children as content for DragSource
-                let drop = Droppable::PlaylistItems(children);
                 selected_rows
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
-                    .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
+                    .for_each(|row| row.borrow_mut().set_drag_src(children.clone()));
             }
             PlaylistsViewIn::MoveSong { src, dest, y } => {
                 let len = self.tracks.selection_model.n_items();

@@ -29,13 +29,10 @@ pub struct PlaylistRow {
     pub item: submarine::data::Child,
     fav_btn: gtk::Button,
     pub title_box: gtk::Box,
-    title_box_drag: gtk::DragSource,
     artist_box: gtk::Box,
-    artist_box_drag: gtk::DragSource,
     album_box: gtk::Box,
-    album_box_drag: gtk::DragSource,
-    content_set: bool,
     sender: relm4::ComponentSender<PlaylistsView>,
+    multiple_drag_sources: Option<gtk::DragSource>,
 }
 
 impl PartialEq for PlaylistRow {
@@ -66,13 +63,10 @@ impl PlaylistRow {
             item,
             fav_btn,
             title_box: gtk::Box::default(),
-            title_box_drag: gtk::DragSource::default(),
             artist_box: gtk::Box::default(),
-            artist_box_drag: gtk::DragSource::default(),
             album_box: gtk::Box::default(),
-            album_box_drag: gtk::DragSource::default(),
-            content_set: false,
             sender: sender.clone(),
+            multiple_drag_sources: None,
         };
 
         let id = result.item.id.clone();
@@ -100,10 +94,6 @@ impl PlaylistRow {
             .label(&result.item.title)
             .build();
         result.title_box.append(&title_label);
-        result.title_box.add_controller(result.get_drag_src());
-        result
-            .title_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
 
         // setup album label
         let album_label = gtk::Label::builder()
@@ -126,10 +116,6 @@ impl PlaylistRow {
             album_label.set_text(album);
         }
         result.album_box.append(&album_label);
-        result.album_box.add_controller(result.get_drag_src());
-        result
-            .album_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
 
         // setup artist label
         let artist_label = gtk::Label::builder()
@@ -151,10 +137,6 @@ impl PlaylistRow {
             artist_label.set_text(artist);
         }
         result.artist_box.append(&artist_label);
-        result.artist_box.add_controller(result.get_drag_src());
-        result
-            .artist_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
 
         result
     }
@@ -163,57 +145,66 @@ impl PlaylistRow {
         &self.uid
     }
 
-    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 3] {
-        //add new widgets here
-        [
-            (&self.title_box_drag, &self.title_box),
-            (&self.artist_box_drag, &self.artist_box),
-            (&self.album_box_drag, &self.album_box),
-        ]
-    }
-
-    pub fn set_drag_src(&mut self, drop: Droppable) {
-        for (src, widget) in self.get_widgets() {
-            //remove DragSource before add new one
-            if self.content_set {
-                widget.remove_controller(src);
-            }
-
-            let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-            src.set_content(Some(&content));
-            let album = self.subsonic.borrow().album_of_song(&self.item);
-            let subsonic = self.subsonic.clone();
-            src.connect_drag_begin(move |src, _drag| {
-                if let Some(album) = &album {
-                    if let Some(cover_id) = &album.cover_art {
-                        let cover = subsonic.borrow().cover_icon(cover_id);
-                        if let Some(tex) = cover {
-                            src.set_icon(Some(&tex), 0, 0);
-                        }
-                    }
-                }
-            });
-            widget.add_controller(src.clone());
+    pub fn set_drag_src(&mut self, drop: Vec<PlaylistIndex>) {
+        // when Vec is empty remove DragSource
+        if drop.is_empty() {
+            self.remove_drag_src();
+            return;
         }
-        self.content_set = true;
-    }
 
-    pub fn remove_drag_src(&mut self) {
-        for (src, widget) in self.get_widgets() {
-            if self.content_set {
-                widget.remove_controller(src);
-            }
+        // remove old DragSource if there is one
+        if self.multiple_drag_sources.is_some() {
+            self.remove_drag_src();
         }
-        self.content_set = false;
-    }
 
-    fn get_drag_src(&self) -> gtk::DragSource {
+        // create new DragSource
         let src = gtk::DragSource::default();
-        let drop = PlaylistIndex{ uid: self.uid, child: self.item.clone()};
+        let drop = Droppable::PlaylistItems(drop);
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
         src.set_actions(gtk::gdk::DragAction::COPY);
 
+        //set drag item
+        let subsonic = self.subsonic.clone();
+        let album = self.subsonic.borrow().album_of_song(&self.item);
+        src.connect_drag_begin(move |src, _drag| {
+            if let Some(album) = &album {
+                if let Some(cover_id) = &album.cover_art {
+                    let cover = subsonic.borrow().cover_icon(cover_id);
+                    if let Some(tex) = cover {
+                        src.set_icon(Some(&tex), 0, 0);
+                    }
+                }
+            }
+        });
+
+        //add this DragSource
+        if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+            list_item.add_controller(src.clone());
+        }
+
+        //save this DragSource
+        self.multiple_drag_sources = Some(src);
+    }
+
+    pub fn remove_drag_src(&mut self) {
+        if let Some(src) = &self.multiple_drag_sources {
+            if let Some(list_item) = Self::get_list_item_widget(&self.title_box) {
+                list_item.remove_controller(src);
+            }
+        }
+        self.multiple_drag_sources = None;
+    }
+
+    fn create_drag_src(&self, uid: &Rc<RefCell<usize>>) -> gtk::DragSource {
+        let src = gtk::DragSource::default();
+        let drop = PlaylistIndex{ uid: *uid.borrow(), child: self.item.clone()};
+        let drop = Droppable::PlaylistItems(vec![drop]);
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        src.set_content(Some(&content));
+        src.set_actions(gtk::gdk::DragAction::COPY);
+
+        // set drag icon
         let album = self.subsonic.borrow().album_of_song(&self.item);
         let subsonic = self.subsonic.clone();
         src.connect_drag_begin(move |src, _drag| {
@@ -229,47 +220,41 @@ impl PlaylistRow {
         src
     }
 
-    fn create_drop_target(sender: relm4::ComponentSender<PlaylistsView>, uid: &Rc<RefCell<usize>>) -> gtk::DropTarget {
+    fn create_drop_target(&self, uid: &Rc<RefCell<usize>>) -> gtk::DropTarget {
         let actions = gdk::DragAction::MOVE | gdk::DragAction::COPY;
         let target = gtk::DropTarget::new(gtk::glib::types::Type::INVALID, actions);
         target.set_types(&[
-            <PlaylistIndex as gtk::prelude::StaticType>::static_type(),
             <Droppable as gtk::prelude::StaticType>::static_type(),
         ]);
 
-        let sender_c = sender.clone();
+        let sender = self.sender.clone();
         let cell = uid.clone();
         target.connect_drop(move |_target, value, _x, y| {
-            if let Ok(index) = value.get::<PlaylistIndex>() {
-                let src_uid = index.uid;
-                sender_c.input(PlaylistsViewIn::MoveSong { src: src_uid, dest: *cell.borrow(), y });
-            }
-            if let Ok(index) = value.get::<QueueIndex>() {
-                todo!()//
-            }
             if let Ok(drop) = value.get::<Droppable>() {
-                if let Droppable::PlaylistItems(items) = drop {
-                    for item in items.iter().rev() {
-                        let src_uid = item.uid;
-                        sender_c.input(PlaylistsViewIn::MoveSong { src: src_uid, dest: *cell.borrow(), y });
+                match drop {
+                    Droppable::PlaylistItems(items) => {
+                        for item in items.iter().rev() {
+                            let src_uid = item.uid;
+                            sender.input(PlaylistsViewIn::MoveSong { src: src_uid, dest: *cell.borrow(), y });
+                        }
                     }
-                } else {
-                    todo!()
+                    _=> todo!() //TODO handle other soures
                 }
+                return true;
             }
-            true
+            false
         });
 
         //sending motion for added indicators
-        let sender_c = sender.clone();
+        let sender = self.sender.clone();
         let cell = uid.clone();
         target.connect_motion(move |_drop, _x, y| {
-            sender_c.input(PlaylistsViewIn::DraggedOver{uid: *cell.borrow(), y});
+            sender.input(PlaylistsViewIn::DraggedOver{uid: *cell.borrow(), y});
             gdk::DragAction::MOVE
         });
 
         //remove indicator on leave
-        let sender = sender.clone();
+        let sender = self.sender.clone();
         target.connect_leave(move |_drop| {
             sender.input(PlaylistsViewIn::DragLeave);
         });
@@ -330,8 +315,10 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         if !finished.0 {
             finished.0 = true;
             let list_item = PlaylistRow::get_list_item_widget(&item.title_box).unwrap();
-            let drop_target = PlaylistRow::create_drop_target(item.sender.clone(), cell);
+            let drop_target = item.create_drop_target(cell);
             list_item.add_controller(drop_target);
+            let drag_src = item.create_drag_src(cell);
+            list_item.add_controller(drag_src);
         }
     }
 
@@ -410,14 +397,13 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
         (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
         label.set_label(
             item.item
                 .genre
                 .as_deref()
                 .unwrap_or(&gettext("Unknown genre")),
         );
-        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -444,10 +430,9 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
         (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
         let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
         label.set_label(&length);
-        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -474,11 +459,10 @@ impl relm4::typed_view::column::RelmColumn for BitRateColumn {
         (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
         let bitrate = item.item.bit_rate;
         let bitrate = bitrate.map(|n| n.to_string());
         label.set_label(&bitrate.unwrap_or(String::from("-")));
-        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
