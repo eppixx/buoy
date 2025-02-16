@@ -23,12 +23,9 @@ pub struct TrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     fav_btn: Option<gtk::Button>,
-    position_box: gtk::Box,
-    position_box_drag: gtk::DragSource,
-    title_box: gtk::Box,
-    title_box_drag: gtk::DragSource,
-    content_set: bool,
+    title_box: gtk::Viewport,
     sender: relm4::ComponentSender<TracksView>,
+    multiple_drag_src: Option<gtk::DragSource>,
 }
 
 impl PartialEq for TrackRow {
@@ -47,93 +44,66 @@ impl TrackRow {
             subsonic: subsonic.clone(),
             item,
             fav_btn: None,
-            position_box: gtk::Box::default(),
-            position_box_drag: gtk::DragSource::default(),
-            title_box: gtk::Box::default(),
-            title_box_drag: gtk::DragSource::default(),
-            content_set: false,
+            title_box: gtk::Viewport::default(),
             sender: sender.clone(),
+            multiple_drag_src: None,
         };
 
-        //setup position label
-        let position_label = gtk::Label::builder().build();
-        let mut text = String::new();
-        if let Some(cd) = result.item.disc_number {
-            text.push_str(&cd.to_string());
-            text.push('.');
-        }
-        if let Some(track) = result.item.track {
-            text = format!("{text}{track:02}");
-        }
-        position_label.set_label(&text);
-        result.position_box.append(&position_label);
-
-        // setup title label
-        let title_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .label(&result.item.title)
-            .build();
-        result.title_box.append(&title_label);
-        result.title_box.add_controller(result.get_drag_src());
         result
-            .title_box_drag
-            .set_actions(gtk::gdk::DragAction::COPY);
-
-        result
-    }
-
-    fn get_widgets(&self) -> [(&gtk::DragSource, &gtk::Box); 2] {
-        //add new widgets here
-        [
-            (&self.position_box_drag, &self.position_box),
-            (&self.title_box_drag, &self.title_box),
-        ]
     }
 
     pub fn set_drag_src(&mut self, drop: Droppable) {
-        for (src, widget) in self.get_widgets() {
-            //remove DragSource before add new one
-            if self.content_set {
-                widget.remove_controller(src);
-            }
+        // remove old DragSource if there is one
+        if self.multiple_drag_src.is_some() {
+            self.remove_drag_src();
+        }
 
-            let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-            src.set_content(Some(&content));
-            let album = self.subsonic.borrow().album_of_song(&self.item);
-            let subsonic = self.subsonic.clone();
-            src.connect_drag_begin(move |src, _drag| {
-                if let Some(album) = &album {
-                    if let Some(cover_id) = &album.cover_art {
-                        let cover = subsonic.borrow().cover_icon(cover_id);
-                        if let Some(tex) = cover {
-                            src.set_icon(Some(&tex), 0, 0);
-                        }
+        // create new DragSource
+        let src = gtk::DragSource::default();
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        src.set_content(Some(&content));
+        src.set_actions(gtk::gdk::DragAction::COPY);
+
+        //set drag item
+        let subsonic = self.subsonic.clone();
+        let album = self.subsonic.borrow().album_of_song(&self.item);
+        src.connect_drag_begin(move |src, _drag| {
+            if let Some(album) = &album {
+                if let Some(cover_id) = &album.cover_art {
+                    let cover = subsonic.borrow().cover_icon(cover_id);
+                    if let Some(tex) = cover {
+                        src.set_icon(Some(&tex), 0, 0);
                     }
                 }
-            });
-            widget.add_controller(src.clone());
+            }
+        });
+
+        //add this DragSource
+        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
+            list_item.add_controller(src.clone());
         }
-        self.content_set = true;
+
+        self.multiple_drag_src = Some(src);
     }
 
     pub fn remove_drag_src(&mut self) {
-        if !self.content_set {
-            return;
+        if let Some(src) = &self.multiple_drag_src {
+            if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
+                list_item.remove_controller(src);
+            }
         }
-        for (src, widget) in self.get_widgets() {
-            widget.remove_controller(src);
-        }
-        self.content_set = false;
+        self.multiple_drag_src = None;
     }
 
-    fn get_drag_src(&self) -> gtk::DragSource {
+    fn create_drag_src(&self) -> gtk::DragSource {
+        // create DragSource with content
         let src = gtk::DragSource::default();
         let drop = Droppable::Child(Box::new(self.item.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::MOVE);
+        src.set_actions(gtk::gdk::DragAction::COPY);
 
+        // set drag icon
         let album = self.subsonic.borrow().album_of_song(&self.item);
         let subsonic = self.subsonic.clone();
         src.connect_drag_begin(move |src, _drag| {
@@ -153,7 +123,7 @@ impl TrackRow {
 pub struct PositionColumn;
 
 impl relm4::typed_view::column::RelmColumn for PositionColumn {
-    type Root = gtk::Viewport;
+    type Root = gtk::Label;
     type Item = TrackRow;
     type Widgets = ();
 
@@ -162,11 +132,19 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        (gtk::Label::default(), ())
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.position_box));
+    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, label: &mut Self::Root) {
+        let mut text = String::new();
+        if let Some(cd) = item.item.disc_number {
+            text.push_str(&cd.to_string());
+            text.push('.');
+        }
+        if let Some(track) = item.item.track {
+            text = format!("{text}{track:02}");
+        }
+        label.set_label(&text);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -179,18 +157,39 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = ();
+    type Widgets = (gtk::Label, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let title_label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+
+        (gtk::Viewport::default(), (title_label, SetupFinished(false)))
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.title_box));
+        item.title_box.set_child(Some(label));
+        label.set_text(&item.item.title);
+
+        // we need only 1 DragSource for the ListItem as it is updated by updating cell
+        if !finished.0 {
+            finished.0 = true;
+            let list_item = super::get_list_item_widget(&item.title_box).unwrap();
+            let drag_src = item.create_drag_src();
+            list_item.add_controller(drag_src);
+        }
+    }
+
+
+    fn unbind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, view: &mut Self::Root) {
+        view.set_child(None::<&gtk::Widget>);
+        item.title_box.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

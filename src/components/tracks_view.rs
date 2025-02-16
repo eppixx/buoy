@@ -822,7 +822,7 @@ impl relm4::Component for TracksView {
     ) {
         match msg {
             TracksViewCmd::AddTracks(candidates, processed) => {
-                const CHUNK: usize = 20;
+                const CHUNK: usize = 20000;
                 const TIMEOUT: u64 = 1;
 
                 //add tracks
