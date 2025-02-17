@@ -94,7 +94,7 @@ pub enum TracksViewIn {
     ReplaceQueue,
     DownloadClicked,
     ToggleFilters,
-    TrackClicked(u32),
+    TrackClicked(usize),
     RecalcDragSource,
 }
 
@@ -337,10 +337,6 @@ impl relm4::Component for TracksView {
                         model.tracks.view.clone() {
                             set_widget_name: "tracks-view-tracks",
                             set_vexpand: true,
-
-                            connect_activate[sender] => move |_column_view, index| {
-                                sender.input(TracksViewIn::TrackClicked(index));
-                            },
 
                             add_controller = gtk::DragSource {
                                 connect_prepare[sender] => move |_drag_src, _x, _y| {
@@ -800,8 +796,12 @@ impl relm4::Component for TracksView {
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
             }
-            TracksViewIn::TrackClicked(index) => {
-                if let Some(track) = self.tracks.get(index) {
+            TracksViewIn::TrackClicked(uid) => {
+                let len = self.tracks.selection_model.n_items();
+                if let Some(track) = (0..len)
+                    .filter_map(|i| self.tracks.get(i))
+                    .find(|track| track.borrow().uid() == &uid)
+                {
                     self.info_cover
                         .emit(CoverIn::LoadSong(Box::new(track.borrow().item.clone())));
                 }

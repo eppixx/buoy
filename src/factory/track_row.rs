@@ -11,15 +11,18 @@ use relm4::{
 
 use crate::{
     common::convert_for_label,
-    components::tracks_view::{TracksView, TracksViewOut},
+    components::tracks_view::{TracksView, TracksViewIn, TracksViewOut},
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
 
 use super::SetupFinished;
 
+static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
 #[derive(Debug)]
 pub struct TrackRow {
+    uid: usize,
     subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::Child,
     pub fav_btn: Option<gtk::Button>,
@@ -40,7 +43,9 @@ impl TrackRow {
         item: submarine::data::Child,
         sender: &relm4::ComponentSender<TracksView>,
     ) -> Self {
+        let uid = UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         Self {
+            uid,
             subsonic: subsonic.clone(),
             item,
             fav_btn: None,
@@ -48,6 +53,10 @@ impl TrackRow {
             sender: sender.clone(),
             multiple_drag_src: None,
         }
+    }
+
+    pub fn uid(&self) -> &usize {
+        &self.uid
     }
 
     pub fn set_drag_src(&mut self, drop: Droppable) {
@@ -155,7 +164,7 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = (gtk::Label, SetupFinished);
+    type Widgets = (Rc<RefCell<usize>>, gtk::Label, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
@@ -169,14 +178,15 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
 
         (
             gtk::Viewport::default(),
-            (title_label, SetupFinished(false)),
+            (Rc::new(RefCell::new(0)), title_label, SetupFinished(false)),
         )
     }
 
-    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, view: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (cell, label, finished): &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.title_box));
         item.title_box.set_child(Some(label));
         label.set_text(&item.item.title);
+        cell.replace(item.uid);
 
         // we need only 1 DragSource for the ListItem as it is updated by updating cell
         if !finished.0 {
@@ -184,6 +194,17 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
             let list_item = super::get_list_item_widget(&item.title_box).unwrap();
             let drag_src = item.create_drag_src();
             list_item.add_controller(drag_src);
+
+            //connect left click
+            let gesture = gtk::GestureClick::default();
+            let sender = item.sender.clone();
+            let cell = cell.clone();
+            gesture.connect_pressed(move |_controller, button, _x, _y| {
+                if button == 1 {
+                    sender.input(TracksViewIn::TrackClicked(*cell.borrow())); //TODO lookup uid in View
+                }
+            });
+            list_item.add_controller(gesture);
         }
     }
 
