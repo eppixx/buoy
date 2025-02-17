@@ -74,6 +74,7 @@ pub enum BrowserIn {
     GoBack,
     ShowDashboard,
     ShowArtists,
+    ShowArtist(Id),
     ShowAlbums,
     ShowTracks,
     ShowPlaylists,
@@ -90,7 +91,6 @@ pub enum BrowserIn {
     FavoriteAlbum(String, bool),
     FavoriteArtist(String, bool),
     FavoriteSong(String, bool),
-    ShowArtist(Id),
 }
 
 #[derive(Debug)]
@@ -230,7 +230,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window.gone");
+                    .unwrap();
             }
             BrowserIn::ShowArtists => {
                 if let Some(&Views::Artists(_)) = self.history_widget.last() {
@@ -252,7 +252,34 @@ impl relm4::component::AsyncComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window gone");
+                    .unwrap();
+            }
+            BrowserIn::ShowArtist(id) => {
+                let Some(artist) = self.subsonic.borrow().find_artist(id) else {
+                    sender
+                        .output(BrowserOut::DisplayToast(String::from(
+                            "clicked artist not found",
+                        )))
+                        .unwrap();
+                    return;
+                };
+                let artist: relm4::Controller<ArtistView> = ArtistView::builder()
+                    .launch((self.subsonic.clone(), Id::artist(&artist.id)))
+                    .forward(sender.input_sender(), |msg| {
+                        BrowserIn::ArtistView(Box::new(msg))
+                    });
+
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Artist))
+                    .unwrap();
+                self.history_widget
+                    .push(Views::Artist(artist.widget().clone()));
+                self.artist_views.push(artist);
+                self.content
+                    .set_child(Some(self.history_widget.last().unwrap().widget()));
+                sender
+                    .output(BrowserOut::BackButtonSensitivity(true))
+                    .unwrap();
             }
             BrowserIn::ShowAlbums => {
                 if let Some(&Views::Albums(_)) = self.history_widget.last() {
@@ -674,33 +701,6 @@ impl relm4::component::AsyncComponent for Browser {
                 if let Some(artists) = &self.artists {
                     artists.emit(ArtistsViewIn::Favorited(id, state));
                 }
-            }
-            BrowserIn::ShowArtist(id) => {
-                let Some(artist) = self.subsonic.borrow().find_artist(id) else {
-                    sender
-                        .output(BrowserOut::DisplayToast(String::from(
-                            "clicked artist not found",
-                        )))
-                        .unwrap();
-                    return;
-                };
-                let artist: relm4::Controller<ArtistView> = ArtistView::builder()
-                    .launch((self.subsonic.clone(), Id::artist(&artist.id)))
-                    .forward(sender.input_sender(), |msg| {
-                        BrowserIn::ArtistView(Box::new(msg))
-                    });
-
-                sender
-                    .output(BrowserOut::ChangedViewTo(views::Views::Artist))
-                    .unwrap();
-                self.history_widget
-                    .push(Views::Artist(artist.widget().clone()));
-                self.artist_views.push(artist);
-                self.content
-                    .set_child(Some(self.history_widget.last().unwrap().widget()));
-                sender
-                    .output(BrowserOut::BackButtonSensitivity(true))
-                    .unwrap();
             }
         }
     }

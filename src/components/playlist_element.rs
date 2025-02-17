@@ -295,9 +295,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 list.name = text.to_string();
                 // inform other widgets
                 sender
-                    .output(PlaylistElementOut::RenamePlaylist(
-                        list
-                    ))
+                    .output(PlaylistElementOut::RenamePlaylist(list))
                     .unwrap();
             }
             PlaylistElementIn::UpdatePlaylistName(list) => {
