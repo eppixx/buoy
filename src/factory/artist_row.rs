@@ -98,7 +98,6 @@ impl relm4::typed_view::column::RelmColumn for CoverColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.add_controller(item.create_drag_src());
         view.set_child(Some(item.cover.widget()));
     }
 }
@@ -160,7 +159,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumCountColumn {
         (b, (label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
         label.set_label(&item.item.album_count.to_string());
     }
 

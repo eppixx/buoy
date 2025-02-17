@@ -104,17 +104,12 @@ pub enum AlbumsViewIn {
     ToggleFilters,
 }
 
-#[derive(Debug)]
-pub enum AlbumsViewCmd {
-    AddAlbums(Vec<submarine::data::Child>, usize),
-}
-
 #[relm4::component(pub)]
 impl relm4::component::Component for AlbumsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = AlbumsViewIn;
     type Output = AlbumsViewOut;
-    type CommandOutput = AlbumsViewCmd;
+    type CommandOutput = ();
 
     fn init(
         subsonic: Self::Init,
@@ -129,7 +124,7 @@ impl relm4::component::Component for AlbumsView {
         entries.append_column::<GenreColumn>();
         entries.append_column::<LengthColumn>();
         entries.append_column::<YearColumn>();
-        entries.append_column::<CdColumn>();
+        // entries.append_column::<CdColumn>();
         entries.append_column::<FavColumn>();
 
         let columns = entries.get_columns();
@@ -157,7 +152,6 @@ impl relm4::component::Component for AlbumsView {
             .get("Year")
             .unwrap()
             .set_title(Some(&gettext("Year")));
-        columns.get("CDs").unwrap().set_title(Some(&gettext("CDs")));
         columns
             .get("Favorite")
             .unwrap()
@@ -173,13 +167,25 @@ impl relm4::component::Component for AlbumsView {
             shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
 
-        // add albums in chunks to not overwhelm the app
+        //add some albums
         let list = model.subsonic.borrow().albums().to_vec();
-        sender.oneshot_command(async move { AlbumsViewCmd::AddAlbums(list, 0) });
+        for album in list.iter() {
+            model.shown_albums.borrow_mut().insert(album.album.clone());
+            model.shown_artists.borrow_mut().insert(album.artist.clone());
+            let album = AlbumRow::new(&model.subsonic, album.clone(), sender.clone());
+            model.entries.append(album);
+        }
 
         model.filters.guard().push_back(Category::Favorite);
         let widgets = view_output!();
 
+        //update labels and buttons
+        update_labels(
+            &widgets.shown_albums,
+            &model.shown_albums,
+            &widgets.shown_artists,
+            &model.shown_artists,
+        );
         model.calc_sensitivity_of_buttons(&widgets);
         relm4::component::ComponentParts { model, widgets }
     }
@@ -590,18 +596,16 @@ impl relm4::component::Component for AlbumsView {
                     .filter(|a| a.borrow().item.id == id)
                     .for_each(|album| match state {
                         true => {
-                            album
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("starred-symbolic"));
+                            if let Some(fav) = &album.borrow().fav_btn {
+                                fav.set_icon_name("starred-symbolic");
+                            }
                             album.borrow_mut().item.starred =
                                 Some(chrono::offset::Local::now().into());
                         }
                         false => {
-                            album
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("non-starred-symbolic"));
+                            if let Some(fav) = &album.borrow().fav_btn {
+                                fav.set_icon_name("non-starred-symbolic");
+                            }
                             album.borrow_mut().item.starred = None;
                         }
                     });
@@ -685,50 +689,6 @@ impl relm4::component::Component for AlbumsView {
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
-            }
-        }
-    }
-
-    fn update_cmd_with_view(
-        &mut self,
-        widgets: &mut Self::Widgets,
-        msg: Self::CommandOutput,
-        sender: relm4::ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        match msg {
-            AlbumsViewCmd::AddAlbums(candidates, processed) => {
-                const CHUNK: usize = 20;
-                const TIMEOUT: u64 = 2;
-
-                //add some albums
-                for album in candidates.iter().skip(processed).take(CHUNK) {
-                    self.shown_albums.borrow_mut().insert(album.album.clone());
-                    self.shown_artists.borrow_mut().insert(album.artist.clone());
-                    let album = AlbumRow::new(&self.subsonic, album.clone(), sender.clone());
-                    self.entries.append(album);
-                }
-
-                //update labels and buttons
-                update_labels(
-                    &widgets.shown_albums,
-                    &self.shown_albums,
-                    &widgets.shown_artists,
-                    &self.shown_artists,
-                );
-                self.calc_sensitivity_of_buttons(widgets);
-
-                // recursion anchor
-                if processed >= candidates.len() {
-                    widgets.spinner.set_visible(false);
-                    return;
-                }
-
-                //recursion the rest of the list
-                sender.oneshot_command(async move {
-                    tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
-                    AlbumsViewCmd::AddAlbums(candidates, processed + CHUNK)
-                });
             }
         }
     }
