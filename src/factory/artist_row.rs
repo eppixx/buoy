@@ -19,13 +19,15 @@ use crate::{
     types::Droppable,
 };
 
+use super::SetupFinished;
+
 #[derive(Debug)]
 pub struct ArtistRow {
     pub subsonic: Rc<RefCell<Subsonic>>,
     pub item: submarine::data::ArtistId3,
-    pub fav: relm4::binding::StringBinding,
     pub cover: relm4::Controller<Cover>,
-    fav_btn: gtk::Button,
+    pub fav_btn: Option<gtk::Button>,
+    sender: relm4::ComponentSender<ArtistsView>,
 }
 
 impl PartialEq for ArtistRow {
@@ -40,46 +42,30 @@ impl ArtistRow {
         item: submarine::data::ArtistId3,
         sender: relm4::ComponentSender<ArtistsView>,
     ) -> Self {
-        let fav = match item.starred.is_some() {
-            true => String::from("starred-symbolic"),
-            false => String::from("non-starred-symbolic"),
-        };
-
+        let send = sender.clone();
         let cover = Cover::builder()
             .launch((subsonic.clone(), item.cover_art.clone()))
-            .forward(sender.input_sender(), ArtistsViewIn::Cover);
+            .forward(send.input_sender(), ArtistsViewIn::Cover);
         cover.model().change_size(75);
-
-        let fav_btn = gtk::Button::from_icon_name(&fav);
-        fav_btn.set_tooltip(&gettext("Click to (un)favorite artist"));
-        fav_btn.set_focus_on_click(false);
-        let id = item.id.clone();
-        fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
-            Some("starred-symbolic") => sender
-                .output(ArtistsViewOut::FavoriteClicked(id.clone(), false))
-                .unwrap(),
-            Some("non-starred-symbolic") => sender
-                .output(ArtistsViewOut::FavoriteClicked(id.clone(), true))
-                .unwrap(),
-            _ => unreachable!("unkown icon name"),
-        });
 
         Self {
             subsonic: subsonic.clone(),
             item,
-            fav: relm4::binding::StringBinding::new(fav),
             cover,
-            fav_btn,
+            fav_btn: None,
+            sender: sender.clone()
         }
     }
 
-    fn get_drag_src(&self) -> gtk::DragSource {
+    fn create_drag_src(&self) -> gtk::DragSource {
+        // create DragSource with content
         let src = gtk::DragSource::default();
         let drop = Droppable::Artist(Box::new(self.item.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::MOVE);
+        src.set_actions(gtk::gdk::DragAction::COPY);
 
+        // set drag icon
         let artist_art = self.item.cover_art.clone();
         let subsonic = self.subsonic.clone();
         src.connect_drag_begin(move |src, _drag| {
@@ -112,7 +98,7 @@ impl relm4::typed_view::column::RelmColumn for CoverColumn {
     }
 
     fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.add_controller(item.get_drag_src());
+        view.add_controller(item.create_drag_src());
         view.set_child(Some(item.cover.widget()));
     }
 }
@@ -122,7 +108,7 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Box;
     type Item = ArtistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (gtk::Label, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Name";
     const ENABLE_RESIZE: bool = true;
@@ -137,12 +123,18 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         b.set_hexpand(true);
         b.add_css_class(granite::STYLE_CLASS_FLAT);
         b.append(&label);
-        (b, (label))
+        (b, (label, SetupFinished(false)))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, b: &mut Self::Root) {
         label.set_label(&item.item.name);
-        b.add_controller(item.get_drag_src());
+
+        if !finished.0 {
+            finished.0 = true;
+            let list_item = super::get_list_item_widget(label).unwrap();
+            let drag_src = item.create_drag_src();
+            list_item.add_controller(drag_src);
+        }
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -170,7 +162,6 @@ impl relm4::typed_view::column::RelmColumn for AlbumCountColumn {
 
     fn bind(item: &mut Self::Item, label: &mut Self::Widgets, b: &mut Self::Root) {
         label.set_label(&item.item.album_count.to_string());
-        b.add_controller(item.get_drag_src());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -178,23 +169,68 @@ impl relm4::typed_view::column::RelmColumn for AlbumCountColumn {
     }
 }
 
+
 pub struct FavColumn;
 
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Viewport;
     type Item = ArtistRow;
-    type Widgets = ();
+    type Widgets = (Rc<RefCell<String>>, gtk::Button, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Favorite";
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (gtk::Viewport::default(), ())
+        let fav_btn = gtk::Button::new();
+        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
+        fav_btn.set_focus_on_click(false);
+
+        let cell = Rc::new(RefCell::new(String::new()));
+        (
+            gtk::Viewport::default(),
+            (cell, fav_btn, SetupFinished(false)),
+        )
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        item.fav_btn.add_write_only_binding(&item.fav, "icon_name");
-        view.set_child(Some(&item.fav_btn));
+    fn bind(
+        item: &mut Self::Item,
+        (cell, fav_btn, finished): &mut Self::Widgets,
+        view: &mut Self::Root,
+    ) {
+        match item.item.starred.is_some() {
+            true => fav_btn.set_icon_name("starred-symbolic"),
+            false => fav_btn.set_icon_name("non-starred-symbolic"),
+        }
+
+        cell.replace(item.item.id.clone());
+
+        if !finished.0 {
+            finished.0 = true;
+            let sender = item.sender.clone();
+            let cell = cell.clone();
+            fav_btn.connect_clicked(move |btn| match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    sender
+                        .output(ArtistsViewOut::FavoriteClicked(cell.borrow().clone(), false))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    sender
+                        .output(ArtistsViewOut::FavoriteClicked(cell.borrow().clone(), true))
+                        .unwrap();
+                }
+                _ => unreachable!("unkown icon name"),
+            });
+        }
+
+        item.fav_btn = Some(fav_btn.clone());
+        view.set_child(Some(fav_btn));
+    }
+
+    fn unbind(item: &mut Self::Item, _widgets: &mut Self::Widgets, _root: &mut Self::Root) {
+        item.fav_btn = None;
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

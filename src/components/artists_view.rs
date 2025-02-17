@@ -433,18 +433,16 @@ impl relm4::component::Component for ArtistsView {
                     .filter(|t| t.borrow().item.id == id)
                     .for_each(|track| match state {
                         true => {
-                            track
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("starred-symbolic"));
                             track.borrow_mut().item.starred =
                                 Some(chrono::offset::Local::now().into());
+                            if let Some(fav) = &track.borrow().fav_btn {
+                                fav.set_icon_name("starred-symbolic");
+                            }
                         }
                         false => {
-                            track
-                                .borrow_mut()
-                                .fav
-                                .set_value(String::from("non-starred-symbolic"));
+                            if let Some(fav) = &track.borrow().fav_btn {
+                                fav.set_icon_name("non-starred-symbolic");
+                            }
                             track.borrow_mut().item.starred = None;
                         }
                     });
