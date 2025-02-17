@@ -541,11 +541,12 @@ impl relm4::component::AsyncComponent for Browser {
                 }
             },
             BrowserIn::RenamePlaylist(list) => {
+                // change server
                 let client = Client::get().unwrap();
-                match client
+                if let Err(e) = client
                     .update_playlist(
-                        list.id,
-                        Some(list.name),
+                        &list.id,
+                        Some(list.name.clone()),
                         None::<&str>,
                         None,
                         Vec::<&str>::new(),
@@ -553,13 +554,16 @@ impl relm4::component::AsyncComponent for Browser {
                     )
                     .await
                 {
-                    Err(e) => sender
+                    sender
                         .output(BrowserOut::DisplayToast(format!(
-                            "could not create playlist on server: {e:?}"
+                            "could not update playlist on server: {e:?}"
                         )))
-                        .unwrap(),
-                    Ok(_list) => {}
+                        .unwrap();
+                    return;
                 }
+
+                // change local cache
+                self.subsonic.borrow_mut().rename_playlist(&list);
             }
             BrowserIn::NewPlaylist(name, list) => {
                 const CHUNKS: usize = 100;

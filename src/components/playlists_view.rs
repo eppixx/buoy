@@ -30,6 +30,8 @@ use crate::{
     types::Droppable,
 };
 
+use super::playlist_element::PlaylistElementIn;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TracksState {
     Tracks,
@@ -404,6 +406,7 @@ impl relm4::Component for PlaylistsView {
                 }
                 PlaylistElementOut::RenamePlaylist(list) => {
                     widgets.info_title.set_label(&list.name);
+                    self.playlists.broadcast(PlaylistElementIn::UpdatePlaylistName(list.clone()));
                     sender
                         .output(PlaylistsViewOut::RenamePlaylist(list))
                         .unwrap();

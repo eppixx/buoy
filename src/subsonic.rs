@@ -299,6 +299,15 @@ impl Subsonic {
         self.save().expect("saving failed");
     }
 
+    pub fn rename_playlist(&mut self, candidate: &submarine::data::Playlist) {
+        for list in &mut self.playlists {
+            if list.base.id == candidate.id {
+                list.base.name = candidate.name.clone();
+            }
+        }
+        self.save().expect("saving failed");
+    }
+
     pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
         self.covers.cover_raw(id)
     }

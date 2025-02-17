@@ -96,11 +96,12 @@ impl TryFrom<String> for EditState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PlaylistElementIn {
     DeletePressed,
     ChangeState(State),
     ConfirmRename,
+    UpdatePlaylistName(submarine::data::Playlist),
 }
 
 #[derive(Debug)]
@@ -168,10 +169,9 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         set_hexpand: true,
                         set_homogeneous: true,
 
-                        gtk::Label {
+                        append: list_name = &gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_halign: gtk::Align::Start,
-                            #[watch]
                             set_text: &self.playlist.base.name,
                         },
                         gtk::Label {
@@ -217,7 +217,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             set_hexpand: true,
                             set_halign: gtk::Align::Fill,
 
-                            #[watch]
                             set_text: &self.playlist.base.name,
                             set_tooltip: &gettext("Renamed title of the playlist"),
                         }
@@ -290,14 +289,23 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             }
             PlaylistElementIn::ChangeState(state) => self.main_stack.set_visible_child_enum(&state),
             PlaylistElementIn::ConfirmRename => {
-                let text = widgets.edit_entry.text();
-                self.playlist.base.name = String::from(text);
                 sender.input(PlaylistElementIn::ChangeState(State::Normal));
+                let text = widgets.edit_entry.text();
+                let mut list = self.playlist.base.clone();
+                list.name = text.to_string();
+                // inform other widgets
                 sender
                     .output(PlaylistElementOut::RenamePlaylist(
-                        self.playlist.base.clone(),
+                        list
                     ))
                     .unwrap();
+            }
+            PlaylistElementIn::UpdatePlaylistName(list) => {
+                if self.playlist.base.id == list.id {
+                    widgets.list_name.set_text(&list.name);
+                    widgets.edit_entry.set_text(&list.name);
+                    self.playlist.base.name = list.name;
+                }
             }
         }
     }
