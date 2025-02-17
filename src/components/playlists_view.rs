@@ -100,6 +100,7 @@ pub enum PlaylistsViewIn {
     Selected(i32),
     RecalcDragSource,
     MoveSong { src: usize, dest: usize, y: f64 },
+    InsertSong(submarine::data::Child, usize, f64),
     DraggedOver { uid: usize, y: f64 },
     DragLeave,
 }
@@ -587,6 +588,7 @@ impl relm4::Component for PlaylistsView {
                     .title_box
                     .height();
                 // insert based on cursor position and order of src and dest
+                //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
                 match (
                     y < f64::from(widget_height) * 0.5f64,
                     src_index <= dest_index,
@@ -599,6 +601,23 @@ impl relm4::Component for PlaylistsView {
                 //TODO update server
                 // subsonic does not allow moving songs, so we need to remove songs
                 // and then readd them
+            }
+            PlaylistsViewIn::InsertSong(child, index, y) => {
+                let row = PlaylistRow::new(&self.subsonic, child, sender.clone());
+                let widget_height = self
+                    .tracks
+                    .get(index as u32)
+                    .unwrap()
+                    .borrow()
+                    .title_box
+                    .height();
+                if y < f64::from(widget_height) {
+                    self.tracks.insert(index as u32, row);
+                } else {
+                    self.tracks.insert(index as u32 + 1, row);
+                }
+
+                //TODO update server
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
                 let len = self.tracks.selection_model.n_items();

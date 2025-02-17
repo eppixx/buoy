@@ -386,6 +386,7 @@ impl relm4::Component for Queue {
             QueueIn::Append(id) => {
                 let songs: Vec<submarine::data::Child> = match id {
                     Droppable::Queue(ids) => ids,
+                    Droppable::QueueSongs(songs) => songs.iter().map(|song| song.1.clone()).collect(),
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
@@ -439,6 +440,7 @@ impl relm4::Component for Queue {
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs: Vec<submarine::data::Child> = match drop {
                     Droppable::Queue(ids) => ids,
+                    Droppable::QueueSongs(_) => unreachable!("should move and not insert"),
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {

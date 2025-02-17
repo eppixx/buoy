@@ -175,6 +175,9 @@ impl PlaylistRow {
                             });
                         }
                     }
+                    Droppable::Child(child) => {
+                        sender.input(PlaylistsViewIn::InsertSong(*child, *cell.borrow(), y));
+                    }
                     _ => todo!(), //TODO handle other soures
                 }
                 return true;

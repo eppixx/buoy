@@ -17,16 +17,15 @@ use crate::{
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
     css::DragState,
-    factory::playlist_row::PlaylistIndex,
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)] //TODO remove boxed
 #[boxed_type(name = "QueueSongIndex")]
-pub struct QueueIndex(relm4::factory::DynamicIndex);
+pub struct QueueIndex(pub relm4::factory::DynamicIndex, pub submarine::data::Child);
 
 #[derive(Debug, Clone)]
 pub enum QueueSongIn {
@@ -165,7 +164,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
         DragState::reset(&mut model.root_widget);
 
         // setup DragSource
-        let index = QueueIndex(index.clone());
+        let index = Droppable::QueueSongs(vec![QueueIndex(index.clone(), model.info.clone())]);
         let content = gdk::ContentProvider::for_value(&index.to_value());
         model.drag_src.set_content(Some(&content));
         model.drag_src.set_actions(gdk::DragAction::MOVE);
@@ -254,21 +253,16 @@ impl relm4::factory::FactoryComponent for QueueSong {
             // accept drop from queue items and id's and render drop indicators
             add_controller = gtk::DropTarget {
                 set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                set_types: &[<QueueIndex as gtk::prelude::StaticType>::static_type(),
-                             <Droppable as gtk::prelude::StaticType>::static_type(),
-                             <PlaylistIndex as gtk::prelude::StaticType>::static_type(),
-                ],
+                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
 
                 connect_drop[sender] => move |_target, value, _x, y| {
-                    if let Ok(index) = value.get::<QueueIndex>() {
-                        sender.input(QueueSongIn::MoveSong { index, y });
-                    }
-                    if let Ok(index) = value.get::<PlaylistIndex>() {
-                        let drop = Droppable::Child(Box::new(index.child));
-                        sender.input(QueueSongIn::DroppedSong { drop, y });
-                    }
                     if let Ok(drop) = value.get::<Droppable>() {
-                        sender.input(QueueSongIn::DroppedSong { drop, y });
+                        match &drop {
+                            Droppable::QueueSongs(songs) => {
+                                sender.input(QueueSongIn::MoveSong { index: songs[0].clone(), y});
+                            }
+                            _ => sender.input(QueueSongIn::DroppedSong { drop, y }),
+                        }
                     }
                     true
                 },
@@ -351,6 +345,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
 
                 let songs = match drop {
                     Droppable::Queue(ids) => ids,
+                    Droppable::QueueSongs(_songs) => unreachable!("should be moved"),
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Playlist(playlist) => playlist.entry,
