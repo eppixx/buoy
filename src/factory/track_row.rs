@@ -182,7 +182,11 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         )
     }
 
-    fn bind(item: &mut Self::Item, (cell, label, finished): &mut Self::Widgets, view: &mut Self::Root) {
+    fn bind(
+        item: &mut Self::Item,
+        (cell, label, finished): &mut Self::Widgets,
+        view: &mut Self::Root,
+    ) {
         view.set_child(Some(&item.title_box));
         item.title_box.set_child(Some(label));
         label.set_text(&item.item.title);
