@@ -23,8 +23,7 @@ use crate::{
     types::{Droppable, Id},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)] //TODO remove boxed
-#[boxed_type(name = "QueueSongIndex")]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QueueIndex(pub relm4::factory::DynamicIndex, pub submarine::data::Child);
 
 #[derive(Debug, Clone)]
