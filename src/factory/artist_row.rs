@@ -7,7 +7,7 @@ use relm4::{
         self,
         prelude::{BoxExt, ButtonExt, WidgetExt},
     },
-    Component, ComponentController, RelmObjectExt, RelmWidgetExt,
+    Component, ComponentController, RelmWidgetExt,
 };
 
 use crate::{
@@ -53,7 +53,7 @@ impl ArtistRow {
             item,
             cover,
             fav_btn: None,
-            sender: sender.clone()
+            sender: sender.clone(),
         }
     }
 
@@ -210,7 +210,10 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
                 Some("starred-symbolic") => {
                     btn.set_icon_name("non-starred-symbolic");
                     sender
-                        .output(ArtistsViewOut::FavoriteClicked(cell.borrow().clone(), false))
+                        .output(ArtistsViewOut::FavoriteClicked(
+                            cell.borrow().clone(),
+                            false,
+                        ))
                         .unwrap();
                 }
                 Some("non-starred-symbolic") => {

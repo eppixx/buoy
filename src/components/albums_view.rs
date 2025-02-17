@@ -16,8 +16,8 @@ use crate::{
         filter_row::{Filter, FilterRowIn},
     },
     factory::album_row::{
-        AlbumRow, ArtistColumn, CdColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn,
-        TitleColumn, YearColumn,
+        AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, TitleColumn,
+        YearColumn,
     },
     settings::Settings,
     subsonic::Subsonic,
@@ -171,7 +171,10 @@ impl relm4::component::Component for AlbumsView {
         let list = model.subsonic.borrow().albums().to_vec();
         for album in list.iter() {
             model.shown_albums.borrow_mut().insert(album.album.clone());
-            model.shown_artists.borrow_mut().insert(album.artist.clone());
+            model
+                .shown_artists
+                .borrow_mut()
+                .insert(album.artist.clone());
             let album = AlbumRow::new(&model.subsonic, album.clone(), sender.clone());
             model.entries.append(album);
         }
@@ -269,10 +272,6 @@ impl relm4::component::Component for AlbumsView {
                                 set_spacing: 10,
                                 set_margin_end: 10,
 
-                                append: spinner = &gtk::Spinner {
-                                    set_spinning: true,
-                                    start: (),
-                                },
                                 gtk::Label {
                                     set_text: &gettext("Filters:"),
                                 },

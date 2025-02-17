@@ -187,7 +187,10 @@ impl relm4::Component for TracksView {
             .map(|track| {
                 model.shown_tracks.borrow_mut().push(track.id.clone());
                 model.shown_albums.borrow_mut().insert(track.album.clone());
-                model.shown_artists.borrow_mut().insert(track.artist.clone());
+                model
+                    .shown_artists
+                    .borrow_mut()
+                    .insert(track.artist.clone());
                 TrackRow::new(&model.subsonic, track.clone(), &sender)
             })
             .collect();
@@ -317,10 +320,6 @@ impl relm4::Component for TracksView {
                                 set_spacing: 10,
                                 set_margin_end: 10,
 
-                                append: spinner = &gtk::Spinner {
-                                    set_spinning: true,
-                                    start: (),
-                                },
                                 gtk::Label {
                                     set_text: &gettext("Filters:"),
                                 },

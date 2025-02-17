@@ -14,5 +14,3 @@ fn get_list_item_widget(widget: &impl glib::object::IsA<gtk::Widget>) -> Option<
 }
 
 pub struct SetupFinished(bool);
-
-

@@ -167,7 +167,10 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
 
-        (gtk::Viewport::default(), (title_label, SetupFinished(false)))
+        (
+            gtk::Viewport::default(),
+            (title_label, SetupFinished(false)),
+        )
     }
 
     fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, view: &mut Self::Root) {
