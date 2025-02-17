@@ -422,7 +422,7 @@ impl relm4::Component for Queue {
                         .into_iter()
                         .cloned()
                         .collect(),
-                    Droppable::PlaylistItems(items) => todo!(),
+                    Droppable::PlaylistItems(items) => items.into_iter().map(|song| song.child).collect()
                 };
 
                 let mut guard = self.songs.guard();

@@ -417,7 +417,9 @@ impl relm4::factory::FactoryComponent for QueueSong {
                         });
                         vec![]
                     }
-                    Droppable::PlaylistItems(_items) => todo!(),
+                    Droppable::PlaylistItems(songs) => {
+                        songs.into_iter().map(|song| song.child).collect()
+                    }
                 };
                 if y < f64::from(widget_height) * 0.5f64 {
                     sender
