@@ -380,7 +380,7 @@ impl relm4::component::AsyncComponent for App {
                                 set_tooltip: &gettext("Go back to previous page"),
 
                                 connect_clicked[browser_sender] => move |_| {
-                                    browser_sender.emit(BrowserIn::BackClicked);
+                                    browser_sender.emit(BrowserIn::GoBack);
                                 }
                             },
 
@@ -878,7 +878,7 @@ impl relm4::component::AsyncComponent for App {
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
-                PlayInfoOut::ShowAlbum(id) => self.browser.emit(BrowserIn::AlbumClicked(id)),
+                PlayInfoOut::ShowAlbum(id) => self.browser.emit(BrowserIn::ShowAlbum(id)),
                 PlayInfoOut::ShowArtist(id) => self.browser.emit(BrowserIn::ShowArtist(id)),
             },
             AppIn::DisplayToast(title) => {
@@ -1069,27 +1069,27 @@ impl relm4::component::AsyncComponent for App {
 
                 match view {
                     ClickableViews::Dashboard => {
-                        self.browser.emit(BrowserIn::DashboardClicked);
+                        self.browser.emit(BrowserIn::ShowDashboard);
                         widgets.dashboard_rvl.set_reveal_child(true);
                         widgets.dashboard_btn.set_active(true);
                     }
                     ClickableViews::Artists => {
-                        self.browser.emit(BrowserIn::ArtistsClicked);
+                        self.browser.emit(BrowserIn::ShowArtists);
                         widgets.artists_rvl.set_reveal_child(true);
                         widgets.artists_btn.set_active(true);
                     }
                     ClickableViews::Albums => {
-                        self.browser.emit(BrowserIn::AlbumsClicked);
+                        self.browser.emit(BrowserIn::ShowAlbums);
                         widgets.albums_rvl.set_reveal_child(true);
                         widgets.albums_btn.set_active(true);
                     }
                     ClickableViews::Tracks => {
-                        self.browser.emit(BrowserIn::TracksClicked);
+                        self.browser.emit(BrowserIn::ShowTracks);
                         widgets.tracks_rvl.set_reveal_child(true);
                         widgets.tracks_btn.set_active(true);
                     }
                     ClickableViews::Playlists => {
-                        self.browser.emit(BrowserIn::PlaylistsClicked);
+                        self.browser.emit(BrowserIn::ShowPlaylists);
                         widgets.playlists_rvl.set_reveal_child(true);
                         widgets.playlists_btn.set_active(true);
                     }

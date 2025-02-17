@@ -71,13 +71,13 @@ pub struct Browser {
 #[derive(Debug)]
 pub enum BrowserIn {
     SearchChanged(String),
-    BackClicked,
-    DashboardClicked,
-    ArtistsClicked,
-    AlbumsClicked,
-    TracksClicked,
-    PlaylistsClicked,
-    AlbumClicked(Id),
+    GoBack,
+    ShowDashboard,
+    ShowArtists,
+    ShowAlbums,
+    ShowTracks,
+    ShowPlaylists,
+    ShowAlbum(Id),
     Dashboard(DashboardOut),
     AlbumsView(AlbumsViewOut),
     AlbumView(Box<AlbumViewOut>),
@@ -136,8 +136,8 @@ impl relm4::component::AsyncComponent for Browser {
         };
         let widgets = view_output!();
 
-        sender.input(BrowserIn::DashboardClicked);
-        sender.input(BrowserIn::BackClicked);
+        sender.input(BrowserIn::ShowDashboard);
+        sender.input(BrowserIn::GoBack);
 
         relm4::component::AsyncComponentParts { model, widgets }
     }
@@ -180,7 +180,7 @@ impl relm4::component::AsyncComponent for Browser {
                     view.emit(PlaylistsViewIn::FilterChanged(search.clone()));
                 }
             }
-            BrowserIn::BackClicked => {
+            BrowserIn::GoBack => {
                 if self.history_widget.len() > 1 {
                     // remove current view from history
                     match self.history_widget.pop() {
@@ -214,7 +214,7 @@ impl relm4::component::AsyncComponent for Browser {
                         .expect("main window.gone");
                 }
             }
-            BrowserIn::DashboardClicked => {
+            BrowserIn::ShowDashboard => {
                 if let Some(&Views::Dashboard(_)) = self.history_widget.last() {
                     return;
                 }
@@ -232,7 +232,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .expect("main window.gone");
             }
-            BrowserIn::ArtistsClicked => {
+            BrowserIn::ShowArtists => {
                 if let Some(&Views::Artists(_)) = self.history_widget.last() {
                     return;
                 }
@@ -254,7 +254,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .expect("main window gone");
             }
-            BrowserIn::AlbumsClicked => {
+            BrowserIn::ShowAlbums => {
                 if let Some(&Views::Albums(_)) = self.history_widget.last() {
                     return;
                 }
@@ -279,9 +279,9 @@ impl relm4::component::AsyncComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window gone");
+                    .unwrap();
             }
-            BrowserIn::AlbumClicked(id) => {
+            BrowserIn::ShowAlbum(id) => {
                 let album: relm4::Controller<AlbumView> = AlbumView::builder()
                     .launch((self.subsonic.clone(), id))
                     .forward(sender.input_sender(), |msg| {
@@ -300,7 +300,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .unwrap();
             }
-            BrowserIn::TracksClicked => {
+            BrowserIn::ShowTracks => {
                 if let Some(&Views::Tracks(_)) = self.history_widget.last() {
                     return;
                 }
@@ -320,9 +320,9 @@ impl relm4::component::AsyncComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window gone");
+                    .unwrap();
             }
-            BrowserIn::PlaylistsClicked => {
+            BrowserIn::ShowPlaylists => {
                 if let Some(&Views::Playlists(_)) = self.history_widget.last() {
                     return;
                 }
@@ -337,7 +337,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
-                    .expect("main window gone");
+                    .unwrap();
             }
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
@@ -485,7 +485,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::FavoriteSongClicked(id, state))
                     .unwrap(),
                 TracksViewOut::ClickedArtist(id) => sender.input(BrowserIn::ShowArtist(id)),
-                TracksViewOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumClicked(id)),
+                TracksViewOut::ClickedAlbum(id) => sender.input(BrowserIn::ShowAlbum(id)),
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
@@ -535,7 +535,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .output(BrowserOut::FavoriteSongClicked(id, state))
                     .unwrap(),
                 PlaylistsViewOut::ClickedArtist(id) => sender.input(BrowserIn::ShowArtist(id)),
-                PlaylistsViewOut::ClickedAlbum(id) => sender.input(BrowserIn::AlbumClicked(id)),
+                PlaylistsViewOut::ClickedAlbum(id) => sender.input(BrowserIn::ShowAlbum(id)),
                 PlaylistsViewOut::RenamePlaylist(list) => {
                     sender.input(BrowserIn::RenamePlaylist(list))
                 }
