@@ -100,7 +100,7 @@ pub enum PlaylistsViewIn {
     Selected(i32),
     RecalcDragSource,
     MoveSong { src: usize, dest: usize, y: f64 },
-    InsertSong(submarine::data::Child, usize, f64),
+    InsertSongs(Vec<submarine::data::Child>, usize, f64),
     DraggedOver { uid: usize, y: f64 },
     DragLeave,
 }
@@ -602,19 +602,28 @@ impl relm4::Component for PlaylistsView {
                 // subsonic does not allow moving songs, so we need to remove songs
                 // and then readd them
             }
-            PlaylistsViewIn::InsertSong(child, index, y) => {
-                let row = PlaylistRow::new(&self.subsonic, child, sender.clone());
-                let widget_height = self
-                    .tracks
-                    .get(index as u32)
-                    .unwrap()
-                    .borrow()
-                    .title_box
-                    .height();
-                if y < f64::from(widget_height) {
-                    self.tracks.insert(index as u32, row);
-                } else {
-                    self.tracks.insert(index as u32 + 1, row);
+            PlaylistsViewIn::InsertSongs(songs, uid, y) => {
+                //remove drag indicators
+                let len = self.tracks.selection_model.n_items();
+                (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
+
+                // find index of uid
+                let dest = (0..len).find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid).unwrap();
+
+                for song in songs.into_iter().rev() {
+                    let row = PlaylistRow::new(&self.subsonic, song, sender.clone());
+                    let widget_height = self
+                        .tracks
+                        .get(dest)
+                        .unwrap()
+                        .borrow()
+                        .title_box
+                        .height();
+                    if y < f64::from(widget_height) * 0.5f64 {
+                        self.tracks.insert(dest as u32, row);
+                    } else {
+                        self.tracks.insert(dest as u32 + 1, row);
+                    }
                 }
 
                 //TODO update server

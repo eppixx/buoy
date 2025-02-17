@@ -174,8 +174,9 @@ impl PlaylistRow {
                             });
                         }
                     }
-                    Droppable::Child(child) => {
-                        sender.input(PlaylistsViewIn::InsertSong(*child, *cell.borrow(), y));
+                    Droppable::QueueSongs(children) => {
+                        let songs = children.into_iter().map(|song| song.1).collect();
+                        sender.input(PlaylistsViewIn::InsertSongs(songs, *cell.borrow(), y));
                     }
                     _ => todo!(), //TODO handle other soures
                 }
