@@ -126,7 +126,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         (b, (label, SetupFinished(false)))
     }
 
-    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, _b: &mut Self::Root) {
         label.set_label(&item.item.name);
 
         if !finished.0 {
@@ -168,7 +168,6 @@ impl relm4::typed_view::column::RelmColumn for AlbumCountColumn {
         Some(Box::new(|a, b| b.item.album_count.cmp(&a.item.album_count)))
     }
 }
-
 
 pub struct FavColumn;
 
