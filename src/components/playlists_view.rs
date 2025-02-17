@@ -608,21 +608,17 @@ impl relm4::Component for PlaylistsView {
                 (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
 
                 // find index of uid
-                let dest = (0..len).find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid).unwrap();
+                let dest = (0..len)
+                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid)
+                    .unwrap();
 
                 for song in songs.into_iter().rev() {
                     let row = PlaylistRow::new(&self.subsonic, song, sender.clone());
-                    let widget_height = self
-                        .tracks
-                        .get(dest)
-                        .unwrap()
-                        .borrow()
-                        .title_box
-                        .height();
+                    let widget_height = self.tracks.get(dest).unwrap().borrow().title_box.height();
                     if y < f64::from(widget_height) * 0.5f64 {
-                        self.tracks.insert(dest as u32, row);
+                        self.tracks.insert(dest, row);
                     } else {
-                        self.tracks.insert(dest as u32 + 1, row);
+                        self.tracks.insert(dest + 1, row);
                     }
                 }
 

@@ -386,7 +386,9 @@ impl relm4::Component for Queue {
             QueueIn::Append(id) => {
                 let songs: Vec<submarine::data::Child> = match id {
                     Droppable::Queue(ids) => ids,
-                    Droppable::QueueSongs(songs) => songs.iter().map(|song| song.1.clone()).collect(),
+                    Droppable::QueueSongs(songs) => {
+                        songs.iter().map(|song| song.1.clone()).collect()
+                    }
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
@@ -422,7 +424,9 @@ impl relm4::Component for Queue {
                         .into_iter()
                         .cloned()
                         .collect(),
-                    Droppable::PlaylistItems(items) => items.into_iter().map(|song| song.child).collect()
+                    Droppable::PlaylistItems(items) => {
+                        items.into_iter().map(|song| song.child).collect()
+                    }
                 };
 
                 let mut guard = self.songs.guard();

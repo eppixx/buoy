@@ -33,7 +33,7 @@ pub enum QueueSongIn {
     DragLeave,
     NewState(PlayState),
     DroppedSong { drop: Droppable, y: f64 },
-    MoveSong { index: QueueIndex, y: f64 },
+    MoveSong { index: Box<QueueIndex>, y: f64 },
     Cover(CoverOut),
     FavoriteClicked,
     FavoriteSong(String, bool),
@@ -258,7 +258,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
                     if let Ok(drop) = value.get::<Droppable>() {
                         match &drop {
                             Droppable::QueueSongs(songs) => {
-                                sender.input(QueueSongIn::MoveSong { index: songs[0].clone(), y});
+                                sender.input(QueueSongIn::MoveSong { index: Box::new(songs[0].clone()), y});
                             }
                             _ => sender.input(QueueSongIn::DroppedSong { drop, y }),
                         }
