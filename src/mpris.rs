@@ -259,9 +259,10 @@ impl Player {
             .unwrap();
     }
 
+    /// api: https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html#Method:SetPosition
     /// * `index` - Index id of the track to set to
     /// * `pos` - Position to seek to in micoseconds
-    fn set_position(&self, index: i32, pos: i64) {
+    fn set_position(&self, _index: i32, pos: i64) {
         //TODO check index
         self.info.lock().unwrap().song_position = pos;
         self.sender
