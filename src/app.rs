@@ -291,9 +291,9 @@ impl relm4::component::AsyncComponent for App {
                     .borrow()
                     .set_position(settings.queue_seek as i64)
                 {
-                    sender.input(AppIn::DisplayToast(format!(
-                        "playback set position error: {e}"
-                    )));
+                    tracing::error!("playback set position error {e}");
+                    //TODO find out why this fails sometimes
+                    model.seekbar.emit(SeekbarIn::SeekTo(0));
                 }
             }
 
