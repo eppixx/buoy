@@ -129,7 +129,7 @@ impl Mpris {
         self.sender.try_send(DataChanged::Playback).unwrap();
     }
 
-    pub async fn set_song(&mut self, song: Option<submarine::data::Child>) {
+    pub fn set_song(&mut self, song: Option<submarine::data::Child>) {
         self.info.lock().unwrap().song = song;
         self.sender.try_send(DataChanged::Metadata).unwrap();
     }

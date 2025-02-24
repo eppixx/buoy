@@ -817,7 +817,8 @@ impl relm4::component::AsyncComponent for App {
                     // update playcontrol
                     self.play_info
                         .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
-                    self.mpris.borrow_mut().set_song(Some(*child)).await;
+
+                    self.mpris.borrow_mut().set_song(Some(*child));
                     self.recalculate_mpris_next_prev();
                     self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
