@@ -26,6 +26,7 @@ pub struct PlayInfo {
 pub enum PlayInfoIn {
     NewState(Box<Option<submarine::data::Child>>),
     Cover(CoverOut),
+    CoverClicked,
 }
 
 #[derive(Debug)]
@@ -33,6 +34,7 @@ pub enum PlayInfoOut {
     DisplayToast(String),
     ShowArtist(Id),
     ShowAlbum(Id),
+    CoverClicked(String),
 }
 
 #[relm4::component(pub)]
@@ -74,6 +76,12 @@ impl relm4::component::Component for PlayInfo {
             append = &model.covers.widget().clone() {
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
+
+                add_controller = gtk::GestureClick {
+                    connect_pressed[sender] => move |_ctrl, _btn, _x, _y| {
+                        sender.input(PlayInfoIn::CoverClicked);
+                    },
+                }
             },
 
             append: info = &gtk::Label {
@@ -124,6 +132,15 @@ impl relm4::component::Component for PlayInfo {
                     sender.output(PlayInfoOut::DisplayToast(title)).unwrap();
                 }
             },
+            PlayInfoIn::CoverClicked => {
+                if let Some(child) = &self.child {
+                    if let Some(cover_art) = &child.cover_art {
+                        sender
+                            .output(PlayInfoOut::CoverClicked(cover_art.clone()))
+                            .unwrap();
+                    }
+                }
+            }
         }
     }
 }

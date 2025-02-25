@@ -90,6 +90,8 @@ pub enum AppIn {
     SearchChanged,
     Download(Droppable),
     ClickedNavigationBtn(ClickableViews),
+    DisableBigCoverOverlay,
+    LoadBigCoverPicture(String),
 }
 
 #[derive(Debug)]
@@ -697,7 +699,27 @@ impl relm4::component::AsyncComponent for App {
                                 }
                             },
 
-                            model.browser.widget(),
+                            gtk::Overlay {
+                                #[wrap(Some)]
+                                set_child = model.browser.widget(),
+
+                                // overlay for showing the cover in the original size
+                                add_overlay: big_cover_overlay = &gtk::Revealer {
+                                    set_transition_type: gtk::RevealerTransitionType::Crossfade,
+                                    set_transition_duration: 1000,
+                                    set_visible: false,
+
+                                    // disable overlay when it is clicked
+                                    add_controller = gtk::GestureClick {
+                                        connect_pressed[sender] => move |_ctrl, _btn, _x, _y| {
+                                            sender.input(AppIn::DisableBigCoverOverlay);
+                                        },
+                                    },
+
+                                    #[wrap(Some)]
+                                    set_child: big_cover_picture = &gtk::Picture {}
+                                }
+                            }
                         },
                         add_overlay: toasts = &granite::Toast,
                     }
@@ -875,6 +897,9 @@ impl relm4::component::AsyncComponent for App {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 PlayInfoOut::ShowAlbum(id) => self.browser.emit(BrowserIn::ShowAlbum(id)),
                 PlayInfoOut::ShowArtist(id) => self.browser.emit(BrowserIn::ShowArtist(id)),
+                PlayInfoOut::CoverClicked(cover_id) => {
+                    sender.input(AppIn::LoadBigCoverPicture(cover_id))
+                }
             },
             AppIn::DisplayToast(title) => {
                 tracing::error!(title);
@@ -1089,6 +1114,27 @@ impl relm4::component::AsyncComponent for App {
                         widgets.playlists_btn.set_active(true);
                     }
                 }
+            }
+            AppIn::DisableBigCoverOverlay => {
+                widgets.big_cover_overlay.set_visible(false);
+                widgets.big_cover_overlay.set_reveal_child(false);
+            }
+            AppIn::LoadBigCoverPicture(cover_id) => {
+                // get url
+                let client = Client::get().unwrap();
+                let buffer = client.get_cover_art(&cover_id, None).await.unwrap();
+                let bytes = gtk::glib::Bytes::from(&buffer);
+                let texture = match gtk::gdk::Texture::from_bytes(&bytes) {
+                    Ok(texture) => Some(texture),
+                    Err(e) => {
+                        // could not convert to image
+                        tracing::warn!("converting buffer to Pixbuf: {e} for {cover_id}");
+                        None
+                    }
+                };
+                widgets.big_cover_picture.set_paintable(texture.as_ref());
+                widgets.big_cover_overlay.set_visible(true);
+                widgets.big_cover_overlay.set_reveal_child(true);
             }
         }
     }
