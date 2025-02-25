@@ -24,10 +24,10 @@ use super::SetupFinished;
 
 #[derive(Debug)]
 pub struct AlbumRow {
-    pub subsonic: Rc<RefCell<Subsonic>>,
-    pub item: submarine::data::Child,
-    pub cover: relm4::Controller<Cover>,
-    pub fav_btn: Option<gtk::Button>,
+    subsonic: Rc<RefCell<Subsonic>>,
+    item: submarine::data::Child,
+    cover: relm4::Controller<Cover>,
+    fav_btn: Option<gtk::Button>,
     sender: relm4::ComponentSender<AlbumsView>,
 }
 
@@ -55,6 +55,18 @@ impl AlbumRow {
             fav_btn: None,
             sender,
         }
+    }
+
+    pub fn item(&self) -> &submarine::data::Child {
+        &self.item
+    }
+
+    pub fn item_mut(&mut self) -> &mut submarine::data::Child {
+        &mut self.item
+    }
+
+    pub fn fav_btn(&self) -> &Option<gtk::Button> {
+        &self.fav_btn
     }
 
     fn create_drag_src(&self) -> gtk::DragSource {

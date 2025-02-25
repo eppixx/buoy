@@ -398,36 +398,38 @@ impl relm4::component::Component for AlbumsView {
 
                 self.entries.add_filter(move |track| {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
-                    let title = track.item.title.clone();
+                    let title = track.item().title.clone();
 
                     for filter in &filters {
                         match filter {
                             //TODO add matching for regular expressions
                             Filter::Favorite(None) => {}
                             Filter::Favorite(Some(state)) => {
-                                if *state != track.item.starred.is_some() {
+                                if *state != track.item().starred.is_some() {
                                     return false;
                                 }
                             }
                             Filter::Album(_, value) if value.is_empty() => {} // filter matches
                             Filter::Album(relation, value) => match relation {
                                 TextRelation::ExactNot
-                                    if Some(value) == track.item.album.as_ref() =>
+                                    if Some(value) == track.item().album.as_ref() =>
                                 {
                                     return false
                                 }
-                                TextRelation::Exact if Some(value) != track.item.album.as_ref() => {
+                                TextRelation::Exact
+                                    if Some(value) != track.item().album.as_ref() =>
+                                {
                                     return false
                                 }
                                 TextRelation::ContainsNot => {
-                                    if let Some(album) = &track.item.album {
+                                    if let Some(album) = &track.item().album {
                                         if album.contains(value) {
                                             return false;
                                         }
                                     }
                                 }
                                 TextRelation::Contains => {
-                                    if let Some(album) = &track.item.album {
+                                    if let Some(album) = &track.item().album {
                                         if !album.contains(value) {
                                             return false;
                                         }
@@ -440,24 +442,24 @@ impl relm4::component::Component for AlbumsView {
                             Filter::Artist(_, value) if value.is_empty() => {} // filter matches
                             Filter::Artist(relation, value) => match relation {
                                 TextRelation::ExactNot
-                                    if Some(value) == track.item.artist.as_ref() =>
+                                    if Some(value) == track.item().artist.as_ref() =>
                                 {
                                     return false
                                 }
                                 TextRelation::Exact
-                                    if Some(value) != track.item.artist.as_ref() =>
+                                    if Some(value) != track.item().artist.as_ref() =>
                                 {
                                     return false
                                 }
                                 TextRelation::ContainsNot => {
-                                    if let Some(artist) = &track.item.artist {
+                                    if let Some(artist) = &track.item().artist {
                                         if artist.contains(value) {
                                             return false;
                                         }
                                     }
                                 }
                                 TextRelation::Contains => {
-                                    if let Some(artist) = &track.item.artist {
+                                    if let Some(artist) = &track.item().artist {
                                         if !artist.contains(value) {
                                             return false;
                                         }
@@ -468,7 +470,7 @@ impl relm4::component::Component for AlbumsView {
                                 _ => {} // filter matches
                             },
                             Filter::Year(order, value) => {
-                                if let Some(year) = &track.item.year {
+                                if let Some(year) = &track.item().year {
                                     if year.cmp(value) != *order {
                                         return false;
                                     }
@@ -477,12 +479,12 @@ impl relm4::component::Component for AlbumsView {
                                 }
                             }
                             Filter::Cd(_, 0) => {
-                                if track.item.disc_number.is_some() {
+                                if track.item().disc_number.is_some() {
                                     return false;
                                 }
                             }
                             Filter::Cd(order, value) => {
-                                if let Some(disc) = &track.item.disc_number {
+                                if let Some(disc) = &track.item().disc_number {
                                     if disc.cmp(value) != *order {
                                         return false;
                                     }
@@ -493,22 +495,24 @@ impl relm4::component::Component for AlbumsView {
                             Filter::Genre(_, value) if value.is_empty() => {}
                             Filter::Genre(relation, value) => match relation {
                                 TextRelation::ExactNot
-                                    if Some(value) == track.item.genre.as_ref() =>
+                                    if Some(value) == track.item().genre.as_ref() =>
                                 {
                                     return false
                                 }
-                                TextRelation::Exact if Some(value) != track.item.genre.as_ref() => {
+                                TextRelation::Exact
+                                    if Some(value) != track.item().genre.as_ref() =>
+                                {
                                     return false
                                 }
                                 TextRelation::ContainsNot => {
-                                    if let Some(genre) = &track.item.genre {
+                                    if let Some(genre) = &track.item().genre {
                                         if genre.contains(value) {
                                             return false;
                                         }
                                     }
                                 }
                                 TextRelation::Contains => {
-                                    if let Some(genre) = &track.item.genre {
+                                    if let Some(genre) = &track.item().genre {
                                         if !genre.contains(value) {
                                             return false;
                                         }
@@ -520,7 +524,7 @@ impl relm4::component::Component for AlbumsView {
                             },
                             Filter::DurationMin(order, value) => {
                                 let value = value * 60;
-                                if let Some(duration) = &track.item.duration {
+                                if let Some(duration) = &track.item().duration {
                                     if duration.cmp(&value) != *order {
                                         return false;
                                     }
@@ -534,8 +538,10 @@ impl relm4::component::Component for AlbumsView {
 
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
-                        shown_artists.borrow_mut().insert(track.item.artist.clone());
-                        shown_albums.borrow_mut().insert(track.item.album.clone());
+                        shown_artists
+                            .borrow_mut()
+                            .insert(track.item().artist.clone());
+                        shown_albums.borrow_mut().insert(track.item().album.clone());
                         update_labels(
                             &shown_albums_widget,
                             &shown_albums,
@@ -547,8 +553,8 @@ impl relm4::component::Component for AlbumsView {
 
                     let mut title_artist_album = format!(
                         "{title} {} {}",
-                        track.item.artist.clone().unwrap_or_default(),
-                        track.item.album.clone().unwrap_or_default()
+                        track.item().artist.clone().unwrap_or_default(),
+                        track.item().album.clone().unwrap_or_default()
                     );
                     //check for case sensitivity
                     if !Settings::get().lock().unwrap().case_sensitive {
@@ -562,8 +568,10 @@ impl relm4::component::Component for AlbumsView {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                         let score = matcher.fuzzy_match(&title_artist_album, &search);
                         if score.is_some() {
-                            shown_artists.borrow_mut().insert(track.item.artist.clone());
-                            shown_albums.borrow_mut().insert(track.item.album.clone());
+                            shown_artists
+                                .borrow_mut()
+                                .insert(track.item().artist.clone());
+                            shown_albums.borrow_mut().insert(track.item().album.clone());
                             update_labels(
                                 &shown_albums_widget,
                                 &shown_albums,
@@ -575,8 +583,10 @@ impl relm4::component::Component for AlbumsView {
                             false
                         }
                     } else if title_artist_album.contains(&search) {
-                        shown_artists.borrow_mut().insert(track.item.artist.clone());
-                        shown_albums.borrow_mut().insert(track.item.album.clone());
+                        shown_artists
+                            .borrow_mut()
+                            .insert(track.item().artist.clone());
+                        shown_albums.borrow_mut().insert(track.item().album.clone());
                         update_labels(
                             &shown_albums_widget,
                             &shown_albums,
@@ -592,20 +602,20 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::Favorited(id, state) => {
                 (0..self.entries.len())
                     .filter_map(|i| self.entries.get(i))
-                    .filter(|a| a.borrow().item.id == id)
+                    .filter(|a| a.borrow().item().id == id)
                     .for_each(|album| match state {
                         true => {
-                            if let Some(fav) = &album.borrow().fav_btn {
+                            if let Some(fav) = &album.borrow().fav_btn() {
                                 fav.set_icon_name("starred-symbolic");
                             }
-                            album.borrow_mut().item.starred =
+                            album.borrow_mut().item_mut().starred =
                                 Some(chrono::offset::Local::now().into());
                         }
                         false => {
-                            if let Some(fav) = &album.borrow().fav_btn {
+                            if let Some(fav) = &album.borrow().fav_btn() {
                                 fav.set_icon_name("non-starred-symbolic");
                             }
-                            album.borrow_mut().item.starred = None;
+                            album.borrow_mut().item_mut().starred = None;
                         }
                     });
             }
@@ -642,7 +652,7 @@ impl relm4::component::Component for AlbumsView {
                 let albums: Vec<submarine::data::Child> =
                     (0..self.entries.selection_model.n_items())
                         .filter_map(|i| self.entries.get_visible(i))
-                        .map(|i| i.borrow().item.clone())
+                        .map(|i| i.borrow().item().clone())
                         .collect();
                 for album in albums {
                     let drop = Droppable::Child(Box::new(album));
@@ -656,7 +666,7 @@ impl relm4::component::Component for AlbumsView {
                 let albums: Vec<submarine::data::Child> =
                     (0..self.entries.selection_model.n_items())
                         .filter_map(|i| self.entries.get_visible(i))
-                        .map(|i| i.borrow().item.clone())
+                        .map(|i| i.borrow().item().clone())
                         .collect();
                 for album in albums {
                     let drop = Droppable::Child(Box::new(album));
@@ -670,7 +680,7 @@ impl relm4::component::Component for AlbumsView {
                 let albums: Vec<submarine::data::Child> =
                     (0..self.entries.selection_model.n_items())
                         .filter_map(|i| self.entries.get_visible(i))
-                        .map(|i| i.borrow().item.clone())
+                        .map(|i| i.borrow().item().clone())
                         .collect();
                 for album in albums {
                     let drop = Droppable::Child(Box::new(album));
@@ -679,7 +689,7 @@ impl relm4::component::Component for AlbumsView {
             }
             AlbumsViewIn::ClickedAlbum(index) => {
                 if let Some(clicked_album) = self.entries.get_visible(index) {
-                    let id = Id::album(&clicked_album.borrow().item.id);
+                    let id = Id::album(&clicked_album.borrow().item().id);
                     sender.output(AlbumsViewOut::ClickedAlbum(id)).unwrap();
                 }
             }
