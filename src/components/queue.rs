@@ -14,7 +14,10 @@ use relm4::{
 
 use crate::{
     components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
-    factory::queue_song::{QueueSong, QueueSongIn, QueueSongOut},
+    factory::{
+        queue_song::{QueueSong, QueueSongIn, QueueSongOut},
+        DropHalf,
+    },
     play_state::PlayState,
     player::Command,
     settings::Settings,
@@ -702,20 +705,24 @@ impl relm4::Component for Queue {
                     }
                     sender.input(QueueIn::Rerandomize);
                 }
-                QueueSongOut::MoveAbove { src, dest } => {
+                QueueSongOut::MoveSong { src, dest, half } => {
                     let mut guard = self.songs.guard();
                     let src = src.current_index();
                     let dest = dest.current_index();
-                    guard.move_to(src, dest);
-                }
-                QueueSongOut::MoveBelow { src, dest } => {
-                    let mut guard = self.songs.guard();
-                    let src = src.current_index();
-                    let dest = dest.current_index();
-                    if src <= dest {
-                        guard.move_to(src, dest);
-                    } else {
-                        guard.move_to(src, dest + 1);
+                    match (half, src.cmp(&dest)) {
+                        (_, std::cmp::Ordering::Equal) => {} // do nothing
+                        (DropHalf::Above, std::cmp::Ordering::Less) => {
+                            guard.move_to(src, dest - 1);
+                        }
+                        (DropHalf::Above, std::cmp::Ordering::Greater) => {
+                            guard.move_to(src, dest);
+                        }
+                        (DropHalf::Below, std::cmp::Ordering::Less) => {
+                            guard.move_to(src, dest);
+                        }
+                        (DropHalf::Below, std::cmp::Ordering::Greater) => {
+                            guard.move_to(src, dest + 1);
+                        }
                     }
                 }
                 QueueSongOut::Remove => sender.input(QueueIn::Remove),

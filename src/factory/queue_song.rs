@@ -23,6 +23,8 @@ use crate::{
     types::{Droppable, Id},
 };
 
+use super::DropHalf;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QueueIndex(pub relm4::factory::DynamicIndex, pub submarine::data::Child);
 
@@ -45,13 +47,10 @@ pub enum QueueSongOut {
     Clicked(relm4::factory::DynamicIndex),
     ShiftClicked(relm4::factory::DynamicIndex),
     Remove,
-    MoveAbove {
+    MoveSong {
         src: relm4::factory::DynamicIndex,
         dest: relm4::factory::DynamicIndex,
-    },
-    MoveBelow {
-        src: relm4::factory::DynamicIndex,
-        dest: relm4::factory::DynamicIndex,
+        half: DropHalf,
     },
     DropAbove {
         src: Vec<submarine::data::Child>,
@@ -440,22 +439,14 @@ impl relm4::factory::FactoryComponent for QueueSong {
             QueueSongIn::MoveSong { index, y } => {
                 sender.input(QueueSongIn::DragLeave);
 
-                let widget_height = self.root_widget.height();
-                if y < f64::from(widget_height) * 0.5f64 {
-                    sender
-                        .output(QueueSongOut::MoveAbove {
-                            src: index.0.clone(),
-                            dest: self.index.clone(),
-                        })
-                        .unwrap();
-                } else {
-                    sender
-                        .output(QueueSongOut::MoveBelow {
-                            src: index.0.clone(),
-                            dest: self.index.clone(),
-                        })
-                        .unwrap();
-                }
+                let half = DropHalf::calc(self.root_widget.height(), y);
+                sender
+                    .output(QueueSongOut::MoveSong {
+                        src: index.0.clone(),
+                        dest: self.index.clone(),
+                        half,
+                    })
+                    .unwrap();
             }
             QueueSongIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => {
