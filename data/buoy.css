@@ -178,6 +178,5 @@ contents > box {
 , #tracks-view-tracks > listview > row
 , #playlist-view-tracks > listview > row {
     border-radius: 8px;
-    margin: 1px 0px;
     padding: 2px 7px;
 }

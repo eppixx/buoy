@@ -251,6 +251,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         if !finished.0 {
             finished.0 = true;
             let list_item = super::get_list_item_widget(&item.title_box).unwrap();
+            DragState::reset(&list_item);
             let drop_target = item.create_drop_target(cell);
             list_item.add_controller(drop_target);
             let drag_src = item.create_drag_src(cell);
