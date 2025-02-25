@@ -12,6 +12,7 @@ use relm4::{
 use crate::{
     common::convert_for_label,
     components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
+    css::DragState,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
@@ -207,22 +208,19 @@ impl PlaylistRow {
 
     pub fn add_drag_indicator_top(&self) {
         if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            list_item.remove_css_class("drag-indicator-bottom");
-            list_item.add_css_class("drag-indicator-top");
+            DragState::drop_shadow_top(&list_item);
         }
     }
 
     pub fn add_drag_indicator_bottom(&self) {
         if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            list_item.add_css_class("drag-indicator-bottom");
-            list_item.remove_css_class("drag-indicator-top");
+            DragState::drop_shadow_bottom(&list_item);
         }
     }
 
     pub fn reset_drag_indicators(&self) {
         if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            list_item.remove_css_class("drag-indicator-bottom");
-            list_item.remove_css_class("drag-indicator-top");
+            DragState::reset(&list_item);
         }
     }
 }

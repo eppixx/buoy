@@ -150,7 +150,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
             None => "non-starred-symbolic",
         };
 
-        let mut model = Self {
+        let model = Self {
             root_widget: gtk::ListBoxRow::new(),
             info: child,
             cover,
@@ -160,7 +160,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
             drag_src: gtk::DragSource::new(),
         };
 
-        DragState::reset(&mut model.root_widget);
+        DragState::reset(&model.root_widget);
 
         // setup DragSource
         let index = Droppable::QueueSongs(vec![QueueIndex(index.clone(), model.info.clone())]);
@@ -327,12 +327,12 @@ impl relm4::factory::FactoryComponent for QueueSong {
             QueueSongIn::DraggedOver(y) => {
                 let widget_height = self.root_widget.height();
                 if y < f64::from(widget_height) * 0.5f64 {
-                    DragState::drop_shadow_top(&mut self.root_widget);
+                    DragState::drop_shadow_top(&self.root_widget);
                 } else {
-                    DragState::drop_shadow_bottom(&mut self.root_widget);
+                    DragState::drop_shadow_bottom(&self.root_widget);
                 }
             }
-            QueueSongIn::DragLeave => DragState::reset(&mut self.root_widget),
+            QueueSongIn::DragLeave => DragState::reset(&self.root_widget),
             QueueSongIn::NewState(state) => {
                 widgets.icon_stack.set_visible_child_enum(&state);
             }
