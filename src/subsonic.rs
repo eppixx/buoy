@@ -205,6 +205,22 @@ impl Subsonic {
         }
     }
 
+    pub fn songs_of_album(&self, id: impl AsRef<str>) -> Vec<submarine::data::Child> {
+        self.tracks()
+            .iter()
+            .filter(|track| track.album_id.as_deref() == Some(id.as_ref()))
+            .cloned()
+            .collect()
+    }
+
+    pub fn songs_of_artist(&self, id: impl AsRef<str>) -> Vec<submarine::data::Child> {
+        self.album_list
+            .iter()
+            .filter(|album| album.artist_id.as_deref() == Some(id.as_ref()))
+            .flat_map(|album| self.songs_of_album(&album.id))
+            .collect()
+    }
+
     pub fn tracks(&self) -> &Vec<submarine::data::Child> {
         &self.tracks
     }
