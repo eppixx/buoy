@@ -13,6 +13,7 @@ use crate::{
     common::convert_for_label,
     components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
     css::DragState,
+    factory::DropHalf,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
@@ -174,22 +175,25 @@ impl PlaylistRow {
 
         let sender = self.sender.clone();
         let cell = uid.clone();
+        let widget = self.title_box.clone();
         target.connect_drop(move |_target, value, _x, y| {
             if let Ok(drop) = value.get::<Droppable>() {
                 match drop {
                     Droppable::PlaylistItems(items) => {
                         for item in items.iter().rev() {
+                            let half = DropHalf::calc(widget.height(), y);
                             let src_uid = item.uid;
                             sender.input(PlaylistsViewIn::MoveSong {
                                 src: src_uid,
                                 dest: *cell.borrow(),
-                                y,
+                                half,
                             });
                         }
                     }
                     Droppable::QueueSongs(children) => {
                         let songs = children.into_iter().map(|song| song.1).collect();
-                        sender.input(PlaylistsViewIn::InsertSongs(songs, *cell.borrow(), y));
+                        let half = DropHalf::calc(widget.height(), y);
+                        sender.input(PlaylistsViewIn::InsertSongs(songs, *cell.borrow(), half));
                     }
                     _ => todo!(), //TODO handle other soures
                 }

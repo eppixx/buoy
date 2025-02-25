@@ -14,3 +14,19 @@ fn get_list_item_widget(widget: &impl glib::object::IsA<gtk::Widget>) -> Option<
 }
 
 pub struct SetupFinished(bool);
+
+#[derive(Debug)]
+pub enum DropHalf {
+    Above,
+    Below,
+}
+
+impl DropHalf {
+    pub fn calc(height: i32, y: f64) -> DropHalf {
+        if y < f64::from(height) * 0.5f64 {
+            DropHalf::Above
+        } else {
+            DropHalf::Below
+        }
+    }
+}

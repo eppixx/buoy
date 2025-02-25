@@ -18,6 +18,7 @@ use relm4::{
 use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistIndex, PlaylistRow, TitleColumn,
 };
+use crate::factory::DropHalf;
 use crate::settings::Settings;
 use crate::types::Id;
 use crate::{
@@ -101,9 +102,16 @@ pub enum PlaylistsViewIn {
     DownloadClicked,
     Selected(i32),
     RecalcDragSource,
-    MoveSong { src: usize, dest: usize, y: f64 },
-    InsertSongs(Vec<submarine::data::Child>, usize, f64),
-    DraggedOver { uid: usize, y: f64 },
+    MoveSong {
+        src: usize,
+        dest: usize,
+        half: DropHalf,
+    },
+    InsertSongs(Vec<submarine::data::Child>, usize, DropHalf),
+    DraggedOver {
+        uid: usize,
+        y: f64,
+    },
     DragLeave,
 }
 
@@ -558,7 +566,7 @@ impl relm4::Component for PlaylistsView {
                     .filter_map(|i| self.tracks.get(*i))
                     .for_each(|row| row.borrow_mut().set_drag_src(children.clone()));
             }
-            PlaylistsViewIn::MoveSong { src, dest, y } => {
+            PlaylistsViewIn::MoveSong { src, dest, half } => {
                 let len = self.tracks.selection_model.n_items();
 
                 //remove drag indicators
@@ -583,30 +591,21 @@ impl relm4::Component for PlaylistsView {
                     PlaylistRow::new(&self.subsonic, src.borrow().item().clone(), sender.clone());
                 self.tracks.remove(src_index);
 
-                //insert dest
-                let widget_height = self
-                    .tracks
-                    .get(src_index)
-                    .unwrap()
-                    .borrow()
-                    .title_box()
-                    .height();
                 // insert based on cursor position and order of src and dest
                 //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
-                match (
-                    y < f64::from(widget_height) * 0.5f64,
-                    src_index <= dest_index,
-                ) {
-                    (true, true) => self.tracks.insert(dest_index - 1, src_row),
-                    (true, false) | (false, true) => self.tracks.insert(dest_index, src_row),
-                    (false, false) => self.tracks.insert(dest_index + 1, src_row),
+                match (half, src_index <= dest_index) {
+                    (DropHalf::Above, true) => self.tracks.insert(dest_index - 1, src_row),
+                    (DropHalf::Above, false) | (DropHalf::Below, true) => {
+                        self.tracks.insert(dest_index, src_row)
+                    }
+                    (DropHalf::Below, false) => self.tracks.insert(dest_index + 1, src_row),
                 }
 
                 //TODO update server
                 // subsonic does not allow moving songs, so we need to remove songs
                 // and then readd them
             }
-            PlaylistsViewIn::InsertSongs(songs, uid, y) => {
+            PlaylistsViewIn::InsertSongs(songs, uid, half) => {
                 //remove drag indicators
                 let len = self.tracks.selection_model.n_items();
                 (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
@@ -618,12 +617,9 @@ impl relm4::Component for PlaylistsView {
 
                 for song in songs.into_iter().rev() {
                     let row = PlaylistRow::new(&self.subsonic, song, sender.clone());
-                    let widget_height =
-                        self.tracks.get(dest).unwrap().borrow().title_box().height();
-                    if y < f64::from(widget_height) * 0.5f64 {
-                        self.tracks.insert(dest, row);
-                    } else {
-                        self.tracks.insert(dest + 1, row);
+                    match half {
+                        DropHalf::Above => self.tracks.insert(dest, row),
+                        DropHalf::Below => self.tracks.insert(dest + 1, row),
                     }
                 }
 
