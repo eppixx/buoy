@@ -24,8 +24,8 @@ static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new
 pub struct TrackRow {
     uid: usize,
     subsonic: Rc<RefCell<Subsonic>>,
-    pub item: submarine::data::Child,
-    pub fav_btn: Option<gtk::Button>,
+    item: submarine::data::Child,
+    fav_btn: Option<gtk::Button>,
     title_box: gtk::Viewport,
     sender: relm4::ComponentSender<TracksView>,
     multiple_drag_src: Option<gtk::DragSource>,
@@ -57,6 +57,18 @@ impl TrackRow {
 
     pub fn uid(&self) -> &usize {
         &self.uid
+    }
+
+    pub fn item(&self) -> &submarine::data::Child {
+        &self.item
+    }
+
+    pub fn item_mut(&mut self) -> &mut submarine::data::Child {
+        &mut self.item
+    }
+
+    pub fn fav_btn(&self) -> &Option<gtk::Button> {
+        &self.fav_btn
     }
 
     pub fn set_drag_src(&mut self, drop: Droppable) {

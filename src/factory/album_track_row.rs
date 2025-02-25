@@ -21,8 +21,8 @@ use super::SetupFinished;
 #[derive(Debug)]
 pub struct AlbumTrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
-    pub item: submarine::data::Child,
-    pub fav_btn: Option<gtk::Button>,
+    item: submarine::data::Child,
+    fav_btn: Option<gtk::Button>,
     title_box: gtk::Viewport,
     sender: relm4::ComponentSender<AlbumView>,
     multiple_drag_src: Option<gtk::DragSource>,
@@ -48,6 +48,18 @@ impl AlbumTrackRow {
             sender: sender.clone(),
             multiple_drag_src: None,
         }
+    }
+
+    pub fn item(&self) -> &submarine::data::Child {
+        &self.item
+    }
+
+    pub fn item_mut(&mut self) -> &mut submarine::data::Child {
+        &mut self.item
+    }
+
+    pub fn fav_btn(&self) -> &Option<gtk::Button> {
+        &self.fav_btn
     }
 
     pub fn set_drag_src(&mut self, drop: Droppable) {

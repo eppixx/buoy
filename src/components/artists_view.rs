@@ -365,26 +365,26 @@ impl relm4::component::Component for ArtistsView {
                             //TODO add matching for regular expressions
                             Filter::Favorite(None) => {}
                             Filter::Favorite(Some(state)) => {
-                                if *state != track.item.starred.is_some() {
+                                if *state != track.item().starred.is_some() {
                                     return false;
                                 }
                             }
                             Filter::Artist(_, value) if value.is_empty() => {}
                             Filter::Artist(relation, value) => match relation {
-                                TextRelation::ExactNot if value == &track.item.name => {
+                                TextRelation::ExactNot if value == &track.item().name => {
                                     return false
                                 }
-                                TextRelation::Exact if value != &track.item.name => return false,
-                                TextRelation::ContainsNot if track.item.name.contains(value) => {
+                                TextRelation::Exact if value != &track.item().name => return false,
+                                TextRelation::ContainsNot if track.item().name.contains(value) => {
                                     return false
                                 }
-                                TextRelation::Contains if !track.item.name.contains(value) => {
+                                TextRelation::Contains if !track.item().name.contains(value) => {
                                     return false
                                 }
                                 _ => {} // filter matches
                             },
                             Filter::AlbumCount(order, value) => {
-                                if track.item.album_count.cmp(value) != *order {
+                                if track.item().album_count.cmp(value) != *order {
                                     return false;
                                 }
                             }
@@ -394,12 +394,12 @@ impl relm4::component::Component for ArtistsView {
 
                     // when search bar is hidden every element will be shown
                     if !Settings::get().lock().unwrap().search_active {
-                        shown_artists.borrow_mut().insert(track.item.name.clone());
+                        shown_artists.borrow_mut().insert(track.item().name.clone());
                         update_label(&shown_artists_widget, &shown_artists);
                         return true;
                     }
 
-                    let mut artist = track.item.name.clone();
+                    let mut artist = track.item().name.clone();
                     //check for case sensitivity
                     if !Settings::get().lock().unwrap().case_sensitive {
                         artist = artist.to_lowercase();
@@ -412,14 +412,14 @@ impl relm4::component::Component for ArtistsView {
                         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                         let score = matcher.fuzzy_match(&artist, &search);
                         if score.is_some() {
-                            shown_artists.borrow_mut().insert(track.item.name.clone());
+                            shown_artists.borrow_mut().insert(track.item().name.clone());
                             update_label(&shown_artists_widget, &shown_artists);
                             true
                         } else {
                             false
                         }
                     } else if artist.contains(&search) {
-                        shown_artists.borrow_mut().insert(track.item.name.clone());
+                        shown_artists.borrow_mut().insert(track.item().name.clone());
                         update_label(&shown_artists_widget, &shown_artists);
                         true
                     } else {
@@ -430,20 +430,20 @@ impl relm4::component::Component for ArtistsView {
             ArtistsViewIn::Favorited(id, state) => {
                 (0..self.entries.len())
                     .filter_map(|i| self.entries.get(i))
-                    .filter(|t| t.borrow().item.id == id)
+                    .filter(|t| t.borrow().item().id == id)
                     .for_each(|track| match state {
                         true => {
-                            track.borrow_mut().item.starred =
+                            track.borrow_mut().item_mut().starred =
                                 Some(chrono::offset::Local::now().into());
-                            if let Some(fav) = &track.borrow().fav_btn {
+                            if let Some(fav) = &track.borrow().fav_btn() {
                                 fav.set_icon_name("starred-symbolic");
                             }
                         }
                         false => {
-                            if let Some(fav) = &track.borrow().fav_btn {
+                            if let Some(fav) = &track.borrow().fav_btn() {
                                 fav.set_icon_name("non-starred-symbolic");
                             }
-                            track.borrow_mut().item.starred = None;
+                            track.borrow_mut().item_mut().starred = None;
                         }
                     });
             }
@@ -480,7 +480,7 @@ impl relm4::component::Component for ArtistsView {
                 let artists: Vec<submarine::data::ArtistId3> =
                     (0..self.entries.selection_model.n_items())
                         .filter_map(|i| self.entries.get_visible(i))
-                        .map(|i| i.borrow().item.clone())
+                        .map(|i| i.borrow().item().clone())
                         .collect();
                 for artist in artists {
                     let drop = Droppable::Artist(Box::new(artist));
@@ -494,7 +494,7 @@ impl relm4::component::Component for ArtistsView {
                 let artists: Vec<submarine::data::ArtistId3> =
                     (0..self.entries.selection_model.n_items())
                         .filter_map(|i| self.entries.get_visible(i))
-                        .map(|i| i.borrow().item.clone())
+                        .map(|i| i.borrow().item().clone())
                         .collect();
                 for artist in artists {
                     let drop = Droppable::Artist(Box::new(artist));
@@ -508,7 +508,7 @@ impl relm4::component::Component for ArtistsView {
                 let artists: Vec<submarine::data::ArtistId3> =
                     (0..self.entries.selection_model.n_items())
                         .filter_map(|i| self.entries.get_visible(i))
-                        .map(|i| i.borrow().item.clone())
+                        .map(|i| i.borrow().item().clone())
                         .collect();
                 for artist in artists {
                     let drop = Droppable::Artist(Box::new(artist));
@@ -517,7 +517,7 @@ impl relm4::component::Component for ArtistsView {
             }
             ArtistsViewIn::ArtistClicked(index) => {
                 if let Some(clicked_artist) = self.entries.get_visible(index) {
-                    let id = Id::artist(clicked_artist.borrow().item.id.clone());
+                    let id = Id::artist(clicked_artist.borrow().item().id.clone());
                     sender.output(ArtistsViewOut::ClickedArtist(id)).unwrap();
                 }
             }

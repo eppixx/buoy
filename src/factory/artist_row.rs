@@ -23,10 +23,10 @@ use super::SetupFinished;
 
 #[derive(Debug)]
 pub struct ArtistRow {
-    pub subsonic: Rc<RefCell<Subsonic>>,
-    pub item: submarine::data::ArtistId3,
-    pub cover: relm4::Controller<Cover>,
-    pub fav_btn: Option<gtk::Button>,
+    subsonic: Rc<RefCell<Subsonic>>,
+    item: submarine::data::ArtistId3,
+    cover: relm4::Controller<Cover>,
+    fav_btn: Option<gtk::Button>,
     sender: relm4::ComponentSender<ArtistsView>,
 }
 
@@ -55,6 +55,18 @@ impl ArtistRow {
             fav_btn: None,
             sender: sender.clone(),
         }
+    }
+
+    pub fn item(&self) -> &submarine::data::ArtistId3 {
+        &self.item
+    }
+
+    pub fn item_mut(&mut self) -> &mut submarine::data::ArtistId3 {
+        &mut self.item
+    }
+
+    pub fn fav_btn(&self) -> &Option<gtk::Button> {
+        &self.fav_btn
     }
 
     fn create_drag_src(&self) -> gtk::DragSource {

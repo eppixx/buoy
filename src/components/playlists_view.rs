@@ -362,9 +362,9 @@ impl relm4::Component for PlaylistsView {
                     let mut search = search.clone();
                     let mut test = format!(
                         "{} {} {}",
-                        row.item.title,
-                        row.item.artist.as_deref().unwrap_or_default(),
-                        row.item.album.as_deref().unwrap_or_default()
+                        row.item().title,
+                        row.item().artist.as_deref().unwrap_or_default(),
+                        row.item().album.as_deref().unwrap_or_default()
                     );
 
                     //check for case sensitivity
@@ -461,13 +461,13 @@ impl relm4::Component for PlaylistsView {
             PlaylistsViewIn::Favorited(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
-                    .filter(|t| t.borrow().item.id == id)
+                    .filter(|t| t.borrow().item().id == id)
                     .for_each(|track| match state {
                         true => {
-                            track.borrow_mut().item.starred =
+                            track.borrow_mut().item_mut().starred =
                                 Some(chrono::offset::Local::now().into());
                         }
-                        false => track.borrow_mut().item.starred = None,
+                        false => track.borrow_mut().item_mut().starred = None,
                     });
             }
             PlaylistsViewIn::DownloadClicked => {
@@ -548,7 +548,7 @@ impl relm4::Component for PlaylistsView {
                     .filter_map(|i| self.tracks.get(*i))
                     .map(|row| PlaylistIndex {
                         uid: *row.borrow().uid(),
-                        child: row.borrow().item.clone(),
+                        child: row.borrow().item().clone(),
                     })
                     .collect();
 
@@ -580,7 +580,7 @@ impl relm4::Component for PlaylistsView {
                 //remove src
                 let src = self.tracks.get(src_index).unwrap();
                 let src_row =
-                    PlaylistRow::new(&self.subsonic, src.borrow().item.clone(), sender.clone());
+                    PlaylistRow::new(&self.subsonic, src.borrow().item().clone(), sender.clone());
                 self.tracks.remove(src_index);
 
                 //insert dest
@@ -589,7 +589,7 @@ impl relm4::Component for PlaylistsView {
                     .get(src_index)
                     .unwrap()
                     .borrow()
-                    .title_box
+                    .title_box()
                     .height();
                 // insert based on cursor position and order of src and dest
                 //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
@@ -618,7 +618,8 @@ impl relm4::Component for PlaylistsView {
 
                 for song in songs.into_iter().rev() {
                     let row = PlaylistRow::new(&self.subsonic, song, sender.clone());
-                    let widget_height = self.tracks.get(dest).unwrap().borrow().title_box.height();
+                    let widget_height =
+                        self.tracks.get(dest).unwrap().borrow().title_box().height();
                     if y < f64::from(widget_height) * 0.5f64 {
                         self.tracks.insert(dest, row);
                     } else {
@@ -639,7 +640,7 @@ impl relm4::Component for PlaylistsView {
                     .get(src_index)
                     .unwrap()
                     .borrow()
-                    .title_box
+                    .title_box()
                     .height();
                 if y < f64::from(widget_height) * 0.5f64 {
                     self.tracks

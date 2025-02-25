@@ -31,8 +31,8 @@ pub struct PlaylistIndex {
 pub struct PlaylistRow {
     uid: usize,
     subsonic: Rc<RefCell<Subsonic>>,
-    pub item: submarine::data::Child,
-    pub title_box: gtk::Box,
+    item: submarine::data::Child,
+    title_box: gtk::Box,
     sender: relm4::ComponentSender<PlaylistsView>,
     multiple_drag_sources: Option<gtk::DragSource>,
 }
@@ -72,6 +72,18 @@ impl PlaylistRow {
 
     pub fn uid(&self) -> &usize {
         &self.uid
+    }
+
+    pub fn item(&self) -> &submarine::data::Child {
+        &self.item
+    }
+
+    pub fn item_mut(&mut self) -> &mut submarine::data::Child {
+        &mut self.item
+    }
+
+    pub fn title_box(&self) -> &gtk::Box {
+        &self.title_box
     }
 
     pub fn set_drag_src(&mut self, drop: Vec<PlaylistIndex>) {

@@ -326,9 +326,9 @@ impl relm4::Component for AlbumView {
                     let mut search = search.clone();
                     let mut test = format!(
                         "{} {} {}",
-                        row.item.title,
-                        row.item.artist.as_deref().unwrap_or_default(),
-                        row.item.album.as_deref().unwrap_or_default()
+                        row.item().title,
+                        row.item().artist.as_deref().unwrap_or_default(),
+                        row.item().album.as_deref().unwrap_or_default()
                     );
 
                     //check for case sensitivity
@@ -360,18 +360,18 @@ impl relm4::Component for AlbumView {
             AlbumViewIn::FavoritedSong(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
-                    .filter(|t| t.borrow().item.id == id)
+                    .filter(|t| t.borrow().item().id == id)
                     .for_each(|track| match state {
                         true => {
-                            track.borrow_mut().item.starred =
+                            track.borrow_mut().item_mut().starred =
                                 Some(chrono::offset::Local::now().into());
-                            if let Some(fav) = &track.borrow().fav_btn {
+                            if let Some(fav) = &track.borrow().fav_btn() {
                                 fav.set_icon_name("starred-symbolic");
                             }
                         }
                         false => {
-                            track.borrow_mut().item.starred = None;
-                            if let Some(fav) = &track.borrow().fav_btn {
+                            track.borrow_mut().item_mut().starred = None;
+                            if let Some(fav) = &track.borrow().fav_btn() {
                                 fav.set_icon_name("non-starred-symbolic");
                             }
                         }
@@ -403,7 +403,7 @@ impl relm4::Component for AlbumView {
                 let children: Vec<submarine::data::Child> = selected_rows
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
-                    .map(|row| row.borrow().item.clone())
+                    .map(|row| row.borrow().item().clone())
                     .collect();
 
                 // set children as content for DragSource
