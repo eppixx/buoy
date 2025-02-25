@@ -7,6 +7,7 @@ use relm4::{
         self,
         prelude::{BoxExt, OrientableExt, WidgetExt},
     },
+    prelude::AsyncComponentController,
     Component, ComponentController,
 };
 
@@ -65,7 +66,7 @@ pub struct Browser {
     tracks: Option<relm4::component::Controller<TracksView>>,
     album_views: Vec<relm4::Controller<AlbumView>>,
     artist_views: Vec<relm4::Controller<ArtistView>>,
-    playlists_views: Vec<relm4::Controller<PlaylistsView>>,
+    playlists_views: Vec<relm4::component::AsyncController<PlaylistsView>>,
 }
 
 #[derive(Debug)]
@@ -354,9 +355,10 @@ impl relm4::component::AsyncComponent for Browser {
                     return;
                 }
 
-                let playlists: relm4::Controller<PlaylistsView> = PlaylistsView::builder()
-                    .launch(self.subsonic.clone())
-                    .forward(sender.input_sender(), BrowserIn::PlaylistsView);
+                let playlists: relm4::component::AsyncController<PlaylistsView> =
+                    PlaylistsView::builder()
+                        .launch(self.subsonic.clone())
+                        .forward(sender.input_sender(), BrowserIn::PlaylistsView);
                 self.history_widget
                     .push(Views::Playlists(playlists.widget().clone()));
                 self.playlists_views.push(playlists);

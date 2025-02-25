@@ -3,7 +3,6 @@ use std::{cell::RefCell, rc::Rc};
 use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
 use relm4::gtk::glib::prelude::ToValue;
-use relm4::RelmWidgetExt;
 use relm4::{
     gtk::{
         self,
@@ -14,7 +13,9 @@ use relm4::{
     },
     ComponentController,
 };
+use relm4::{Component, RelmWidgetExt};
 
+use crate::client::Client;
 use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistIndex, PlaylistRow, TitleColumn,
 };
@@ -65,9 +66,72 @@ pub struct PlaylistsView {
     subsonic: Rc<RefCell<Subsonic>>,
     playlists: relm4::factory::FactoryVecDeque<PlaylistElement>,
 
+    selected_playlist: Option<submarine::data::PlaylistWithSongs>,
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistRow, gtk::MultiSelection>,
     info_cover: relm4::Controller<Cover>,
     info_cover_controller: gtk::DragSource,
+}
+
+impl PlaylistsView {
+    async fn update_playlist(&mut self, sender: &relm4::AsyncComponentSender<Self>) {
+        let Some(current_playlist) = &self.selected_playlist else {
+            return;
+        };
+
+        // subsonic does not allow moving songs, so we need to remove songs
+        // and then readd them
+
+        //TODO improve efficiency by removing the parts that need removing instead of all
+
+        // remove playlist content
+        let client = Client::get().unwrap();
+        let temp_delete_indices: Vec<i64> = (0..self.tracks.len() as i64).collect();
+        if let Err(e) = client
+            .update_playlist(
+                &current_playlist.base.id,
+                None::<String>,
+                None::<String>,
+                None,
+                Vec::<String>::new(),
+                temp_delete_indices,
+            )
+            .await
+        {
+            sender
+                .output(PlaylistsViewOut::DisplayToast(format!(
+                    "moving playlist entry, removing failed: {e}",
+                )))
+                .unwrap();
+        }
+
+        //readd playlist content
+        let ids: Vec<String> = (0..self.tracks.len())
+            .filter_map(|i| self.tracks.get(i))
+            .map(|track| track.borrow().item().id.clone())
+            .collect();
+        if let Err(e) = client
+            .update_playlist(
+                &current_playlist.base.id,
+                None::<String>,
+                None::<String>,
+                None,
+                ids,
+                vec![],
+            )
+            .await
+        {
+            sender
+                .output(PlaylistsViewOut::DisplayToast(format!(
+                    "moving playlist entry, readding failed: {e}",
+                )))
+                .unwrap();
+        }
+
+        // update cache
+        self.subsonic
+            .borrow_mut()
+            .replace_playlist(current_playlist);
+    }
 }
 
 #[derive(Debug)]
@@ -115,18 +179,18 @@ pub enum PlaylistsViewIn {
     DragLeave,
 }
 
-#[relm4::component(pub)]
-impl relm4::Component for PlaylistsView {
+#[relm4::component(pub, async)]
+impl relm4::component::AsyncComponent for PlaylistsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = PlaylistsViewIn;
     type Output = PlaylistsViewOut;
     type CommandOutput = ();
 
-    fn init(
+    async fn init(
         subsonic: Self::Init,
         root: Self::Root,
-        sender: relm4::ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
+        sender: relm4::AsyncComponentSender<Self>,
+    ) -> relm4::component::AsyncComponentParts<Self> {
         let mut tracks =
             relm4::typed_view::column::TypedColumnView::<PlaylistRow, gtk::MultiSelection>::new();
         tracks.append_column::<TitleColumn>();
@@ -159,6 +223,7 @@ impl relm4::Component for PlaylistsView {
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), PlaylistsViewIn::PlaylistElement),
 
+            selected_playlist: None,
             tracks,
             info_cover: Cover::builder()
                 .launch((subsonic, None))
@@ -189,7 +254,7 @@ impl relm4::Component for PlaylistsView {
                 sender.input(PlaylistsViewIn::RecalcDragSource);
             });
 
-        relm4::ComponentParts { model, widgets }
+        relm4::component::AsyncComponentParts { model, widgets }
     }
 
     view! {
@@ -356,11 +421,11 @@ impl relm4::Component for PlaylistsView {
         }
     }
 
-    fn update_with_view(
+    async fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
         msg: Self::Input,
-        sender: relm4::ComponentSender<Self>,
+        sender: relm4::AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
@@ -502,6 +567,7 @@ impl relm4::Component for PlaylistsView {
                     return;
                 };
                 list.set_edit_area(true);
+                self.selected_playlist = Some(list.info().clone());
                 let list = list.info();
 
                 // set info
@@ -593,7 +659,7 @@ impl relm4::Component for PlaylistsView {
 
                 // insert based on cursor position and order of src and dest
                 //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
-                match (half, src_index <= dest_index) {
+                match (&half, src_index <= dest_index) {
                     (DropHalf::Above, true) => self.tracks.insert(dest_index - 1, src_row),
                     (DropHalf::Above, false) | (DropHalf::Below, true) => {
                         self.tracks.insert(dest_index, src_row)
@@ -601,9 +667,7 @@ impl relm4::Component for PlaylistsView {
                     (DropHalf::Below, false) => self.tracks.insert(dest_index + 1, src_row),
                 }
 
-                //TODO update server
-                // subsonic does not allow moving songs, so we need to remove songs
-                // and then readd them
+                self.update_playlist(&sender).await;
             }
             PlaylistsViewIn::InsertSongs(songs, uid, half) => {
                 //remove drag indicators
@@ -623,7 +687,7 @@ impl relm4::Component for PlaylistsView {
                     }
                 }
 
-                //TODO update server
+                self.update_playlist(&sender).await;
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
                 let len = self.tracks.selection_model.n_items();

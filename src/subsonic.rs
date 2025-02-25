@@ -324,6 +324,20 @@ impl Subsonic {
         self.save().expect("saving failed");
     }
 
+    pub fn replace_playlist(&mut self, list: &submarine::data::PlaylistWithSongs) {
+        let Some(playlist) = self
+            .playlists
+            .iter_mut()
+            .find(|playlist| playlist.base.id == list.base.id)
+        else {
+            todo!("do smth when playlist does not exist");
+        };
+
+        playlist.entry = list.entry.clone();
+        playlist.base = list.base.clone();
+        self.save().expect("saving failed");
+    }
+
     pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
         self.covers.cover_raw(id)
     }

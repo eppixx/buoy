@@ -34,7 +34,7 @@ pub struct PlaylistRow {
     subsonic: Rc<RefCell<Subsonic>>,
     item: submarine::data::Child,
     title_box: gtk::Box,
-    sender: relm4::ComponentSender<PlaylistsView>,
+    sender: relm4::AsyncComponentSender<PlaylistsView>,
     multiple_drag_sources: Option<gtk::DragSource>,
 }
 
@@ -48,7 +48,7 @@ impl PlaylistRow {
     pub fn new(
         subsonic: &Rc<RefCell<Subsonic>>,
         item: submarine::data::Child,
-        sender: relm4::ComponentSender<PlaylistsView>,
+        sender: relm4::AsyncComponentSender<PlaylistsView>,
     ) -> Self {
         let uid = UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let result = Self {
