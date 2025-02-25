@@ -571,7 +571,7 @@ impl relm4::Component for Dashboard {
             },
             DashboardIn::ClickedRandomize => {
                 self.random_album_list.guard().clear();
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
                 let mut albums = self.subsonic.borrow().albums().clone();
                 albums.shuffle(&mut rng);
 

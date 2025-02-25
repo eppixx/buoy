@@ -780,7 +780,7 @@ impl relm4::Component for Queue {
             }
             QueueIn::Rerandomize => {
                 self.randomized_indices = (0..self.songs.len()).collect();
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
                 self.randomized_indices.shuffle(&mut rng);
             }
         }
