@@ -344,11 +344,10 @@ impl relm4::Component for ArtistView {
                 )))
                 .unwrap(),
             ArtistViewCmd::LoadedArtistInfo(Ok(artist)) => {
-                if let Some(bio) = artist.base.biography {
-                    self.bio = bio;
-                } else {
-                    self.bio = gettext("No biography found");
-                }
+                self.bio = artist
+                    .base
+                    .biography
+                    .unwrap_or(gettext("No biography found"));
 
                 // TODO do smth with similar artists
             }
