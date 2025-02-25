@@ -357,6 +357,7 @@ impl relm4::component::AsyncComponent for MainWindow {
             MainWindowIn::Logout => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
+                crate::client::Client::get_mut().lock().unwrap().reset();
                 sender.input(MainWindowIn::ShowLogin);
             }
             MainWindowIn::RetryLogin => {

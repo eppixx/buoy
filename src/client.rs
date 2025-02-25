@@ -69,4 +69,8 @@ impl Client {
             }
         }
     }
+
+    pub fn reset(&mut self) {
+        self.inner = None;
+    }
 }
