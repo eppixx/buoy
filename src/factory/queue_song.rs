@@ -52,13 +52,10 @@ pub enum QueueSongOut {
         dest: relm4::factory::DynamicIndex,
         half: DropHalf,
     },
-    DropAbove {
+    DropSongs {
         src: Vec<submarine::data::Child>,
         dest: relm4::factory::DynamicIndex,
-    },
-    DropBelow {
-        src: Vec<submarine::data::Child>,
-        dest: relm4::factory::DynamicIndex,
+        half: DropHalf,
     },
     DisplayToast(String),
     FavoriteClicked(String, bool),
@@ -110,15 +107,13 @@ impl QueueSong {
 
 #[derive(Debug)]
 pub enum QueueSongCmd {
-    InsertChildrenAbove(
+    InsertChildren(
         Result<
-            (relm4::factory::DynamicIndex, Vec<submarine::data::Child>),
-            submarine::SubsonicError,
-        >,
-    ),
-    InsertChildrenBelow(
-        Result<
-            (relm4::factory::DynamicIndex, Vec<submarine::data::Child>),
+            (
+                relm4::factory::DynamicIndex,
+                Vec<submarine::data::Child>,
+                DropHalf,
+            ),
             submarine::SubsonicError,
         >,
     ),
@@ -337,7 +332,6 @@ impl relm4::factory::FactoryComponent for QueueSong {
             }
             QueueSongIn::DroppedSong { drop, y } => {
                 sender.input(QueueSongIn::DragLeave);
-                let widget_height = self.root_widget.height();
                 let index = self.index.clone();
                 let client = Client::get().unwrap();
 
@@ -348,69 +342,57 @@ impl relm4::factory::FactoryComponent for QueueSong {
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Playlist(playlist) => playlist.entry,
                     Droppable::Album(album) => {
+                        let half = DropHalf::calc(self.root_widget.height(), y);
                         sender.oneshot_command(async move {
                             match client.get_album(album.id).await {
-                                Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
-                                Ok(album) if y < f64::from(widget_height) * 0.5f64 => {
-                                    QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
-                                }
+                                Err(e) => QueueSongCmd::InsertChildren(Err(e)),
                                 Ok(album) => {
-                                    QueueSongCmd::InsertChildrenBelow(Ok((index, album.song)))
+                                    QueueSongCmd::InsertChildren(Ok((index, album.song, half)))
                                 }
                             }
                         });
                         vec![]
                     }
                     Droppable::Artist(artist) => {
+                        let half = DropHalf::calc(self.root_widget.height(), y);
                         sender.oneshot_command(async move {
                             match client.get_artist(artist.id).await {
-                                Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
+                                Err(e) => QueueSongCmd::InsertChildren(Err(e)),
                                 Ok(artist) => {
                                     let mut songs = vec![];
                                     for album in artist.album {
                                         match client.get_album(album.id).await {
-                                            Err(e) => {
-                                                return QueueSongCmd::InsertChildrenBelow(Err(e))
-                                            }
+                                            Err(e) => return QueueSongCmd::InsertChildren(Err(e)),
                                             Ok(mut album) => songs.append(&mut album.song),
                                         }
                                     }
-                                    if y < f64::from(widget_height) * 0.5f64 {
-                                        QueueSongCmd::InsertChildrenAbove(Ok((index, songs)))
-                                    } else {
-                                        QueueSongCmd::InsertChildrenBelow(Ok((index, songs)))
-                                    }
+                                    QueueSongCmd::InsertChildren(Ok((index, songs, half)))
                                 }
                             }
                         });
                         vec![]
                     }
                     Droppable::ArtistWithAlbums(artist) => {
+                        let half = DropHalf::calc(self.root_widget.height(), y);
                         sender.oneshot_command(async move {
                             let mut songs = vec![];
                             for album in artist.album {
                                 match client.get_album(album.id).await {
-                                    Err(e) => return QueueSongCmd::InsertChildrenBelow(Err(e)),
+                                    Err(e) => return QueueSongCmd::InsertChildren(Err(e)),
                                     Ok(mut album) => songs.append(&mut album.song),
                                 }
                             }
-                            if y < f64::from(widget_height) * 0.5f64 {
-                                QueueSongCmd::InsertChildrenAbove(Ok((index, songs)))
-                            } else {
-                                QueueSongCmd::InsertChildrenBelow(Ok((index, songs)))
-                            }
+                            QueueSongCmd::InsertChildren(Ok((index, songs, half)))
                         });
                         vec![]
                     }
                     Droppable::AlbumChild(album) => {
+                        let half = DropHalf::calc(self.root_widget.height(), y);
                         sender.oneshot_command(async move {
                             match client.get_album(album.id).await {
-                                Err(e) => QueueSongCmd::InsertChildrenBelow(Err(e)),
-                                Ok(album) if y < f64::from(widget_height) * 0.5f64 => {
-                                    QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
-                                }
+                                Err(e) => QueueSongCmd::InsertChildren(Err(e)),
                                 Ok(album) => {
-                                    QueueSongCmd::InsertChildrenAbove(Ok((index, album.song)))
+                                    QueueSongCmd::InsertChildren(Ok((index, album.song, half)))
                                 }
                             }
                         });
@@ -420,21 +402,14 @@ impl relm4::factory::FactoryComponent for QueueSong {
                         songs.into_iter().map(|song| song.child).collect()
                     }
                 };
-                if y < f64::from(widget_height) * 0.5f64 {
-                    sender
-                        .output(QueueSongOut::DropAbove {
-                            src: songs,
-                            dest: self.index.clone(),
-                        })
-                        .unwrap();
-                } else {
-                    sender
-                        .output(QueueSongOut::DropBelow {
-                            src: songs,
-                            dest: self.index.clone(),
-                        })
-                        .unwrap();
-                }
+                let half = DropHalf::calc(self.root_widget.height(), y);
+                sender
+                    .output(QueueSongOut::DropSongs {
+                        src: songs,
+                        dest: self.index.clone(),
+                        half,
+                    })
+                    .unwrap();
             }
             QueueSongIn::MoveSong { index, y } => {
                 sender.input(QueueSongIn::DragLeave);
@@ -470,31 +445,23 @@ impl relm4::factory::FactoryComponent for QueueSong {
                 self.info.starred = None;
                 self.favorited.set_icon_name("non-starred-symbolic");
             }
-            QueueSongIn::FavoriteSong(_, _) => {}
+            QueueSongIn::FavoriteSong(_, _) => {} // this song is not changed
         }
     }
 
     fn update_cmd(&mut self, message: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
         match message {
-            QueueSongCmd::InsertChildrenAbove(Err(e))
-            | QueueSongCmd::InsertChildrenBelow(Err(e)) => sender
+            QueueSongCmd::InsertChildren(Err(e)) => sender
                 .output(QueueSongOut::DisplayToast(format!(
-                    "moving song failed: {e}",
+                    "inserting song failed: {e}"
                 )))
                 .unwrap(),
-            QueueSongCmd::InsertChildrenAbove(Ok((index, songs))) => {
+            QueueSongCmd::InsertChildren(Ok((index, songs, half))) => {
                 sender
-                    .output(QueueSongOut::DropAbove {
+                    .output(QueueSongOut::DropSongs {
                         src: songs,
                         dest: index,
-                    })
-                    .unwrap();
-            }
-            QueueSongCmd::InsertChildrenBelow(Ok((index, songs))) => {
-                sender
-                    .output(QueueSongOut::DropBelow {
-                        src: songs,
-                        dest: index,
+                        half,
                     })
                     .unwrap();
             }

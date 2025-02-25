@@ -686,26 +686,31 @@ impl relm4::Component for Queue {
                 QueueSongOut::DisplayToast(msg) => {
                     sender.output(QueueOut::DisplayToast(msg)).unwrap();
                 }
-                QueueSongOut::DropAbove { src, dest } => {
+                QueueSongOut::DropSongs { src, dest, half } => {
                     self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
-                    for child in src.iter().rev() {
-                        guard.insert(dest.current_index(), (self.subsonic.clone(), child.clone()));
-                    }
-                    sender.input(QueueIn::Rerandomize);
-                }
-                QueueSongOut::DropBelow { src, dest } => {
-                    self.scroll_motion.replace(ScrollMotion::None);
-                    let mut guard = self.songs.guard();
-                    for child in src.iter().rev() {
-                        guard.insert(
-                            dest.current_index() + 1,
-                            (self.subsonic.clone(), child.clone()),
-                        );
+                    match half {
+                        DropHalf::Above => {
+                            for child in src.iter().rev() {
+                                guard.insert(
+                                    dest.current_index(),
+                                    (self.subsonic.clone(), child.clone()),
+                                );
+                            }
+                        }
+                        DropHalf::Below => {
+                            for child in src.iter().rev() {
+                                guard.insert(
+                                    dest.current_index() + 1,
+                                    (self.subsonic.clone(), child.clone()),
+                                );
+                            }
+                        }
                     }
                     sender.input(QueueIn::Rerandomize);
                 }
                 QueueSongOut::MoveSong { src, dest, half } => {
+                    self.scroll_motion.replace(ScrollMotion::None);
                     let mut guard = self.songs.guard();
                     let src = src.current_index();
                     let dest = dest.current_index();
