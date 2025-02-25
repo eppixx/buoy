@@ -13,7 +13,6 @@ use relm4::{
 };
 
 use crate::{
-    client::Client,
     common::convert_for_label,
     components::cover::{Cover, CoverIn, CoverOut},
     css::DragState,
@@ -63,6 +62,7 @@ pub enum QueueSongOut {
 
 #[derive(Debug)]
 pub struct QueueSong {
+    subsonic: Rc<RefCell<Subsonic>>,
     root_widget: gtk::ListBoxRow,
     info: submarine::data::Child,
     cover: relm4::Controller<Cover>,
@@ -105,20 +105,6 @@ impl QueueSong {
     }
 }
 
-#[derive(Debug)]
-pub enum QueueSongCmd {
-    InsertChildren(
-        Result<
-            (
-                relm4::factory::DynamicIndex,
-                Vec<submarine::data::Child>,
-                DropHalf,
-            ),
-            submarine::SubsonicError,
-        >,
-    ),
-}
-
 #[relm4::factory(pub)]
 impl relm4::factory::FactoryComponent for QueueSong {
     type Init = (Rc<RefCell<Subsonic>>, submarine::data::Child);
@@ -126,7 +112,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
     type Output = QueueSongOut;
     type ParentWidget = gtk::ListBox;
     type Widgets = QueueSongWidgets;
-    type CommandOutput = QueueSongCmd;
+    type CommandOutput = ();
 
     fn init_model(
         (subsonic, child): Self::Init,
@@ -145,6 +131,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
         };
 
         let model = Self {
+            subsonic: subsonic.clone(),
             root_widget: gtk::ListBoxRow::new(),
             info: child,
             cover,
@@ -332,72 +319,23 @@ impl relm4::factory::FactoryComponent for QueueSong {
             }
             QueueSongIn::DroppedSong { drop, y } => {
                 sender.input(QueueSongIn::DragLeave);
-                let index = self.index.clone();
-                let client = Client::get().unwrap();
 
                 let songs = match drop {
                     Droppable::Queue(ids) => ids,
-                    Droppable::QueueSongs(_songs) => unreachable!("should be moved"),
+                    Droppable::QueueSongs(_songs) => {
+                        unreachable!("should be moved instead of dropped")
+                    }
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Playlist(playlist) => playlist.entry,
-                    Droppable::Album(album) => {
-                        let half = DropHalf::calc(self.root_widget.height(), y);
-                        sender.oneshot_command(async move {
-                            match client.get_album(album.id).await {
-                                Err(e) => QueueSongCmd::InsertChildren(Err(e)),
-                                Ok(album) => {
-                                    QueueSongCmd::InsertChildren(Ok((index, album.song, half)))
-                                }
-                            }
-                        });
-                        vec![]
-                    }
-                    Droppable::Artist(artist) => {
-                        let half = DropHalf::calc(self.root_widget.height(), y);
-                        sender.oneshot_command(async move {
-                            match client.get_artist(artist.id).await {
-                                Err(e) => QueueSongCmd::InsertChildren(Err(e)),
-                                Ok(artist) => {
-                                    let mut songs = vec![];
-                                    for album in artist.album {
-                                        match client.get_album(album.id).await {
-                                            Err(e) => return QueueSongCmd::InsertChildren(Err(e)),
-                                            Ok(mut album) => songs.append(&mut album.song),
-                                        }
-                                    }
-                                    QueueSongCmd::InsertChildren(Ok((index, songs, half)))
-                                }
-                            }
-                        });
-                        vec![]
-                    }
-                    Droppable::ArtistWithAlbums(artist) => {
-                        let half = DropHalf::calc(self.root_widget.height(), y);
-                        sender.oneshot_command(async move {
-                            let mut songs = vec![];
-                            for album in artist.album {
-                                match client.get_album(album.id).await {
-                                    Err(e) => return QueueSongCmd::InsertChildren(Err(e)),
-                                    Ok(mut album) => songs.append(&mut album.song),
-                                }
-                            }
-                            QueueSongCmd::InsertChildren(Ok((index, songs, half)))
-                        });
-                        vec![]
-                    }
-                    Droppable::AlbumChild(album) => {
-                        let half = DropHalf::calc(self.root_widget.height(), y);
-                        sender.oneshot_command(async move {
-                            match client.get_album(album.id).await {
-                                Err(e) => QueueSongCmd::InsertChildren(Err(e)),
-                                Ok(album) => {
-                                    QueueSongCmd::InsertChildren(Ok((index, album.song, half)))
-                                }
-                            }
-                        });
-                        vec![]
-                    }
+                    Droppable::Album(album) => self.subsonic.borrow().songs_of_album(album.id),
+                    Droppable::Artist(artist) => self.subsonic.borrow().songs_of_artist(artist.id),
+                    Droppable::ArtistWithAlbums(artist) => artist
+                        .album
+                        .iter()
+                        .flat_map(|album| self.subsonic.borrow().songs_of_album(&album.id))
+                        .collect(),
+                    Droppable::AlbumChild(album) => self.subsonic.borrow().songs_of_album(album.id),
                     Droppable::PlaylistItems(songs) => {
                         songs.into_iter().map(|song| song.child).collect()
                     }
@@ -446,25 +384,6 @@ impl relm4::factory::FactoryComponent for QueueSong {
                 self.favorited.set_icon_name("non-starred-symbolic");
             }
             QueueSongIn::FavoriteSong(_, _) => {} // this song is not changed
-        }
-    }
-
-    fn update_cmd(&mut self, message: Self::CommandOutput, sender: relm4::FactorySender<Self>) {
-        match message {
-            QueueSongCmd::InsertChildren(Err(e)) => sender
-                .output(QueueSongOut::DisplayToast(format!(
-                    "inserting song failed: {e}"
-                )))
-                .unwrap(),
-            QueueSongCmd::InsertChildren(Ok((index, songs, half))) => {
-                sender
-                    .output(QueueSongOut::DropSongs {
-                        src: songs,
-                        dest: index,
-                        half,
-                    })
-                    .unwrap();
-            }
         }
     }
 }
