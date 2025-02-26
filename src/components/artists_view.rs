@@ -108,7 +108,6 @@ impl relm4::component::Component for ArtistsView {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::component::ComponentParts<Self> {
-        println!("artists view start");
         let mut entries =
             relm4::typed_view::column::TypedColumnView::<ArtistRow, gtk::SingleSelection>::new();
         entries.append_column::<CoverColumn>();
