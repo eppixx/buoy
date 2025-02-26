@@ -96,23 +96,19 @@ pub enum ArtistsViewIn {
     ToggleFilters,
 }
 
-#[derive(Debug)]
-pub enum ArtistsViewCmd {
-    AddArtists(Vec<submarine::data::ArtistId3>, usize),
-}
-
 #[relm4::component(pub)]
 impl relm4::component::Component for ArtistsView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = ArtistsViewIn;
     type Output = ArtistsViewOut;
-    type CommandOutput = ArtistsViewCmd;
+    type CommandOutput = ();
 
     fn init(
         subsonic: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::component::ComponentParts<Self> {
+        println!("artists view start");
         let mut entries =
             relm4::typed_view::column::TypedColumnView::<ArtistRow, gtk::SingleSelection>::new();
         entries.append_column::<CoverColumn>();
@@ -147,14 +143,27 @@ impl relm4::component::Component for ArtistsView {
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
         };
 
-        // add artists in chunks to not overwhelm the app
-        let list = model.subsonic.borrow().artists().to_vec();
-        sender.oneshot_command(async move { ArtistsViewCmd::AddArtists(list, 0) });
-
         model.filters.guard().push_back(Category::Favorite);
+
+        //add artists
+        let list = model.subsonic.borrow().artists().to_vec();
+        for artist in list.iter() {
+            model.shown_artists.borrow_mut().insert(artist.name.clone());
+            let artist = ArtistRow::new(&model.subsonic, artist.clone(), sender.clone());
+            model.entries.append(artist);
+        }
+
+        // create view
         let widgets = view_output!();
 
+        //update labels and buttons
+        widgets.shown_artists.set_label(&format!(
+            "{}: {}",
+            gettext("Shown artists"),
+            model.shown_artists.borrow().len()
+        ));
         model.calc_sensitivity_of_buttons(&widgets);
+
         relm4::component::ComponentParts { model, widgets }
     }
 
@@ -526,48 +535,6 @@ impl relm4::component::Component for ArtistsView {
                 widgets
                     .filters
                     .set_reveal_child(!widgets.filters.reveals_child());
-            }
-        }
-    }
-
-    fn update_cmd_with_view(
-        &mut self,
-        widgets: &mut Self::Widgets,
-        msg: Self::CommandOutput,
-        sender: relm4::ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        match msg {
-            ArtistsViewCmd::AddArtists(candidates, processed) => {
-                const CHUNK: usize = 20;
-                const TIMEOUT: u64 = 2;
-
-                //add some albums
-                for artist in candidates.iter().skip(processed).take(CHUNK) {
-                    self.shown_artists.borrow_mut().insert(artist.name.clone());
-                    let artist = ArtistRow::new(&self.subsonic, artist.clone(), sender.clone());
-                    self.entries.append(artist);
-                }
-
-                //update labels and buttons
-                widgets.shown_artists.set_label(&format!(
-                    "{}: {}",
-                    gettext("Shown artists"),
-                    self.shown_artists.borrow().len()
-                ));
-                self.calc_sensitivity_of_buttons(widgets);
-
-                // recursion anchor
-                if processed >= candidates.len() {
-                    widgets.spinner.set_visible(false);
-                    return;
-                }
-
-                //recursion the rest of the list
-                sender.oneshot_command(async move {
-                    tokio::time::sleep(std::time::Duration::from_millis(TIMEOUT)).await;
-                    ArtistsViewCmd::AddArtists(candidates, processed + CHUNK)
-                });
             }
         }
     }
