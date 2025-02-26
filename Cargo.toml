@@ -53,4 +53,3 @@ strip = "debuginfo"
 lto = true
 
 [profile.dev]
-strip = "debuginfo"
