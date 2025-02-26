@@ -244,10 +244,6 @@ impl relm4::component::Component for ArtistsView {
                                 set_spacing: 10,
                                 set_margin_end: 10,
 
-                                append: spinner = &gtk::Spinner {
-                                    set_spinning: true,
-                                    start: (),
-                                },
                                 gtk::Label {
                                     set_text: &gettext("Filters:"),
                                 },
