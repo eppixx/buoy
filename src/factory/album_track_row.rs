@@ -62,6 +62,34 @@ impl AlbumTrackRow {
         &self.fav_btn
     }
 
+    pub fn set_single_drag_src(&self) {
+        // create new DragSource
+        let src = gtk::DragSource::default();
+        let drop = Droppable::Child(Box::new(self.item.clone()));
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        src.set_content(Some(&content));
+        src.set_actions(gtk::gdk::DragAction::COPY);
+
+        //set drag item
+        let subsonic = self.subsonic.clone();
+        let album = self.subsonic.borrow().album_of_song(&self.item);
+        src.connect_drag_begin(move |src, _drag| {
+            if let Some(album) = &album {
+                if let Some(cover_id) = &album.cover_art {
+                    let cover = subsonic.borrow().cover_icon(cover_id);
+                    if let Some(tex) = cover {
+                        src.set_icon(Some(&tex), 0, 0);
+                    }
+                }
+            }
+        });
+
+        //add this DragSource
+        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
+            list_item.add_controller(src.clone());
+        }
+    }
+
     pub fn set_drag_src(&mut self, drop: Droppable) {
         // remove old DragSource if there is one
         if self.multiple_drag_src.is_some() {
@@ -104,30 +132,6 @@ impl AlbumTrackRow {
         }
         self.multiple_drag_src = None;
     }
-
-    fn create_drag_src(&self) -> gtk::DragSource {
-        // create DragSource with content
-        let src = gtk::DragSource::default();
-        let drop = Droppable::Child(Box::new(self.item.clone()));
-        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-        src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::MOVE);
-
-        // set drag icon
-        let album = self.subsonic.borrow().album_of_song(&self.item);
-        let subsonic = self.subsonic.clone();
-        src.connect_drag_begin(move |src, _drag| {
-            if let Some(album) = &album {
-                if let Some(cover_id) = &album.cover_art {
-                    let cover = subsonic.borrow().cover_icon(cover_id);
-                    if let Some(tex) = cover {
-                        src.set_icon(Some(&tex), 0, 0);
-                    }
-                }
-            }
-        });
-        src
-    }
 }
 
 pub struct PositionColumn;
@@ -167,7 +171,7 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
     type Item = AlbumTrackRow;
-    type Widgets = (gtk::Label, SetupFinished);
+    type Widgets = gtk::Label;
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
@@ -181,22 +185,14 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
 
         (
             gtk::Viewport::default(),
-            (title_label, SetupFinished(false)),
+            title_label
         )
     }
 
-    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, view: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, view: &mut Self::Root) {
         view.set_child(Some(&item.title_box));
         item.title_box.set_child(Some(label));
         label.set_text(&item.item.title);
-
-        // we need only 1 DragSource for the ListItem as it is updated by updating cell
-        if !finished.0 {
-            finished.0 = true;
-            let list_item = super::get_list_item_widget(&item.title_box).unwrap();
-            let drag_src = item.create_drag_src();
-            list_item.add_controller(drag_src);
-        }
     }
 
     fn unbind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {

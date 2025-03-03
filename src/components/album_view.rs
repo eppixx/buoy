@@ -434,6 +434,9 @@ impl relm4::Component for AlbumView {
                     let track = AlbumTrackRow::new(&self.subsonic, track.clone(), sender.clone());
                     self.tracks.append(track);
                 }
+                // setup drag source
+                (0..album.song.len()).filter_map(|i| self.tracks.get(i as u32))
+                    .for_each(|entry| entry.borrow().set_single_drag_src());
 
                 // update dragSource
                 let drop = Droppable::AlbumWithSongs(Box::new(album.clone()));
