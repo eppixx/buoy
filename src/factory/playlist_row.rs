@@ -14,6 +14,7 @@ use crate::{
     components::playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
     css::DragState,
     factory::DropHalf,
+    settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
@@ -177,6 +178,20 @@ impl PlaylistRow {
         let cell = uid.clone();
         let widget = self.title_box.clone();
         target.connect_drop(move |_target, value, _x, y| {
+            //disable dropping items while searching
+            {
+                let settings = Settings::get().lock().unwrap();
+                if settings.search_active && !settings.search_text.is_empty() {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(gettext(
+                            "dropping songs into a playlist is not allowed while searching",
+                        )))
+                        .unwrap();
+                    return false;
+                }
+            }
+
+            // check if drop is valid
             if let Ok(drop) = value.get::<Droppable>() {
                 match drop {
                     Droppable::PlaylistItems(items) => {

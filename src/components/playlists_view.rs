@@ -690,10 +690,21 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 self.update_playlist(&sender).await;
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
+                //disable reordering item when searching
+                {
+                    let settings = Settings::get().lock().unwrap();
+                    if settings.search_active && !settings.search_text.is_empty() {
+                        return;
+                    }
+                }
+
                 let len = self.tracks.selection_model.n_items();
-                let src_index: u32 = (0..len)
-                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid)
-                    .unwrap();
+                let Some(src_index) =
+                    (0..len).find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid)
+                else {
+                    tracing::warn!("source index {uid} while dragging over not found");
+                    return;
+                };
 
                 let widget_height = self
                     .tracks
