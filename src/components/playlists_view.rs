@@ -636,7 +636,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 let len = self.tracks.selection_model.n_items();
 
                 //remove drag indicators
-                (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
+                (0..len)
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|entry| entry.borrow().reset_drag_indicators());
 
                 // do nothing when src is dest
                 if src == dest {
@@ -644,17 +646,35 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
 
                 //find src and dest row
-                let src_index: u32 = (0..len)
-                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &src)
-                    .unwrap();
-                let dest_index: u32 = (0..len)
-                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &dest)
-                    .unwrap();
+                let Some((src_index, src_entry)) = (0..len)
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &src)
+                else {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(String::from(
+                            "source not found in move_song",
+                        )))
+                        .unwrap();
+                    return;
+                };
+                let Some((dest_index, _dest_entry)) = (0..len)
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &dest)
+                else {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(String::from(
+                            "dest not found in move_song",
+                        )))
+                        .unwrap();
+                    return;
+                };
 
                 //remove src
-                let src = self.tracks.get(src_index).unwrap();
-                let src_row =
-                    PlaylistRow::new(&self.subsonic, src.borrow().item().clone(), sender.clone());
+                let src_row = PlaylistRow::new(
+                    &self.subsonic,
+                    src_entry.borrow().item().clone(),
+                    sender.clone(),
+                );
                 self.tracks.remove(src_index);
 
                 // insert based on cursor position and order of src and dest
@@ -672,12 +692,22 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             PlaylistsViewIn::InsertSongs(songs, uid, half) => {
                 //remove drag indicators
                 let len = self.tracks.selection_model.n_items();
-                (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
+                (0..len)
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|entry| entry.borrow().reset_drag_indicators());
 
                 // find index of uid
-                let dest = (0..len)
-                    .find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid)
-                    .unwrap();
+                let Some((dest, _dest_entry)) = (0..len)
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &uid)
+                else {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(String::from(
+                            "dest not found in insert_songs",
+                        )))
+                        .unwrap();
+                    return;
+                };
 
                 for song in songs.into_iter().rev() {
                     let row = PlaylistRow::new(&self.subsonic, song, sender.clone());
@@ -691,29 +721,22 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
                 //disable reordering item when searching
-                {
-                    let settings = Settings::get().lock().unwrap();
-                    if settings.search_active && !settings.search_text.is_empty() {
-                        return;
-                    }
+                let settings = Settings::get().lock().unwrap();
+                if settings.search_active && !settings.search_text.is_empty() {
+                    return;
                 }
+                drop(settings);
 
                 let len = self.tracks.selection_model.n_items();
-                let Some((src_index, src_entry)) = (0..len)
-                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
-                    .find(|(_i, entry)| entry.borrow().uid() == &uid)
+                let Some(src_entry) = (0..len)
+                    .filter_map(|i| self.tracks.get(i))
+                    .find(|entry| entry.borrow().uid() == &uid)
                 else {
                     tracing::warn!("source index {uid} while dragging over not found");
                     return;
                 };
 
-                let widget_height = self
-                    .tracks
-                    .get(src_index)
-                    .unwrap()
-                    .borrow()
-                    .title_box()
-                    .height();
+                let widget_height = src_entry.borrow().title_box().height();
                 if y < f64::from(widget_height) * 0.5f64 {
                     src_entry.borrow().add_drag_indicator_top();
                 } else {
