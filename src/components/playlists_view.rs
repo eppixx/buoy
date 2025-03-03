@@ -699,8 +699,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
 
                 let len = self.tracks.selection_model.n_items();
-                let Some(src_index) =
-                    (0..len).find(|i| self.tracks.get(*i).unwrap().borrow().uid() == &uid)
+                let Some((src_index, src_entry)) = (0..len)
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &uid)
                 else {
                     tracing::warn!("source index {uid} while dragging over not found");
                     return;
@@ -714,23 +715,17 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .title_box()
                     .height();
                 if y < f64::from(widget_height) * 0.5f64 {
-                    self.tracks
-                        .get(src_index)
-                        .unwrap()
-                        .borrow()
-                        .add_drag_indicator_top();
+                    src_entry.borrow().add_drag_indicator_top();
                 } else {
-                    self.tracks
-                        .get(src_index)
-                        .unwrap()
-                        .borrow()
-                        .add_drag_indicator_bottom();
+                    src_entry.borrow().add_drag_indicator_bottom();
                 }
             }
             PlaylistsViewIn::DragLeave => {
                 let len = self.tracks.selection_model.n_items();
                 //remove drag indicators
-                (0..len).for_each(|i| self.tracks.get(i).unwrap().borrow().reset_drag_indicators());
+                (0..len)
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|entry| entry.borrow().reset_drag_indicators());
             }
         }
     }
