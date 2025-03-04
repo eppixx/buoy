@@ -406,11 +406,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
         (view, (model, label))
     }
 
-    fn bind(
-        item: &mut Self::Item,
-        (model, label): &mut Self::Widgets,
-        _root: &mut Self::Root,
-    ) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
         model.set_from_row(item);
 
         let stock = gettext("Unknown Album");
