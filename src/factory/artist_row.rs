@@ -5,7 +5,7 @@ use granite::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, WidgetExt},
+        prelude::{ButtonExt, WidgetExt},
     },
     Component, ComponentController, RelmWidgetExt,
 };
@@ -68,27 +68,58 @@ impl ArtistRow {
     pub fn fav_btn(&self) -> &Option<gtk::Button> {
         &self.fav_btn
     }
+}
 
-    fn create_drag_src(&self) -> gtk::DragSource {
-        // create DragSource with content
-        let src = gtk::DragSource::default();
-        let drop = Droppable::Artist(Box::new(self.item.clone()));
-        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-        src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::COPY);
+pub struct Model {
+    subsonic: Rc<RefCell<Option<Rc<RefCell<Subsonic>>>>>,
+    artist: Rc<RefCell<Option<submarine::data::ArtistId3>>>,
+    drag_src: gtk::DragSource,
+}
+
+impl Model {
+    fn new() -> (gtk::Viewport, Self) {
+        let model = Model {
+            subsonic: Rc::new(RefCell::new(None)),
+            artist: Rc::new(RefCell::new(None)),
+            drag_src: gtk::DragSource::default(),
+        };
+
+        let root = gtk::Viewport::default();
+
+        // create DragSource
+        model.drag_src.set_actions(gtk::gdk::DragAction::COPY);
 
         // set drag icon
-        let artist_art = self.item.cover_art.clone();
-        let subsonic = self.subsonic.clone();
-        src.connect_drag_begin(move |src, _drag| {
-            if let Some(cover_id) = &artist_art {
+        let subsonic = model.subsonic.clone();
+        let artist = model.artist.clone();
+        model.drag_src.connect_drag_begin(move |src, _drag| {
+            let Some(ref subsonic) = *subsonic.borrow() else {
+                return;
+            };
+            let Some(ref artist) = *artist.borrow() else {
+                return;
+            };
+
+            if let Some(cover_id) = &artist.cover_art {
                 let cover = subsonic.borrow().cover_icon(cover_id);
                 if let Some(tex) = cover {
                     src.set_icon(Some(&tex), 0, 0);
                 }
             }
         });
-        src
+
+        root.add_controller(model.drag_src.clone());
+
+        (root, model)
+    }
+
+    fn set_from_row(&self, row: &ArtistRow) {
+        self.subsonic.replace(Some(row.subsonic.clone()));
+        self.artist.replace(Some(row.item.clone()));
+
+        let drop = Droppable::Artist(Box::new(row.item.clone()));
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        self.drag_src.set_content(Some(&content));
     }
 }
 
@@ -97,55 +128,48 @@ pub struct CoverColumn;
 impl relm4::typed_view::column::RelmColumn for CoverColumn {
     type Root = gtk::Viewport;
     type Item = ArtistRow;
-    type Widgets = ();
+    type Widgets = Model;
 
     const COLUMN_NAME: &'static str = "Cover";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let view = gtk::Viewport::default();
+        let (view, model) = Model::new();
         view.set_margin_end(12);
-        (view, ())
+        (view, model)
     }
 
-    fn bind(item: &mut Self::Item, _: &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(item.cover.widget()));
+    fn bind(item: &mut Self::Item, model: &mut Self::Widgets, root: &mut Self::Root) {
+        model.set_from_row(item);
+        root.set_child(Some(item.cover.widget()));
     }
 }
 
 pub struct TitleColumn;
 
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = ArtistRow;
-    type Widgets = (gtk::Label, SetupFinished);
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Name";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
+        let (view, model) = Model::new();
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        b.set_hexpand(true);
-        b.add_css_class(granite::STYLE_CLASS_FLAT);
-        b.append(&label);
-        (b, (label, SetupFinished(false)))
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, (label, finished): &mut Self::Widgets, _b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
         label.set_label(&item.item.name);
-
-        if !finished.0 {
-            finished.0 = true;
-            let list_item = super::get_list_item_widget(label).unwrap();
-            let drag_src = item.create_drag_src();
-            list_item.add_controller(drag_src);
-        }
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -156,22 +180,23 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
 pub struct AlbumCountColumn;
 
 impl relm4::typed_view::column::RelmColumn for AlbumCountColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = ArtistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Albums";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
+        let (view, model) = Model::new();
         let label = gtk::Label::builder().build();
-        b.append(&label);
-        (b, (label))
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
         label.set_label(&item.item.album_count.to_string());
     }
 
@@ -185,28 +210,29 @@ pub struct FavColumn;
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Viewport;
     type Item = ArtistRow;
-    type Widgets = (Rc<RefCell<String>>, gtk::Button, SetupFinished);
+    type Widgets = (Rc<RefCell<String>>, gtk::Button, Model, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Favorite";
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
+        let (view, model) = Model::new();
         let fav_btn = gtk::Button::new();
         fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
         fav_btn.set_focus_on_click(false);
 
         let cell = Rc::new(RefCell::new(String::new()));
-        (
-            gtk::Viewport::default(),
-            (cell, fav_btn, SetupFinished(false)),
-        )
+        view.set_child(Some(&fav_btn));
+        (view, (cell, fav_btn, model, SetupFinished(false)))
     }
 
     fn bind(
         item: &mut Self::Item,
-        (cell, fav_btn, finished): &mut Self::Widgets,
-        view: &mut Self::Root,
+        (cell, fav_btn, model, finished): &mut Self::Widgets,
+        _view: &mut Self::Root,
     ) {
+        model.set_from_row(item);
+
         match item.item.starred.is_some() {
             true => fav_btn.set_icon_name("starred-symbolic"),
             false => fav_btn.set_icon_name("non-starred-symbolic"),
@@ -239,11 +265,6 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
         }
 
         item.fav_btn = Some(fav_btn.clone());
-        view.set_child(Some(fav_btn));
-    }
-
-    fn unbind(item: &mut Self::Item, _widgets: &mut Self::Widgets, _root: &mut Self::Root) {
-        item.fav_btn = None;
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
