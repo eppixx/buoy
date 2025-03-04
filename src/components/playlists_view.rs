@@ -603,6 +603,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         sender.clone(),
                     ));
                 }
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|entry| entry.borrow().reset_drag_indicators());
             }
             PlaylistsViewIn::RecalcDragSource => {
                 let len = self.tracks.selection_model.n_items();
