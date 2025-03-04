@@ -139,104 +139,6 @@ impl PlaylistRow {
         self.multiple_drag_sources = None;
     }
 
-    fn create_drag_src(&self, uid: &Rc<RefCell<usize>>) -> gtk::DragSource {
-        // prepare content
-        let drop = PlaylistIndex {
-            uid: *uid.borrow(),
-            child: self.item.clone(),
-        };
-        let drop = Droppable::PlaylistItems(vec![drop]);
-        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
-
-        // create DragSource
-        let src = gtk::DragSource::default();
-        src.set_content(Some(&content));
-        src.set_actions(gtk::gdk::DragAction::COPY);
-
-        // set drag icon
-        let album = self.subsonic.borrow().album_of_song(&self.item);
-        let subsonic = self.subsonic.clone();
-        src.connect_drag_begin(move |src, _drag| {
-            if let Some(album) = &album {
-                if let Some(cover_id) = &album.cover_art {
-                    let cover = subsonic.borrow().cover_icon(cover_id);
-                    if let Some(tex) = cover {
-                        src.set_icon(Some(&tex), 0, 0);
-                    }
-                }
-            }
-        });
-        src
-    }
-
-    fn create_drop_target(&self, uid: &Rc<RefCell<usize>>) -> gtk::DropTarget {
-        let actions = gdk::DragAction::MOVE | gdk::DragAction::COPY;
-        let target = gtk::DropTarget::new(gtk::glib::types::Type::INVALID, actions);
-        target.set_types(&[<Droppable as gtk::prelude::StaticType>::static_type()]);
-
-        let sender = self.sender.clone();
-        let cell = uid.clone();
-        let widget = self.title_box.clone();
-        target.connect_drop(move |_target, value, _x, y| {
-            //disable dropping items while searching
-            {
-                let settings = Settings::get().lock().unwrap();
-                if settings.search_active && !settings.search_text.is_empty() {
-                    sender
-                        .output(PlaylistsViewOut::DisplayToast(gettext(
-                            "dropping songs into a playlist is not allowed while searching",
-                        )))
-                        .unwrap();
-                    return false;
-                }
-            }
-
-            // check if drop is valid
-            if let Ok(drop) = value.get::<Droppable>() {
-                match drop {
-                    Droppable::PlaylistItems(items) => {
-                        for item in items.iter().rev() {
-                            let half = DropHalf::calc(widget.height(), y);
-                            let src_uid = item.uid;
-                            sender.input(PlaylistsViewIn::MoveSong {
-                                src: src_uid,
-                                dest: *cell.borrow(),
-                                half,
-                            });
-                        }
-                    }
-                    Droppable::QueueSongs(children) => {
-                        let songs = children.into_iter().map(|song| song.1).collect();
-                        let half = DropHalf::calc(widget.height(), y);
-                        sender.input(PlaylistsViewIn::InsertSongs(songs, *cell.borrow(), half));
-                    }
-                    _ => todo!(), //TODO handle other soures
-                }
-                return true;
-            }
-            false
-        });
-
-        //sending motion for added indicators
-        let sender = self.sender.clone();
-        let cell = uid.clone();
-        target.connect_motion(move |_drop, _x, y| {
-            sender.input(PlaylistsViewIn::DraggedOver {
-                uid: *cell.borrow(),
-                y,
-            });
-            gdk::DragAction::MOVE
-        });
-
-        //remove indicator on leave
-        let sender = self.sender.clone();
-        target.connect_leave(move |_drop| {
-            sender.input(PlaylistsViewIn::DragLeave);
-        });
-
-        target
-    }
-
     pub fn add_drag_indicator_top(&self) {
         if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
             DragState::drop_shadow_top(&list_item);
@@ -256,38 +158,178 @@ impl PlaylistRow {
     }
 }
 
+pub struct Model {
+    subsonic: Rc<RefCell<Option<Rc<RefCell<Subsonic>>>>>,
+    album: Rc<RefCell<Option<submarine::data::Child>>>,
+    drag_src: gtk::DragSource,
+    drop_target: gtk::DropTarget,
+    sender: Rc<RefCell<Option<relm4::AsyncComponentSender<PlaylistsView>>>>,
+    uid: Rc<RefCell<Option<usize>>>,
+}
+
+impl Model {
+    fn new() -> (gtk::Viewport, Self) {
+        let model = Model {
+            subsonic: Rc::new(RefCell::new(None)),
+            album: Rc::new(RefCell::new(None)),
+            drag_src: gtk::DragSource::default(),
+            drop_target: gtk::DropTarget::default(),
+            sender: Rc::new(RefCell::new(None)),
+            uid: Rc::new(RefCell::new(None)),
+        };
+
+        let root = gtk::Viewport::default();
+
+        // create DragSource
+        model.drag_src.set_actions(gtk::gdk::DragAction::COPY);
+
+        // set drag icon
+        let subsonic = model.subsonic.clone();
+        let album = model.album.clone();
+        model.drag_src.connect_drag_begin(move |src, _drag| {
+            let Some(ref subsonic) = *subsonic.borrow() else {
+                return;
+            };
+            let Some(ref album) = *album.borrow() else {
+                return;
+            };
+
+            let Some(album) = subsonic.borrow().album_of_song(album) else {
+                return;
+            };
+            if let Some(cover_id) = &album.cover_art {
+                let cover = subsonic.borrow().cover_icon(cover_id);
+                if let Some(tex) = cover {
+                    src.set_icon(Some(&tex), 0, 0);
+                }
+            }
+        });
+
+        // create drop target
+        model
+            .drop_target
+            .set_actions(gdk::DragAction::MOVE | gdk::DragAction::COPY);
+        model
+            .drop_target
+            .set_types(&[<Droppable as gtk::prelude::StaticType>::static_type()]);
+
+        let sender = model.sender.clone();
+        let uid = model.uid.clone();
+        let widget = root.clone();
+        model
+            .drop_target
+            .connect_drop(move |_target, value, _x, y| {
+                let Some(uid) = *uid.borrow() else {
+                    return false;
+                };
+                let Some(ref sender) = *sender.borrow() else {
+                    return false;
+                };
+
+                //disable dropping items while searching
+                {
+                    let settings = Settings::get().lock().unwrap();
+                    if settings.search_active && !settings.search_text.is_empty() {
+                        sender
+                            .output(PlaylistsViewOut::DisplayToast(gettext(
+                                "dropping songs into a playlist is not allowed while searching",
+                            )))
+                            .unwrap();
+                        return false;
+                    }
+                }
+
+                // check if drop is valid
+                if let Ok(drop) = value.get::<Droppable>() {
+                    match drop {
+                        Droppable::PlaylistItems(items) => {
+                            for item in items.iter().rev() {
+                                let half = DropHalf::calc(widget.height(), y);
+                                let src_uid = item.uid;
+                                sender.input(PlaylistsViewIn::MoveSong {
+                                    src: src_uid,
+                                    dest: uid,
+                                    half,
+                                });
+                            }
+                        }
+                        Droppable::QueueSongs(children) => {
+                            let songs = children.into_iter().map(|song| song.1).collect();
+                            let half = DropHalf::calc(widget.height(), y);
+                            sender.input(PlaylistsViewIn::InsertSongs(songs, uid, half));
+                        }
+                        _ => todo!(), //TODO handle other soures
+                    }
+                    return true;
+                }
+                false
+            });
+
+        //sending motion for added indicators
+        let sender = model.sender.clone();
+        let cell = model.uid.clone();
+        model.drop_target.connect_motion(move |_drop, _x, y| {
+            let Some(cell) = *cell.borrow() else {
+                return gdk::DragAction::empty();
+            };
+            let Some(ref sender) = *sender.borrow() else {
+                return gdk::DragAction::empty();
+            };
+
+            sender.input(PlaylistsViewIn::DraggedOver { uid: cell, y });
+            gdk::DragAction::MOVE
+        });
+
+        //remove indicator on leave
+        let sender = model.sender.clone();
+        model.drop_target.connect_leave(move |_drop| {
+            let Some(ref sender) = *sender.borrow() else {
+                return;
+            };
+
+            sender.input(PlaylistsViewIn::DragLeave);
+        });
+
+        root.add_controller(model.drop_target.clone());
+        root.add_controller(model.drag_src.clone());
+
+        (root, model)
+    }
+
+    fn set_from_row(&self, row: &PlaylistRow) {
+        self.subsonic.replace(Some(row.subsonic.clone()));
+        self.album.replace(Some(row.item.clone()));
+        self.sender.replace(Some(row.sender.clone()));
+        self.uid.replace(Some(row.uid));
+
+        let drop = PlaylistIndex {
+            uid: row.uid,
+            child: row.item.clone(),
+        };
+        let drop = Droppable::PlaylistItems(vec![drop]);
+        let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+        self.drag_src.set_content(Some(&content));
+    }
+}
+
 pub struct TitleColumn;
 
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = (Rc<RefCell<usize>>, SetupFinished);
+    type Widgets = Model;
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        (
-            gtk::Viewport::default(),
-            (Rc::new(RefCell::new(0)), SetupFinished(false)),
-        )
+        Model::new()
     }
 
-    fn bind(item: &mut Self::Item, (cell, finished): &mut Self::Widgets, view: &mut Self::Root) {
-        view.set_child(Some(&item.title_box));
-        cell.replace(item.uid);
-
-        // we need only 1 DragSource for the ListItem as it is updated by updating cell
-        if !finished.0 {
-            finished.0 = true;
-            let list_item = super::get_list_item_widget(&item.title_box).unwrap();
-            DragState::reset(&list_item);
-            let drop_target = item.create_drop_target(cell);
-            list_item.add_controller(drop_target);
-            let drag_src = item.create_drag_src(cell);
-            list_item.add_controller(drag_src);
-        }
+    fn bind(item: &mut Self::Item, model: &mut Self::Widgets, root: &mut Self::Root) {
+        root.set_child(Some(&item.title_box));
+        model.set_from_row(item);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -300,44 +342,42 @@ pub struct ArtistColumn;
 impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Artist";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let artist_label = gtk::Label::builder()
+        let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        (gtk::Viewport::default(), artist_label)
+        let (view, model) = Model::new();
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, artist_label: &mut Self::Widgets, view: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
+
         let stock = gettext("Unknown Artist");
         let artist = item.item.artist.as_deref().unwrap_or(&stock);
         if let Some(artist_id) = &item.item.artist_id {
             // set text with link
             let artist = gtk::glib::markup_escape_text(artist);
-            artist_label.set_markup(&format!("<a href=\"\">{artist}</a>"));
+            label.set_markup(&format!("<a href=\"\">{artist}</a>"));
             let artist_id = artist_id.clone();
             let sender = item.sender.clone();
-            artist_label.connect_activate_link(move |_label, _id| {
+            label.connect_activate_link(move |_label, _id| {
                 let id = Id::artist(&artist_id);
                 sender.output(PlaylistsViewOut::ClickedArtist(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
             // set plain text
-            artist_label.set_text(artist);
+            label.set_text(artist);
         }
-        view.set_child(Some(artist_label));
-    }
-
-    fn unbind(_item: &mut Self::Item, artist_label: &mut Self::Widgets, view: &mut Self::Root) {
-        artist_label.set_text("");
-        view.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -350,45 +390,46 @@ pub struct AlbumColumn;
 impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Album";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let album_label = gtk::Label::builder()
+        let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        (gtk::Viewport::default(), album_label)
+        let (view, model) = Model::new();
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, album_label: &mut Self::Widgets, view: &mut Self::Root) {
+    fn bind(
+        item: &mut Self::Item,
+        (model, label): &mut Self::Widgets,
+        _root: &mut Self::Root,
+    ) {
+        model.set_from_row(item);
+
         let stock = gettext("Unknown Album");
         let album = item.item.album.as_deref().unwrap_or(&stock);
         if let Some(album_id) = &item.item.album_id {
             // set text with link
             let album = gtk::glib::markup_escape_text(album);
-            album_label.set_markup(&format!("<a href=\"\">{album}</a>"));
+            label.set_markup(&format!("<a href=\"\">{album}</a>"));
             let album_id = album_id.clone();
             let sender = item.sender.clone();
-            album_label.connect_activate_link(move |_label, _id| {
+            label.connect_activate_link(move |_label, _id| {
                 let id = Id::album(&album_id);
                 sender.output(PlaylistsViewOut::ClickedAlbum(id)).unwrap();
                 gtk::glib::signal::Propagation::Stop
             });
         } else {
             // set plain text
-            album_label.set_text(album);
+            label.set_text(album);
         }
-
-        view.set_child(Some(album_label));
-    }
-
-    fn unbind(_item: &mut Self::Item, album_label: &mut Self::Widgets, view: &mut Self::Root) {
-        album_label.set_text("");
-        view.set_child(None::<&gtk::Widget>);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -399,26 +440,27 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
 pub struct GenreColumn;
 
 impl relm4::typed_view::column::RelmColumn for GenreColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Genre";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
+        let (view, model) = Model::new();
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
+
         label.set_label(
             item.item
                 .genre
@@ -435,23 +477,24 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
 pub struct LengthColumn;
 
 impl relm4::typed_view::column::RelmColumn for LengthColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Length";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
+        let (view, model) = Model::new();
         let label = gtk::Label::default();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
+
         let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
         label.set_label(&length);
     }
@@ -464,23 +507,24 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
 pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {
-    type Root = gtk::Box;
+    type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = gtk::Label;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Bitrate";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        let b = gtk::Box::default();
+        let (view, model) = Model::new();
         let label = gtk::Label::default();
-        b.set_hexpand(true);
-        b.append(&label);
-        (b, (label))
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, label: &mut Self::Widgets, _b: &mut Self::Root) {
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
+
         let bitrate = item.item.bit_rate;
         let bitrate = bitrate.map(|n| n.to_string());
         label.set_label(&bitrate.unwrap_or(String::from("-")));
@@ -496,28 +540,29 @@ pub struct FavColumn;
 impl relm4::typed_view::column::RelmColumn for FavColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = (Rc<RefCell<String>>, gtk::Button, SetupFinished);
+    type Widgets = (Rc<RefCell<String>>, gtk::Button, Model, SetupFinished);
 
     const COLUMN_NAME: &'static str = "Favorite";
     const ENABLE_RESIZE: bool = false;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
+        let (view, model) = Model::new();
         let fav_btn = gtk::Button::new();
         fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
         fav_btn.set_focus_on_click(false);
 
         let cell = Rc::new(RefCell::new(String::new()));
-        (
-            gtk::Viewport::default(),
-            (cell, fav_btn, SetupFinished(false)),
-        )
+        view.set_child(Some(&fav_btn));
+        (view, (cell, fav_btn, model, SetupFinished(false)))
     }
 
     fn bind(
         item: &mut Self::Item,
-        (cell, fav_btn, finished): &mut Self::Widgets,
-        view: &mut Self::Root,
+        (cell, fav_btn, model, finished): &mut Self::Widgets,
+        _root: &mut Self::Root,
     ) {
+        model.set_from_row(item);
+
         match item.item.starred.is_some() {
             true => fav_btn.set_icon_name("starred-symbolic"),
             false => fav_btn.set_icon_name("non-starred-symbolic"),
@@ -551,8 +596,6 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
                 _ => unreachable!("unkown icon name"),
             });
         }
-
-        view.set_child(Some(fav_btn));
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
