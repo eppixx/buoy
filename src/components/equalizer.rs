@@ -1,25 +1,29 @@
 use gettextrs::gettext;
 use relm4::gtk::{
     self,
-    prelude::{BoxExt, ButtonExt, OrientableExt, RangeExt, WidgetExt},
+    prelude::{BoxExt, ButtonExt, OrientableExt, RangeExt, ScaleExt, WidgetExt},
 };
 
 use crate::settings::Settings;
 
 #[derive(Debug, Default)]
-pub struct Equalizer {
-    reset_btn: gtk::Button,
-    enabled: gtk::Switch,
-    band0: gtk::Scale,
-    band1: gtk::Scale,
-    band2: gtk::Scale,
-    band3: gtk::Scale,
-    band4: gtk::Scale,
-    band5: gtk::Scale,
-    band6: gtk::Scale,
-    band7: gtk::Scale,
-    band8: gtk::Scale,
-    band9: gtk::Scale,
+pub struct Equalizer {}
+
+impl Equalizer {
+    fn get_bands(widgets: &<Equalizer as relm4::Component>::Widgets) -> [&gtk::Scale; 10] {
+        [
+            &widgets.band0,
+            &widgets.band1,
+            &widgets.band2,
+            &widgets.band3,
+            &widgets.band4,
+            &widgets.band5,
+            &widgets.band6,
+            &widgets.band7,
+            &widgets.band8,
+            &widgets.band9,
+        ]
+    }
 }
 
 #[derive(Debug)]
@@ -35,10 +39,11 @@ pub enum EqualizerOut {
 }
 
 #[relm4::component(pub)]
-impl relm4::SimpleComponent for Equalizer {
+impl relm4::Component for Equalizer {
+    type Init = ();
     type Input = EqualizerIn;
     type Output = EqualizerOut;
-    type Init = ();
+    type CommandOutput = ();
 
     fn init(
         _init: Self::Init,
@@ -48,26 +53,40 @@ impl relm4::SimpleComponent for Equalizer {
         let model = Equalizer::default();
         let widgets = view_output!();
 
+        let bands = Self::get_bands(&widgets);
         {
             let settings = Settings::get().lock().unwrap();
-            model.reset_btn.set_sensitive(settings.equalizer_enabled);
-            model.enabled.set_active(settings.equalizer_enabled);
-            let bands = [
-                &model.band0,
-                &model.band1,
-                &model.band2,
-                &model.band3,
-                &model.band4,
-                &model.band5,
-                &model.band6,
-                &model.band7,
-                &model.band8,
-                &model.band9,
-            ];
+            widgets.reset_btn.set_sensitive(settings.equalizer_enabled);
+            widgets.enabled.set_active(settings.equalizer_enabled);
             for (i, band) in bands.iter().enumerate() {
+                // set properties for all bands
+                band.set_vexpand(true);
+                band.set_orientation(gtk::Orientation::Vertical);
+                band.set_inverted(true);
+                band.set_range(-10.0, 10.0);
+                band.set_increments(0.1, 0.1);
+
+                // set value from settings
                 band.set_value(settings.equalizer_bands[i]);
                 band.set_sensitive(settings.equalizer_enabled);
             }
+        }
+        // set marker for the first band
+        for band in bands.iter().take(1) {
+            band.add_mark(10.0, gtk::PositionType::Left, Some("10"));
+            band.add_mark(5.0, gtk::PositionType::Left, Some("5"));
+            band.add_mark(0.0, gtk::PositionType::Left, Some("0"));
+            band.add_mark(-5.0, gtk::PositionType::Left, Some("-5"));
+            band.add_mark(-10.0, gtk::PositionType::Left, Some("-10"));
+        }
+
+        // and then stops the rest
+        for band in bands.iter().skip(1) {
+            band.add_mark(10.0, gtk::PositionType::Left, None);
+            band.add_mark(5.0, gtk::PositionType::Left, None);
+            band.add_mark(0.0, gtk::PositionType::Left, None);
+            band.add_mark(-5.0, gtk::PositionType::Left, None);
+            band.add_mark(-10.0, gtk::PositionType::Left, None);
         }
 
         // set uniform size
@@ -99,17 +118,17 @@ impl relm4::SimpleComponent for Equalizer {
 
             gtk::CenterBox {
                 #[wrap(Some)]
-                set_start_widget = &model.reset_btn.clone() -> gtk::Button {
+                set_start_widget: reset_btn = &gtk::Button {
                     set_widget_name: "destructive-action",
                     set_label: &gettext("Reset bands"),
                     connect_clicked => EqualizerIn::Reset,
                 },
 
                 #[wrap(Some)]
-                set_end_widget = &model.enabled.clone() -> gtk::Switch {
+                set_end_widget: enabled = &gtk::Switch {
                     connect_state_set[sender] => move |_swtich, state| {
                         sender.input(EqualizerIn::Enabled(state));
-                                                gtk::glib::Propagation::Proceed
+                        gtk::glib::Propagation::Proceed
                     }
                 }
             },
@@ -120,15 +139,9 @@ impl relm4::SimpleComponent for Equalizer {
 
                 #[name = "box0"]
                 gtk::Box {
-                    set_hexpand: true,
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band0.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band0 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -139,12 +152,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band1.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band1 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -155,12 +163,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band2.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band2 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -171,12 +174,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band3.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band3 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -187,12 +185,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band4.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band4 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -203,12 +196,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band5.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band5 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -219,13 +207,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band6.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
-                        set_show_fill_level: false,
+                    append: band6 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -236,12 +218,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band7.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band7 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -252,12 +229,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band8.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band8 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -268,12 +240,7 @@ impl relm4::SimpleComponent for Equalizer {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 5,
-                    append = &model.band9.clone() -> gtk::Scale {
-                        set_vexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_inverted: true,
-                        set_range: (-10.0, 10.0),
-                        set_increments: (0.1, 0.1),
+                    append: band9 = &gtk::Scale {
                         connect_value_changed => EqualizerIn::StateChanged,
                     },
                     gtk::Label {
@@ -284,30 +251,23 @@ impl relm4::SimpleComponent for Equalizer {
         }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
-        let bands = [
-            &self.band0,
-            &self.band1,
-            &self.band2,
-            &self.band3,
-            &self.band4,
-            &self.band5,
-            &self.band6,
-            &self.band7,
-            &self.band8,
-            &self.band9,
-        ];
-
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
             EqualizerIn::Reset => {
-                for band in bands {
+                for band in Self::get_bands(widgets) {
                     band.set_value(0.0);
                 }
                 sender.input(EqualizerIn::StateChanged);
             }
             EqualizerIn::Enabled(state) => {
-                self.reset_btn.set_sensitive(state);
-                for band in bands {
+                widgets.reset_btn.set_sensitive(state);
+                for band in Self::get_bands(widgets) {
                     band.set_sensitive(state);
                 }
                 sender.input(EqualizerIn::StateChanged);
@@ -315,8 +275,8 @@ impl relm4::SimpleComponent for Equalizer {
             EqualizerIn::StateChanged => {
                 {
                     let mut settings = Settings::get().lock().unwrap();
-                    settings.equalizer_enabled = self.enabled.is_active();
-                    for (i, band) in bands.iter().enumerate() {
+                    settings.equalizer_enabled = widgets.enabled.is_active();
+                    for (i, band) in Self::get_bands(widgets).iter().enumerate() {
                         settings.equalizer_bands[i] = band.value();
                     }
                     settings.save();
