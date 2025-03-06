@@ -4,7 +4,7 @@ use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, gdk,
-        prelude::{BoxExt, ButtonExt, ToValue, WidgetExt},
+        prelude::{ButtonExt, ToValue, WidgetExt},
     },
     RelmWidgetExt,
 };
@@ -34,7 +34,7 @@ pub struct PlaylistRow {
     uid: usize,
     subsonic: Rc<RefCell<Subsonic>>,
     item: submarine::data::Child,
-    title_box: gtk::Box,
+    fav_btn: Option<gtk::Button>,
     sender: relm4::AsyncComponentSender<PlaylistsView>,
     multiple_drag_sources: Option<gtk::DragSource>,
 }
@@ -52,24 +52,14 @@ impl PlaylistRow {
         sender: relm4::AsyncComponentSender<PlaylistsView>,
     ) -> Self {
         let uid = UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let result = Self {
+        Self {
             uid,
             subsonic: subsonic.clone(),
             item,
-            title_box: gtk::Box::default(),
+            fav_btn: None,
             sender: sender.clone(),
             multiple_drag_sources: None,
-        };
-
-        // setup title label
-        let title_label = gtk::Label::builder()
-            .halign(gtk::Align::Start)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .label(&result.item.title)
-            .build();
-        result.title_box.append(&title_label);
-
-        result
+        }
     }
 
     pub fn uid(&self) -> &usize {
@@ -84,8 +74,8 @@ impl PlaylistRow {
         &mut self.item
     }
 
-    pub fn title_box(&self) -> &gtk::Box {
-        &self.title_box
+    pub fn fav_btn(&self) -> &Option<gtk::Button> {
+        &self.fav_btn
     }
 
     pub fn set_drag_src(&mut self, drop: Vec<PlaylistIndex>) {
@@ -122,8 +112,10 @@ impl PlaylistRow {
         });
 
         //add this DragSource
-        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            list_item.add_controller(src.clone());
+        if let Some(fav_btn) = &self.fav_btn {
+            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
+                list_item.add_controller(src.clone());
+            }
         }
 
         //save this DragSource
@@ -131,29 +123,37 @@ impl PlaylistRow {
     }
 
     pub fn remove_drag_src(&mut self) {
-        if let Some(src) = &self.multiple_drag_sources {
-            if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-                list_item.remove_controller(src);
+        if let Some(fav_btn) = &self.fav_btn {
+            if let Some(src) = &self.multiple_drag_sources {
+                if let Some(list_item) = super::get_list_item_widget(fav_btn) {
+                    list_item.remove_controller(src);
+                }
             }
         }
         self.multiple_drag_sources = None;
     }
 
     pub fn add_drag_indicator_top(&self) {
-        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            DragState::drop_shadow_top(&list_item);
+        if let Some(fav_btn) = &self.fav_btn {
+            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
+                DragState::drop_shadow_top(&list_item);
+            }
         }
     }
 
     pub fn add_drag_indicator_bottom(&self) {
-        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            DragState::drop_shadow_bottom(&list_item);
+        if let Some(fav_btn) = &self.fav_btn {
+            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
+                DragState::drop_shadow_bottom(&list_item);
+            }
         }
     }
 
     pub fn reset_drag_indicators(&self) {
-        if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
-            DragState::reset(&list_item);
+        if let Some(fav_btn) = &self.fav_btn {
+            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
+                DragState::reset(&list_item);
+            }
         }
     }
 }
@@ -317,19 +317,27 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
     type Item = PlaylistRow;
-    type Widgets = Model;
+    type Widgets = (Model, gtk::Label);
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
     const ENABLE_EXPAND: bool = true;
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
-        Model::new()
+        let (view, model) = Model::new();
+        let label = gtk::Label::builder()
+            .halign(gtk::Align::Start)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .label("No title given")
+            .build();
+
+        view.set_child(Some(&label));
+        (view, (model, label))
     }
 
-    fn bind(item: &mut Self::Item, model: &mut Self::Widgets, root: &mut Self::Root) {
-        root.set_child(Some(&item.title_box));
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
         model.set_from_row(item);
+        label.set_label(&item.item.title);
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
@@ -592,6 +600,8 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
                 _ => unreachable!("unkown icon name"),
             });
         }
+
+        item.fav_btn = Some(fav_btn.clone());
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

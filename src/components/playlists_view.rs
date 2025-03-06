@@ -537,10 +537,18 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .filter(|t| t.borrow().item().id == id)
                     .for_each(|track| match state {
                         true => {
+                            if let Some(fav) = &track.borrow().fav_btn() {
+                                fav.set_icon_name("starred-symbolic");
+                            }
                             track.borrow_mut().item_mut().starred =
                                 Some(chrono::offset::Local::now().into());
                         }
-                        false => track.borrow_mut().item_mut().starred = None,
+                        false => {
+                            if let Some(fav) = &track.borrow().fav_btn() {
+                                fav.set_icon_name("non-starred-symbolic");
+                            }
+                            track.borrow_mut().item_mut().starred = None;
+                        }
                     });
             }
             PlaylistsViewIn::DownloadClicked => {
@@ -739,11 +747,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     return;
                 };
 
-                let widget_height = src_entry.borrow().title_box().height();
-                if y < f64::from(widget_height) * 0.5f64 {
-                    src_entry.borrow().add_drag_indicator_top();
-                } else {
-                    src_entry.borrow().add_drag_indicator_bottom();
+                let fav_btn = src_entry.borrow().fav_btn().clone();
+                if let Some(fav_btn) = fav_btn {
+                    let widget_height = fav_btn.height();
+                    if y < f64::from(widget_height) * 0.5f64 {
+                        src_entry.borrow().add_drag_indicator_top();
+                    } else {
+                        src_entry.borrow().add_drag_indicator_bottom();
+                    }
                 }
             }
             PlaylistsViewIn::DragLeave => {
