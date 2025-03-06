@@ -378,6 +378,7 @@ impl relm4::component::AsyncComponent for App {
                         pack_start = &gtk::Box {
                             append: back_btn = &gtk::Button {
                                 set_icon_name: "go-previous-symbolic",
+                                add_css_class: "size24",
                                 add_css_class: "destructive-button-spacer",
                                 set_tooltip: &gettext("Go back to previous page"),
 
@@ -397,6 +398,7 @@ impl relm4::component::AsyncComponent for App {
 
                             append: search_btn = &gtk::ToggleButton {
                                 set_icon_name: "system-search-symbolic",
+                                add_css_class: "size24",
                                 set_tooltip: &gettext("Open search bar"),
 
                                 connect_toggled[sender] => move |button| {

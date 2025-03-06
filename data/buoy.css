@@ -38,6 +38,11 @@ contents > box {
     background-color: rgb(75, 75, 75);
 }
 
+.size24 {
+    min-width: 24px;
+    min-height: 24px;
+}
+
 /* queue-song covers */
 .size32 {
     min-width: 32px;
