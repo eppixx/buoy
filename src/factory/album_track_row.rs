@@ -414,13 +414,13 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
                 Some("starred-symbolic") => {
                     btn.set_icon_name("non-starred-symbolic");
                     sender
-                        .output(AlbumViewOut::FavoriteClicked(cell.borrow().clone(), false))
+                        .output(AlbumViewOut::FavoriteSongClicked(cell.borrow().clone(), false))
                         .unwrap();
                 }
                 Some("non-starred-symbolic") => {
                     btn.set_icon_name("starred-symbolic");
                     sender
-                        .output(AlbumViewOut::FavoriteClicked(cell.borrow().clone(), true))
+                        .output(AlbumViewOut::FavoriteSongClicked(cell.borrow().clone(), true))
                         .unwrap();
                 }
                 _ => unreachable!("unkown icon name"),

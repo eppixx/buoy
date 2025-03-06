@@ -44,6 +44,7 @@ pub enum AlbumViewOut {
     InsertAfterCurrentPlayed(Droppable),
     ReplaceQueue(Droppable),
     FavoriteClicked(String, bool),
+    FavoriteSongClicked(String, bool),
     DisplayToast(String),
     Download(Droppable),
     ArtistClicked(Id),

@@ -453,6 +453,9 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::FavoriteClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
                     .unwrap(),
+                AlbumViewOut::FavoriteSongClicked(id, state) => sender
+                    .output(BrowserOut::FavoriteSongClicked(id, state))
+                    .unwrap(),
                 AlbumViewOut::Download(drop) => sender.output(BrowserOut::Download(drop)).unwrap(),
                 AlbumViewOut::ArtistClicked(id) => sender.input(BrowserIn::ShowArtist(id)),
             },
