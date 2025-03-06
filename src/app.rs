@@ -980,10 +980,20 @@ impl relm4::component::AsyncComponent for App {
                     self.mpris.borrow_mut().set_state(PlayState::Stop);
                 }
                 Command::SetSongPosition(pos_ms) => {
-                    self.seekbar.emit(SeekbarIn::SeekTo(pos_ms));
-                    self.play_controls
-                        .emit(PlayControlIn::NewState(PlayState::Play));
-                    self.mpris.borrow_mut().set_position(pos_ms);
+                    // sanitiy check
+                    if pos_ms < 0 {
+                        self.seekbar.emit(SeekbarIn::SeekTo(0));
+                        self.play_controls
+                            .emit(PlayControlIn::NewState(PlayState::Play));
+                        self.mpris.borrow_mut().set_position(0);
+                    } else if pos_ms > self.seekbar.model().length() {
+                        sender.input(AppIn::Player(Command::Next));
+                    } else {
+                        self.seekbar.emit(SeekbarIn::SeekTo(pos_ms));
+                        self.play_controls
+                            .emit(PlayControlIn::NewState(PlayState::Play));
+                        self.mpris.borrow_mut().set_position(pos_ms);
+                    }
                 }
                 Command::Volume(volume) => {
                     self.playback.borrow_mut().set_volume(volume);

@@ -11,14 +11,18 @@ use crate::common::convert_for_label;
 
 #[derive(Debug, Default)]
 pub struct Seekbar {
-    current: i64,
+    current: i64, // in ms
     scale: gtk::Scale,
-    total: i64,
+    total: i64, // in ms
 }
 
 impl Seekbar {
     pub fn current(&self) -> f64 {
         self.scale.value()
+    }
+
+    pub fn length(&self) -> i64 {
+        self.total
     }
 }
 
