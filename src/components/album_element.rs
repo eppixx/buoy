@@ -180,12 +180,10 @@ impl relm4::factory::FactoryComponent for AlbumElement {
                     set_child = &gtk::Overlay {
                         add_overlay = &self.favorite_ribbon.clone() {
                             add_css_class: "cover-favorite-ribbon",
-                            set_halign: gtk::Align::End,
-                            set_valign: gtk::Align::End,
+                            set_halign: gtk::Align::Start,
+                            set_valign: gtk::Align::Start,
                             set_height_request: 35,
                             set_width_request: 35,
-                            set_margin_bottom: 45,
-                            set_margin_end: 5,
                         },
 
                         #[wrap(Some)]

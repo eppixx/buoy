@@ -72,7 +72,7 @@ contents > box {
 }
 
 .cover-favorite-ribbon {
-    background-image: linear-gradient(-45deg, @accent_color, @accent_color 50% ,alpha(@accent_color, 0) 50%);
+    background-image: linear-gradient(135deg, @accent_color, @accent_color 50% ,alpha(@accent_color, 0) 50%);
 }
 
 #main-window {}
