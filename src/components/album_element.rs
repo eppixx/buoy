@@ -134,6 +134,8 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         if album.starred.is_some() {
             model.favorite.set_icon_name("starred-symbolic");
             model.favorite_ribbon.set_visible(true);
+        } else {
+            model.favorite.set_icon_name("non-starred-symbolic");
         }
 
         model
@@ -163,7 +165,6 @@ impl relm4::factory::FactoryComponent for AlbumElement {
                         add_css_class: "neutral-color",
                         set_width_request: 24,
                         set_height_request: 24,
-                        set_icon_name: "non-starred-symbolic",
 
                         connect_clicked => AlbumElementIn::FavoriteClicked,
                     }
@@ -228,10 +229,16 @@ impl relm4::factory::FactoryComponent for AlbumElement {
             }
             AlbumElementIn::FavoriteClicked => match widgets.favorite.icon_name().as_deref() {
                 Some("starred-symbolic") => sender
-                    .output(AlbumElementOut::FavoriteClicked(self.id.to_string(), false))
+                    .output(AlbumElementOut::FavoriteClicked(
+                        self.id.inner().to_string(),
+                        false,
+                    ))
                     .unwrap(),
                 Some("non-starred-symbolic") => sender
-                    .output(AlbumElementOut::FavoriteClicked(self.id.to_string(), true))
+                    .output(AlbumElementOut::FavoriteClicked(
+                        self.id.inner().to_string(),
+                        true,
+                    ))
                     .unwrap(),
                 name => unreachable!("unkonwn icon name: {name:?}"),
             },
