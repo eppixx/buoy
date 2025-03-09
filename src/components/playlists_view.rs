@@ -74,7 +74,7 @@ pub struct PlaylistsView {
 
 impl PlaylistsView {
     async fn update_playlist(&mut self, sender: &relm4::AsyncComponentSender<Self>) {
-        let Some(current_playlist) = &self.selected_playlist else {
+        let Some(current_playlist) = &mut self.selected_playlist else {
             return;
         };
 
@@ -126,11 +126,24 @@ impl PlaylistsView {
                 )))
                 .unwrap();
         }
+        let updated_list = match client.get_playlist(&current_playlist.base.id).await {
+            Ok(list) => list,
+            Err(e) => {
+                tracing::error!("updated list not found on server: {e}");
+                return;
+            }
+        };
 
         // update cache
-        self.subsonic
-            .borrow_mut()
-            .replace_playlist(current_playlist);
+        self.subsonic.borrow_mut().replace_playlist(&updated_list);
+
+        //sync local cache playlist content
+        *current_playlist = updated_list.clone();
+        self.playlists
+            .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
+                current_playlist.base.id.clone(),
+                updated_list.base,
+            ));
     }
 }
 
@@ -729,6 +742,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
 
                 self.update_playlist(&sender).await;
+
+                // update info string
+                if let Some(list) = &self.selected_playlist {
+                    widgets.info_details.set_text(&build_info_string(list));
+                }
             }
             PlaylistsViewIn::DraggedOver { uid, y } => {
                 //disable reordering item when searching

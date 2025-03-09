@@ -102,6 +102,7 @@ pub enum PlaylistElementIn {
     ChangeState(State),
     ConfirmRename,
     UpdatePlaylistName(submarine::data::Playlist),
+    UpdatePlaylistSongs(String, submarine::data::Playlist),
 }
 
 #[derive(Debug)]
@@ -174,7 +175,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             set_halign: gtk::Align::Start,
                             set_text: &self.playlist.base.name,
                         },
-                        gtk::Label {
+                        append: song_number = &gtk::Label {
                             set_halign: gtk::Align::Start,
                             set_text: &format!("{} {}", self.playlist.base.song_count, gettext("songs")),
                         }
@@ -303,6 +304,16 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     widgets.list_name.set_text(&list.name);
                     widgets.edit_entry.set_text(&list.name);
                     self.playlist.base.name = list.name;
+                }
+            }
+            PlaylistElementIn::UpdatePlaylistSongs(id, list) => {
+                if self.playlist.base.id == id {
+                    self.playlist.base = list;
+                    widgets.song_number.set_text(&format!(
+                        "{} {}",
+                        self.playlist.base.song_count,
+                        gettext("songs")
+                    ));
                 }
             }
         }
