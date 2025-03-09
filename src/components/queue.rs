@@ -137,6 +137,7 @@ pub enum QueueIn {
     Favorite(String, bool),
     JumpToCurrent,
     Rerandomize,
+    DragOverSpace,
 }
 
 #[derive(Debug)]
@@ -314,12 +315,18 @@ impl relm4::Component for Queue {
                         add_controller = gtk::DropTarget {
                             set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
                             set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
                             connect_drop[sender] => move |_target, value, _x, _y| {
                                 if let Ok(drop) = value.get::<Droppable>() {
                                     sender.input(QueueIn::Append(drop));
                                 }
                                 true
                             },
+
+                            connect_motion[sender] => move |_widget, _x, _y| {
+                                sender.input(QueueIn::DragOverSpace);
+                                gdk::DragAction::MOVE
+                            }
                         }
                     }
                 },
@@ -443,6 +450,7 @@ impl relm4::Component for Queue {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
                 self.clear_items.set_sensitive(!self.songs.is_empty());
+                self.songs.broadcast(QueueSongIn::DragLeave);
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs: Vec<submarine::data::Child> = match drop {
@@ -782,6 +790,16 @@ impl relm4::Component for Queue {
                 self.randomized_indices = (0..self.songs.len()).collect();
                 let mut rng = rand::rng();
                 self.randomized_indices.shuffle(&mut rng);
+            }
+            QueueIn::DragOverSpace => {
+                // show indicator on last item
+                if let Some(last) = self.songs.back() {
+                    let widget = last.root_widget();
+                    self.songs.send(
+                        self.songs.len() - 1,
+                        QueueSongIn::DraggedOver(widget.height() as f64),
+                    );
+                }
             }
         }
     }
