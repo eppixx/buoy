@@ -144,6 +144,10 @@ pub enum QueueIn {
     Rerandomize,
     DragOverSpace,
     Cover(CoverOut),
+    MoveSong { src: usize, dest: usize, half: DropHalf },
+    InsertSongs { dest: usize, drop: Droppable, half: DropHalf },
+    DraggedOverRow { dest: usize, y: f64 },
+    DragLeaveRow,
 }
 
 #[derive(Debug)]
@@ -819,8 +823,160 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::Cover(msg) => match msg {
-                _ => todo!(), //TODO
+                CoverOut::DisplayToast(msg) => sender.output(QueueOut::DisplayToast(msg)).unwrap(),
             },
+            QueueIn::MoveSong { src, dest, half } => {
+                //remove drag indicators
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|entry| entry.borrow().reset_drag_indicators());
+
+                // do nothing when src is dest
+                if src == dest {
+                    return;
+                }
+
+                //find src and dest row
+                let Some((src_index, src_entry)) = (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &src)
+                else {
+                    sender
+                        .output(QueueOut::DisplayToast(String::from(
+                            "source not found in move_song",
+                        )))
+                        .unwrap();
+                    return;
+                };
+                let Some((dest_index, _dest_entry)) = (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &dest)
+                else {
+                    sender
+                        .output(QueueOut::DisplayToast(String::from(
+                            "dest not found in move_song",
+                        )))
+                        .unwrap();
+                    return;
+                };
+
+                //remove src
+                let src_row = QueueSongRow::new(
+                    &self.subsonic,
+                    &src_entry.borrow().item(),
+                    &sender,
+                );
+                self.tracks.remove(src_index);
+
+                // insert based on cursor position and order of src and dest
+                //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
+                match (&half, src_index <= dest_index) {
+                    (DropHalf::Above, true) => self.tracks.insert(dest_index - 1, src_row),
+                    (DropHalf::Above, false) | (DropHalf::Below, true) => {
+                        self.tracks.insert(dest_index, src_row)
+                    }
+                    (DropHalf::Below, false) => self.tracks.insert(dest_index + 1, src_row),
+                }
+            }
+            QueueIn::InsertSongs { dest, drop, half } => {
+                //remove drag indicators
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|entry| entry.borrow().reset_drag_indicators());
+
+                // find index of uid
+                let Some((dest, _dest_entry)) = (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
+                    .find(|(_i, entry)| entry.borrow().uid() == &dest)
+                else {
+                    sender
+                        .output(QueueOut::DisplayToast(String::from(
+                            "dest not found in insert_songs",
+                        )))
+                        .unwrap();
+                    return;
+                };
+
+                let songs: Vec<submarine::data::Child> = match drop {
+                    Droppable::Queue(ids) => ids,
+                    Droppable::QueueSongs(_) => unreachable!("should move and not insert"),
+                    Droppable::QueueSong(_) => unreachable!("should move and not insert"),
+                    Droppable::Child(c) => vec![*c],
+                    Droppable::AlbumWithSongs(album) => album.song,
+                    Droppable::Artist(artist) => {
+                        let subsonic = self.subsonic.borrow();
+                        let albums = subsonic.albums_from_artist(&artist);
+                        albums
+                            .iter()
+                            .flat_map(|a| subsonic.tracks_from_album(a))
+                            .cloned()
+                            .collect()
+                    }
+                    Droppable::ArtistWithAlbums(artist) => {
+                        let subsonic = self.subsonic.borrow();
+                        artist
+                            .album
+                            .iter()
+                            .flat_map(|a| subsonic.tracks_from_album_id3(a))
+                            .cloned()
+                            .collect()
+                    }
+                    Droppable::Playlist(playlist) => playlist.entry,
+                    Droppable::AlbumChild(child) => self
+                        .subsonic
+                        .borrow()
+                        .tracks_from_album(&child)
+                        .into_iter()
+                        .cloned()
+                        .collect(),
+                    Droppable::Album(album) => self
+                        .subsonic
+                        .borrow()
+                        .tracks_from_album_id3(&album)
+                        .into_iter()
+                        .cloned()
+                        .collect(),
+                    Droppable::PlaylistItems(_items) => todo!(),
+                };
+
+                for song in songs.iter().rev() {
+                    let row = QueueSongRow::new(&self.subsonic, song, &sender);
+                    match half {
+                        DropHalf::Above => self.tracks.insert(dest, row),
+                        DropHalf::Below => self.tracks.insert(dest + 1, row),
+                    }
+                }
+            }
+            QueueIn::DraggedOverRow { dest, y } => {
+                //disable reordering item when searching
+                let settings = Settings::get().lock().unwrap();
+                if settings.search_active && !settings.search_text.is_empty() {
+                    return;
+                }
+                drop(settings);
+
+                let Some(src_entry) = (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .find(|entry| entry.borrow().uid() == &dest)
+                else {
+                    tracing::warn!("source index {dest} while dragging over not found");
+                    return;
+                };
+
+                let fav_btn = src_entry.borrow().fav_btn().clone();
+                if let Some(fav_btn) = fav_btn {
+                    let widget_height = fav_btn.height();
+                    if y < f64::from(widget_height) * 0.5f64 {
+                        src_entry.borrow().add_drag_indicator_top();
+                    } else {
+                        src_entry.borrow().add_drag_indicator_bottom();
+                    }
+                }
+            }
+            QueueIn::DragLeaveRow => {
+                (0..self.tracks.len()).filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow().reset_drag_indicators());
+            }
         }
     }
 }
