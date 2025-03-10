@@ -841,6 +841,10 @@ impl relm4::component::AsyncComponent for App {
                     self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 QueueOut::QueueEmpty => {
+                    if let Err(e) = self.playback.borrow_mut().stop() {
+                        sender.input(AppIn::DisplayToast(format!("{e}")));
+                    }
+                    self.play_info.emit(PlayInfoIn::NewState(Box::new(None)));
                     self.play_controls.emit(PlayControlIn::Disable);
                     self.mpris.borrow_mut().can_play(false);
                 }
