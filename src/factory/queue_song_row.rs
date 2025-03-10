@@ -66,6 +66,10 @@ impl QueueSongRow {
         &self.item
     }
 
+    pub fn item_mut(&mut self) -> &mut submarine::data::Child {
+        &mut self.item
+    }
+
     pub fn uid(&self) -> &usize {
         &self.uid
     }
@@ -79,6 +83,16 @@ impl QueueSongRow {
             stack.set_visible_child_enum(state);
         }
         self.play_state = state.clone();
+    }
+
+    pub fn play_state(&self) -> &PlayState {
+        &self.play_state
+    }
+
+    //TODO remove
+    pub fn activate(&mut self) {
+        self.set_play_state(&PlayState::Play);
+        self.sender.input(QueueIn::Activate(self.uid as u32));
     }
 
     pub fn add_drag_indicator_top(&self) {
@@ -207,7 +221,7 @@ impl Model {
                 // check if drop is valid
                 if let Ok(drop) = value.get::<Droppable>() {
                     match drop {
-                        Droppable::QueueSong(children) => {
+                        Droppable::QueueSongs(children) => {
                             for child in children.iter().rev() {
                                 let half = DropHalf::calc(widget.height(), y);
                                 sender.input(QueueIn::MoveSong {
@@ -268,7 +282,7 @@ impl Model {
         self.sender.replace(Some(row.sender.clone()));
         self.uid.replace(Some(row.uid));
 
-        let drop = Droppable::QueueSong(vec![QueueUid {
+        let drop = Droppable::QueueSongs(vec![QueueUid {
             uid: row.uid,
             child: row.item.clone(),
         }]);

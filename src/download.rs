@@ -39,7 +39,6 @@ impl Download {
         let ids: Vec<(String, Id)> = match drop {
             Droppable::Child(child) => vec![(format!("{}.zip", child.title), Id::album(child.id))],
             Droppable::QueueSongs(_) => unreachable!(),
-            Droppable::QueueSong(_) => unreachable!(), //TODO
             Droppable::Album(id3) => vec![(format!("{}.zip", id3.name), Id::album(id3.id))],
             Droppable::AlbumChild(child) => {
                 vec![(format!("{}.zip", child.title), Id::album(child.id))]

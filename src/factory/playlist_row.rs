@@ -254,7 +254,7 @@ impl Model {
                             }
                         }
                         Droppable::QueueSongs(children) => {
-                            let songs = children.into_iter().map(|song| song.1).collect();
+                            let songs = children.into_iter().map(|song| song.child).collect();
                             let half = DropHalf::calc(widget.height(), y);
                             sender.input(PlaylistsViewIn::InsertSongs(songs, uid, half));
                         }

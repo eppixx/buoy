@@ -1,6 +1,8 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::gtk::glib;
 
-use crate::factory::{playlist_row::PlaylistIndex, queue_song::QueueIndex, queue_song_row::QueueUid};
+use crate::{factory::{playlist_row::PlaylistIndex, queue_song_row::QueueUid}, subsonic::Subsonic};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, glib::Boxed)]
 #[boxed_type(name = "MediaId")]
@@ -59,8 +61,7 @@ impl Id {
 #[boxed_type(name = "Droppable")]
 pub enum Droppable {
     Queue(Vec<submarine::data::Child>),
-    QueueSongs(Vec<QueueIndex>),
-    QueueSong(Vec<QueueUid>),
+    QueueSongs(Vec<QueueUid>),
     Child(Box<submarine::data::Child>),
     AlbumWithSongs(Box<submarine::data::AlbumWithSongsId3>),
     Album(Box<submarine::data::AlbumId3>),
@@ -69,6 +70,55 @@ pub enum Droppable {
     Artist(Box<submarine::data::ArtistId3>),
     Playlist(Box<submarine::data::PlaylistWithSongs>),
     PlaylistItems(Vec<PlaylistIndex>),
+}
+
+impl Droppable {
+    pub fn get_songs(&self, subsonic: &Rc<RefCell<Subsonic>>) -> Vec<submarine::data::Child> {
+        match &self {
+            Droppable::Queue(ids) => ids.clone(),
+            Droppable::QueueSongs(songs) => {
+                songs.iter().map(|song| song.child.clone()).collect()
+            }
+            Droppable::Child(c) => vec![*c.clone()],
+            Droppable::AlbumWithSongs(album) => album.song.clone(),
+            Droppable::Artist(artist) => {
+                let subsonic = subsonic.borrow();
+                let albums = subsonic.albums_from_artist(&artist);
+                albums
+                    .iter()
+                    .flat_map(|a| subsonic.tracks_from_album(a))
+                    .cloned()
+                    .collect()
+            }
+            Droppable::ArtistWithAlbums(artist) => {
+                let subsonic = subsonic.borrow();
+                artist
+                    .album
+                    .iter()
+                    .flat_map(|a| subsonic.tracks_from_album_id3(a))
+                    .cloned()
+                    .collect()
+            }
+            Droppable::Playlist(playlist) => playlist.entry.clone(),
+            Droppable::AlbumChild(child) =>
+                subsonic
+                .borrow()
+                .tracks_from_album(&child)
+                .into_iter()
+                .cloned()
+                .collect(),
+            Droppable::Album(album) =>
+                subsonic
+                .borrow()
+                .tracks_from_album_id3(&album)
+                .into_iter()
+                .cloned()
+                .collect(),
+            Droppable::PlaylistItems(items) => {
+                items.into_iter().map(|song| song.child.clone()).collect()
+            }
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]

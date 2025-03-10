@@ -1165,9 +1165,7 @@ impl relm4::component::AsyncComponent for App {
         settings.queue_current = self
             .queue
             .model()
-            .playing_index()
-            .as_ref()
-            .map(|i| i.current_index());
+            .playing_index().map(|i| i as usize);
         settings.queue_seek = self.seekbar.model().current();
 
         //save window state
