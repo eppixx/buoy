@@ -13,9 +13,13 @@ use relm4::{
 };
 
 use crate::{
-    components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+    components::{
+        cover::CoverOut,
+        sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+    },
     factory::{
         queue_song::{QueueSong, QueueSongIn, QueueSongOut},
+        queue_song_row::QueueSongRow,
         DropHalf,
     },
     play_state::PlayState,
@@ -44,6 +48,7 @@ pub struct Queue {
     remove_items: gtk::Button,
     clear_items: gtk::Button,
     last_selected: Option<DynamicIndex>,
+    tracks: relm4::typed_view::list::TypedListView<QueueSongRow, gtk::MultiSelection>,
 }
 
 impl Queue {
@@ -138,6 +143,7 @@ pub enum QueueIn {
     JumpToCurrent,
     Rerandomize,
     DragOverSpace,
+    Cover(CoverOut),
 }
 
 #[derive(Debug)]
@@ -169,6 +175,13 @@ impl relm4::Component for Queue {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let mut tracks = relm4::typed_view::list::TypedListView::<QueueSongRow, gtk::MultiSelection>::new();
+
+        songs
+            .iter()
+            .map(|song| QueueSongRow::new(&subsonic, song, &sender))
+            .for_each(|row| tracks.append(row));
+
         let model = Queue {
             subsonic,
             scrolled: gtk::ScrolledWindow::default(),
@@ -182,6 +195,7 @@ impl relm4::Component for Queue {
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
             last_selected: None,
+            tracks,
         };
 
         //init queue
@@ -237,99 +251,100 @@ impl relm4::Component for Queue {
             model.scrolled.clone() -> gtk::ScrolledWindow {
                 set_vexpand: true,
 
-                if model.loading_queue {
-                    gtk::Box {
-                        set_hexpand: true,
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_spacing: 20,
+            //     if model.loading_queue {
+            //         gtk::Box {
+            //             set_hexpand: true,
+            //             set_orientation: gtk::Orientation::Vertical,
+            //             set_spacing: 20,
 
-                        gtk::Label {
-                            add_css_class: "h3",
-                            set_label: &gettext("Loading queue"),
-                        },
-                        gtk::Spinner {
-                            add_css_class: "size100",
-                            start: (),
-                        }
-                    }
-                } else {
-                    model.songs.widget().clone() -> gtk::ListBox {
-                        set_selection_mode: gtk::SelectionMode::Multiple,
+            //             gtk::Label {
+            //                 add_css_class: "h3",
+            //                 set_label: &gettext("Loading queue"),
+            //             },
+            //             gtk::Spinner {
+            //                 add_css_class: "size100",
+            //                 start: (),
+            //             }
+            //         }
+            //     } else {
+            //         // model.songs.widget().clone() -> gtk::ListBox {
+            //         //     set_selection_mode: gtk::SelectionMode::Multiple,
 
-                        connect_selected_rows_changed[sender] => move |widget| {
-                            sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
-                        },
+            //         //     connect_selected_rows_changed[sender] => move |widget| {
+            //         //         sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
+            //         //     },
 
-                        // when hovering over the queue stop scrolling
-                        add_controller = gtk::EventControllerMotion {
-                            connect_motion[scrolling] => move |_self, _x, _y| {
-                                scrolling.replace(ScrollMotion::None);
-                            }
-                        },
+            //         //     // when hovering over the queue stop scrolling
+            //         //     add_controller = gtk::EventControllerMotion {
+            //         //         connect_motion[scrolling] => move |_self, _x, _y| {
+            //         //             scrolling.replace(ScrollMotion::None);
+            //         //         }
+            //         //     },
 
-                        add_controller = gtk::DropControllerMotion {
-                            connect_motion[scrolled, songs, scrolling, scroll_sender] => move |_self, x, y| {
-                                if *scrolling.borrow() != ScrollMotion::None {
-                                    return;
-                                }
+            //         //     add_controller = gtk::DropControllerMotion {
+            //         //         connect_motion[scrolled, songs, scrolling, scroll_sender] => move |_self, x, y| {
+            //         //             if *scrolling.borrow() != ScrollMotion::None {
+            //         //                 return;
+            //         //             }
 
-                                const SCROLL_ZONE: f32 = 60f32;
+            //         //             const SCROLL_ZONE: f32 = 60f32;
 
-                                let point = gtk::graphene::Point::new(x as f32, y as f32);
-                                let computed = songs.compute_point(&scrolled, &point).unwrap();
-                                if computed.y() >= 0f32 && computed.y() <= SCROLL_ZONE {
-                                    scrolling.replace(ScrollMotion::Up);
-                                    scroll_sender.try_send(true).unwrap();
-                                } else if computed.y() >= scrolled.height() as f32 - SCROLL_ZONE && computed.y() <= scrolled.height() as f32 {
-                                    scrolling.replace(ScrollMotion::Down);
-                                    scroll_sender.try_send(true).unwrap();
-                                } else {
-                                    scrolling.replace(ScrollMotion::None);
-                                }
-                            },
+            //         //             let point = gtk::graphene::Point::new(x as f32, y as f32);
+            //         //             let computed = songs.compute_point(&scrolled, &point).unwrap();
+            //         //             if computed.y() >= 0f32 && computed.y() <= SCROLL_ZONE {
+            //         //                 scrolling.replace(ScrollMotion::Up);
+            //         //                 scroll_sender.try_send(true).unwrap();
+            //         //             } else if computed.y() >= scrolled.height() as f32 - SCROLL_ZONE && computed.y() <= scrolled.height() as f32 {
+            //         //                 scrolling.replace(ScrollMotion::Down);
+            //         //                 scroll_sender.try_send(true).unwrap();
+            //         //             } else {
+            //         //                 scrolling.replace(ScrollMotion::None);
+            //         //             }
+            //         //         },
 
-                            connect_leave[scrolling] => move |_self| {
-                                scrolling.replace(ScrollMotion::None);
-                            },
+            //         //         connect_leave[scrolling] => move |_self| {
+            //         //             scrolling.replace(ScrollMotion::None);
+            //         //         },
 
-                            connect_drop_notify[scrolling] => move |_self| {
-                                scrolling.replace(ScrollMotion::None);
-                            }
-                        },
+            //         //         connect_drop_notify[scrolling] => move |_self| {
+            //         //             scrolling.replace(ScrollMotion::None);
+            //         //         }
+            //         //     },
 
-                        #[wrap(Some)]
-                        set_placeholder = &gtk::Box {
-                            set_valign: gtk::Align::Center,
-                            set_orientation: gtk::Orientation::Vertical,
+            //         //     #[wrap(Some)]
+            //         //     set_placeholder = &gtk::Box {
+            //         //         set_valign: gtk::Align::Center,
+            //         //         set_orientation: gtk::Orientation::Vertical,
 
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_label: &gettext("Queue is empty"),
-                            },
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_label: &gettext("Drag music here to add it"),
-                            },
-                        },
+            //         //         gtk::Label {
+            //         //             add_css_class: granite::STYLE_CLASS_H2_LABEL,
+            //         //             set_label: &gettext("Queue is empty"),
+            //         //         },
+            //         //         gtk::Label {
+            //         //             add_css_class: granite::STYLE_CLASS_H3_LABEL,
+            //         //             set_label: &gettext("Drag music here to add it"),
+            //         //         },
+            //         //     },
 
-                        add_controller = gtk::DropTarget {
-                            set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+            //         //     add_controller = gtk::DropTarget {
+            //         //         set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
+            //         //         set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
 
-                            connect_drop[sender] => move |_target, value, _x, _y| {
-                                if let Ok(drop) = value.get::<Droppable>() {
-                                    sender.input(QueueIn::Append(drop));
-                                }
-                                true
-                            },
+            //         //         connect_drop[sender] => move |_target, value, _x, _y| {
+            //         //             if let Ok(drop) = value.get::<Droppable>() {
+            //         //                 sender.input(QueueIn::Append(drop));
+            //         //             }
+            //         //             true
+            //         //         },
 
-                            connect_motion[sender] => move |_widget, _x, _y| {
-                                sender.input(QueueIn::DragOverSpace);
-                                gdk::DragAction::MOVE
-                            }
-                        }
-                    }
-                },
+            //         //         connect_motion[sender] => move |_widget, _x, _y| {
+            //         //             sender.input(QueueIn::DragOverSpace);
+            //         //             gdk::DragAction::MOVE
+            //         //         }
+            //         //     }
+            //         // }
+            //     }
+                model.tracks.view.clone() {},
             },
 
             gtk::ActionBar {
@@ -399,6 +414,7 @@ impl relm4::Component for Queue {
                     Droppable::QueueSongs(songs) => {
                         songs.iter().map(|song| song.1.clone()).collect()
                     }
+                    Droppable::QueueSong(_) => todo!(), //TODO
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
@@ -456,6 +472,7 @@ impl relm4::Component for Queue {
                 let songs: Vec<submarine::data::Child> = match drop {
                     Droppable::Queue(ids) => ids,
                     Droppable::QueueSongs(_) => unreachable!("should move and not insert"),
+                    Droppable::QueueSong(_) => todo!(), //TODO
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Artist(artist) => {
@@ -801,6 +818,9 @@ impl relm4::Component for Queue {
                     );
                 }
             }
+            QueueIn::Cover(msg) => match msg {
+                _ => todo!(), //TODO
+            },
         }
     }
 }

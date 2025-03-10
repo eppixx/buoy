@@ -325,6 +325,7 @@ impl relm4::factory::FactoryComponent for QueueSong {
                     Droppable::QueueSongs(_songs) => {
                         unreachable!("should be moved instead of dropped")
                     }
+                    Droppable::QueueSong(_) => todo!(), //TODO
                     Droppable::Child(c) => vec![*c],
                     Droppable::AlbumWithSongs(album) => album.song,
                     Droppable::Playlist(playlist) => playlist.entry,

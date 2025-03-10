@@ -1,6 +1,6 @@
 use relm4::gtk::glib;
 
-use crate::factory::{playlist_row::PlaylistIndex, queue_song::QueueIndex};
+use crate::factory::{playlist_row::PlaylistIndex, queue_song::QueueIndex, queue_song_row::QueueUid};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, glib::Boxed)]
 #[boxed_type(name = "MediaId")]
@@ -60,6 +60,7 @@ impl Id {
 pub enum Droppable {
     Queue(Vec<submarine::data::Child>),
     QueueSongs(Vec<QueueIndex>),
+    QueueSong(Vec<QueueUid>),
     Child(Box<submarine::data::Child>),
     AlbumWithSongs(Box<submarine::data::AlbumWithSongsId3>),
     Album(Box<submarine::data::AlbumId3>),
