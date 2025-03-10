@@ -6,7 +6,10 @@ use relm4::{
     factory::FactoryVecDeque,
     gtk::{
         self, gdk,
-        prelude::{AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, WidgetExt},
+        prelude::{
+            AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, SelectionModelExt,
+            WidgetExt,
+        },
     },
     prelude::DynamicIndex,
     ComponentParts, ComponentSender, RelmWidgetExt,
@@ -43,10 +46,9 @@ pub struct Queue {
     scroll_motion: Rc<RefCell<ScrollMotion>>,
     songs: FactoryVecDeque<QueueSong>,
     randomized_indices: Vec<usize>,
-    loading_queue: bool,
     playing_index: Option<DynamicIndex>,
     remove_items: gtk::Button,
-    clear_items: gtk::Button,
+    clear_items: gtk::Button, //TODO change to named widget
     last_selected: Option<DynamicIndex>,
     tracks: relm4::typed_view::list::TypedListView<QueueSongRow, gtk::MultiSelection>,
 }
@@ -144,10 +146,22 @@ pub enum QueueIn {
     Rerandomize,
     DragOverSpace,
     Cover(CoverOut),
-    MoveSong { src: usize, dest: usize, half: DropHalf },
-    InsertSongs { dest: usize, drop: Droppable, half: DropHalf },
-    DraggedOverRow { dest: usize, y: f64 },
+    MoveSong {
+        src: usize,
+        dest: usize,
+        half: DropHalf,
+    },
+    InsertSongs {
+        dest: usize,
+        drop: Droppable,
+        half: DropHalf,
+    },
+    DraggedOverRow {
+        dest: usize,
+        y: f64,
+    },
     DragLeaveRow,
+    Activate(u32),
 }
 
 #[derive(Debug)]
@@ -179,7 +193,8 @@ impl relm4::Component for Queue {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut tracks = relm4::typed_view::list::TypedListView::<QueueSongRow, gtk::MultiSelection>::new();
+        let mut tracks =
+            relm4::typed_view::list::TypedListView::<QueueSongRow, gtk::MultiSelection>::new();
 
         songs
             .iter()
@@ -194,7 +209,6 @@ impl relm4::Component for Queue {
                 .launch(gtk::ListBox::default())
                 .forward(sender.input_sender(), QueueIn::QueueSong),
             randomized_indices: vec![],
-            loading_queue: false,
             playing_index: None,
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
@@ -255,22 +269,6 @@ impl relm4::Component for Queue {
             model.scrolled.clone() -> gtk::ScrolledWindow {
                 set_vexpand: true,
 
-            //     if model.loading_queue {
-            //         gtk::Box {
-            //             set_hexpand: true,
-            //             set_orientation: gtk::Orientation::Vertical,
-            //             set_spacing: 20,
-
-            //             gtk::Label {
-            //                 add_css_class: "h3",
-            //                 set_label: &gettext("Loading queue"),
-            //             },
-            //             gtk::Spinner {
-            //                 add_css_class: "size100",
-            //                 start: (),
-            //             }
-            //         }
-            //     } else {
             //         // model.songs.widget().clone() -> gtk::ListBox {
             //         //     set_selection_mode: gtk::SelectionMode::Multiple,
 
@@ -347,8 +345,21 @@ impl relm4::Component for Queue {
             //         //         }
             //         //     }
             //         // }
-            //     }
-                model.tracks.view.clone() {},
+                model.tracks.view.clone() {
+                    connect_activate[sender] => move |_view, index| {
+                        sender.input(QueueIn::Activate(index));
+                    },
+
+                    add_controller = gtk::EventControllerKey {
+                        connect_key_pressed[sender] => move |_widget, key, _code, _state| {
+                            if key == gtk::gdk::Key::Delete {
+                                sender.input(QueueIn::Remove);
+                            }
+                            gtk::glib::Propagation::Proceed
+                        }
+                    }
+
+                },
             },
 
             gtk::ActionBar {
@@ -534,6 +545,7 @@ impl relm4::Component for Queue {
                 self.clear_items.set_sensitive(!self.songs.is_empty());
             }
             QueueIn::Clear => {
+                self.tracks.clear();
                 self.songs.guard().clear();
                 self.randomized_indices.clear();
                 self.clear_items.set_sensitive(!self.songs.is_empty());
@@ -542,47 +554,37 @@ impl relm4::Component for Queue {
                 sender.output(QueueOut::QueueEmpty).unwrap();
             }
             QueueIn::Remove => {
-                let selected_indices: Vec<usize> = self
-                    .songs
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(i, s)| {
-                        if s.root_widget().is_selected() {
-                            Some(i)
-                        } else {
-                            None
-                        }
-                    })
+                let selected_rows: Vec<u32> = (0..self.tracks.len())
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
                     .collect();
-                let mut guard = self.songs.guard();
-                for index in selected_indices.iter().rev() {
-                    guard.remove(*index);
-                }
-                drop(guard);
+                selected_rows
+                    .iter()
+                    .rev()
+                    .for_each(|i| self.tracks.remove(*i));
+
                 sender.input(QueueIn::Rerandomize);
 
                 //set new state when deleting played index
                 if let Some(current) = &self.playing_index {
-                    if selected_indices.contains(&current.current_index()) {
+                    if selected_rows.contains(&(current.current_index() as u32)) {
                         sender.output(QueueOut::Player(Command::Stop)).unwrap();
                         sender.input(QueueIn::SetCurrent(None));
                     }
                 }
 
-                if self.songs.is_empty() {
+                if self.tracks.is_empty() {
                     sender.output(QueueOut::QueueEmpty).unwrap();
+                    self.clear_items.set_sensitive(false);
                 }
-
-                self.clear_items.set_sensitive(!self.songs.is_empty());
             }
             QueueIn::NewState(state) => {
-                if self.songs.is_empty() {
+                if self.tracks.is_empty() {
                     return;
                 }
 
                 if let Some(index) = &self.playing_index {
-                    if let Some(song) = self.songs.get(index.current_index()) {
-                        song.new_play_state(&state);
+                    if let Some(song) = self.tracks.get(index.current_index() as u32) {
+                        song.borrow_mut().set_play_state(&state);
                     }
                 }
             }
@@ -861,11 +863,8 @@ impl relm4::Component for Queue {
                 };
 
                 //remove src
-                let src_row = QueueSongRow::new(
-                    &self.subsonic,
-                    &src_entry.borrow().item(),
-                    &sender,
-                );
+                let src_row =
+                    QueueSongRow::new(&self.subsonic, &src_entry.borrow().item(), &sender);
                 self.tracks.remove(src_index);
 
                 // insert based on cursor position and order of src and dest
@@ -974,8 +973,24 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::DragLeaveRow => {
-                (0..self.tracks.len()).filter_map(|i| self.tracks.get(i))
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
                     .for_each(|track| track.borrow().reset_drag_indicators());
+            }
+            QueueIn::Activate(index) => {
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| {
+                        track.borrow_mut().set_play_state(&PlayState::Stop);
+                    });
+
+                if let Some(track) = self.tracks.get(index) {
+                    // self.playing_index = Some(index); //TODO update playing index
+                    track.borrow_mut().set_play_state(&PlayState::Play);
+                    sender
+                        .output(QueueOut::Play(Box::new(track.borrow().item().clone())))
+                        .unwrap();
+                }
             }
         }
     }

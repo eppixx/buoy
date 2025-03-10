@@ -39,6 +39,8 @@ pub struct QueueSongRow {
     item: submarine::data::Child,
     uid: usize,
     sender: relm4::ComponentSender<Queue>,
+    play_state: PlayState,
+    cover_stack: Option<gtk::Stack>,
     fav_btn: Option<gtk::Button>,
 }
 
@@ -54,6 +56,8 @@ impl QueueSongRow {
             item: child.clone(),
             uid,
             sender: sender.clone(),
+            play_state: PlayState::Stop,
+            cover_stack: None,
             fav_btn: None,
         }
     }
@@ -68,6 +72,13 @@ impl QueueSongRow {
 
     pub fn fav_btn(&self) -> &Option<gtk::Button> {
         &self.fav_btn
+    }
+
+    pub fn set_play_state(&mut self, state: &PlayState) {
+        if let Some(stack) = &self.cover_stack {
+            stack.set_visible_child_enum(state);
+        }
+        self.play_state = state.clone();
     }
 
     pub fn add_drag_indicator_top(&self) {
@@ -103,6 +114,7 @@ pub struct Model {
     drag_src: gtk::DragSource,
     drop_target: gtk::DropTarget,
 
+    cover_stack: gtk::Stack,
     cover: Option<relm4::Controller<Cover>>,
     title: gtk::Label,
     artist: gtk::Label,
@@ -113,6 +125,7 @@ pub struct Model {
 
 impl Model {
     fn new(
+        cover_stack: gtk::Stack,
         title: gtk::Label,
         artist: gtk::Label,
         length: gtk::Label,
@@ -125,6 +138,7 @@ impl Model {
             child: Rc::new(RefCell::new(None)),
             drag_src: gtk::DragSource::default(),
             drop_target: gtk::DropTarget::default(),
+            cover_stack,
             cover: None,
             title,
             artist,
@@ -309,11 +323,11 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
                 append: fav_btn = &gtk::Button {
                     set_tooltip: &gettext("Click to (un)favorite song"),
                     set_focus_on_click: false,
-                }
+                },
             }
         }
 
-        let (view, widgets) = Model::new(title, artist, length, fav_btn);
+        let (view, widgets) = Model::new(cover_stack, title, artist, length, fav_btn);
         view.set_child(Some(&my_box));
         (view, (widgets, cover_box))
     }
@@ -334,6 +348,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
         }
         widgets.set_from_row(self);
 
+        // set labels and button
         widgets.title.set_label(&self.item.title);
         widgets.artist.set_label(
             self.item
@@ -349,11 +364,15 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
             false => widgets.fav_btn.set_icon_name("non-starred-symbolic"),
         }
 
+        //TODO connect fav_btn
+
+        self.cover_stack = Some(widgets.cover_stack.clone());
         self.fav_btn = Some(widgets.fav_btn.clone());
     }
 
     fn unbind(&mut self, (widgets, _cover_box): &mut Self::Widgets, _root: &mut Self::Root) {
         widgets.size_group.remove_widget(&widgets.length);
+        self.cover_stack = None;
         self.fav_btn = None;
     }
 }
