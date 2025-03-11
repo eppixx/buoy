@@ -147,7 +147,10 @@ impl relm4::component::Component for PlayInfo {
 
 fn style_label_from_child(child: &Option<submarine::data::Child>) -> String {
     let Some(child) = &child else {
-        return gettext("Nothing is playing");
+        return format!(
+            "<span font_size=\"xx-large\">{}</span>\n<span font_size=\"large\"> </span>",
+            gettext("Nothing is playing")
+        );
     };
 
     let mut result = format!(
