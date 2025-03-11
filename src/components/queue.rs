@@ -161,7 +161,6 @@ pub enum QueueIn {
     Clear,
     Remove,
     NewState(PlayState),
-    SomeIsSelected(bool),
     ToggleShuffle(Shuffle),
     PlayNext,
     PlayPrevious,
@@ -308,10 +307,6 @@ impl relm4::Component for Queue {
                     set_vexpand: true,
                     // model.songs.widget().clone() -> gtk::ListBox {
                     //     set_selection_mode: gtk::SelectionMode::Multiple,
-
-                    //     connect_selected_rows_changed[sender] => move |widget| {
-                    //         sender.input(QueueIn::SomeIsSelected(!widget.selected_rows().is_empty()));
-                    //     },
 
                     //     // when hovering over the queue stop scrolling
                     //     add_controller = gtk::EventControllerMotion {
@@ -555,7 +550,6 @@ impl relm4::Component for Queue {
                     }
                 }
             }
-            QueueIn::SomeIsSelected(state) => self.remove_items.set_sensitive(state),
             QueueIn::ToggleShuffle(shuffle) => {
                 {
                     let mut settings = Settings::get().lock().unwrap();
@@ -850,7 +844,6 @@ impl relm4::Component for Queue {
                 });
 
                 self.remove_items.set_sensitive(is_some);
-                //TODO remove SomeIsSelected
             }
         }
     }
