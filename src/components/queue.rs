@@ -190,6 +190,7 @@ pub enum QueueIn {
     },
     DragLeaveRow,
     Activate(u32),
+    SelectionChanged,
 }
 
 #[derive(Debug)]
@@ -279,6 +280,11 @@ impl relm4::Component for Queue {
                     },
                 );
             }
+        });
+
+        let send = sender.clone();
+        model.tracks.view.model().unwrap().connect_selection_changed(move|_model, _, _| {
+            send.input(QueueIn::SelectionChanged);
         });
 
         if model.tracks.is_empty() {
@@ -508,6 +514,7 @@ impl relm4::Component for Queue {
                 self.tracks.clear();
                 self.randomized_indices.clear();
                 self.clear_items.set_sensitive(!self.tracks.is_empty());
+                sender.input(QueueIn::SelectionChanged);
                 self.last_selected = None;
                 widgets.queue_stack.set_visible_child_enum(&QueueStack::Placeholder);
                 sender.output(QueueOut::QueueEmpty).unwrap();
@@ -530,6 +537,8 @@ impl relm4::Component for Queue {
                         sender.input(QueueIn::SetCurrent(None));
                     }
                 }
+
+                sender.input(QueueIn::SelectionChanged);
 
                 if self.tracks.is_empty() {
                     sender.input(QueueIn::Clear);
@@ -834,6 +843,14 @@ impl relm4::Component for Queue {
                         .output(QueueOut::Play(Box::new(track.borrow().item().clone())))
                         .unwrap();
                 }
+            }
+            QueueIn::SelectionChanged => {
+                let is_some = (0..self.tracks.len()).any(|i| {
+                    self.tracks.view.model().unwrap().is_selected(i)
+                });
+
+                self.remove_items.set_sensitive(is_some);
+                //TODO remove SomeIsSelected
             }
         }
     }
