@@ -236,15 +236,14 @@ impl relm4::Component for Queue {
         };
 
         //init queue
-        println!("songs {}", songs.len());
         songs
             .iter()
             .map(|song| QueueSongRow::new(&model.subsonic, song, &sender))
             .for_each(|row| model.tracks.append(row));
         if let Some(index) = index {
-            println!("set current index to {index}");
             model.tracks.get(index as u32).unwrap().borrow_mut().set_play_state(&PlayState::Pause);
         }
+        sender.input(QueueIn::Rerandomize);
 
         // let songs = model.songs.widget().clone();
         let scrolled = model.scrolled.clone();
@@ -469,7 +468,6 @@ impl relm4::Component for Queue {
                 sender.input(QueueIn::Append(drop));
             }
             QueueIn::Append(drop) => {
-                println!("appending songs");
                 let songs = drop.get_songs(&self.subsonic);
                 for song in songs {
                     let row = QueueSongRow::new(&self.subsonic, &song, &sender);
