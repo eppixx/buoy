@@ -63,7 +63,6 @@ impl TryFrom<String> for QueueStack {
 pub struct Queue {
     subsonic: Rc<RefCell<Subsonic>>,
     scrolled: gtk::ScrolledWindow,
-    scroll_motion: Rc<RefCell<ScrollMotion>>,
     randomized_indices: Vec<usize>,
     remove_items: gtk::Button,
     clear_items: gtk::Button, //TODO change to named widget
@@ -237,7 +236,6 @@ impl relm4::Component for Queue {
         let mut model = Queue {
             subsonic,
             scrolled: gtk::ScrolledWindow::default(),
-            scroll_motion: Rc::new(RefCell::new(ScrollMotion::None)),
             randomized_indices: vec![],
             remove_items: gtk::Button::new(),
             clear_items: gtk::Button::new(),
@@ -253,40 +251,7 @@ impl relm4::Component for Queue {
         sender.input(QueueIn::SetCurrent(index));
         sender.input(QueueIn::Rerandomize);
 
-        let scrolled = model.scrolled.clone();
-        let scrolling = model.scroll_motion.clone();
-        let (scroll_sender, receiver) = async_channel::unbounded::<bool>();
         let widgets = view_output!();
-
-        gtk::glib::spawn_future_local(async move {
-            let scrolling = scrolling.clone();
-
-            while let Ok(_msg) = receiver.recv().await {
-                let scrolled = scrolled.clone();
-                let scrolling = scrolling.clone();
-
-                gtk::glib::source::timeout_add_local(
-                    core::time::Duration::from_millis(15),
-                    move || {
-                        const SCROLL_MOVE: f64 = 5f64;
-                        match *scrolling.borrow() {
-                            ScrollMotion::None => return gtk::glib::ControlFlow::Break,
-                            ScrollMotion::Up => {
-                                let vadj = scrolled.vadjustment();
-                                vadj.set_value(vadj.value() - SCROLL_MOVE);
-                                scrolled.set_vadjustment(Some(&vadj));
-                            }
-                            ScrollMotion::Down => {
-                                let vadj = scrolled.vadjustment();
-                                vadj.set_value(vadj.value() + SCROLL_MOVE);
-                                scrolled.set_vadjustment(Some(&vadj));
-                            }
-                        }
-                        gtk::glib::ControlFlow::Continue
-                    },
-                );
-            }
-        });
 
         let send = sender.clone();
         model
@@ -360,23 +325,6 @@ impl relm4::Component for Queue {
                     //             scrolling.replace(ScrollMotion::None);
                     //         }
                     //     },
-
-                    //     add_controller = gtk::DropTarget {
-                    //         set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                    //         set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
-
-                    //         connect_drop[sender] => move |_target, value, _x, _y| {
-                    //             if let Ok(drop) = value.get::<Droppable>() {
-                    //                 sender.input(QueueIn::Append(drop));
-                    //             }
-                    //             true
-                    //         },
-
-                    //         connect_motion[sender] => move |_widget, _x, _y| {
-                    //             sender.input(QueueIn::DragOverSpace);
-                    //             gdk::DragAction::MOVE
-                    //         }
-                    //     }
                     // }
                     model.tracks.view.clone() {
                         set_widget_name: "queue-list",
