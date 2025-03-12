@@ -1,14 +1,15 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gettextrs::gettext;
+use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use relm4::{
     factory::FactoryVecDeque,
     gtk::{
         self, gdk,
         prelude::{
-            AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, SelectionModelExt,
-            WidgetExt,
+            AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, ListModelExt, OrientableExt,
+            SelectionModelExt, WidgetExt,
         },
     },
     prelude::DynamicIndex,
@@ -153,6 +154,28 @@ impl Queue {
                 .map(|queue_song| queue_song.borrow().item().clone()),
         }
     }
+
+    fn find_nearest_widget(&self, y: f64) -> Option<(f64, u32)> {
+        (0..self.tracks.len())
+            .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+            .filter_map(|(i, track)| {
+                let track = track.borrow();
+                let Some(widget) = track.fav_btn() else {
+                    return None;
+                };
+                let translated_y = widget
+                    .translate_coordinates(
+                        &self.tracks.view,
+                        0.0,
+                        widget.height() as f64 * 0.5,
+                    )
+                    .unwrap();
+                let y_diff = y - translated_y.1;
+                Some((y_diff, i))
+            })
+            .min_by(|(diff, _), (diff1, _)| diff.abs().partial_cmp(&diff1.abs()).unwrap())
+            .take()
+    }
 }
 
 #[derive(Debug)]
@@ -189,6 +212,10 @@ pub enum QueueIn {
     },
     DragLeaveRow,
     Activate(u32),
+    DropHover(f64, f64),
+    DropMotionLeave,
+    DropMove(Droppable, f64, f64),
+    DropInsert(Droppable, f64, f64),
     SelectionChanged,
 }
 
@@ -285,6 +312,7 @@ impl relm4::Component for Queue {
         model.tracks.view.model().unwrap().connect_selection_changed(move|_model, _, _| {
             send.input(QueueIn::SelectionChanged);
         });
+        sender.input(QueueIn::DragLeaveRow);
 
         if model.tracks.is_empty() {
             sender.input(QueueIn::Clear);
@@ -363,8 +391,16 @@ impl relm4::Component for Queue {
                     //     }
                     // }
                     model.tracks.view.clone() {
+                        set_widget_name: "queue-list",
+
                         connect_activate[sender] => move |_view, index| {
                             sender.input(QueueIn::Activate(index));
+                        },
+
+                        add_controller = gtk::GestureClick {
+                            connect_pressed => move |controller, button, _x, _y| {
+                                println!("pressed on queue {controller:?} {button}");
+                            }
                         },
 
                         add_controller = gtk::EventControllerKey {
@@ -373,6 +409,32 @@ impl relm4::Component for Queue {
                                     sender.input(QueueIn::Remove);
                                 }
                                 gtk::glib::Propagation::Proceed
+                            }
+                        },
+
+                        add_controller = gtk::DropTarget {
+                            set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
+                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
+                            connect_motion[sender] => move |_controller, x, y| {
+                                sender.input(QueueIn::DropHover(x, y));
+                                gdk::DragAction::MOVE
+                            },
+
+                            connect_leave[sender] => move |_controller| {
+                                sender.input(QueueIn::DropMotionLeave)
+                            },
+
+                            connect_drop[sender] => move |_controller, value, x, y| {
+                                sender.input(QueueIn::DropMotionLeave);
+
+                                if let Ok(drop) = value.get::<Droppable>() {
+                                    match &drop {
+                                        Droppable::QueueSongs(_) => sender.input(QueueIn::DropMove(drop, x, y)),
+                                        _ => sender.input(QueueIn::DropInsert(drop, x, y)),
+                                    }
+                                }
+                                true
                             }
                         }
                     }
@@ -838,10 +900,88 @@ impl relm4::Component for Queue {
                         .unwrap();
                 }
             }
+            QueueIn::DropHover(_x, y) => {
+                //reset drag indicators
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow().reset_drag_indicators());
+
+                //finding the index which is the closest
+                if let Some((diff, i)) = (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+                    .filter_map(|(i, track)| {
+                        let track = track.borrow();
+                        let Some(widget) = track.fav_btn() else {
+                            return None;
+                        };
+                        let translated_y = widget
+                            .translate_coordinates(
+                                &self.tracks.view,
+                                0.0,
+                                widget.height() as f64 * 0.5,
+                            )
+                            .unwrap();
+                        let y_diff = y - translated_y.1;
+                        Some((y_diff, i))
+                    })
+                    .min_by(|(diff, _), (diff1, _)| diff.abs().partial_cmp(&diff1.abs()).unwrap())
+                    .take()
+                {
+                    if diff < 0.0 {
+                        self.tracks.get(i).unwrap().borrow().add_drag_indicator_top();
+                    } else {
+                        self.tracks.get(i).unwrap().borrow().add_drag_indicator_bottom();
+                    }
+                }
+            }
+            QueueIn::DropMotionLeave => {
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow().reset_drag_indicators());
+            }
+            QueueIn::DropMove(drop, _x, y) => {
+                //finding the index which is the closest
+                if let Some((diff, i)) = self.find_nearest_widget(y) {
+                    let Droppable::QueueSongs(songs) = drop else {
+                        unreachable!("can only move QueueSongs");
+                    };
+                    //insert songs
+                    for song in songs.iter().rev() {
+                        let row = QueueSongRow::new(&self.subsonic, &song.child, &sender);
+                        if diff < 0.0 {
+                            self.tracks.insert(i, row);
+                        } else {
+                            self.tracks.insert(i + 1, row);
+                        }
+                    }
+
+                    //remove old uids
+                    let uids: Vec<usize> = songs.iter().map(|s| s.uid).collect();
+                    let idx: Vec<u32> = (0..self.tracks.len())
+                        .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+                        .filter_map(|(i, t)| (uids.contains(t.borrow().uid())).then(|| i))
+                        .collect();
+                    idx.iter().sorted().rev().for_each(|i| self.tracks.remove(*i));
+                }
+            }
+            QueueIn::DropInsert(drop, _x, y) => {
+                //finding the index which is the closest
+                if let Some((diff, i)) = self.find_nearest_widget(y) {
+                    let songs = drop.get_songs(&self.subsonic);
+                    //insert songs
+                    for song in songs.iter().rev() {
+                        let row = QueueSongRow::new(&self.subsonic, song, &sender);
+                        if diff < 0.0 {
+                            self.tracks.insert(i, row);
+                        } else {
+                            self.tracks.insert(i + 1, row);
+                        }
+                    }
+                }
+            }
             QueueIn::SelectionChanged => {
-                let is_some = (0..self.tracks.len()).any(|i| {
-                    self.tracks.view.model().unwrap().is_selected(i)
-                });
+                let is_some = (0..self.tracks.len())
+                    .any(|i| self.tracks.view.model().unwrap().is_selected(i));
 
                 self.remove_items.set_sensitive(is_some);
             }

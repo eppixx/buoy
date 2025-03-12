@@ -270,7 +270,7 @@ impl Model {
             sender.input(QueueIn::DragLeaveRow);
         });
 
-        root.add_controller(model.drop_target.clone());
+        // root.add_controller(model.drop_target.clone());
         root.add_controller(model.drag_src.clone());
 
         (root, model)

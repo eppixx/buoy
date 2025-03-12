@@ -105,13 +105,6 @@ contents > box {
 
 #queue {}
 
-#queue-song {
-    border-radius: 8px;
-    padding: 4px;
-    margin-left: 5px;
-    margin-right: 5px;
-}
-
 #play-control {}
 
 .play-control-main-button {
@@ -178,6 +171,7 @@ contents > box {
 
 /* row in columnviews */
 #artists-view-tracks > listview > row
+, #queue-list > row
 , #albums-view-tracks > listview > row
 , #album-view-tracks > listview > row
 , #tracks-view-tracks > listview > row
