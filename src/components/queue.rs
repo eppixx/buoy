@@ -755,9 +755,9 @@ impl relm4::Component for Queue {
                 // where the current song in the window will up end from start
                 const CURRENT_POSITION: f64 = 0.4;
                 if let Some(current) = self.playing_index() {
-                    let height = self.tracks.view.height();
                     let adj = self.scrolled.vadjustment();
-                    let scroll_y = f64::from(height) / self.tracks.len() as f64 * current as f64
+                    let height = adj.upper();
+                    let scroll_y = height / self.tracks.len() as f64 * current as f64
                         - f64::from(self.scrolled.height()) * CURRENT_POSITION;
                     adj.set_value(scroll_y);
                     self.scrolled.set_vadjustment(Some(&adj));
