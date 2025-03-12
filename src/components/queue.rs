@@ -425,26 +425,26 @@ impl relm4::Component for Queue {
                         }
                     }
                 },
-                add_enumed[QueueStack::Placeholder] = &gtk::Box {
-                    set_valign: gtk::Align::Center,
+                add_enumed[QueueStack::Placeholder] = &gtk::CenterBox {
                     set_orientation: gtk::Orientation::Vertical,
 
-                    gtk::Label {
-                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                        set_label: &gettext("Queue is empty"),
-                    },
-                    gtk::Label {
-                        add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                        set_label: &gettext("Drag music here to add it"),
-                    },
-                    add_controller = gtk::DropTarget {
-                        set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                        set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                    #[wrap(Some)]
+                    set_center_widget = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
 
-                        connect_motion => move |_target, _x, _y| {
-                            println!("motion");
-                            gdk::DragAction::COPY
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                            set_label: &gettext("Queue is empty"),
                         },
+                        gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                            set_label: &gettext("Drag music here to add it"),
+                        },
+                    },
+
+                    add_controller = gtk::DropTarget {
+                        set_actions: gdk::DragAction::COPY,
+                        set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
 
                         connect_drop[sender] => move |_target, value, _x, _y| {
                             if let Ok(drop) = value.get::<Droppable>() {
