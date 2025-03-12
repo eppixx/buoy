@@ -129,61 +129,9 @@ pub struct Model {
     artist: gtk::Label,
     length: gtk::Label,
     fav_btn: gtk::Button,
-    size_group: gtk::SizeGroup,
 }
 
 impl Model {
-    fn new(
-        cover_stack: gtk::Stack,
-        title: gtk::Label,
-        artist: gtk::Label,
-        length: gtk::Label,
-        fav_btn: gtk::Button,
-    ) -> (gtk::Viewport, Self) {
-        let model = Model {
-            subsonic: Rc::new(RefCell::new(None)),
-            sender: Rc::new(RefCell::new(None)),
-            uid: Rc::new(RefCell::new(None)),
-            child: Rc::new(RefCell::new(None)),
-            drag_src: gtk::DragSource::default(),
-            cover_stack,
-            cover: None,
-            title,
-            artist,
-            length,
-            fav_btn,
-            size_group: gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal),
-        };
-
-        let root = gtk::Viewport::default();
-
-        // create DragSource
-        model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
-
-        // set drag icon
-        let subsonic = model.subsonic.clone();
-        let child = model.child.clone();
-        model.drag_src.connect_drag_begin(move |src, _drag| {
-            let Some(ref subsonic) = *subsonic.borrow() else {
-                return;
-            };
-            let Some(ref child) = *child.borrow() else {
-                return;
-            };
-
-            if let Some(cover_id) = &child.cover_art {
-                let cover = subsonic.borrow().cover_icon(cover_id);
-                if let Some(tex) = cover {
-                    src.set_icon(Some(&tex), 0, 0);
-                }
-            }
-        });
-
-        root.add_controller(model.drag_src.clone());
-
-        (root, model)
-    }
-
     fn set_from_row(&self, row: &QueueSongRow) {
         self.subsonic.replace(Some(row.subsonic.clone()));
         self.child.replace(Some(row.item.clone()));
@@ -249,9 +197,47 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
             }
         }
 
-        let (view, widgets) = Model::new(cover_stack, title, artist, length, fav_btn);
-        view.set_child(Some(&my_box));
-        (view, (widgets, cover_box))
+        let model = Model {
+            subsonic: Rc::new(RefCell::new(None)),
+            sender: Rc::new(RefCell::new(None)),
+            uid: Rc::new(RefCell::new(None)),
+            child: Rc::new(RefCell::new(None)),
+            drag_src: gtk::DragSource::default(),
+            cover_stack,
+            cover: None,
+            title,
+            artist,
+            length,
+            fav_btn,
+        };
+
+
+        // create DragSource
+        model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+
+        // set drag icon
+        let subsonic = model.subsonic.clone();
+        let child = model.child.clone();
+        model.drag_src.connect_drag_begin(move |src, _drag| {
+            let Some(ref subsonic) = *subsonic.borrow() else {
+                return;
+            };
+            let Some(ref child) = *child.borrow() else {
+                return;
+            };
+
+            if let Some(cover_id) = &child.cover_art {
+                let cover = subsonic.borrow().cover_icon(cover_id);
+                if let Some(tex) = cover {
+                    src.set_icon(Some(&tex), 0, 0);
+                }
+            }
+        });
+
+        let root = gtk::Viewport::default();
+        root.add_controller(model.drag_src.clone());
+        root.set_child(Some(&my_box));
+        (root, (model, cover_box))
     }
 
     fn bind(&mut self, (widgets, cover_box): &mut Self::Widgets, _root: &mut Self::Root) {
@@ -280,7 +266,6 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
         );
         let length = common::convert_for_label(i64::from(self.item.duration.unwrap_or(0)) * 1000);
         widgets.length.set_label(&length);
-        widgets.size_group.add_widget(&widgets.length);
         match self.item.starred.is_some() {
             true => widgets.fav_btn.set_icon_name("starred-symbolic"),
             false => widgets.fav_btn.set_icon_name("non-starred-symbolic"),
@@ -292,8 +277,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
         self.fav_btn = Some(widgets.fav_btn.clone());
     }
 
-    fn unbind(&mut self, (widgets, _cover_box): &mut Self::Widgets, _root: &mut Self::Root) {
-        widgets.size_group.remove_widget(&widgets.length);
+    fn unbind(&mut self, (_widgets, _cover_box): &mut Self::Widgets, _root: &mut Self::Root) {
         self.cover_stack = None;
         self.fav_btn = None;
     }
