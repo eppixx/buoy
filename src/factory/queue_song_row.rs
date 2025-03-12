@@ -205,19 +205,6 @@ impl Model {
                     return false;
                 };
 
-                //disable dropping items while searching
-                {
-                    let settings = Settings::get().lock().unwrap();
-                    if settings.search_active && !settings.search_text.is_empty() {
-                        sender
-                            .output(QueueOut::DisplayToast(gettext(
-                                "dropping songs into a playlist is not allowed while searching",
-                            )))
-                            .unwrap();
-                        return false;
-                    }
-                }
-
                 // check if drop is valid
                 if let Ok(drop) = value.get::<Droppable>() {
                     match drop {
