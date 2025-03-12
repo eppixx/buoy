@@ -86,7 +86,9 @@ impl Queue {
     pub fn playing_index(&self) -> Option<u32> {
         (0..self.tracks.len())
             .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
-            .find(|(_i, track)| *track.borrow().play_state() == PlayState::Play)
+            .find(|(_i, track)| {
+                *track.borrow().play_state() != PlayState::Stop
+            })
             .map(|(i, _t)| i)
     }
 
@@ -735,10 +737,10 @@ impl relm4::Component for Queue {
             QueueIn::JumpToCurrent => {
                 // where the current song in the window will up end from start
                 const CURRENT_POSITION: f64 = 0.4;
-                if let Some(current) = self.playing_index() {
+                if let Some(index) = self.playing_index() {
                     let adj = self.scrolled.vadjustment();
                     let height = adj.upper();
-                    let scroll_y = height / self.tracks.len() as f64 * current as f64
+                    let scroll_y = height / self.tracks.len() as f64 * index as f64
                         - f64::from(self.scrolled.height()) * CURRENT_POSITION;
                     adj.set_value(scroll_y);
                     self.scrolled.set_vadjustment(Some(&adj));
