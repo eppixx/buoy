@@ -733,6 +733,7 @@ impl relm4::Component for Queue {
             QueueIn::Favorite(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
+                    .filter(|track| track.borrow().item().id == id)
                     .for_each(|track| match state {
                         true => {
                             if let Some(fav) = &track.borrow().fav_btn() {
