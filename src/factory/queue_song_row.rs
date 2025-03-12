@@ -86,7 +86,6 @@ impl QueueSongRow {
         &self.play_state
     }
 
-    //TODO remove
     pub fn activate(&mut self) {
         self.set_play_state(&PlayState::Play);
         self.sender.input(QueueIn::Activate(self.uid as u32));
