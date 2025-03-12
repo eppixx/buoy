@@ -197,6 +197,7 @@ pub enum QueueIn {
     DropMove(Droppable, f64, f64),
     DropInsert(Droppable, f64, f64),
     SelectionChanged,
+    SetCurrent(Option<usize>),
 }
 
 #[derive(Debug)]
@@ -247,14 +248,7 @@ impl relm4::Component for Queue {
             .iter()
             .map(|song| QueueSongRow::new(&model.subsonic, song, &sender))
             .for_each(|row| model.tracks.append(row));
-        if let Some(index) = index {
-            model
-                .tracks
-                .get(index as u32)
-                .unwrap()
-                .borrow_mut()
-                .set_play_state(&PlayState::Pause);
-        }
+        sender.input(QueueIn::SetCurrent(index));
         sender.input(QueueIn::Rerandomize);
 
         let scrolled = model.scrolled.clone();
@@ -885,6 +879,16 @@ impl relm4::Component for Queue {
                     .any(|i| self.tracks.view.model().unwrap().is_selected(i));
 
                 self.remove_items.set_sensitive(is_some);
+            }
+            QueueIn::SetCurrent(index) => {
+                if let Some(index) = index {
+                    self
+                        .tracks
+                        .get(index as u32)
+                        .unwrap()
+                        .borrow_mut()
+                        .set_play_state(&PlayState::Pause);
+                }
             }
         }
     }
