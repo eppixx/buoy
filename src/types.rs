@@ -2,7 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use relm4::gtk::glib;
 
-use crate::{factory::{playlist_row::PlaylistIndex, queue_song_row::QueueUid}, subsonic::Subsonic};
+use crate::{
+    factory::{playlist_row::PlaylistIndex, queue_song_row::QueueUid},
+    subsonic::Subsonic,
+};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, glib::Boxed)]
 #[boxed_type(name = "MediaId")]
@@ -76,14 +79,12 @@ impl Droppable {
     pub fn get_songs(&self, subsonic: &Rc<RefCell<Subsonic>>) -> Vec<submarine::data::Child> {
         match &self {
             Droppable::Queue(ids) => ids.clone(),
-            Droppable::QueueSongs(songs) => {
-                songs.iter().map(|song| song.child.clone()).collect()
-            }
+            Droppable::QueueSongs(songs) => songs.iter().map(|song| song.child.clone()).collect(),
             Droppable::Child(c) => vec![*c.clone()],
             Droppable::AlbumWithSongs(album) => album.song.clone(),
             Droppable::Artist(artist) => {
                 let subsonic = subsonic.borrow();
-                let albums = subsonic.albums_from_artist(&artist);
+                let albums = subsonic.albums_from_artist(artist);
                 albums
                     .iter()
                     .flat_map(|a| subsonic.tracks_from_album(a))
@@ -100,22 +101,20 @@ impl Droppable {
                     .collect()
             }
             Droppable::Playlist(playlist) => playlist.entry.clone(),
-            Droppable::AlbumChild(child) =>
-                subsonic
+            Droppable::AlbumChild(child) => subsonic
                 .borrow()
-                .tracks_from_album(&child)
+                .tracks_from_album(child)
                 .into_iter()
                 .cloned()
                 .collect(),
-            Droppable::Album(album) =>
-                subsonic
+            Droppable::Album(album) => subsonic
                 .borrow()
-                .tracks_from_album_id3(&album)
+                .tracks_from_album_id3(album)
                 .into_iter()
                 .cloned()
                 .collect(),
             Droppable::PlaylistItems(items) => {
-                items.into_iter().map(|song| song.child.clone()).collect()
+                items.iter().map(|song| song.child.clone()).collect()
             }
         }
     }

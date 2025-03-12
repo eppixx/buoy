@@ -4,13 +4,9 @@ use gettextrs::gettext;
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use relm4::{
-    factory::FactoryVecDeque,
     gtk::{
         self, gdk,
-        prelude::{
-            AdjustmentExt, BoxExt, ButtonExt, ListBoxRowExt, ListModelExt, OrientableExt,
-            SelectionModelExt, WidgetExt,
-        },
+        prelude::{AdjustmentExt, BoxExt, ButtonExt, OrientableExt, SelectionModelExt, WidgetExt},
     },
     prelude::DynamicIndex,
     ComponentParts, ComponentSender, RelmWidgetExt,
@@ -21,10 +17,7 @@ use crate::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::{
-        queue_song_row::QueueSongRow,
-        DropHalf,
-    },
+    factory::{queue_song_row::QueueSongRow, DropHalf},
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     player::Command,
@@ -164,23 +157,21 @@ impl Queue {
                     return None;
                 };
                 let translated_y = widget
-                    .translate_coordinates(
-                        &self.tracks.view,
-                        0.0,
-                        widget.height() as f64 * 0.5,
-                    )
+                    .translate_coordinates(&self.tracks.view, 0.0, widget.height() as f64 * 0.5)
                     .unwrap();
                 let y_diff = y - translated_y.1;
                 Some((y_diff, i))
             })
-            .min_by(|(diff, _), (diff1, _)| diff.abs().partial_cmp(&diff1.abs()).unwrap())
-            .take()
+            .min_by(|(diff, _), (diff1, _)| {
+                diff.abs()
+                    .partial_cmp(&diff1.abs())
+                    .expect("widget has no NaN")
+            })
     }
 }
 
 #[derive(Debug)]
 pub enum QueueIn {
-    SetCurrent(Option<usize>),
     Clear,
     Remove,
     NewState(PlayState),
@@ -268,7 +259,12 @@ impl relm4::Component for Queue {
             .map(|song| QueueSongRow::new(&model.subsonic, song, &sender))
             .for_each(|row| model.tracks.append(row));
         if let Some(index) = index {
-            model.tracks.get(index as u32).unwrap().borrow_mut().set_play_state(&PlayState::Pause);
+            model
+                .tracks
+                .get(index as u32)
+                .unwrap()
+                .borrow_mut()
+                .set_play_state(&PlayState::Pause);
         }
         sender.input(QueueIn::Rerandomize);
 
@@ -309,16 +305,24 @@ impl relm4::Component for Queue {
         });
 
         let send = sender.clone();
-        model.tracks.view.model().unwrap().connect_selection_changed(move|_model, _, _| {
-            send.input(QueueIn::SelectionChanged);
-        });
+        model
+            .tracks
+            .view
+            .model()
+            .unwrap()
+            .connect_selection_changed(move |_model, _, _| {
+                send.input(QueueIn::SelectionChanged);
+            });
+
         sender.input(QueueIn::DragLeaveRow);
 
         if model.tracks.is_empty() {
             sender.input(QueueIn::Clear);
         } else {
             model.clear_items.set_sensitive(true);
-            widgets.queue_stack.set_visible_child_enum(&QueueStack::Queue);
+            widgets
+                .queue_stack
+                .set_visible_child_enum(&QueueStack::Queue);
         }
 
         ComponentParts { model, widgets }
@@ -510,22 +514,14 @@ impl relm4::Component for Queue {
         }
     }
 
-    fn update_with_view(&mut self,
-                        widgets: &mut Self::Widgets,
-                        msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match msg {
-            QueueIn::SetCurrent(None) | QueueIn::NewState(PlayState::Stop) => {
-                if let Some(index) = &self.playing_index() {
-                    if let Some(song) = self.tracks.get(*index) {
-                        song.borrow_mut().set_play_state(&PlayState::Stop);
-                    }
-                }
-            }
-            QueueIn::SetCurrent(Some(index)) => {
-                if let Some(song) = self.tracks.get(index as u32) {
-                    sender.input(QueueIn::NewState(PlayState::Pause));
-                }
-            }
             QueueIn::Replace(drop) => {
                 sender.input(QueueIn::Clear);
                 sender.input(QueueIn::Append(drop));
@@ -543,7 +539,9 @@ impl relm4::Component for Queue {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
                 self.clear_items.set_sensitive(!self.tracks.is_empty());
-                widgets.queue_stack.set_visible_child_enum(&QueueStack::Queue);
+                widgets
+                    .queue_stack
+                    .set_visible_child_enum(&QueueStack::Queue);
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -565,7 +563,9 @@ impl relm4::Component for Queue {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
                 self.clear_items.set_sensitive(!self.tracks.is_empty());
-                widgets.queue_stack.set_visible_child_enum(&QueueStack::Queue);
+                widgets
+                    .queue_stack
+                    .set_visible_child_enum(&QueueStack::Queue);
             }
             QueueIn::Clear => {
                 self.tracks.clear();
@@ -573,7 +573,9 @@ impl relm4::Component for Queue {
                 self.clear_items.set_sensitive(!self.tracks.is_empty());
                 sender.input(QueueIn::SelectionChanged);
                 self.last_selected = None;
-                widgets.queue_stack.set_visible_child_enum(&QueueStack::Placeholder);
+                widgets
+                    .queue_stack
+                    .set_visible_child_enum(&QueueStack::Placeholder);
                 sender.output(QueueOut::QueueEmpty).unwrap();
             }
             QueueIn::Remove => {
@@ -589,9 +591,8 @@ impl relm4::Component for Queue {
 
                 //set new state when deleting played index
                 if let Some(current) = &self.playing_index() {
-                    if selected_rows.contains(&current) {
+                    if selected_rows.contains(current) {
                         sender.output(QueueOut::Player(Command::Stop)).unwrap();
-                        sender.input(QueueIn::SetCurrent(None));
                     }
                 }
 
@@ -812,8 +813,7 @@ impl relm4::Component for Queue {
                 };
 
                 //remove src
-                let src_row =
-                    QueueSongRow::new(&self.subsonic, &src_entry.borrow().item(), &sender);
+                let src_row = QueueSongRow::new(&self.subsonic, src_entry.borrow().item(), &sender);
                 self.tracks.remove(src_index);
 
                 // insert based on cursor position and order of src and dest
@@ -853,7 +853,9 @@ impl relm4::Component for Queue {
                         DropHalf::Below => self.tracks.insert(dest + 1, row),
                     }
                 }
-                widgets.queue_stack.set_visible_child_enum(&QueueStack::Queue);
+                widgets
+                    .queue_stack
+                    .set_visible_child_enum(&QueueStack::Queue);
             }
             QueueIn::DraggedOverRow { dest, y } => {
                 //disable reordering item when searching
@@ -908,30 +910,19 @@ impl relm4::Component for Queue {
                     .for_each(|track| track.borrow().reset_drag_indicators());
 
                 //finding the index which is the closest
-                if let Some((diff, i)) = (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
-                    .filter_map(|(i, track)| {
-                        let track = track.borrow();
-                        let Some(widget) = track.fav_btn() else {
-                            return None;
-                        };
-                        let translated_y = widget
-                            .translate_coordinates(
-                                &self.tracks.view,
-                                0.0,
-                                widget.height() as f64 * 0.5,
-                            )
-                            .unwrap();
-                        let y_diff = y - translated_y.1;
-                        Some((y_diff, i))
-                    })
-                    .min_by(|(diff, _), (diff1, _)| diff.abs().partial_cmp(&diff1.abs()).unwrap())
-                    .take()
-                {
+                if let Some((diff, i)) = self.find_nearest_widget(y) {
                     if diff < 0.0 {
-                        self.tracks.get(i).unwrap().borrow().add_drag_indicator_top();
+                        self.tracks
+                            .get(i)
+                            .unwrap()
+                            .borrow()
+                            .add_drag_indicator_top();
                     } else {
-                        self.tracks.get(i).unwrap().borrow().add_drag_indicator_bottom();
+                        self.tracks
+                            .get(i)
+                            .unwrap()
+                            .borrow()
+                            .add_drag_indicator_bottom();
                     }
                 }
             }
@@ -960,9 +951,12 @@ impl relm4::Component for Queue {
                     let uids: Vec<usize> = songs.iter().map(|s| s.uid).collect();
                     let idx: Vec<u32> = (0..self.tracks.len())
                         .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
-                        .filter_map(|(i, t)| (uids.contains(t.borrow().uid())).then(|| i))
+                        .filter_map(|(i, t)| (uids.contains(t.borrow().uid())).then_some(i))
                         .collect();
-                    idx.iter().sorted().rev().for_each(|i| self.tracks.remove(*i));
+                    idx.iter()
+                        .sorted()
+                        .rev()
+                        .for_each(|i| self.tracks.remove(*i));
                 }
             }
             QueueIn::DropInsert(drop, _x, y) => {

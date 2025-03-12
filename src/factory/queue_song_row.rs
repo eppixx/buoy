@@ -12,13 +12,12 @@ use relm4::{
 use crate::{
     common,
     components::{
-        cover::{self, Cover, CoverIn},
-        queue::{Queue, QueueIn, QueueOut},
+        cover::{Cover, CoverIn},
+        queue::{Queue, QueueIn},
     },
     css::DragState,
     gtk_helper::stack::StackExt,
     play_state::PlayState,
-    settings::Settings,
     subsonic::Subsonic,
     types::Droppable,
 };
