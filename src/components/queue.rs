@@ -181,27 +181,16 @@ pub enum QueueIn {
     Append(Droppable),
     InsertAfterCurrentlyPlayed(Droppable),
     Replace(Droppable),
-    DisplayToast(String),
     Favorite(String, bool),
     JumpToCurrent,
     Rerandomize,
-    DragOverSpace,
     Cover(CoverOut),
-    MoveSong {
-        src: usize,
-        dest: usize,
-        half: DropHalf,
-    },
     InsertSongs {
         dest: usize,
         drop: Droppable,
         half: DropHalf,
     },
-    DraggedOverRow {
-        dest: usize,
-        y: f64,
-    },
-    DragLeaveRow,
+    DragCssReset,
     Activate(u32),
     DropHover(f64, f64),
     DropMotionLeave,
@@ -268,7 +257,6 @@ impl relm4::Component for Queue {
         }
         sender.input(QueueIn::Rerandomize);
 
-        // let songs = model.songs.widget().clone();
         let scrolled = model.scrolled.clone();
         let scrolling = model.scroll_motion.clone();
         let (scroll_sender, receiver) = async_channel::unbounded::<bool>();
@@ -314,7 +302,7 @@ impl relm4::Component for Queue {
                 send.input(QueueIn::SelectionChanged);
             });
 
-        sender.input(QueueIn::DragLeaveRow);
+        sender.input(QueueIn::DragCssReset);
 
         if model.tracks.is_empty() {
             sender.input(QueueIn::Clear);
@@ -730,7 +718,6 @@ impl relm4::Component for Queue {
                     }
                 }
             }
-            QueueIn::DisplayToast(title) => sender.output(QueueOut::DisplayToast(title)).unwrap(),
             QueueIn::Favorite(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
@@ -768,64 +755,9 @@ impl relm4::Component for Queue {
                 let mut rng = rand::rng();
                 self.randomized_indices.shuffle(&mut rng);
             }
-            QueueIn::DragOverSpace => {
-                // show indicator on last item
-                if let Some(last) = self.tracks.get(self.tracks.len()) {
-                    last.borrow().add_drag_indicator_bottom();
-                }
-            }
             QueueIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => sender.output(QueueOut::DisplayToast(msg)).unwrap(),
             },
-            QueueIn::MoveSong { src, dest, half } => {
-                //remove drag indicators
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
-                    .for_each(|entry| entry.borrow().reset_drag_indicators());
-
-                // do nothing when src is dest
-                if src == dest {
-                    return;
-                }
-
-                //find src and dest row
-                let Some((src_index, src_entry)) = (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
-                    .find(|(_i, entry)| entry.borrow().uid() == &src)
-                else {
-                    sender
-                        .output(QueueOut::DisplayToast(String::from(
-                            "source not found in move_song",
-                        )))
-                        .unwrap();
-                    return;
-                };
-                let Some((dest_index, _dest_entry)) = (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
-                    .find(|(_i, entry)| entry.borrow().uid() == &dest)
-                else {
-                    sender
-                        .output(QueueOut::DisplayToast(String::from(
-                            "dest not found in move_song",
-                        )))
-                        .unwrap();
-                    return;
-                };
-
-                //remove src
-                let src_row = QueueSongRow::new(&self.subsonic, src_entry.borrow().item(), &sender);
-                self.tracks.remove(src_index);
-
-                // insert based on cursor position and order of src and dest
-                //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
-                match (&half, src_index <= dest_index) {
-                    (DropHalf::Above, true) => self.tracks.insert(dest_index - 1, src_row),
-                    (DropHalf::Above, false) | (DropHalf::Below, true) => {
-                        self.tracks.insert(dest_index, src_row)
-                    }
-                    (DropHalf::Below, false) => self.tracks.insert(dest_index + 1, src_row),
-                }
-            }
             QueueIn::InsertSongs { dest, drop, half } => {
                 //remove drag indicators
                 (0..self.tracks.len())
@@ -857,33 +789,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
             }
-            QueueIn::DraggedOverRow { dest, y } => {
-                //disable reordering item when searching
-                let settings = Settings::get().lock().unwrap();
-                if settings.search_active && !settings.search_text.is_empty() {
-                    return;
-                }
-                drop(settings);
-
-                let Some(src_entry) = (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
-                    .find(|entry| entry.borrow().uid() == &dest)
-                else {
-                    tracing::warn!("source index {dest} while dragging over not found");
-                    return;
-                };
-
-                let fav_btn = src_entry.borrow().fav_btn().clone();
-                if let Some(fav_btn) = fav_btn {
-                    let widget_height = fav_btn.height();
-                    if y < f64::from(widget_height) * 0.5f64 {
-                        src_entry.borrow().add_drag_indicator_top();
-                    } else {
-                        src_entry.borrow().add_drag_indicator_bottom();
-                    }
-                }
-            }
-            QueueIn::DragLeaveRow => {
+            QueueIn::DragCssReset => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
                     .for_each(|track| track.borrow().reset_drag_indicators());

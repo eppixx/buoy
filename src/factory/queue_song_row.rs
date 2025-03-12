@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self, gdk, pango,
+        self, pango,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
     Component, ComponentController, RelmWidgetExt,
@@ -21,8 +21,6 @@ use crate::{
     subsonic::Subsonic,
     types::Droppable,
 };
-
-use super::DropHalf;
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
@@ -125,7 +123,6 @@ pub struct Model {
     child: Rc<RefCell<Option<submarine::data::Child>>>,
     uid: Rc<RefCell<Option<usize>>>,
     drag_src: gtk::DragSource,
-    drop_target: gtk::DropTarget,
 
     cover_stack: gtk::Stack,
     cover: Option<relm4::Controller<Cover>>,
@@ -150,7 +147,6 @@ impl Model {
             uid: Rc::new(RefCell::new(None)),
             child: Rc::new(RefCell::new(None)),
             drag_src: gtk::DragSource::default(),
-            drop_target: gtk::DropTarget::default(),
             cover_stack,
             cover: None,
             title,
@@ -184,79 +180,6 @@ impl Model {
             }
         });
 
-        // set DropTarget
-        model
-            .drop_target
-            .set_actions(gdk::DragAction::MOVE | gdk::DragAction::COPY);
-        model
-            .drop_target
-            .set_types(&[<Droppable as gtk::prelude::StaticType>::static_type()]);
-        let sender = model.sender.clone();
-        let uid = model.uid.clone();
-        let widget = root.clone();
-        model
-            .drop_target
-            .connect_drop(move |_target, value, _x, y| {
-                let Some(uid) = *uid.borrow() else {
-                    return false;
-                };
-                let Some(ref sender) = *sender.borrow() else {
-                    return false;
-                };
-
-                // check if drop is valid
-                if let Ok(drop) = value.get::<Droppable>() {
-                    match drop {
-                        Droppable::QueueSongs(children) => {
-                            for child in children.iter().rev() {
-                                let half = DropHalf::calc(widget.height(), y);
-                                sender.input(QueueIn::MoveSong {
-                                    src: child.uid,
-                                    dest: uid,
-                                    half,
-                                });
-                            }
-                        }
-                        drop => {
-                            let half = DropHalf::calc(widget.height(), y);
-                            sender.input(QueueIn::InsertSongs {
-                                dest: uid,
-                                drop,
-                                half,
-                            });
-                        }
-                    }
-                    return true;
-                }
-                false
-            });
-
-        //sending motion for added indicators
-        let sender = model.sender.clone();
-        let cell = model.uid.clone();
-        model.drop_target.connect_motion(move |_drop, _x, y| {
-            let Some(cell) = *cell.borrow() else {
-                return gdk::DragAction::empty();
-            };
-            let Some(ref sender) = *sender.borrow() else {
-                return gdk::DragAction::empty();
-            };
-
-            sender.input(QueueIn::DraggedOverRow { dest: cell, y });
-            gdk::DragAction::MOVE
-        });
-
-        //remove indicator on leave
-        let sender = model.sender.clone();
-        model.drop_target.connect_leave(move |_drop| {
-            let Some(ref sender) = *sender.borrow() else {
-                return;
-            };
-
-            sender.input(QueueIn::DragLeaveRow);
-        });
-
-        // root.add_controller(model.drop_target.clone());
         root.add_controller(model.drag_src.clone());
 
         (root, model)
