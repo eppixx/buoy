@@ -333,12 +333,6 @@ impl relm4::Component for Queue {
                             sender.input(QueueIn::Activate(index));
                         },
 
-                        add_controller = gtk::GestureClick {
-                            connect_pressed => move |controller, button, _x, _y| {
-                                println!("pressed on queue {controller:?} {button}");
-                            }
-                        },
-
                         add_controller = gtk::EventControllerKey {
                             connect_key_pressed[sender] => move |_widget, key, _code, _state| {
                                 if key == gtk::gdk::Key::Delete {
