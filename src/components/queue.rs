@@ -414,6 +414,7 @@ impl relm4::Component for Queue {
                 widgets
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
+                sender.input(QueueIn::DragCssReset);
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -440,6 +441,7 @@ impl relm4::Component for Queue {
                 widgets
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
+                sender.input(QueueIn::DragCssReset);
             }
             QueueIn::Clear => {
                 self.tracks.clear();
