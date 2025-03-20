@@ -7,7 +7,6 @@ use relm4::{
         self, gdk,
         prelude::{AdjustmentExt, BoxExt, ButtonExt, OrientableExt, SelectionModelExt, WidgetExt},
     },
-    prelude::DynamicIndex,
     ComponentParts, ComponentSender, RelmWidgetExt,
 };
 
@@ -16,7 +15,7 @@ use crate::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::{queue_song_row::QueueSongRow, DropHalf},
+    factory::queue_song_row::QueueSongRow,
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     player::Command,
@@ -61,11 +60,7 @@ impl TryFrom<String> for QueueStack {
 #[derive(Debug)]
 pub struct Queue {
     subsonic: Rc<RefCell<Subsonic>>,
-    scrolled: gtk::ScrolledWindow,
     randomized_indices: Vec<usize>,
-    remove_items: gtk::Button,
-    clear_items: gtk::Button, //TODO change to named widget
-    last_selected: Option<DynamicIndex>,
     tracks: relm4::typed_view::list::TypedListView<QueueSongRow, gtk::MultiSelection>,
 }
 
@@ -184,11 +179,6 @@ pub enum QueueIn {
     JumpToCurrent,
     Rerandomize,
     Cover(CoverOut),
-    InsertSongs {
-        dest: usize,
-        drop: Droppable,
-        half: DropHalf,
-    },
     DragCssReset,
     Activate(u32),
     ActivateUid(usize),
@@ -234,11 +224,7 @@ impl relm4::Component for Queue {
 
         let mut model = Queue {
             subsonic,
-            scrolled: gtk::ScrolledWindow::default(),
             randomized_indices: vec![],
-            remove_items: gtk::Button::new(),
-            clear_items: gtk::Button::new(),
-            last_selected: None,
             tracks,
         };
 
@@ -267,12 +253,13 @@ impl relm4::Component for Queue {
         if model.tracks.is_empty() {
             sender.input(QueueIn::Clear);
         } else {
-            model.clear_items.set_sensitive(true);
+            widgets.clear_items.set_sensitive(true);
             widgets
                 .queue_stack
                 .set_visible_child_enum(&QueueStack::Queue);
         }
 
+        sender.input(QueueIn::JumpToCurrent);
         ComponentParts { model, widgets }
     }
 
@@ -282,7 +269,7 @@ impl relm4::Component for Queue {
             set_orientation: gtk::Orientation::Vertical,
 
             append: queue_stack = &gtk::Stack {
-                add_enumed[QueueStack::Queue] = &model.scrolled.clone() -> gtk::ScrolledWindow
+                add_enumed[QueueStack::Queue]: scrolled = &gtk::ScrolledWindow
                 {
                     set_vexpand: true,
                     model.tracks.view.clone() {
@@ -361,7 +348,7 @@ impl relm4::Component for Queue {
 
             gtk::ActionBar {
                 pack_start = &gtk::Box {
-                    model.remove_items.clone() {
+                    append: remove_items = &gtk::Button {
                         set_icon_name: "list-remove-symbolic",
                         set_tooltip: &gettext("Remove selected songs from queue"),
                         set_sensitive: false,
@@ -369,7 +356,7 @@ impl relm4::Component for Queue {
                         connect_clicked => QueueIn::Remove,
                     },
 
-                    model.clear_items.clone() {
+                    append: clear_items = &gtk::Button {
                         set_margin_start: 15,
                         set_icon_name: "user-trash-symbolic",
                         set_tooltip: &gettext("Clear queue"),
@@ -423,7 +410,7 @@ impl relm4::Component for Queue {
                 if !self.tracks.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
-                self.clear_items.set_sensitive(!self.tracks.is_empty());
+                widgets.clear_items.set_sensitive(!self.tracks.is_empty());
                 widgets
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
@@ -449,7 +436,7 @@ impl relm4::Component for Queue {
                 if !self.tracks.is_empty() {
                     sender.output(QueueOut::QueueNotEmpty).unwrap();
                 }
-                self.clear_items.set_sensitive(!self.tracks.is_empty());
+                widgets.clear_items.set_sensitive(!self.tracks.is_empty());
                 widgets
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
@@ -457,9 +444,8 @@ impl relm4::Component for Queue {
             QueueIn::Clear => {
                 self.tracks.clear();
                 self.randomized_indices.clear();
-                self.clear_items.set_sensitive(!self.tracks.is_empty());
+                widgets.clear_items.set_sensitive(!self.tracks.is_empty());
                 sender.input(QueueIn::SelectionChanged);
-                self.last_selected = None;
                 widgets
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Placeholder);
@@ -637,12 +623,12 @@ impl relm4::Component for Queue {
                 // where the current song in the window will up end from start
                 const CURRENT_POSITION: f64 = 0.4;
                 if let Some((index, _track)) = self.current() {
-                    let adj = self.scrolled.vadjustment();
+                    let adj = widgets.scrolled.vadjustment();
                     let height = adj.upper();
                     let scroll_y = height / self.tracks.len() as f64 * index as f64
-                        - f64::from(self.scrolled.height()) * CURRENT_POSITION;
+                        - f64::from(widgets.scrolled.height()) * CURRENT_POSITION;
                     adj.set_value(scroll_y);
-                    self.scrolled.set_vadjustment(Some(&adj));
+                    widgets.scrolled.set_vadjustment(Some(&adj));
                 }
             }
             QueueIn::Rerandomize => {
@@ -653,33 +639,6 @@ impl relm4::Component for Queue {
             QueueIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => sender.output(QueueOut::DisplayToast(msg)).unwrap(),
             },
-            QueueIn::InsertSongs { dest, drop, half } => {
-                //remove drag indicators
-                self.iter_tracks()
-                    .for_each(|entry| entry.borrow().reset_drag_indicators());
-
-                // find index of uid
-                let Some((dest, _dest_entry)) = self.index_of_uid(dest) else {
-                    sender
-                        .output(QueueOut::DisplayToast(String::from(
-                            "dest not found in insert_songs",
-                        )))
-                        .unwrap();
-                    return;
-                };
-
-                let songs = drop.get_songs(&self.subsonic);
-                for song in songs.iter().rev() {
-                    let row = QueueSongRow::new(&self.subsonic, song, &sender);
-                    match half {
-                        DropHalf::Above => self.tracks.insert(dest as u32, row),
-                        DropHalf::Below => self.tracks.insert(dest as u32 + 1, row),
-                    }
-                }
-                widgets
-                    .queue_stack
-                    .set_visible_child_enum(&QueueStack::Queue);
-            }
             QueueIn::DragCssReset => {
                 self.iter_tracks()
                     .for_each(|track| track.borrow().reset_drag_indicators());
@@ -815,12 +774,14 @@ impl relm4::Component for Queue {
                         self.tracks.insert(i as u32, row);
                     }
                 }
+
+                sender.input(QueueIn::DragCssReset);
             }
             QueueIn::SelectionChanged => {
                 let is_some = (0..self.tracks.len())
                     .any(|i| self.tracks.view.model().unwrap().is_selected(i));
 
-                self.remove_items.set_sensitive(is_some);
+                widgets.remove_items.set_sensitive(is_some);
             }
             QueueIn::SetCurrent(index) => {
                 if let Some(index) = index {
