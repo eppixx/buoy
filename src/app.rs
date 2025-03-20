@@ -1162,7 +1162,7 @@ impl relm4::component::AsyncComponent for App {
 
         //save queue
         settings.queue_ids = self.queue.model().songs();
-        settings.queue_current = self.queue.model().current().map(|(i, _t)| i as usize);
+        settings.queue_current = self.queue.model().current().map(|(i, _t)| i);
         settings.queue_seek = self.seekbar.model().current();
 
         //save window state

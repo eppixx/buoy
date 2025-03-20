@@ -88,7 +88,7 @@ impl QueueSongRow {
 
     pub fn activate(&mut self) {
         self.set_play_state(&PlayState::Play);
-        self.sender.input(QueueIn::Activate(self.uid as u32));
+        self.sender.input(QueueIn::ActivateUid(self.uid));
     }
 
     pub fn add_drag_indicator_top(&self) {

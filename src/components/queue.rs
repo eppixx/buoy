@@ -71,10 +71,20 @@ pub struct Queue {
 
 impl Queue {
     pub fn songs(&self) -> Vec<submarine::data::Child> {
-        (0..self.tracks.len())
-            .filter_map(|i| self.tracks.get(i))
+        self.iter_tracks()
             .map(|track| track.borrow().item().clone())
             .collect()
+    }
+
+    fn tracks(&self) -> &relm4::typed_view::list::TypedListView<QueueSongRow, gtk::MultiSelection> {
+        &self.tracks
+    }
+
+    pub fn iter_tracks(&self) -> QueueRowIterator {
+        QueueRowIterator {
+            queue: self,
+            index: 0,
+        }
     }
 
     pub fn can_play(&self) -> bool {
@@ -93,7 +103,7 @@ impl Queue {
         drop(settings);
 
         if let Some((index, _track)) = &self.current() {
-            if index + 1 == self.tracks.len() {
+            if index + 1 == self.tracks.len() as usize {
                 return false;
             }
         }
@@ -121,28 +131,26 @@ impl Queue {
         true
     }
 
-    pub fn current(&self) -> Option<(u32, QueueSongRow)> {
-        (0..self.tracks.len())
-            .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+    pub fn current(&self) -> Option<(usize, QueueSongRow)> {
+        self.iter_tracks()
+            .enumerate()
             .find(|(_, t)| t.borrow().play_state() != &PlayState::Stop)
             .map(|(i, t)| (i, t.borrow().clone()))
     }
 
-    fn find_nearest_widget(&self, y: f64) -> Option<(f64, u32)> {
-        (0..self.tracks.len())
-            .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+    fn find_nearest_widget(&self, y: f64) -> Option<(f64, usize)> {
+        self.iter_tracks()
+            .enumerate()
             .filter_map(|(i, track)| {
                 let track = track.borrow();
                 let Some(widget) = track.fav_btn() else {
                     return None;
                 };
-                let Some(translated_y) = widget.translate_coordinates(
+                let translated_y = widget.translate_coordinates(
                     &self.tracks.view,
                     0.0,
                     widget.height() as f64 * 0.5,
-                ) else {
-                    return None;
-                };
+                )?;
                 let y_diff = y - translated_y.1;
                 Some((y_diff, i))
             })
@@ -153,10 +161,10 @@ impl Queue {
             })
     }
 
-    fn index_of_uid(&self, uid: u32) -> Option<(u32, QueueSongRow)> {
-        (0..self.tracks.len())
-            .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
-            .find(|(_i, t)| *t.borrow().uid() as u32 == uid)
+    fn index_of_uid(&self, uid: usize) -> Option<(usize, QueueSongRow)> {
+        self.iter_tracks()
+            .enumerate()
+            .find(|(_i, t)| *t.borrow().uid() == uid)
             .map(|(i, track)| (i, track.borrow().clone()))
     }
 }
@@ -183,7 +191,7 @@ pub enum QueueIn {
     },
     DragCssReset,
     Activate(u32),
-    ActivateUid(u32),
+    ActivateUid(usize),
     DropHover(f64, f64),
     DropMotionLeave,
     DropMove(Droppable, f64, f64),
@@ -425,8 +433,10 @@ impl relm4::Component for Queue {
 
                 if let Some((index, _track)) = self.current() {
                     for song in songs.into_iter().rev() {
-                        self.tracks
-                            .insert(index + 1, QueueSongRow::new(&self.subsonic, &song, &sender));
+                        self.tracks.insert(
+                            index as u32 + 1,
+                            QueueSongRow::new(&self.subsonic, &song, &sender),
+                        );
                     }
                 } else {
                     for song in songs.into_iter().rev() {
@@ -468,7 +478,7 @@ impl relm4::Component for Queue {
 
                 //set new state when deleting played index
                 if let Some((current, _track)) = &self.current() {
-                    if selected_rows.contains(current) {
+                    if selected_rows.contains(&(*current as u32)) {
                         sender.output(QueueOut::Player(Command::Stop)).unwrap();
                     }
                 }
@@ -485,7 +495,7 @@ impl relm4::Component for Queue {
                 }
 
                 if let Some((index, _track)) = self.current() {
-                    if let Some(song) = self.tracks.get(index) {
+                    if let Some(song) = self.tracks.get(index as u32) {
                         song.borrow_mut().set_play_state(&state);
                     }
                 }
@@ -512,7 +522,7 @@ impl relm4::Component for Queue {
                 match self.current() {
                     None => self.tracks.get(0).unwrap().borrow_mut().activate(),
                     Some((index, _track)) => {
-                        match index {
+                        match index as u32 {
                             // at end of queue with repeat current song
                             i if repeat == Repeat::One => {
                                 self.tracks.get(i).unwrap().borrow_mut().activate();
@@ -541,8 +551,7 @@ impl relm4::Component for Queue {
                             }
                             // at end of queue
                             i if i + 1 == self.tracks.len() => {
-                                (0..self.tracks.len())
-                                    .filter_map(|i| self.tracks.get(i))
+                                self.iter_tracks()
                                     .for_each(|track| {
                                         track.borrow_mut().set_play_state(&PlayState::Stop)
                                     });
@@ -564,7 +573,7 @@ impl relm4::Component for Queue {
                 drop(settings);
 
                 if let Some((index, _track)) = self.current() {
-                    match index {
+                    match index as u32 {
                         // previous with repeat current song
                         i if repeat == Repeat::One => {
                             self.tracks.get(i).unwrap().borrow_mut().activate();
@@ -607,8 +616,7 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::Favorite(id, state) => {
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
+                self.iter_tracks()
                     .filter(|track| track.borrow().item().id == id)
                     .for_each(|track| match state {
                         true => {
@@ -648,12 +656,11 @@ impl relm4::Component for Queue {
             },
             QueueIn::InsertSongs { dest, drop, half } => {
                 //remove drag indicators
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
+                self.iter_tracks()
                     .for_each(|entry| entry.borrow().reset_drag_indicators());
 
                 // find index of uid
-                let Some((dest, _dest_entry)) = self.index_of_uid(dest as u32) else {
+                let Some((dest, _dest_entry)) = self.index_of_uid(dest) else {
                     sender
                         .output(QueueOut::DisplayToast(String::from(
                             "dest not found in insert_songs",
@@ -666,8 +673,8 @@ impl relm4::Component for Queue {
                 for song in songs.iter().rev() {
                     let row = QueueSongRow::new(&self.subsonic, song, &sender);
                     match half {
-                        DropHalf::Above => self.tracks.insert(dest, row),
-                        DropHalf::Below => self.tracks.insert(dest + 1, row),
+                        DropHalf::Above => self.tracks.insert(dest as u32, row),
+                        DropHalf::Below => self.tracks.insert(dest as u32 + 1, row),
                     }
                 }
                 widgets
@@ -675,18 +682,15 @@ impl relm4::Component for Queue {
                     .set_visible_child_enum(&QueueStack::Queue);
             }
             QueueIn::DragCssReset => {
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
+                self.iter_tracks()
                     .for_each(|track| track.borrow().reset_drag_indicators());
             }
             QueueIn::Activate(index) => {
                 tracing::info!("playing index {index}");
                 // needed when random is activated
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
-                    .for_each(|track| {
-                        track.borrow_mut().set_play_state(&PlayState::Stop);
-                    });
+                self.iter_tracks().for_each(|track| {
+                    track.borrow_mut().set_play_state(&PlayState::Stop);
+                });
 
                 if let Some(track) = self.tracks.get(index) {
                     track.borrow_mut().set_play_state(&PlayState::Play);
@@ -697,26 +701,25 @@ impl relm4::Component for Queue {
             }
             QueueIn::ActivateUid(uid) => {
                 if let Some((index, _row)) = self.index_of_uid(uid) {
-                    sender.input(QueueIn::Activate(index));
+                    sender.input(QueueIn::Activate(index as u32));
                 }
             }
             QueueIn::DropHover(_x, y) => {
                 //reset drag indicators
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
+                self.iter_tracks()
                     .for_each(|track| track.borrow().reset_drag_indicators());
 
                 //finding the index which is the closest
                 if let Some((diff, i)) = self.find_nearest_widget(y) {
                     if diff < 0.0 {
                         self.tracks
-                            .get(i)
+                            .get(i as u32)
                             .unwrap()
                             .borrow()
                             .add_drag_indicator_top();
                     } else {
                         self.tracks
-                            .get(i)
+                            .get(i as u32)
                             .unwrap()
                             .borrow()
                             .add_drag_indicator_bottom();
@@ -724,8 +727,7 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::DropMotionLeave => {
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
+                self.iter_tracks()
                     .for_each(|track| track.borrow().reset_drag_indicators());
             }
             QueueIn::DropMove(drop, _x, y) => {
@@ -750,14 +752,13 @@ impl relm4::Component for Queue {
                     .collect();
 
                 // convert uid to index and track
-                let Some((dragged_index, dragged_track)) = self.index_of_uid(dragged[0].uid as u32)
-                else {
+                let Some((dragged_index, dragged_track)) = self.index_of_uid(dragged[0].uid) else {
                     return;
                 };
 
-                let mut src_index: Vec<u32> = vec![dragged_index];
+                let mut src_index: Vec<u32> = vec![dragged_index as u32];
                 let mut src_tracks: Vec<QueueSongRow> = vec![dragged_track];
-                if (selected_idx).contains(&dragged_index) {
+                if (selected_idx).contains(&(dragged_index as u32)) {
                     (src_index, src_tracks) = selected_idx
                         .iter()
                         .filter_map(|i| self.tracks.get(*i).map(|t| (i, t)))
@@ -767,7 +768,7 @@ impl relm4::Component for Queue {
 
                 // insert new tracks
                 let mut inserted_uids = vec![]; // remember uids to select them later
-                let i = if diff < 0.0 { i } else { i + 1 };
+                let i = if diff < 0.0 { i as u32 } else { i as u32 + 1 };
                 tracing::info!("moving queue index {src_index:?} to {i}");
                 for track in src_tracks.iter().rev() {
                     let row = QueueSongRow::new(&self.subsonic, track.item(), &sender);
@@ -782,19 +783,24 @@ impl relm4::Component for Queue {
 
                 // remove old tracks
                 src_tracks.iter().for_each(|track| {
-                    if let Some((i, _row)) = self.index_of_uid(*track.uid() as u32) {
-                        self.tracks.remove(i);
+                    if let Some((i, _row)) = self.index_of_uid(*track.uid()) {
+                        self.tracks.remove(i as u32);
                     }
                 });
 
                 // //unselect rows
                 self.tracks.view.model().unwrap().unselect_all();
                 // reselect moved rows
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i).map(|track| (i, track)))
+                self.iter_tracks()
+                    .enumerate()
                     .filter(|(_i, track)| inserted_uids.contains(track.borrow().uid()))
                     .for_each(|(i, _track)| {
-                        _ = self.tracks.view.model().unwrap().select_item(i, false)
+                        _ = self
+                            .tracks
+                            .view
+                            .model()
+                            .unwrap()
+                            .select_item(i as u32, false)
                     });
 
                 sender.input(QueueIn::DragCssReset);
@@ -807,7 +813,7 @@ impl relm4::Component for Queue {
                     let i = if diff < 0.0 { i } else { i + 1 };
                     for song in songs.iter().rev() {
                         let row = QueueSongRow::new(&self.subsonic, song, &sender);
-                        self.tracks.insert(i, row);
+                        self.tracks.insert(i as u32, row);
                     }
                 }
             }
@@ -826,6 +832,27 @@ impl relm4::Component for Queue {
                         .set_play_state(&PlayState::Pause);
                 }
             }
+        }
+    }
+}
+
+//TODO remove when iter method available in relm4
+#[derive(Debug)]
+pub struct QueueRowIterator<'a> {
+    queue: &'a Queue,
+    index: u32,
+}
+
+impl Iterator for QueueRowIterator<'_> {
+    type Item = relm4::typed_view::TypedListItem<QueueSongRow>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.queue.tracks().len() {
+            let result = self.queue.tracks().get(self.index);
+            self.index += 1;
+            result
+        } else {
+            None
         }
     }
 }
