@@ -30,7 +30,7 @@ pub struct QueueUid {
     pub child: submarine::data::Child,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct QueueSongRow {
     subsonic: Rc<RefCell<Subsonic>>,
     item: submarine::data::Child,
@@ -56,6 +56,13 @@ impl QueueSongRow {
             play_state: PlayState::Stop,
             cover_stack: None,
             fav_btn: None,
+        }
+    }
+
+    pub fn queue_uid(&self) -> QueueUid {
+        QueueUid {
+            uid: self.uid,
+            child: self.item.clone(),
         }
     }
 

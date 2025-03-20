@@ -913,9 +913,9 @@ impl relm4::component::AsyncComponent for App {
                 widgets.toasts.send_notification();
             }
             AppIn::DesktopNotification => {
-                let song = self.queue.model().current_song();
-                if let Some(song) = song {
-                    show_desktop_notification(song, sender).await;
+                let song = self.queue.model().current();
+                if let Some((_i, song)) = song {
+                    show_desktop_notification(song.item().clone(), sender).await;
                 }
             }
             AppIn::Mpris(msg) => match msg {
@@ -1162,7 +1162,7 @@ impl relm4::component::AsyncComponent for App {
 
         //save queue
         settings.queue_ids = self.queue.model().songs();
-        settings.queue_current = self.queue.model().playing_index().map(|i| i as usize);
+        settings.queue_current = self.queue.model().current().map(|(i, _t)| i as usize);
         settings.queue_seek = self.seekbar.model().current();
 
         //save window state
