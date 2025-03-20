@@ -211,7 +211,6 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
             fav_btn,
         };
 
-
         // create DragSource
         model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
 

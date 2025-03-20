@@ -16,10 +16,7 @@ use crate::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::{
-        queue_song_row::QueueSongRow,
-        DropHalf,
-    },
+    factory::{queue_song_row::QueueSongRow, DropHalf},
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     player::Command,
@@ -770,7 +767,8 @@ impl relm4::Component for Queue {
                     .collect();
 
                 // convert uid to index and track
-                let Some((dragged_index, dragged_track)) = self.index_of_uid(dragged[0].uid as u32) else {
+                let Some((dragged_index, dragged_track)) = self.index_of_uid(dragged[0].uid as u32)
+                else {
                     return;
                 };
                 let mut src_tracks: Vec<QueueSongRow> = vec![dragged_track];
@@ -787,11 +785,7 @@ impl relm4::Component for Queue {
                 for track in src_tracks.iter().rev() {
                     let row = QueueSongRow::new(&self.subsonic, track.item(), &sender);
                     inserted_uids.push(*row.uid());
-                    let i = if diff < 0.0 {
-                        i
-                    } else {
-                        i + 1
-                    };
+                    let i = if diff < 0.0 { i } else { i + 1 };
                     self.tracks.insert(i, row);
                     self.tracks
                         .get(i)
