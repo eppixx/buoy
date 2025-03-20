@@ -59,13 +59,6 @@ impl QueueSongRow {
         }
     }
 
-    pub fn queue_uid(&self) -> QueueUid {
-        QueueUid {
-            uid: self.uid,
-            child: self.item.clone(),
-        }
-    }
-
     pub fn item(&self) -> &submarine::data::Child {
         &self.item
     }

@@ -1,7 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gettextrs::gettext;
-use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use relm4::{
     gtk::{
@@ -18,7 +17,7 @@ use crate::{
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
     factory::{
-        queue_song_row::{QueueSongRow, QueueUid},
+        queue_song_row::QueueSongRow,
         DropHalf,
     },
     gtk_helper::stack::StackExt,
@@ -774,21 +773,20 @@ impl relm4::Component for Queue {
                 let Some((dragged_index, dragged_track)) = self.index_of_uid(dragged[0].uid as u32) else {
                     return;
                 };
-                let mut src_index: Vec<u32> = vec![dragged_index];
                 let mut src_tracks: Vec<QueueSongRow> = vec![dragged_track];
                 if (selected_idx).contains(&dragged_index) {
-                    (src_index, src_tracks) = selected_idx
+                    src_tracks = selected_idx
                         .iter()
-                        .filter_map(|i| self.tracks.get(*i).map(|t| (i, t)))
-                        .map(|(i, track)| (i, track.borrow().clone()))
+                        .filter_map(|i| self.tracks.get(*i))
+                        .map(|track| track.borrow().clone())
                         .collect();
                 }
 
                 // insert new tracks
                 let mut inserted_uids = vec![]; // remember uids to select them later
                 for track in src_tracks.iter().rev() {
-                    let row = QueueSongRow::new(&self.subsonic, &track.item(), &sender);
-                    inserted_uids.push(row.uid().clone());
+                    let row = QueueSongRow::new(&self.subsonic, track.item(), &sender);
+                    inserted_uids.push(*row.uid());
                     let i = if diff < 0.0 {
                         i
                     } else {
