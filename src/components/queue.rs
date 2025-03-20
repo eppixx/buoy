@@ -87,12 +87,8 @@ impl Queue {
         }
 
         let settings = Settings::get().lock().unwrap();
-        if settings.repeat != Repeat::Normal {
+        if settings.repeat != Repeat::Normal || settings.shuffle == Shuffle::Shuffle {
             return true;
-        }
-
-        if settings.shuffle == Shuffle::Shuffle {
-            return true; //TODO might change later
         }
         drop(settings);
 
@@ -111,11 +107,7 @@ impl Queue {
         }
 
         let settings = Settings::get().lock().unwrap();
-        if settings.repeat != Repeat::Normal {
-            return true;
-        }
-
-        if settings.shuffle == Shuffle::Shuffle {
+        if settings.repeat != Repeat::Normal || settings.shuffle == Shuffle::Shuffle {
             return true;
         }
         drop(settings);
@@ -688,6 +680,7 @@ impl relm4::Component for Queue {
                     .for_each(|track| track.borrow().reset_drag_indicators());
             }
             QueueIn::Activate(index) => {
+                tracing::info!("playing index {index}");
                 // needed when random is activated
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
