@@ -144,9 +144,13 @@ impl Queue {
                 let Some(widget) = track.fav_btn() else {
                     return None;
                 };
-                let translated_y = widget
-                    .translate_coordinates(&self.tracks.view, 0.0, widget.height() as f64 * 0.5)
-                    .unwrap();
+                let Some(translated_y) = widget.translate_coordinates(
+                    &self.tracks.view,
+                    0.0,
+                    widget.height() as f64 * 0.5,
+                ) else {
+                    return None;
+                };
                 let y_diff = y - translated_y.1;
                 Some((y_diff, i))
             })
@@ -550,16 +554,9 @@ impl relm4::Component for Queue {
                                     .for_each(|track| {
                                         track.borrow_mut().set_play_state(&PlayState::Stop)
                                     });
-                                self.tracks
-                                    .get(i)
-                                    .unwrap()
-                                    .borrow_mut()
-                                    .set_play_state(&PlayState::Stop);
                             }
                             // play next song
-                            i => {
-                                self.tracks.get(i + 1).unwrap().borrow_mut().activate();
-                            }
+                            i => self.tracks.get(i + 1).unwrap().borrow_mut().activate(),
                         }
                     }
                 }
@@ -613,14 +610,7 @@ impl relm4::Component for Queue {
                         }
                         // at start of queue
                         0 => unreachable!("play next should not be active"),
-                        i => {
-                            self.tracks
-                                .get(i)
-                                .unwrap()
-                                .borrow_mut()
-                                .set_play_state(&PlayState::Stop);
-                            self.tracks.get(i - 1).unwrap().borrow_mut().activate();
-                        }
+                        i => self.tracks.get(i - 1).unwrap().borrow_mut().activate(),
                     }
                 }
             }
@@ -771,21 +761,24 @@ impl relm4::Component for Queue {
                 else {
                     return;
                 };
+
+                let mut src_index: Vec<u32> = vec![dragged_index];
                 let mut src_tracks: Vec<QueueSongRow> = vec![dragged_track];
                 if (selected_idx).contains(&dragged_index) {
-                    src_tracks = selected_idx
+                    (src_index, src_tracks) = selected_idx
                         .iter()
-                        .filter_map(|i| self.tracks.get(*i))
-                        .map(|track| track.borrow().clone())
+                        .filter_map(|i| self.tracks.get(*i).map(|t| (i, t)))
+                        .map(|(i, track)| (i, track.borrow().clone()))
                         .collect();
                 }
 
                 // insert new tracks
                 let mut inserted_uids = vec![]; // remember uids to select them later
+                let i = if diff < 0.0 { i } else { i + 1 };
+                tracing::info!("moving queue index {src_index:?} to {i}");
                 for track in src_tracks.iter().rev() {
                     let row = QueueSongRow::new(&self.subsonic, track.item(), &sender);
                     inserted_uids.push(*row.uid());
-                    let i = if diff < 0.0 { i } else { i + 1 };
                     self.tracks.insert(i, row);
                     self.tracks
                         .get(i)
@@ -818,13 +811,10 @@ impl relm4::Component for Queue {
                 if let Some((diff, i)) = self.find_nearest_widget(y) {
                     let songs = drop.get_songs(&self.subsonic);
                     //insert songs
+                    let i = if diff < 0.0 { i } else { i + 1 };
                     for song in songs.iter().rev() {
                         let row = QueueSongRow::new(&self.subsonic, song, &sender);
-                        if diff < 0.0 {
-                            self.tracks.insert(i, row);
-                        } else {
-                            self.tracks.insert(i + 1, row);
-                        }
+                        self.tracks.insert(i, row);
                     }
                 }
             }
