@@ -24,7 +24,7 @@ use super::SetupFinished;
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PlaylistIndex {
+pub struct PlaylistUid {
     pub uid: usize,
     pub child: submarine::data::Child,
 }
@@ -78,7 +78,7 @@ impl PlaylistRow {
         &self.fav_btn
     }
 
-    pub fn set_drag_src(&mut self, drop: Vec<PlaylistIndex>) {
+    pub fn set_drag_src(&mut self, drop: Vec<PlaylistUid>) {
         // when Vec is empty remove DragSource
         if drop.is_empty() {
             self.remove_drag_src();
@@ -302,7 +302,7 @@ impl Model {
         self.sender.replace(Some(row.sender.clone()));
         self.uid.replace(Some(row.uid));
 
-        let drop = PlaylistIndex {
+        let drop = PlaylistUid {
             uid: row.uid,
             child: row.item.clone(),
         };

@@ -551,10 +551,9 @@ impl relm4::Component for Queue {
                             }
                             // at end of queue
                             i if i + 1 == self.tracks.len() => {
-                                self.iter_tracks()
-                                    .for_each(|track| {
-                                        track.borrow_mut().set_play_state(&PlayState::Stop)
-                                    });
+                                self.iter_tracks().for_each(|track| {
+                                    track.borrow_mut().set_play_state(&PlayState::Stop)
+                                });
                             }
                             // play next song
                             i => self.tracks.get(i + 1).unwrap().borrow_mut().activate(),

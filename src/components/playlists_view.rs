@@ -17,7 +17,7 @@ use relm4::{Component, RelmWidgetExt};
 
 use crate::client::Client;
 use crate::factory::playlist_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistIndex, PlaylistRow, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, PlaylistUid, TitleColumn,
 };
 use crate::factory::DropHalf;
 use crate::settings::Settings;
@@ -641,10 +641,10 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .for_each(|row| row.borrow_mut().remove_drag_src());
 
                 // get selected children
-                let children: Vec<PlaylistIndex> = selected_rows
+                let children: Vec<PlaylistUid> = selected_rows
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
-                    .map(|row| PlaylistIndex {
+                    .map(|row| PlaylistUid {
                         uid: *row.borrow().uid(),
                         child: row.borrow().item().clone(),
                     })

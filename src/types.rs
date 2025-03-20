@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use relm4::gtk::glib;
 
 use crate::{
-    factory::{playlist_row::PlaylistIndex, queue_song_row::QueueUid},
+    factory::{playlist_row::PlaylistUid, queue_song_row::QueueUid},
     subsonic::Subsonic,
 };
 
@@ -72,7 +72,7 @@ pub enum Droppable {
     ArtistWithAlbums(Box<submarine::data::ArtistWithAlbumsId3>),
     Artist(Box<submarine::data::ArtistId3>),
     Playlist(Box<submarine::data::PlaylistWithSongs>),
-    PlaylistItems(Vec<PlaylistIndex>),
+    PlaylistItems(Vec<PlaylistUid>),
 }
 
 impl Droppable {
