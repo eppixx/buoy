@@ -200,6 +200,7 @@ pub enum PlaylistsViewOut {
     FavoriteClicked(String, bool),
     ClickedArtist(Id),
     ClickedAlbum(Id),
+    DroppedQueueSongs(u32),
 }
 
 #[derive(Debug)]
@@ -221,6 +222,7 @@ pub enum PlaylistsViewIn {
     DropInsert(Droppable, f64, f64),
     DragCssReset,
     RemovePlaylistRow,
+    InsertSongsTo(u32, Vec<submarine::data::Child>),
 }
 
 #[relm4::component(pub, async)]
@@ -777,9 +779,17 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             PlaylistsViewIn::DropInsert(drop, _x, y) => {
                 //finding the index which is the closest
                 if let Some((diff, i)) = self.find_nearest_widget(y) {
+                    let i = if diff < 0.0 { i } else { i + 1 };
+                    //check if queue song was dropped
+                    if let Droppable::QueueSongs(_) = &drop {
+                        sender
+                            .output(PlaylistsViewOut::DroppedQueueSongs(i))
+                            .unwrap();
+                        return;
+                    }
+
                     let songs = drop.get_songs(&self.subsonic);
                     //insert songs
-                    let i = if diff < 0.0 { i } else { i + 1 };
                     for song in songs.iter().rev() {
                         let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
                         self.tracks.insert(i, row);
@@ -821,6 +831,22 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 widgets
                     .info_details
                     .set_text(&build_info_string(current_playlist));
+            }
+            PlaylistsViewIn::InsertSongsTo(index, songs) => {
+                //insert songs
+                for song in songs.iter().rev() {
+                    let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
+                    self.tracks.insert(index, row);
+                }
+
+                self.update_playlist(&sender).await;
+                let Some(current_playlist) = &mut self.selected_playlist else {
+                    return;
+                };
+                widgets
+                    .info_details
+                    .set_text(&build_info_string(current_playlist));
+                sender.input(PlaylistsViewIn::DragCssReset);
             }
         }
     }

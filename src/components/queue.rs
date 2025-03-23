@@ -75,6 +75,14 @@ impl Queue {
         &self.tracks
     }
 
+    pub fn selected_songs(&self) -> Vec<submarine::data::Child> {
+        (0..self.tracks.len())
+            .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+            .filter_map(|i| self.tracks.get(i))
+            .map(|t| t.borrow().item().clone())
+            .collect()
+    }
+
     pub fn iter_tracks(&self) -> QueueRowIterator {
         QueueRowIterator {
             queue: self,

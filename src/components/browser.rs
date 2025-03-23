@@ -92,6 +92,7 @@ pub enum BrowserIn {
     UpdateFavoriteAlbum(String, bool),
     UpdateFavoriteArtist(String, bool),
     UpdateFavoriteSong(String, bool),
+    InsertSongsToPlaylist(u32, Vec<submarine::data::Child>),
 }
 
 #[derive(Debug)]
@@ -106,6 +107,7 @@ pub enum BrowserOut {
     FavoriteSongClicked(String, bool),
     Download(Droppable),
     ChangedViewTo(views::Views),
+    InsertSelectedQueueSongIntoPlaylist(u32),
 }
 
 #[relm4::component(async, pub)]
@@ -571,6 +573,9 @@ impl relm4::component::AsyncComponent for Browser {
                 PlaylistsViewOut::RenamePlaylist(list) => {
                     sender.input(BrowserIn::RenamePlaylist(list))
                 }
+                PlaylistsViewOut::DroppedQueueSongs(index) => sender
+                    .output(BrowserOut::InsertSelectedQueueSongIntoPlaylist(index))
+                    .unwrap(),
             },
             BrowserIn::RenamePlaylist(list) => {
                 // change server
@@ -705,6 +710,11 @@ impl relm4::component::AsyncComponent for Browser {
                 }
                 if let Some(artists) = &self.artists {
                     artists.emit(ArtistsViewIn::UpdateFavoriteArtist(id, state));
+                }
+            }
+            BrowserIn::InsertSongsToPlaylist(index, songs) => {
+                for view in &self.playlists_views {
+                    view.emit(PlaylistsViewIn::InsertSongsTo(index, songs.clone()));
                 }
             }
         }
