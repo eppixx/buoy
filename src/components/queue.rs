@@ -457,12 +457,6 @@ impl relm4::Component for Queue {
                 let selected_rows: Vec<u32> = (0..self.tracks.len())
                     .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
                     .collect();
-                selected_rows
-                    .iter()
-                    .rev()
-                    .for_each(|i| self.tracks.remove(*i));
-
-                sender.input(QueueIn::Rerandomize);
 
                 //set new state when deleting played index
                 if let Some((current, _track)) = &self.current() {
@@ -471,11 +465,18 @@ impl relm4::Component for Queue {
                     }
                 }
 
-                sender.input(QueueIn::SelectionChanged);
+                // actual removing rows
+                selected_rows
+                    .iter()
+                    .rev()
+                    .for_each(|i| self.tracks.remove(*i));
 
                 if self.tracks.is_empty() {
                     sender.input(QueueIn::Clear);
                 }
+
+                sender.input(QueueIn::Rerandomize);
+                sender.input(QueueIn::SelectionChanged);
             }
             QueueIn::NewState(state) => {
                 if self.tracks.is_empty() {
