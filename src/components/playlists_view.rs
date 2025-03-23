@@ -80,25 +80,35 @@ impl PlaylistsView {
 
         //TODO improve efficiency by removing the parts that need removing instead of all
 
-        // remove playlist content
         let client = Client::get().unwrap();
-        let temp_delete_indices: Vec<i64> = (0..self.tracks.len() as i64).collect();
-        if let Err(e) = client
-            .update_playlist(
-                &current_playlist.base.id,
-                None::<String>,
-                None::<String>,
-                None,
-                Vec::<String>::new(),
-                temp_delete_indices,
-            )
-            .await
-        {
-            sender
+        // fetch playlist and see its length so we can delete every index
+        // the fetch is needed when removing, because we dont know how big the list was
+        match client.get_playlist(&current_playlist.base.id).await {
+            Err(e) => sender
                 .output(PlaylistsViewOut::DisplayToast(format!(
-                    "moving playlist entry, removing failed: {e}",
+                    "fetching playlist failed: {e}",
                 )))
-                .unwrap();
+                .unwrap(),
+            Ok(list) => {
+                let temp_delete_indices: Vec<i64> = (0..list.entry.len() as i64).collect();
+                if let Err(e) = client
+                    .update_playlist(
+                        &current_playlist.base.id,
+                        None::<String>,
+                        None::<String>,
+                        None,
+                        Vec::<String>::new(),
+                        temp_delete_indices,
+                    )
+                    .await
+                {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(format!(
+                            "moving playlist entry, removing failed: {e}",
+                        )))
+                        .unwrap();
+                }
+            }
         }
 
         //readd playlist content
@@ -210,6 +220,7 @@ pub enum PlaylistsViewIn {
     DropMove(Droppable, f64, f64),
     DropInsert(Droppable, f64, f64),
     DragCssReset,
+    RemovePlaylistRow,
 }
 
 #[relm4::component(pub, async)]
@@ -432,6 +443,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                             model.tracks.view.clone() -> gtk::ColumnView {
                                 set_widget_name: "playlist-view-tracks",
 
+                                add_controller = gtk::EventControllerKey {
+                                    connect_key_pressed[sender] => move |_widget, key, _code, _state| {
+                                        if key == gtk::gdk::Key::Delete {
+                                            sender.input(PlaylistsViewIn::RemovePlaylistRow);
+                                        }
+                                        gtk::glib::Propagation::Proceed
+                                    }
+                                },
 
                                 add_controller = gtk::DropTarget {
                                     set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
@@ -767,12 +786,41 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     }
                 }
 
+                self.update_playlist(&sender).await;
+                let Some(current_playlist) = &mut self.selected_playlist else {
+                    return;
+                };
+                widgets
+                    .info_details
+                    .set_text(&build_info_string(current_playlist));
                 sender.input(PlaylistsViewIn::DragCssReset);
             }
             PlaylistsViewIn::DragCssReset => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
                     .for_each(|track| track.borrow().reset_drag_indicators());
+            }
+            PlaylistsViewIn::RemovePlaylistRow => {
+                // find all selected rows
+                let selected_rows: Vec<u32> = (0..self.tracks.len())
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .collect();
+
+                // removing rows
+                selected_rows
+                    .iter()
+                    .rev()
+                    .for_each(|i| self.tracks.remove(*i));
+
+                self.update_playlist(&sender).await;
+
+                //update playlist info
+                let Some(current_playlist) = &mut self.selected_playlist else {
+                    return;
+                };
+                widgets
+                    .info_details
+                    .set_text(&build_info_string(current_playlist));
             }
         }
     }
