@@ -973,7 +973,8 @@ impl relm4::component::AsyncComponent for App {
                     self.seekbar.emit(SeekbarIn::Disable);
                     self.mpris.borrow_mut().set_state(PlayState::Stop);
                     self.mpris.borrow_mut().can_play_previous(false);
-                    self.play_controls.emit(PlayControlIn::DisablePrevious(false));
+                    self.play_controls
+                        .emit(PlayControlIn::DisablePrevious(false));
                 }
                 Command::SetSongPosition(pos_ms) => {
                     // sanitiy check

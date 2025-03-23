@@ -2,14 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
+use relm4::gtk::gdk;
 use relm4::gtk::glib::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
-        prelude::{
-            BoxExt, ButtonExt, ListBoxRowExt, ListModelExt, OrientableExt, SelectionModelExt,
-            WidgetExt,
-        },
+        prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, SelectionModelExt, WidgetExt},
     },
     ComponentController,
 };
@@ -17,9 +15,8 @@ use relm4::{Component, RelmWidgetExt};
 
 use crate::client::Client;
 use crate::factory::playlist_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, PlaylistUid, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, TitleColumn,
 };
-use crate::factory::DropHalf;
 use crate::settings::Settings;
 use crate::types::Id;
 use crate::{
@@ -145,6 +142,36 @@ impl PlaylistsView {
                 updated_list.base,
             ));
     }
+
+    fn find_nearest_widget(&self, y: f64) -> Option<(f64, u32)> {
+        (0..self.tracks.len())
+            .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+            .filter_map(|(i, track)| {
+                let track = track.borrow();
+                let Some(widget) = track.fav_btn() else {
+                    return None;
+                };
+                let translated_y = widget.translate_coordinates(
+                    &self.tracks.view,
+                    0.0,
+                    widget.height() as f64 * 0.5,
+                )?;
+                let y_diff = y - translated_y.1;
+                Some((y_diff, i))
+            })
+            .min_by(|(diff, _), (diff1, _)| {
+                diff.abs()
+                    .partial_cmp(&diff1.abs())
+                    .expect("widget has no NaN")
+            })
+    }
+
+    fn index_of_uid(&self, uid: usize) -> Option<(usize, PlaylistRow)> {
+        (0..self.tracks.len())
+            .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+            .find(|(_i, t)| *t.borrow().uid() == uid)
+            .map(|(i, track)| (i as usize, track.borrow().clone()))
+    }
 }
 
 #[derive(Debug)]
@@ -178,18 +205,11 @@ pub enum PlaylistsViewIn {
     UpdateFavoriteSong(String, bool),
     DownloadClicked,
     Selected(i32),
-    RecalcDragSource,
-    MoveSong {
-        src: usize,
-        dest: usize,
-        half: DropHalf,
-    },
-    InsertSongs(Vec<submarine::data::Child>, usize, DropHalf),
-    DraggedOver {
-        uid: usize,
-        y: f64,
-    },
-    DragLeave,
+    DropHover(f64, f64),
+    DropMotionLeave,
+    DropMove(Droppable, f64, f64),
+    DropInsert(Droppable, f64, f64),
+    DragCssReset,
 }
 
 #[relm4::component(pub, async)]
@@ -258,14 +278,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             guard.push_back((model.subsonic.clone(), playlist.clone()));
         }
         drop(guard);
-
-        // send signal on selection change
-        model
-            .tracks
-            .selection_model
-            .connect_selection_changed(move |_selection_model, _x, _y| {
-                sender.input(PlaylistsViewIn::RecalcDragSource);
-            });
 
         relm4::component::AsyncComponentParts { model, widgets }
     }
@@ -420,10 +432,30 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                             model.tracks.view.clone() -> gtk::ColumnView {
                                 set_widget_name: "playlist-view-tracks",
 
-                                add_controller = gtk::DragSource {
-                                    connect_prepare[sender] => move |_drag_src, _x, _y| {
-                                        sender.input(PlaylistsViewIn::RecalcDragSource);
-                                        None
+
+                                add_controller = gtk::DropTarget {
+                                    set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
+                                    set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
+                                    connect_motion[sender] => move |_controller, x, y| {
+                                        sender.input(PlaylistsViewIn::DropHover(x, y));
+                                        gdk::DragAction::MOVE
+                                    },
+
+                                    connect_leave[sender] => move |_controller| {
+                                        sender.input(PlaylistsViewIn::DropMotionLeave)
+                                    },
+
+                                    connect_drop[sender] => move |_controller, value, x, y| {
+                                        sender.input(PlaylistsViewIn::DropMotionLeave);
+
+                                        if let Ok(drop) = value.get::<Droppable>() {
+                                            match &drop {
+                                                Droppable::PlaylistItems(_) => sender.input(PlaylistsViewIn::DropMove(drop, x, y)),
+                                                _ => sender.input(PlaylistsViewIn::DropInsert(drop, x, y)),
+                                            }
+                                        }
+                                        true
                                     }
                                 }
                             }
@@ -628,159 +660,119 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .filter_map(|i| self.tracks.get(i))
                     .for_each(|entry| entry.borrow().reset_drag_indicators());
             }
-            PlaylistsViewIn::RecalcDragSource => {
-                let len = self.tracks.selection_model.n_items();
-                let selected_rows: Vec<u32> = (0..len)
+            PlaylistsViewIn::DropHover(_x, y) => {
+                //reset drag indicators
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow().reset_drag_indicators());
+
+                //finding the index which is the closest
+                if let Some((diff, i)) = self.find_nearest_widget(y) {
+                    if diff < 0.0 {
+                        self.tracks
+                            .get(i)
+                            .unwrap()
+                            .borrow()
+                            .add_drag_indicator_top();
+                    } else {
+                        self.tracks
+                            .get(i)
+                            .unwrap()
+                            .borrow()
+                            .add_drag_indicator_bottom();
+                    }
+                }
+            }
+            PlaylistsViewIn::DropMotionLeave => {
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow().reset_drag_indicators());
+            }
+            PlaylistsViewIn::DropMove(drop, _x, y) => {
+                //finding the index which is the closest to mouse pointer
+                let Some((diff, i)) = self.find_nearest_widget(y) else {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(String::from(
+                            "could not find widget to drop to",
+                        )))
+                        .unwrap();
+                    return;
+                };
+
+                let dragged = match drop {
+                    Droppable::PlaylistItems(songs) => songs,
+                    _ => unreachable!("can only move QueueSongs"),
+                };
+
+                // find all selected rows
+                let selected_idx: Vec<u32> = (0..self.tracks.len())
                     .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
                     .collect();
 
-                // remove DragSource of not selected items
-                (0..len)
-                    .filter(|i| !selected_rows.contains(i))
-                    .filter_map(|i| self.tracks.get(i))
-                    .for_each(|row| row.borrow_mut().remove_drag_src());
-
-                // get selected children
-                let children: Vec<PlaylistUid> = selected_rows
-                    .iter()
-                    .filter_map(|i| self.tracks.get(*i))
-                    .map(|row| PlaylistUid {
-                        uid: *row.borrow().uid(),
-                        child: row.borrow().item().clone(),
-                    })
-                    .collect();
-
-                // set children as content for DragSource
-                selected_rows
-                    .iter()
-                    .filter_map(|i| self.tracks.get(*i))
-                    .for_each(|row| row.borrow_mut().set_drag_src(children.clone()));
-            }
-            PlaylistsViewIn::MoveSong { src, dest, half } => {
-                let len = self.tracks.selection_model.n_items();
-
-                //remove drag indicators
-                (0..len)
-                    .filter_map(|i| self.tracks.get(i))
-                    .for_each(|entry| entry.borrow().reset_drag_indicators());
-
-                // do nothing when src is dest
-                if src == dest {
+                // convert uid to index and track
+                let Some((dragged_index, dragged_track)) = self.index_of_uid(dragged[0].uid) else {
                     return;
+                };
+
+                let mut src_index: Vec<u32> = vec![dragged_index as u32];
+                let mut src_tracks: Vec<PlaylistRow> = vec![dragged_track];
+                if (selected_idx).contains(&(dragged_index as u32)) {
+                    (src_index, src_tracks) = selected_idx
+                        .iter()
+                        .filter_map(|i| self.tracks.get(*i).map(|t| (i, t)))
+                        .map(|(i, track)| (i, track.borrow().clone()))
+                        .collect();
                 }
 
-                //find src and dest row
-                let Some((src_index, src_entry)) = (0..len)
-                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
-                    .find(|(_i, entry)| entry.borrow().uid() == &src)
-                else {
-                    sender
-                        .output(PlaylistsViewOut::DisplayToast(String::from(
-                            "source not found in move_song",
-                        )))
-                        .unwrap();
-                    return;
-                };
-                let Some((dest_index, _dest_entry)) = (0..len)
-                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
-                    .find(|(_i, entry)| entry.borrow().uid() == &dest)
-                else {
-                    sender
-                        .output(PlaylistsViewOut::DisplayToast(String::from(
-                            "dest not found in move_song",
-                        )))
-                        .unwrap();
-                    return;
-                };
+                // insert new tracks
+                let mut inserted_uids = vec![]; // remember uids to select them later
+                let i = if diff < 0.0 { i } else { i + 1 };
+                tracing::info!("moving queue index {src_index:?} to {i}");
+                for track in src_tracks.iter().rev() {
+                    let row =
+                        PlaylistRow::new(&self.subsonic, track.item().clone(), sender.clone());
+                    inserted_uids.push(*row.uid());
+                    self.tracks.insert(i, row);
+                }
 
-                //remove src
-                let src_row = PlaylistRow::new(
-                    &self.subsonic,
-                    src_entry.borrow().item().clone(),
-                    sender.clone(),
-                );
-                self.tracks.remove(src_index);
-
-                // insert based on cursor position and order of src and dest
-                //TODO try to insert first and delete then, to avoid scrolling ScrolledWindow
-                match (&half, src_index <= dest_index) {
-                    (DropHalf::Above, true) => self.tracks.insert(dest_index - 1, src_row),
-                    (DropHalf::Above, false) | (DropHalf::Below, true) => {
-                        self.tracks.insert(dest_index, src_row)
+                // remove old tracks
+                src_tracks.iter().for_each(|track| {
+                    if let Some((i, _row)) = self.index_of_uid(*track.uid()) {
+                        self.tracks.remove(i as u32);
                     }
-                    (DropHalf::Below, false) => self.tracks.insert(dest_index + 1, src_row),
-                }
+                });
+
+                // //unselect rows
+                self.tracks.view.model().unwrap().unselect_all();
+                // reselect moved rows
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i).map(|t| (i, t)))
+                    .filter(|(_i, track)| inserted_uids.contains(track.borrow().uid()))
+                    .for_each(|(i, _track)| {
+                        _ = self.tracks.view.model().unwrap().select_item(i, false)
+                    });
 
                 self.update_playlist(&sender).await;
+                sender.input(PlaylistsViewIn::DragCssReset);
             }
-            PlaylistsViewIn::InsertSongs(songs, uid, half) => {
-                //remove drag indicators
-                let len = self.tracks.selection_model.n_items();
-                (0..len)
-                    .filter_map(|i| self.tracks.get(i))
-                    .for_each(|entry| entry.borrow().reset_drag_indicators());
-
-                // find index of uid
-                let Some((dest, _dest_entry)) = (0..len)
-                    .filter_map(|i| self.tracks.get(i).map(|entry| (i, entry)))
-                    .find(|(_i, entry)| entry.borrow().uid() == &uid)
-                else {
-                    sender
-                        .output(PlaylistsViewOut::DisplayToast(String::from(
-                            "dest not found in insert_songs",
-                        )))
-                        .unwrap();
-                    return;
-                };
-
-                for song in songs.into_iter().rev() {
-                    let row = PlaylistRow::new(&self.subsonic, song, sender.clone());
-                    match half {
-                        DropHalf::Above => self.tracks.insert(dest, row),
-                        DropHalf::Below => self.tracks.insert(dest + 1, row),
+            PlaylistsViewIn::DropInsert(drop, _x, y) => {
+                //finding the index which is the closest
+                if let Some((diff, i)) = self.find_nearest_widget(y) {
+                    let songs = drop.get_songs(&self.subsonic);
+                    //insert songs
+                    let i = if diff < 0.0 { i } else { i + 1 };
+                    for song in songs.iter().rev() {
+                        let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
+                        self.tracks.insert(i, row);
                     }
                 }
 
-                self.update_playlist(&sender).await;
-
-                // update info string
-                if let Some(list) = &self.selected_playlist {
-                    widgets.info_details.set_text(&build_info_string(list));
-                }
+                sender.input(PlaylistsViewIn::DragCssReset);
             }
-            PlaylistsViewIn::DraggedOver { uid, y } => {
-                //disable reordering item when searching
-                let settings = Settings::get().lock().unwrap();
-                if settings.search_active && !settings.search_text.is_empty() {
-                    return;
-                }
-                drop(settings);
-
-                let len = self.tracks.selection_model.n_items();
-                let Some(src_entry) = (0..len)
+            PlaylistsViewIn::DragCssReset => {
+                (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
-                    .find(|entry| entry.borrow().uid() == &uid)
-                else {
-                    tracing::warn!("source index {uid} while dragging over not found");
-                    return;
-                };
-
-                let fav_btn = src_entry.borrow().fav_btn().clone();
-                if let Some(fav_btn) = fav_btn {
-                    let widget_height = fav_btn.height();
-                    if y < f64::from(widget_height) * 0.5f64 {
-                        src_entry.borrow().add_drag_indicator_top();
-                    } else {
-                        src_entry.borrow().add_drag_indicator_bottom();
-                    }
-                }
-            }
-            PlaylistsViewIn::DragLeave => {
-                let len = self.tracks.selection_model.n_items();
-                //remove drag indicators
-                (0..len)
-                    .filter_map(|i| self.tracks.get(i))
-                    .for_each(|entry| entry.borrow().reset_drag_indicators());
+                    .for_each(|track| track.borrow().reset_drag_indicators());
             }
         }
     }
