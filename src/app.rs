@@ -55,19 +55,6 @@ pub struct App {
     equalizer: Controller<Equalizer>,
 }
 
-impl App {
-    fn recalculate_mpris_next_prev(&mut self) {
-        let can_prev = self.queue.model().can_play_previous();
-        self.play_controls
-            .emit(PlayControlIn::DisablePrevious(can_prev));
-        self.mpris.borrow_mut().can_play_previous(can_prev);
-        let can_next = self.queue.model().can_play_next();
-        self.play_controls
-            .emit(PlayControlIn::DisableNext(can_next));
-        self.mpris.borrow_mut().can_play_next(can_next);
-    }
-}
-
 #[derive(Debug)]
 pub enum AppIn {
     ResetLogin,
@@ -92,6 +79,7 @@ pub enum AppIn {
     ClickedNavigationBtn(ClickableViews),
     DisableBigCoverOverlay,
     LoadBigCoverPicture(String),
+    UpdateCanPlayNextOrPrev,
 }
 
 #[derive(Debug)]
@@ -837,7 +825,6 @@ impl relm4::component::AsyncComponent for App {
                         .emit(PlayInfoIn::NewState(Box::new(Some(*child.clone()))));
 
                     self.mpris.borrow_mut().set_song(Some(*child));
-                    self.recalculate_mpris_next_prev();
                     self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 QueueOut::QueueEmpty => {
@@ -866,15 +853,7 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::FavoriteClicked(id, state) => {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
-                QueueOut::UpdateControllButtons {
-                    prev,
-                    play: _,
-                    next,
-                } => {
-                    self.play_controls
-                        .emit(PlayControlIn::DisablePrevious(prev));
-                    self.play_controls.emit(PlayControlIn::DisableNext(next));
-                }
+                QueueOut::UpdateControlButtons => sender.input(AppIn::UpdateCanPlayNextOrPrev),
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
@@ -938,7 +917,6 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
                     self.queue.emit(QueueIn::PlayNext);
-                    self.recalculate_mpris_next_prev();
                     self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 Command::Previous => {
@@ -946,11 +924,15 @@ impl relm4::component::AsyncComponent for App {
                         return;
                     }
                     self.queue.emit(QueueIn::PlayPrevious);
-                    self.recalculate_mpris_next_prev();
                     self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 Command::Play => {
                     if !self.queue.model().can_play() {
+                        return;
+                    }
+                    // play the next song if no song is played
+                    if self.queue.model().current().is_none() {
+                        sender.input(AppIn::Player(Command::Next));
                         return;
                     }
 
@@ -959,7 +941,6 @@ impl relm4::component::AsyncComponent for App {
                             "could not play playback: {e:?}"
                         )));
                     }
-                    self.recalculate_mpris_next_prev();
                     self.mpris.borrow_mut().set_state(PlayState::Play);
                 }
                 Command::Pause => {
@@ -991,6 +972,8 @@ impl relm4::component::AsyncComponent for App {
                     self.queue.emit(QueueIn::NewState(PlayState::Stop));
                     self.seekbar.emit(SeekbarIn::Disable);
                     self.mpris.borrow_mut().set_state(PlayState::Stop);
+                    self.mpris.borrow_mut().can_play_previous(false);
+                    self.play_controls.emit(PlayControlIn::DisablePrevious(false));
                 }
                 Command::SetSongPosition(pos_ms) => {
                     // sanitiy check
@@ -1162,6 +1145,16 @@ impl relm4::component::AsyncComponent for App {
                 widgets.big_cover_picture.set_paintable(texture.as_ref());
                 widgets.big_cover_overlay.set_visible(true);
                 widgets.big_cover_overlay.set_reveal_child(true);
+            }
+            AppIn::UpdateCanPlayNextOrPrev => {
+                let can_prev = self.queue.model().can_play_previous();
+                self.play_controls
+                    .emit(PlayControlIn::DisablePrevious(can_prev));
+                self.mpris.borrow_mut().can_play_previous(can_prev);
+                let can_next = self.queue.model().can_play_next();
+                self.play_controls
+                    .emit(PlayControlIn::DisableNext(can_next));
+                self.mpris.borrow_mut().can_play_next(can_next);
             }
         }
     }

@@ -97,13 +97,10 @@ impl Queue {
         }
         drop(settings);
 
-        if let Some((index, _track)) = &self.current() {
-            if index + 1 == self.tracks.len() as usize {
-                return false;
-            }
+        match self.current() {
+            Some((index, _)) if index == self.tracks.len() as usize => false,
+            Some((_, _)) | None => true,
         }
-
-        true
     }
 
     pub fn can_play_previous(&self) -> bool {
@@ -117,13 +114,10 @@ impl Queue {
         }
         drop(settings);
 
-        if let Some(index) = &self.current() {
-            if index.0 == 0 {
-                return false;
-            }
+        match self.current() {
+            Some((0, _)) | None => false,
+            Some((_, _)) => true,
         }
-
-        true
     }
 
     pub fn current(&self) -> Option<(usize, QueueSongRow)> {
@@ -188,7 +182,6 @@ pub enum QueueIn {
     DropInsert(Droppable, f64, f64),
     SelectionChanged,
     SetCurrent(Option<usize>),
-    UpdateControllButtons,
 }
 
 #[derive(Debug)]
@@ -201,7 +194,7 @@ pub enum QueueOut {
     DisplayToast(String),
     DesktopNotification(Box<submarine::data::Child>),
     FavoriteClicked(String, bool),
-    UpdateControllButtons { prev: bool, play: bool, next: bool },
+    UpdateControlButtons,
 }
 
 #[relm4::component(pub)]
@@ -262,6 +255,7 @@ impl relm4::Component for Queue {
         }
 
         sender.input(QueueIn::JumpToCurrent);
+        sender.output(QueueOut::UpdateControlButtons).unwrap();
         ComponentParts { model, widgets }
     }
 
@@ -399,7 +393,7 @@ impl relm4::Component for Queue {
             QueueIn::Replace(drop) => {
                 sender.input(QueueIn::Clear);
                 sender.input(QueueIn::Append(drop));
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::Append(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -418,7 +412,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -446,7 +440,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::Clear => {
                 self.tracks.clear();
@@ -457,7 +451,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Placeholder);
                 sender.output(QueueOut::QueueEmpty).unwrap();
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::Remove => {
                 let selected_rows: Vec<u32> = (0..self.tracks.len())
@@ -483,7 +477,7 @@ impl relm4::Component for Queue {
 
                 sender.input(QueueIn::Rerandomize);
                 sender.input(QueueIn::SelectionChanged);
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::NewState(state) => {
                 if self.tracks.is_empty() {
@@ -556,7 +550,7 @@ impl relm4::Component for Queue {
                         }
                     }
                 }
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::PlayPrevious => {
                 if self.tracks.is_empty() {
@@ -610,7 +604,7 @@ impl relm4::Component for Queue {
                         i => self.tracks.get(i - 1).unwrap().borrow_mut().activate(),
                     }
                 }
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::UpdateFavoriteSong(id, state) => {
                 self.iter_tracks()
@@ -668,6 +662,7 @@ impl relm4::Component for Queue {
                         .output(QueueOut::Play(Box::new(track.borrow().item().clone())))
                         .unwrap();
                 }
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::ActivateUid(uid) => {
                 if let Some((index, _row)) = self.index_of_uid(uid) {
@@ -788,7 +783,7 @@ impl relm4::Component for Queue {
                 }
 
                 sender.input(QueueIn::DragCssReset);
-                sender.input(QueueIn::UpdateControllButtons);
+                sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::SelectionChanged => {
                 let is_some = (0..self.tracks.len())
@@ -804,15 +799,6 @@ impl relm4::Component for Queue {
                         .borrow_mut()
                         .set_play_state(&PlayState::Pause);
                 }
-            }
-            QueueIn::UpdateControllButtons => {
-                sender
-                    .output(QueueOut::UpdateControllButtons {
-                        prev: self.can_play_previous(),
-                        play: !self.tracks.is_empty(),
-                        next: self.can_play_next(),
-                    })
-                    .unwrap();
             }
         }
     }
