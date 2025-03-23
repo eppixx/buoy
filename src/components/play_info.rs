@@ -7,7 +7,7 @@ use relm4::{
         self, glib, pango,
         prelude::{BoxExt, WidgetExt},
     },
-    ComponentController,
+    ComponentController, RelmWidgetExt,
 };
 
 use crate::subsonic::Subsonic;
@@ -116,9 +116,9 @@ impl relm4::component::Component for PlayInfo {
         match msg {
             PlayInfoIn::NewState(child) => {
                 self.child = *child;
-                widgets
-                    .info
-                    .set_markup(&style_label_from_child(&self.child));
+                let (label, tooltip) = style_label_from_child(&self.child);
+                widgets.info.set_markup(&label);
+                widgets.info.set_tooltip_markup(tooltip.as_deref());
 
                 match &self.child {
                     None => self.covers.emit(CoverIn::LoadId(None)),
@@ -145,24 +145,26 @@ impl relm4::component::Component for PlayInfo {
     }
 }
 
-fn style_label_from_child(child: &Option<submarine::data::Child>) -> String {
+fn style_label_from_child(child: &Option<submarine::data::Child>) -> (String, Option<String>) {
     let Some(child) = &child else {
-        return format!(
+        let stock = format!(
             "<span font_size=\"xx-large\">{}</span>\n<span font_size=\"large\"> </span>",
             gettext("Nothing is playing")
         );
+        return (stock, None);
     };
 
     let mut result = format!(
         "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
         glib::markup_escape_text(&child.title)
     );
+    let mut tooltip = format!("<span weight=\"bold\">{}</span>", child.title.clone());
 
     match &child.artist {
         None => result.push('\n'),
         Some(artist) => {
             // insert link if artist_id exists for child
-            let artist = match &child.artist_id {
+            let artist_link = match &child.artist_id {
                 None => glib::markup_escape_text(artist),
                 Some(id) => format!(
                     "<a href=\"{}\">{}</a>",
@@ -173,11 +175,11 @@ fn style_label_from_child(child: &Option<submarine::data::Child>) -> String {
             };
 
             // build artist markup string
+            let by = gettext("by");
             result.push_str(&format!(
-                "\n{} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
-                gettext("by"),
-                artist
+                "\n{by} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{artist_link}</span>",
             ));
+            tooltip.push_str(&format!(" {by} <span weight=\"bold\">{artist}</span>"));
         }
     }
 
@@ -185,7 +187,7 @@ fn style_label_from_child(child: &Option<submarine::data::Child>) -> String {
         None => result.push('\n'),
         Some(album) => {
             // insert link if album_id exists for child
-            let album = match &child.album_id {
+            let album_link = match &child.album_id {
                 None => glib::markup_escape_text(album),
                 Some(id) => format!(
                     "<a href=\"{}\">{}</a>",
@@ -196,12 +198,13 @@ fn style_label_from_child(child: &Option<submarine::data::Child>) -> String {
             };
 
             // build album markup string
+            let on = gettext("on");
             result.push_str(&format!(
-                " {} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{}</span>",
-                gettext("on"),
-                album
+                " {on} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{album_link}</span>",
             ));
+            tooltip.push_str(&format!(" {on} <span weight=\"bold\">{album}</span>"));
         }
     }
-    result
+
+    (result, Some(tooltip))
 }
