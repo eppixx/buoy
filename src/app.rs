@@ -1039,7 +1039,7 @@ impl relm4::component::AsyncComponent for App {
                         self.subsonic.borrow_mut().favorite_album(id.clone(), state);
 
                         //update view
-                        self.browser.emit(BrowserIn::FavoriteAlbum(id, state));
+                        self.browser.emit(BrowserIn::UpdateFavoriteAlbum(id, state));
                     }
                 }
             }
@@ -1061,7 +1061,8 @@ impl relm4::component::AsyncComponent for App {
                             .favorite_artist(id.clone(), state);
 
                         //update view
-                        self.browser.emit(BrowserIn::FavoriteArtist(id, state));
+                        self.browser
+                            .emit(BrowserIn::UpdateFavoriteArtist(id, state));
                     }
                 }
             }
@@ -1082,8 +1083,9 @@ impl relm4::component::AsyncComponent for App {
                         self.subsonic.borrow_mut().favorite_song(id.clone(), state);
 
                         //update views
-                        self.queue.emit(QueueIn::Favorite(id.clone(), state));
-                        self.browser.emit(BrowserIn::FavoriteSong(id, state));
+                        self.queue
+                            .emit(QueueIn::UpdateFavoriteSong(id.clone(), state));
+                        self.browser.emit(BrowserIn::UpdateFavoriteSong(id, state));
                     }
                 }
             }

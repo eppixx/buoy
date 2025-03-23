@@ -43,7 +43,7 @@ pub enum AlbumViewOut {
     AppendAlbum(Droppable),
     InsertAfterCurrentPlayed(Droppable),
     ReplaceQueue(Droppable),
-    FavoriteClicked(String, bool),
+    FavoriteAlbumClicked(String, bool),
     FavoriteSongClicked(String, bool),
     DisplayToast(String),
     Download(Droppable),
@@ -54,8 +54,8 @@ pub enum AlbumViewOut {
 pub enum AlbumViewIn {
     AlbumTracks,
     Cover(CoverOut),
-    FavoritedAlbum(String, bool),
-    FavoritedSong(String, bool),
+    UpdateFavoriteAlbum(String, bool),
+    UpdateFavoriteSong(String, bool),
     FilterChanged(String),
     HoverCover(bool),
     RecalcDragSource,
@@ -180,7 +180,7 @@ impl relm4::Component for AlbumView {
                                 Some("non-starred-symbolic") => true,
                                 name => unreachable!("unkonwn icon name: {name:?}"),
                             };
-                            sender.output(AlbumViewOut::FavoriteClicked(String::from(id.inner()), state)).unwrap();
+                            sender.output(AlbumViewOut::FavoriteSongClicked(String::from(id.inner()), state)).unwrap();
                         }
                     },
 
@@ -349,7 +349,7 @@ impl relm4::Component for AlbumView {
                     }
                 });
             }
-            AlbumViewIn::FavoritedAlbum(id, state) => {
+            AlbumViewIn::UpdateFavoriteAlbum(id, state) => {
                 let album = self.subsonic.borrow().find_album(self.id.as_ref()).unwrap();
 
                 match (state, album.id == id) {
@@ -358,7 +358,7 @@ impl relm4::Component for AlbumView {
                     (_, false) => {} // signal is not for this album
                 }
             }
-            AlbumViewIn::FavoritedSong(id, state) => {
+            AlbumViewIn::UpdateFavoriteSong(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
                     .filter(|t| t.borrow().item().id == id)

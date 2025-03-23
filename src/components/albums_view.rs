@@ -93,7 +93,7 @@ pub enum AlbumsViewOut {
 #[derive(Debug)]
 pub enum AlbumsViewIn {
     FilterChanged,
-    Favorited(String, bool),
+    UpdateFavoriteAlbum(String, bool),
     Cover(CoverOut),
     FilterRow(FilterRowOut),
     FilterAdd,
@@ -599,7 +599,7 @@ impl relm4::component::Component for AlbumsView {
                     }
                 });
             }
-            AlbumsViewIn::Favorited(id, state) => {
+            AlbumsViewIn::UpdateFavoriteAlbum(id, state) => {
                 (0..self.entries.len())
                     .filter_map(|i| self.entries.get(i))
                     .filter(|a| a.borrow().item().id == id)

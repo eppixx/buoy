@@ -175,7 +175,7 @@ pub enum QueueIn {
     Append(Droppable),
     InsertAfterCurrentlyPlayed(Droppable),
     Replace(Droppable),
-    Favorite(String, bool),
+    UpdateFavoriteSong(String, bool),
     JumpToCurrent,
     Rerandomize,
     Cover(CoverOut),
@@ -612,7 +612,7 @@ impl relm4::Component for Queue {
                 }
                 sender.input(QueueIn::UpdateControllButtons);
             }
-            QueueIn::Favorite(id, state) => {
+            QueueIn::UpdateFavoriteSong(id, state) => {
                 self.iter_tracks()
                     .filter(|track| track.borrow().item().id == id)
                     .for_each(|track| match state {

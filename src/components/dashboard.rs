@@ -62,7 +62,7 @@ pub enum DashboardIn {
     FilterChanged,
     AlbumElement(AlbumElementOut),
     ClickedRandomize,
-    FavoritedAlbum(String, bool),
+    UpdateFavoriteAlbum(String, bool),
     ScrollOuter(f64),
 }
 
@@ -584,7 +584,7 @@ impl relm4::Component for Dashboard {
                 ids.into_iter()
                     .for_each(|id| _ = guard.push_back((self.subsonic.clone(), id)));
             }
-            DashboardIn::FavoritedAlbum(id, state) => {
+            DashboardIn::UpdateFavoriteAlbum(id, state) => {
                 self.recently_added_list
                     .broadcast(AlbumElementIn::Favorited(id.clone(), state));
                 self.recently_played_list

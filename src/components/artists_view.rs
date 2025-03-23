@@ -85,7 +85,7 @@ pub enum ArtistsViewOut {
 #[derive(Debug)]
 pub enum ArtistsViewIn {
     FilterChanged,
-    Favorited(String, bool),
+    UpdateFavoriteArtist(String, bool),
     Cover(CoverOut),
     FilterRow(FilterRowOut),
     FilterAdd,
@@ -431,7 +431,7 @@ impl relm4::component::Component for ArtistsView {
                     }
                 });
             }
-            ArtistsViewIn::Favorited(id, state) => {
+            ArtistsViewIn::UpdateFavoriteArtist(id, state) => {
                 (0..self.entries.len())
                     .filter_map(|i| self.entries.get(i))
                     .filter(|t| t.borrow().item().id == id)

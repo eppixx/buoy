@@ -89,9 +89,9 @@ pub enum BrowserIn {
     PlaylistsView(PlaylistsViewOut),
     RenamePlaylist(submarine::data::Playlist),
     NewPlaylist(String, Vec<submarine::data::Child>),
-    FavoriteAlbum(String, bool),
-    FavoriteArtist(String, bool),
-    FavoriteSong(String, bool),
+    UpdateFavoriteAlbum(String, bool),
+    UpdateFavoriteArtist(String, bool),
+    UpdateFavoriteSong(String, bool),
 }
 
 #[derive(Debug)]
@@ -450,7 +450,7 @@ impl relm4::component::AsyncComponent for Browser {
                 AlbumViewOut::DisplayToast(title) => {
                     sender.output(BrowserOut::DisplayToast(title)).unwrap();
                 }
-                AlbumViewOut::FavoriteClicked(id, state) => sender
+                AlbumViewOut::FavoriteAlbumClicked(id, state) => sender
                     .output(BrowserOut::FavoriteAlbumClicked(id, state))
                     .unwrap(),
                 AlbumViewOut::FavoriteSongClicked(id, state) => sender
@@ -672,39 +672,39 @@ impl relm4::component::AsyncComponent for Browser {
                     view.emit(PlaylistsViewIn::NewPlaylist(list.clone()));
                 }
             }
-            BrowserIn::FavoriteSong(id, state) => {
+            BrowserIn::UpdateFavoriteSong(id, state) => {
                 //notify all views with songs in them
                 for view in &self.album_views {
-                    view.emit(AlbumViewIn::FavoritedSong(id.clone(), state));
+                    view.emit(AlbumViewIn::UpdateFavoriteSong(id.clone(), state));
                 }
                 for view in &self.playlists_views {
-                    view.emit(PlaylistsViewIn::Favorited(id.clone(), state));
+                    view.emit(PlaylistsViewIn::UpdateFavoriteSong(id.clone(), state));
                 }
                 if let Some(tracks) = &self.tracks {
-                    tracks.emit(TracksViewIn::Favorited(id, state));
+                    tracks.emit(TracksViewIn::UpdateFavoriteSong(id, state));
                 }
             }
-            BrowserIn::FavoriteAlbum(id, state) => {
+            BrowserIn::UpdateFavoriteAlbum(id, state) => {
                 //notify all views with albums in them
                 self.dashboard
-                    .emit(DashboardIn::FavoritedAlbum(id.clone(), state));
+                    .emit(DashboardIn::UpdateFavoriteAlbum(id.clone(), state));
                 if let Some(albums) = &self.albums {
-                    albums.emit(AlbumsViewIn::Favorited(id.clone(), state));
+                    albums.emit(AlbumsViewIn::UpdateFavoriteAlbum(id.clone(), state));
                 }
                 for view in &self.album_views {
-                    view.emit(AlbumViewIn::FavoritedAlbum(id.clone(), state));
+                    view.emit(AlbumViewIn::UpdateFavoriteAlbum(id.clone(), state));
                 }
                 for view in &self.artist_views {
-                    view.emit(ArtistViewIn::FavoritedAlbum(id.clone(), state));
+                    view.emit(ArtistViewIn::UpdateFavoriteAlbum(id.clone(), state));
                 }
             }
-            BrowserIn::FavoriteArtist(id, state) => {
+            BrowserIn::UpdateFavoriteArtist(id, state) => {
                 //notify all views with artists in them
                 for view in &self.artist_views {
-                    view.emit(ArtistViewIn::FavoritedArtist(id.clone(), state));
+                    view.emit(ArtistViewIn::UpdateFavoriteArtist(id.clone(), state));
                 }
                 if let Some(artists) = &self.artists {
-                    artists.emit(ArtistsViewIn::Favorited(id, state));
+                    artists.emit(ArtistsViewIn::UpdateFavoriteArtist(id, state));
                 }
             }
         }

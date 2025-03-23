@@ -175,7 +175,7 @@ pub enum PlaylistsViewIn {
     Cover(CoverOut),
     NewPlaylist(submarine::data::PlaylistWithSongs),
     DeletePlaylist(relm4::factory::DynamicIndex),
-    Favorited(String, bool),
+    UpdateFavoriteSong(String, bool),
     DownloadClicked,
     Selected(i32),
     RecalcDragSource,
@@ -544,7 +544,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 widgets.track_stack.set_visible_child_name("tracks-stock");
                 self.playlists.guard().remove(index.current_index());
             }
-            PlaylistsViewIn::Favorited(id, state) => {
+            PlaylistsViewIn::UpdateFavoriteSong(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
                     .filter(|t| t.borrow().item().id == id)

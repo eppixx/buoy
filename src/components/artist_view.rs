@@ -35,8 +35,8 @@ pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
     Cover(CoverOut),
     FilterChanged(String),
-    FavoritedArtist(String, bool),
-    FavoritedAlbum(String, bool),
+    UpdateFavoriteArtist(String, bool),
+    UpdateFavoriteAlbum(String, bool),
     HoverCover(bool),
 }
 
@@ -307,7 +307,7 @@ impl relm4::Component for ArtistView {
                     score.is_some()
                 });
             }
-            ArtistViewIn::FavoritedArtist(id, state) => {
+            ArtistViewIn::UpdateFavoriteArtist(id, state) => {
                 if self.id.as_ref() == id {
                     match state {
                         true => self.favorite.set_icon_name("starred-symbolic"),
@@ -315,7 +315,7 @@ impl relm4::Component for ArtistView {
                     }
                 }
             }
-            ArtistViewIn::FavoritedAlbum(id, state) => {
+            ArtistViewIn::UpdateFavoriteAlbum(id, state) => {
                 self.albums.broadcast(AlbumElementIn::Favorited(id, state));
             }
             ArtistViewIn::HoverCover(false) => {

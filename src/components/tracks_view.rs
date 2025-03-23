@@ -85,7 +85,7 @@ impl TracksView {
 #[derive(Debug)]
 pub enum TracksViewIn {
     FilterChanged,
-    Favorited(String, bool),
+    UpdateFavoriteSong(String, bool),
     FilterAdd,
     FilterRow(FilterRowOut),
     Cover(CoverOut),
@@ -412,7 +412,7 @@ impl relm4::Component for TracksView {
         _root: &Self::Root,
     ) {
         match msg {
-            TracksViewIn::Favorited(id, state) => {
+            TracksViewIn::UpdateFavoriteSong(id, state) => {
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
                     .filter(|t| t.borrow().item().id == id)
