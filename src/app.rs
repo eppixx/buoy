@@ -866,6 +866,10 @@ impl relm4::component::AsyncComponent for App {
                 QueueOut::FavoriteClicked(id, state) => {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
+                QueueOut::UpdateControllButtons { prev, play: _, next } => {
+                    self.play_controls.emit(PlayControlIn::DisablePrevious(prev));
+                    self.play_controls.emit(PlayControlIn::DisableNext(next));
+                }
             },
             AppIn::Browser(msg) => match msg {
                 BrowserOut::AppendToQueue(drop) => self.queue.emit(QueueIn::Append(drop)),
