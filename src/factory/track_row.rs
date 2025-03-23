@@ -166,7 +166,11 @@ impl relm4::typed_view::column::RelmColumn for PositionColumn {
         label.set_label(&text);
 
         if let (Some(cd), Some(track)) = (item.item.disc_number, item.item.track) {
-            label.set_tooltip(&format!("{} {track:02} {} {cd}", gettext("Track"), gettext("on CD")));
+            label.set_tooltip(&format!(
+                "{} {track:02} {} {cd}",
+                gettext("Track"),
+                gettext("on CD")
+            ));
         };
     }
 

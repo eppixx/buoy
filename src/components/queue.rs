@@ -201,11 +201,7 @@ pub enum QueueOut {
     DisplayToast(String),
     DesktopNotification(Box<submarine::data::Child>),
     FavoriteClicked(String, bool),
-    UpdateControllButtons{
-        prev: bool,
-        play: bool,
-        next: bool,
-    },
+    UpdateControllButtons { prev: bool, play: bool, next: bool },
 }
 
 #[relm4::component(pub)]
@@ -810,11 +806,13 @@ impl relm4::Component for Queue {
                 }
             }
             QueueIn::UpdateControllButtons => {
-                sender.output(QueueOut::UpdateControllButtons {
-                    prev: self.can_play_previous(),
-                    play: !self.tracks.is_empty(),
-                    next: self.can_play_next(),
-                }).unwrap();
+                sender
+                    .output(QueueOut::UpdateControllButtons {
+                        prev: self.can_play_previous(),
+                        play: !self.tracks.is_empty(),
+                        next: self.can_play_next(),
+                    })
+                    .unwrap();
             }
         }
     }
