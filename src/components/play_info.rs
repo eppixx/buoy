@@ -7,7 +7,7 @@ use relm4::{
         self, glib, pango,
         prelude::{BoxExt, WidgetExt},
     },
-    ComponentController, RelmWidgetExt,
+    ComponentController,
 };
 
 use crate::subsonic::Subsonic;
