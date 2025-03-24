@@ -114,7 +114,10 @@ impl TrackRow {
         self.multiple_drag_src = None;
     }
 
-    fn create_drag_src(&self) -> gtk::DragSource {
+    fn create_drag_src(
+        &self,
+        cell: &Rc<RefCell<Option<submarine::data::Child>>>,
+    ) -> gtk::DragSource {
         // create DragSource with content
         let src = gtk::DragSource::default();
         let drop = Droppable::Child(Box::new(self.item.clone()));
@@ -122,18 +125,28 @@ impl TrackRow {
         src.set_content(Some(&content));
         src.set_actions(gtk::gdk::DragAction::COPY);
 
-        // set drag icon
-        let album = self.subsonic.borrow().album_of_song(&self.item);
         let subsonic = self.subsonic.clone();
-        src.connect_drag_begin(move |src, _drag| {
-            if let Some(album) = &album {
-                if let Some(cover_id) = &album.cover_art {
-                    let cover = subsonic.borrow().cover_icon(cover_id);
-                    if let Some(tex) = cover {
-                        src.set_icon(Some(&tex), 0, 0);
+        let cell = cell.clone();
+        src.connect_prepare(move |src, _x, _y| {
+            // upate content from cell
+            if let Some(child) = cell.borrow().clone() {
+                // set drag icon
+                let album = subsonic.borrow().album_of_song(&child);
+                if let Some(album) = &album {
+                    if let Some(cover_id) = &album.cover_art {
+                        let cover = subsonic.borrow().cover_icon(cover_id);
+                        if let Some(tex) = cover {
+                            src.set_icon(Some(&tex), 0, 0);
+                        }
                     }
                 }
+
+                // set content
+                let drop = Droppable::Child(Box::new(child));
+                let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+                return Some(content);
             }
+            None
         });
         src
     }
@@ -184,7 +197,12 @@ pub struct TitleColumn;
 impl relm4::typed_view::column::RelmColumn for TitleColumn {
     type Root = gtk::Viewport;
     type Item = TrackRow;
-    type Widgets = (Rc<RefCell<usize>>, gtk::Label, SetupFinished);
+    type Widgets = (
+        Rc<RefCell<Option<submarine::data::Child>>>,
+        Rc<RefCell<usize>>,
+        gtk::Label,
+        SetupFinished,
+    );
 
     const COLUMN_NAME: &'static str = "Title";
     const ENABLE_RESIZE: bool = true;
@@ -198,34 +216,40 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
 
         (
             gtk::Viewport::default(),
-            (Rc::new(RefCell::new(0)), title_label, SetupFinished(false)),
+            (
+                Rc::new(RefCell::new(None)),
+                Rc::new(RefCell::new(0)),
+                title_label,
+                SetupFinished(false),
+            ),
         )
     }
 
     fn bind(
         item: &mut Self::Item,
-        (cell, label, finished): &mut Self::Widgets,
+        (cell, uid, label, finished): &mut Self::Widgets,
         view: &mut Self::Root,
     ) {
         view.set_child(Some(&item.title_box));
         item.title_box.set_child(Some(label));
         label.set_text(&item.item.title);
-        cell.replace(item.uid);
+        cell.replace(Some(item.item.clone()));
+        uid.replace(*item.uid());
 
         // we need only 1 DragSource for the ListItem as it is updated by updating cell
         if !finished.0 {
             finished.0 = true;
             let list_item = super::get_list_item_widget(&item.title_box).unwrap();
-            let drag_src = item.create_drag_src();
+            let drag_src = item.create_drag_src(cell);
             list_item.add_controller(drag_src);
 
             //connect left click
             let gesture = gtk::GestureClick::default();
             let sender = item.sender.clone();
-            let cell = cell.clone();
+            let uid = uid.clone();
             gesture.connect_pressed(move |_controller, button, _x, _y| {
                 if button == 1 {
-                    sender.input(TracksViewIn::TrackClicked(*cell.borrow())); //TODO lookup uid in View
+                    sender.input(TracksViewIn::TrackClicked(*uid.borrow()));
                 }
             });
             list_item.add_controller(gesture);
