@@ -4,7 +4,6 @@ use gettextrs::gettext;
 use granite::prelude::ToastExt;
 use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, ScaleButtonExt};
 use relm4::{
-    actions::AccelsPlus,
     component::{AsyncComponentController, AsyncController},
     gtk::{
         self,
@@ -87,9 +86,6 @@ pub enum AppOut {
     Logout,
     Reload,
 }
-
-relm4::new_action_group!(AppActionGroup, "win");
-relm4::new_stateless_action!(ActivateSearchAction, AppActionGroup, "activate-search");
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for App {
@@ -248,23 +244,6 @@ impl relm4::component::AsyncComponent for App {
         let widgets = view_output!();
         tracing::info!("loaded main window");
 
-        // set application shortcuts
-        // quit
-        let application = relm4::main_application();
-        application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
-        let search_btn = widgets.search_btn.clone();
-        let senderc = sender.clone();
-        let activate_search_action: relm4::actions::RelmAction<ActivateSearchAction> =
-            relm4::actions::RelmAction::new_stateless(move |_| {
-                tracing::info!("activate search called");
-                search_btn.set_active(true);
-                senderc.input(AppIn::SearchActivate(true));
-            });
-
-        let mut group = relm4::actions::RelmActionGroup::<AppActionGroup>::new();
-        group.add_action(activate_search_action);
-        group.register_for_widget(&widgets.main_window);
-
         //init widgets
         {
             let settings = Settings::get().lock().unwrap();
@@ -307,7 +286,7 @@ impl relm4::component::AsyncComponent for App {
             let shutdown = std::time::Instant::now();
             let duration = shutdown - time_startup;
             tracing::info!("startup time was {duration:?}");
-            application.quit();
+            relm4::main_application().quit();
         }
 
         relm4::component::AsyncComponentParts { model, widgets }

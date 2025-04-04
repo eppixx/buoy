@@ -20,6 +20,7 @@ use crate::{
     mpris::{Mpris, MprisOut},
     playback::{Playback, PlaybackOut},
     settings::Settings,
+    views::ClickableViews,
     Args,
 };
 
@@ -65,7 +66,7 @@ pub struct MainWindow {
 
     content: gtk::Viewport,
     login_form: relm4::component::AsyncController<LoginForm>,
-    app: Option<relm4::component::AsyncController<App>>,
+    app: Rc<RefCell<Option<relm4::component::AsyncController<App>>>>,
 }
 
 #[derive(Debug)]
@@ -83,6 +84,12 @@ pub enum MainWindowIn {
 
 relm4::new_action_group!(WindowActionGroup, "win");
 relm4::new_stateless_action!(QuitAction, WindowActionGroup, "quit-app");
+relm4::new_stateless_action!(ActivateSearchAction, WindowActionGroup, "activate-search");
+relm4::new_stateless_action!(SwitchToDashboard, WindowActionGroup, "switch-to-dashboard");
+relm4::new_stateless_action!(SwitchToArtists, WindowActionGroup, "switch-to-artists");
+relm4::new_stateless_action!(SwitchToAlbums, WindowActionGroup, "switch-to-albums");
+relm4::new_stateless_action!(SwitchToTracks, WindowActionGroup, "switch-to-tracks");
+relm4::new_stateless_action!(SwitchToPlaylists, WindowActionGroup, "switch-to-playlists");
 
 #[relm4::component(async, pub)]
 impl relm4::component::AsyncComponent for MainWindow {
@@ -153,7 +160,7 @@ impl relm4::component::AsyncComponent for MainWindow {
 
             content: gtk::Viewport::default(),
             login_form,
-            app: None,
+            app: Rc::new(RefCell::new(None)),
         };
         let widgets = view_output!();
         gtk::Window::set_default_icon_name(config::APP_ID);
@@ -161,14 +168,76 @@ impl relm4::component::AsyncComponent for MainWindow {
         // set window shortcuts
         let application = relm4::main_application();
         application.set_accelerators_for_action::<QuitAction>(&["<Primary>Q"]);
+        application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
+        application.set_accelerators_for_action::<SwitchToDashboard>(&["<Primary>1"]);
+        application.set_accelerators_for_action::<SwitchToArtists>(&["<Primary>2"]);
+        application.set_accelerators_for_action::<SwitchToAlbums>(&["<Primary>3"]);
+        application.set_accelerators_for_action::<SwitchToTracks>(&["<Primary>4"]);
+        application.set_accelerators_for_action::<SwitchToPlaylists>(&["<Primary>5"]);
         let app = application.clone();
+
         let quit_action: relm4::actions::RelmAction<QuitAction> =
             relm4::actions::RelmAction::new_stateless(move |_| {
-                tracing::info!("quit called");
+                tracing::info!("keyboard shortcut quit called");
                 app.quit();
             });
+        let app = model.app.clone();
+        let activate_search: relm4::actions::RelmAction<ActivateSearchAction> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                if let Some(ref app) = *app.borrow() {
+                    tracing::info!("keyboard shortcut open search bar");
+                    app.emit(AppIn::SearchActivate(true));
+                }
+            });
+        let app = model.app.clone();
+        let switch_to_dashboard: relm4::actions::RelmAction<SwitchToDashboard> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                if let Some(ref app) = *app.borrow() {
+                    tracing::info!("keyboard shortcut switch to dashboard");
+                    app.emit(AppIn::ClickedNavigationBtn(ClickableViews::Dashboard));
+                }
+            });
+        let app = model.app.clone();
+        let switch_to_artists: relm4::actions::RelmAction<SwitchToArtists> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                if let Some(ref app) = *app.borrow() {
+                    tracing::info!("keyboard shortcut switch to artists");
+                    app.emit(AppIn::ClickedNavigationBtn(ClickableViews::Artists));
+                }
+            });
+        let app = model.app.clone();
+        let switch_to_albums: relm4::actions::RelmAction<SwitchToAlbums> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                if let Some(ref app) = *app.borrow() {
+                    tracing::info!("keyboard shortcut switch to albums");
+                    app.emit(AppIn::ClickedNavigationBtn(ClickableViews::Albums));
+                }
+            });
+        let app = model.app.clone();
+        let switch_to_tracks: relm4::actions::RelmAction<SwitchToTracks> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                if let Some(ref app) = *app.borrow() {
+                    tracing::info!("keyboard shortcut switch to tracks");
+                    app.emit(AppIn::ClickedNavigationBtn(ClickableViews::Tracks));
+                }
+            });
+        let app = model.app.clone();
+        let switch_to_playlists: relm4::actions::RelmAction<SwitchToPlaylists> =
+            relm4::actions::RelmAction::new_stateless(move |_| {
+                if let Some(ref app) = *app.borrow() {
+                    tracing::info!("keyboard shortcut switch to playlists");
+                    app.emit(AppIn::ClickedNavigationBtn(ClickableViews::Playlists));
+                }
+            });
+
         let mut group = relm4::actions::RelmActionGroup::<WindowActionGroup>::new();
         group.add_action(quit_action);
+        group.add_action(activate_search);
+        group.add_action(switch_to_dashboard);
+        group.add_action(switch_to_artists);
+        group.add_action(switch_to_albums);
+        group.add_action(switch_to_tracks);
+        group.add_action(switch_to_playlists);
         group.register_for_widget(&widgets.main_window);
 
         {
@@ -319,18 +388,18 @@ impl relm4::component::AsyncComponent for MainWindow {
     ) {
         match msg {
             MainWindowIn::Playback(msg) => {
-                if let Some(app) = &self.app {
+                if let Some(ref app) = *self.app.borrow() {
                     app.emit(AppIn::Playback(msg));
                 }
             }
             MainWindowIn::Mpris(msg) => {
-                if let Some(app) = &self.app {
+                if let Some(ref app) = *self.app.borrow() {
                     app.emit(AppIn::Mpris(msg));
                 }
             }
             MainWindowIn::ShowApp => {
                 //reset app
-                self.app = None;
+                self.app.replace(None);
                 self.content.set_child(None::<&gtk::Box>);
 
                 //load app
@@ -338,7 +407,7 @@ impl relm4::component::AsyncComponent for MainWindow {
                     .launch((self.args.clone(), self.mpris.clone(), self.playback.clone()))
                     .forward(sender.input_sender(), MainWindowIn::App);
                 self.content.set_child(Some(app.widget()));
-                self.app = Some(app);
+                self.app.replace(Some(app));
                 widgets.stack.set_visible_child_enum(&Content::App);
             }
             MainWindowIn::ShowLogin => {
