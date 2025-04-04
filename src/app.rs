@@ -1204,14 +1204,11 @@ async fn show_desktop_notification(
         {
             let image_buffer = image::load_from_memory(&raw).unwrap().to_rgb8();
             let buffer: Vec<u8> = image_buffer.to_vec();
-            match notify_rust::Image::from_rgb(
+            notify_rust::Image::from_rgb(
                 image_buffer.width() as i32,
                 image_buffer.height() as i32,
                 buffer,
-            ) {
-                Ok(image) => Some(image),
-                Err(_) => None,
-            }
+            ).ok()
         } else {
             None
         }

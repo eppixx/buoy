@@ -30,10 +30,7 @@ impl StackExt for gtk::Stack {
         T: TryFrom<String>,
     {
         let name = self.visible_child_name()?;
-        match T::try_from(name.to_string()) {
-            Err(_e) => None,
-            Ok(state) => Some(state),
-        }
+        T::try_from(name.to_string()).ok()
     }
 }
 

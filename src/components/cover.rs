@@ -24,7 +24,6 @@ impl std::fmt::Debug for Cover {
     }
 }
 
-
 impl Cover {
     pub fn add_css_class_image(&self, class: &str) {
         self.stack.add_css_class(class);
