@@ -51,5 +51,6 @@ image = "0.25.5"
 [profile.release]
 strip = "debuginfo"
 lto = true
+# overflow-checks = true
 
 [profile.dev]
