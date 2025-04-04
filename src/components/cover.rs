@@ -8,7 +8,6 @@ use relm4::gtk::{
 
 use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
 
-#[derive(Debug)]
 pub struct Cover {
     subsonic: Rc<RefCell<Subsonic>>,
 
@@ -16,6 +15,15 @@ pub struct Cover {
     stack: gtk::Stack,
     cover: gtk::Image,
 }
+
+impl std::fmt::Debug for Cover {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Cover")
+            .field("state", &self.stack.visible_child_enum::<State>())
+            .finish()
+    }
+}
+
 
 impl Cover {
     pub fn add_css_class_image(&self, class: &str) {
@@ -66,17 +74,6 @@ pub enum CoverIn {
     LoadPlaylist(Box<submarine::data::PlaylistWithSongs>),
     LoadArtist(Box<submarine::data::ArtistId3>),
     ChangeImage(subsonic_cover::Response),
-}
-
-// use tuple struct to keep the logging small
-pub struct Image(Vec<u8>);
-
-impl std::fmt::Debug for Image {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Image buffer")
-            .field(&format!("size: {}", self.0.len()))
-            .finish()
-    }
 }
 
 #[derive(Debug, Clone)]
