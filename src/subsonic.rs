@@ -273,6 +273,14 @@ impl Subsonic {
                 }
             }
         }
+        for track in &mut self.tracks {
+            if track.id == id.as_ref() {
+                match state {
+                    true => track.starred = Some(chrono::offset::Local::now().into()),
+                    false => track.starred = None,
+                }
+            }
+        }
         self.save().expect("saving failed");
     }
 
