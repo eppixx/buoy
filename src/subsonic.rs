@@ -30,32 +30,39 @@ impl Subsonic {
         //fetch artists
         tracing::info!("fetching artists");
         let indexes = client.get_artists(None).await?;
-        let artists = indexes.into_iter().flat_map(|i| i.artist).collect();
+        let artists: Vec<_> = indexes.into_iter().flat_map(|i| i.artist).collect();
+        tracing::info!("fetched {} artists", artists.len());
 
         //fetch album_list
-        tracing::info!("fetching album_list");
+        tracing::info!("fetching albums");
         let album_list: Vec<submarine::data::Child> = {
             let mut albums = vec![];
             let mut offset = 0;
             loop {
-                let mut part = client
-                    .get_album_list2(
+                match client
+                    .get_album_list(
                         submarine::api::get_album_list::Order::AlphabeticalByName,
                         Some(500),
                         Some(offset),
                         None::<&str>,
                     )
-                    .await?;
-                if part.len() < 500 || part.is_empty() {
-                    albums.append(&mut part);
-                    break;
-                } else {
-                    albums.append(&mut part);
-                    offset += 500;
-                }
+                    .await {
+                        Err(e) => {
+                            println!("error while fetching albums: {e}");
+                        }
+                        Ok(mut part) => {
+                            albums.append(&mut part);
+                            if part.len() < 500 || part.is_empty() {
+                                break;
+                            } else {
+                                offset += 500;
+                            }
+                        }
+                    }
             }
             albums
         };
+        tracing::info!("fetched {} albums", album_list.len());
 
         //fetch tracks
         tracing::info!("fetching tracks");
@@ -80,6 +87,7 @@ impl Subsonic {
             .collect::<Vec<_>>();
         let tracks = stream.await;
         let tracks: Vec<submarine::data::Child> = tracks.into_iter().flatten().collect();
+        tracing::info!("fetched {} tracks", tracks.len());
 
         //fetch playlists
         tracing::info!("fetching playlists");
@@ -92,6 +100,7 @@ impl Subsonic {
             }
             playlist_list
         };
+        tracing::info!("fetched {} playlists", playlists.len());
 
         let result = Self {
             scan_status: scan_status.count,
