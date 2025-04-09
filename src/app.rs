@@ -257,7 +257,7 @@ impl relm4::component::AsyncComponent for App {
             if model.playback.borrow().is_track_set() {
                 if let Err(e) = model
                     .playback
-                    .borrow()
+                    .borrow_mut()
                     .set_position(settings.queue_seek as i64)
                 {
                     tracing::error!("playback set position error {e}");
@@ -720,6 +720,57 @@ impl relm4::component::AsyncComponent for App {
                 PlaybackOut::SongPosition(ms) => {
                     sender.input(AppIn::Player(Command::SetSongPosition(ms)));
                 }
+                PlaybackOut::ScrobbleThresholdReached => {
+                    if Settings::get().lock().unwrap().scrobble {
+                        let child = match self.queue.model().current() {
+                            Some((_index, row)) => row.item().clone(),
+                            None => {
+                                return;
+                            }
+                        };
+
+                        let client = Client::get().unwrap();
+                        if let Err(e) = client.scrobble(vec![(&child.id, None)], Some(true)).await {
+                            sender.input(AppIn::DisplayToast(format!(
+                                "could not scrobble to server: {e:?}"
+                            )));
+                            return;
+                        }
+
+                        // update subsonic cache
+                        self.subsonic.borrow_mut().increment_play_counter(&child);
+
+                        // update played counter in app
+                        let play_count = match &child.play_count {
+                            None => Some(1),
+                            Some(i) => Some(i + 1),
+                        };
+                        self.queue
+                            .emit(QueueIn::UpdatePlayCountSong(child.id.clone(), play_count));
+                        self.browser
+                            .emit(BrowserIn::UpdatePlayCountSong(child.id.clone(), play_count));
+
+                        //TODO check if play count album changed
+                        let Some(album) = self.subsonic.borrow().album_of_song(&child) else {
+                            return;
+                        };
+                        match client.get_album(&album.id).await {
+                            Err(e) => {
+                                sender.input(AppIn::DisplayToast(format!(
+                                    "could not find album: {e:?}"
+                                )));
+                            }
+                            Ok(server_album) => {
+                                if server_album.base.play_count != album.play_count {
+                                    self.browser.emit(BrowserIn::UpdatePlayCountAlbum(
+                                        album.id.clone(),
+                                        server_album.base.play_count,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
             },
             AppIn::Equalizer(_changed) => {
                 self.playback.borrow_mut().sync_equalizer();
@@ -779,17 +830,6 @@ impl relm4::component::AsyncComponent for App {
                     }
 
                     sender.input(AppIn::DesktopNotification);
-
-                    //scrobble
-                    let scrobble = Settings::get().lock().unwrap().scrobble;
-                    if scrobble {
-                        if let Err(e) = client.scrobble(vec![(&child.id, None)], Some(true)).await {
-                            sender.input(AppIn::DisplayToast(format!(
-                                "could not find song streaming url: {e:?}"
-                            )));
-                            return;
-                        }
-                    }
 
                     // update seekbar
                     if let Some(length) = child.duration {
@@ -1187,7 +1227,8 @@ async fn show_desktop_notification(
                 image_buffer.width() as i32,
                 image_buffer.height() as i32,
                 buffer,
-            ).ok()
+            )
+            .ok()
         } else {
             None
         }

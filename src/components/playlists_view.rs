@@ -214,6 +214,7 @@ pub enum PlaylistsViewIn {
     NewPlaylist(submarine::data::PlaylistWithSongs),
     DeletePlaylist(relm4::factory::DynamicIndex),
     UpdateFavoriteSong(String, bool),
+    UpdatePlayCountSong(String, Option<i64>),
     DownloadClicked,
     Selected(i32),
     DropHover(f64, f64),
@@ -616,6 +617,12 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                             track.borrow_mut().item_mut().starred = None;
                         }
                     });
+            }
+            PlaylistsViewIn::UpdatePlayCountSong(id, play_count) => {
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .filter(|t| t.borrow().item().id == id)
+                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
             }
             PlaylistsViewIn::DownloadClicked => {
                 let Some(row) = self.playlists.widget().selected_row() else {

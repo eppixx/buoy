@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use gstreamer::{self as gst, prelude::*};
 use relm4::gtk;
@@ -15,6 +15,7 @@ pub struct Playback {
     volume: gst::Element,
     equalizer: gst::Element,
     track_set: Arc<AtomicBool>,
+    scrobbled: Arc<Mutex<Scrobbled>>, //needed for threshold
 }
 
 const TICK: u64 = 250; // update rate for Seekbar
@@ -23,6 +24,13 @@ const TICK: u64 = 250; // update rate for Seekbar
 pub enum PlaybackOut {
     TrackEnd,
     SongPosition(i64), // in ms
+    ScrobbleThresholdReached,
+}
+
+#[derive(Debug)]
+pub enum Scrobbled {
+    ScrobbleTriggered,
+    SetTo(Option<gstreamer::format::Percent>),
 }
 
 impl Playback {
@@ -41,6 +49,7 @@ impl Playback {
             gst::ElementFactory::make_with_name("equalizer-10bands", Some("equalizer"))?;
         let sink = gst::ElementFactory::make_with_name("autoaudiosink", Some("sink"))?;
         let track_set = Arc::new(AtomicBool::new(false));
+        let scrobbled = Arc::new(Mutex::new(Scrobbled::SetTo(None)));
 
         // build the pipeline
         pipeline.add_many([&source, &convert, &volume, &equalizer, &sink])?;
@@ -96,6 +105,7 @@ impl Playback {
         let stamp = Rc::new(RefCell::new(pipeline.query_position::<gst::ClockTime>()));
         let pipeline_weak = pipeline.downgrade();
         let send = sender.clone();
+        let scrobble = scrobbled.clone();
         gtk::glib::source::timeout_add_local(std::time::Duration::from_millis(TICK), move || {
             let Some(pipeline) = pipeline_weak.upgrade() else {
                 return gtk::glib::ControlFlow::Continue;
@@ -107,6 +117,7 @@ impl Playback {
             }
 
             let current = pipeline.query_position::<gst::ClockTime>();
+            // is not paused since last tick
             if current != *stamp.borrow() {
                 let seconds = match current {
                     Some(clock) => clock.seconds() as i64,
@@ -115,6 +126,24 @@ impl Playback {
                 send.try_send(PlaybackOut::SongPosition(seconds * 1000))
                     .unwrap();
                 stamp.replace(current);
+
+                let mut lock = scrobble.lock().unwrap();
+                match *lock {
+                    Scrobbled::ScrobbleTriggered => {}
+                    Scrobbled::SetTo(None) => {
+                        tracing::error!("Scrobble is set to None while playing song");
+                    }
+                    Scrobbled::SetTo(Some(time)) => {
+                        if let Some(position) = pipeline.query_position::<gst::format::Percent>() {
+                            if position.percent() - time.percent() >= 80 {
+                                *lock = Scrobbled::ScrobbleTriggered;
+                                send.try_send(PlaybackOut::ScrobbleThresholdReached)
+                                    .unwrap();
+                            }
+                        }
+                    }
+                }
+                drop(lock);
             }
 
             gtk::glib::ControlFlow::Continue
@@ -126,6 +155,7 @@ impl Playback {
             volume,
             equalizer,
             track_set,
+            scrobbled,
         };
 
         play.sync_equalizer();
@@ -137,6 +167,10 @@ impl Playback {
         self.stop()?;
         self.track_set.store(true, Ordering::Relaxed);
         self.source.set_property("uri", uri.as_ref());
+
+        let mut lock = self.scrobbled.lock().unwrap();
+        *lock = Scrobbled::SetTo(Some(0.percent()));
+
         Ok(())
     }
 
@@ -165,6 +199,9 @@ impl Playback {
     pub fn stop(&mut self) -> anyhow::Result<()> {
         self.track_set.store(false, Ordering::Relaxed);
         self.pipeline.set_state(gst::State::Ready)?;
+
+        let mut lock = self.scrobbled.lock().unwrap();
+        *lock = Scrobbled::SetTo(None);
         Ok(())
     }
 
@@ -174,12 +211,23 @@ impl Playback {
     }
 
     /// position in ms
-    pub fn set_position(&self, position: i64) -> anyhow::Result<()> {
-        let position = position as u64 * gst::ClockTime::MSECOND;
+    pub fn set_position(&mut self, position: i64) -> anyhow::Result<()> {
+        let pos = position as u64 * gst::ClockTime::MSECOND;
+
+        // https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c
         self.pipeline.seek_simple(
-            gst::SeekFlags::SNAP_AFTER | gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-            position,
+            gst::SeekFlags::SEGMENT | gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
+            pos,
         )?;
+
+        // TODO find out why self.pipeline.query_position returns None
+        // workaround calculate percent ourself
+        if let Some(total) = self.pipeline.query_duration::<gst::ClockTime>() {
+            let percent = position as f32 / (total.mseconds() as f32);
+            let mut lock = self.scrobbled.lock().unwrap();
+            *lock = Scrobbled::SetTo(Some(percent.percent_ratio()));
+        }
+
         Ok(())
     }
 

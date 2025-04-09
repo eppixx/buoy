@@ -12,7 +12,6 @@ use relm4::{
     ComponentController, RelmWidgetExt,
 };
 
-use crate::settings::Settings;
 use crate::{
     client::Client,
     common::convert_for_label,
@@ -24,6 +23,7 @@ use crate::{
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
+use crate::{factory::album_track_row::PlayCountColumn, settings::Settings};
 
 #[derive(Debug)]
 pub struct AlbumView {
@@ -39,6 +39,18 @@ pub struct AlbumView {
 }
 
 #[derive(Debug)]
+pub enum AlbumViewIn {
+    AlbumTracks,
+    Cover(CoverOut),
+    UpdateFavoriteAlbum(String, bool),
+    UpdateFavoriteSong(String, bool),
+    UpdatePlayCountSong(String, Option<i64>),
+    FilterChanged(String),
+    HoverCover(bool),
+    RecalcDragSource,
+}
+
+#[derive(Debug)]
 pub enum AlbumViewOut {
     AppendAlbum(Droppable),
     InsertAfterCurrentPlayed(Droppable),
@@ -48,17 +60,6 @@ pub enum AlbumViewOut {
     DisplayToast(String),
     Download(Droppable),
     ArtistClicked(Id),
-}
-
-#[derive(Debug)]
-pub enum AlbumViewIn {
-    AlbumTracks,
-    Cover(CoverOut),
-    UpdateFavoriteAlbum(String, bool),
-    UpdateFavoriteSong(String, bool),
-    FilterChanged(String),
-    HoverCover(bool),
-    RecalcDragSource,
 }
 
 #[derive(Debug)]
@@ -92,6 +93,7 @@ impl relm4::Component for AlbumView {
         tracks.append_column::<ArtistColumn>();
         tracks.append_column::<GenreColumn>();
         tracks.append_column::<LengthColumn>();
+        tracks.append_column::<PlayCountColumn>();
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
@@ -377,6 +379,12 @@ impl relm4::Component for AlbumView {
                             }
                         }
                     });
+            }
+            AlbumViewIn::UpdatePlayCountSong(id, play_count) => {
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .filter(|t| t.borrow().item().id == id)
+                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
             }
             AlbumViewIn::HoverCover(false) => {
                 self.favorite.remove_css_class("neutral-color");

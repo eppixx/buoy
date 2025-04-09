@@ -92,6 +92,8 @@ pub enum BrowserIn {
     UpdateFavoriteAlbum(String, bool),
     UpdateFavoriteArtist(String, bool),
     UpdateFavoriteSong(String, bool),
+    UpdatePlayCountSong(String, Option<i64>),
+    UpdatePlayCountAlbum(String, Option<i64>),
     InsertSongsToPlaylist(u32, Vec<submarine::data::Child>),
 }
 
@@ -710,6 +712,22 @@ impl relm4::component::AsyncComponent for Browser {
                 }
                 if let Some(artists) = &self.artists {
                     artists.emit(ArtistsViewIn::UpdateFavoriteArtist(id, state));
+                }
+            }
+            BrowserIn::UpdatePlayCountSong(id, play_count) => {
+                for view in &self.album_views {
+                    view.emit(AlbumViewIn::UpdatePlayCountSong(id.clone(), play_count));
+                }
+                for view in &self.playlists_views {
+                    view.emit(PlaylistsViewIn::UpdatePlayCountSong(id.clone(), play_count));
+                }
+                if let Some(tracks) = &self.tracks {
+                    tracks.emit(TracksViewIn::UpdatePlayCountSong(id.clone(), play_count));
+                }
+            }
+            BrowserIn::UpdatePlayCountAlbum(id, play_count) => {
+                if let Some(albums) = &self.albums {
+                    albums.emit(AlbumsViewIn::UpdatePlayCountAlbum(id.clone(), play_count));
                 }
             }
             BrowserIn::InsertSongsToPlaylist(index, songs) => {

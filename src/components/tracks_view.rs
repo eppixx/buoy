@@ -86,6 +86,7 @@ impl TracksView {
 pub enum TracksViewIn {
     FilterChanged,
     UpdateFavoriteSong(String, bool),
+    UpdatePlayCountSong(String, Option<i64>),
     FilterAdd,
     FilterRow(FilterRowOut),
     Cover(CoverOut),
@@ -431,6 +432,12 @@ impl relm4::Component for TracksView {
                             }
                         }
                     });
+            }
+            TracksViewIn::UpdatePlayCountSong(id, play_count) => {
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .filter(|t| t.borrow().item().id == id)
+                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
             }
             TracksViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);

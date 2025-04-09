@@ -178,6 +178,7 @@ pub enum QueueIn {
     InsertAfterCurrentlyPlayed(Droppable),
     Replace(Droppable),
     UpdateFavoriteSong(String, bool),
+    UpdatePlayCountSong(String, Option<i64>),
     JumpToCurrent,
     Rerandomize,
     Cover(CoverOut),
@@ -632,6 +633,11 @@ impl relm4::Component for Queue {
                             track.borrow_mut().item_mut().starred = None;
                         }
                     });
+            }
+            QueueIn::UpdatePlayCountSong(id, play_count) => {
+                self.iter_tracks()
+                    .filter(|track| track.borrow().item().id == id)
+                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
             }
             QueueIn::JumpToCurrent => {
                 // where the current song in the window will up end from start

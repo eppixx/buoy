@@ -349,6 +349,36 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
     }
 }
 
+pub struct PlayCountColumn;
+
+impl relm4::typed_view::column::RelmColumn for PlayCountColumn {
+    type Root = gtk::Viewport;
+    type Item = AlbumTrackRow;
+    type Widgets = (Model, gtk::Label);
+
+    const COLUMN_NAME: &'static str = "Play count";
+    const ENABLE_RESIZE: bool = false;
+    const ENABLE_EXPAND: bool = false;
+
+    fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
+        let (view, model) = Model::new();
+        let label = gtk::Label::default();
+        view.set_child(Some(&label));
+        (view, (model, label))
+    }
+
+    fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
+        model.set_from_row(item);
+        let play_count = item.item.play_count;
+        let play_count = play_count.map(|n| n.to_string());
+        label.set_label(&play_count.unwrap_or(String::from("-")));
+    }
+
+    fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
+        Some(Box::new(|a, b| a.item.bit_rate.cmp(&b.item.bit_rate)))
+    }
+}
+
 pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {

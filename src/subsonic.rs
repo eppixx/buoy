@@ -355,6 +355,21 @@ impl Subsonic {
         self.save().expect("saving failed");
     }
 
+    pub fn increment_play_counter(&mut self, candidate: &submarine::data::Child) {
+        for track in &mut self.tracks {
+            if track.id == candidate.id {
+                track.play_count.map(|count| count + 1);
+            }
+        }
+        for playlist in &mut self.playlists {
+            for track in &mut playlist.entry {
+                if track.id == candidate.id {
+                track.play_count.map(|count| count + 1);
+                }
+            }
+        }
+    }
+
     pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
         self.covers.cover_raw(id)
     }

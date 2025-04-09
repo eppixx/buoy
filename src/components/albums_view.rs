@@ -16,8 +16,8 @@ use crate::{
         filter_row::{Filter, FilterRowIn},
     },
     factory::album_row::{
-        AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, TitleColumn,
-        YearColumn,
+        AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, PlayCountColumn,
+        TitleColumn, YearColumn,
     },
     settings::Settings,
     subsonic::Subsonic,
@@ -80,20 +80,10 @@ impl AlbumsView {
 }
 
 #[derive(Debug)]
-pub enum AlbumsViewOut {
-    ClickedAlbum(Id),
-    ClickedArtist(Id),
-    DisplayToast(String),
-    FavoriteClicked(String, bool),
-    AddToQueue(Droppable),
-    AppendToQueue(Droppable),
-    ReplaceQueue(Droppable),
-}
-
-#[derive(Debug)]
 pub enum AlbumsViewIn {
     FilterChanged,
     UpdateFavoriteAlbum(String, bool),
+    UpdatePlayCountAlbum(String, Option<i64>),
     Cover(CoverOut),
     FilterRow(FilterRowOut),
     FilterAdd,
@@ -102,6 +92,17 @@ pub enum AlbumsViewIn {
     ReplaceQueue,
     ClickedAlbum(u32),
     ToggleFilters,
+}
+
+#[derive(Debug)]
+pub enum AlbumsViewOut {
+    ClickedAlbum(Id),
+    ClickedArtist(Id),
+    DisplayToast(String),
+    FavoriteClicked(String, bool),
+    AddToQueue(Droppable),
+    AppendToQueue(Droppable),
+    ReplaceQueue(Droppable),
 }
 
 #[relm4::component(pub)]
@@ -125,6 +126,7 @@ impl relm4::component::Component for AlbumsView {
         entries.append_column::<LengthColumn>();
         entries.append_column::<YearColumn>();
         // entries.append_column::<CdColumn>();
+        entries.append_column::<PlayCountColumn>();
         entries.append_column::<FavColumn>();
 
         let columns = entries.get_columns();
@@ -618,6 +620,12 @@ impl relm4::component::Component for AlbumsView {
                             album.borrow_mut().item_mut().starred = None;
                         }
                     });
+            }
+            AlbumsViewIn::UpdatePlayCountAlbum(id, play_count) => {
+                (0..self.entries.len())
+                    .filter_map(|i| self.entries.get(i))
+                    .filter(|a| a.borrow().item().id == id)
+                    .for_each(|album| album.borrow_mut().item_mut().play_count = play_count);
             }
             AlbumsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => {
