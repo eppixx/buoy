@@ -179,7 +179,10 @@ fn style_label_from_child(child: &Option<submarine::data::Child>) -> (String, Op
             result.push_str(&format!(
                 "\n{by} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{artist_link}</span>",
             ));
-            tooltip.push_str(&format!(" {by} <span weight=\"bold\">{artist}</span>"));
+            tooltip.push_str(&format!(
+                " {by} <span weight=\"bold\">{}</span>",
+                glib::markup_escape_text(artist)
+            ));
         }
     }
 
@@ -202,7 +205,10 @@ fn style_label_from_child(child: &Option<submarine::data::Child>) -> (String, Op
             result.push_str(&format!(
                 " {on} <span font_size=\"large\" style=\"italic\" weight=\"bold\">{album_link}</span>",
             ));
-            tooltip.push_str(&format!(" {on} <span weight=\"bold\">{album}</span>"));
+            tooltip.push_str(&format!(
+                " {on} <span weight=\"bold\">{}</span>",
+                glib::markup_escape_text(album)
+            ));
         }
     }
 
