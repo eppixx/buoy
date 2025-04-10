@@ -588,6 +588,26 @@ impl relm4::component::AsyncComponent for App {
                                                 }
                                             },
                                         },
+                                        gtk::CenterBox {
+                                            set_tooltip: &gettext("How much of a song needs to be played to be scrobbled to server in percent"),
+
+                                            #[wrap(Some)]
+                                            set_start_widget = &gtk::Label {
+                                                set_text: &gettext("Scrobble threshold"),
+                                            },
+                                            #[wrap(Some)]
+                                            set_end_widget = &gtk::SpinButton {
+                                                set_width_request: 100,
+                                                set_range: (1f64, 100f64),
+                                                set_increments: (1f64, 1f64),
+                                                set_digits: 0,
+                                                set_value: Settings::get().lock().unwrap().scrobble_threshold as f64,
+
+                                                connect_value_changed => move |button| {
+                                                    Settings::get().lock().unwrap().scrobble_threshold = button.value() as u32;
+                                                }
+                                            },
+                                        },
                                         gtk::Separator {},
                                         gtk::Box {
                                             set_halign: gtk::Align::End,

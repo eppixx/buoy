@@ -52,6 +52,8 @@ pub struct Settings {
 
     #[serde(default)]
     pub scrobble: bool,
+    #[serde(default = "default_scrobble_threshold")]
+    pub scrobble_threshold: u32,
 
     #[serde(default)] //defaults to false
     pub equalizer_enabled: bool,
@@ -85,6 +87,10 @@ fn default_paned_position() -> i32 {
 
 fn default_volume() -> f64 {
     0.75
+}
+
+fn default_scrobble_threshold() -> u32 {
+    80
 }
 
 fn default_cover_size() -> i32 {
