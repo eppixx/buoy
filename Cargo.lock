@@ -2947,7 +2947,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 [[package]]
 name = "submarine"
 version = "0.1.0"
-source = "git+https://github.com/eppixx/submarine#e94e7d96a11e108cb58f2c2df2847e2bf84e27c0"
+source = "git+https://github.com/eppixx/submarine#2c677433d8fe0df821cb7daa70ec0a276eb2917e"
 dependencies = [
  "cfg-if",
  "chrono",
