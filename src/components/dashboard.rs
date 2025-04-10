@@ -128,7 +128,7 @@ impl relm4::Component for Dashboard {
             };
             DashboardCmd::LoadedRecentlyPlayed(
                 client
-                    .get_album_list2(
+                    .get_album_list(
                         submarine::api::get_album_list::Order::Recent,
                         Some(10),
                         None,
