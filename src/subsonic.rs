@@ -51,10 +51,11 @@ impl Subsonic {
                             println!("error while fetching albums: {e}");
                         }
                         Ok(mut part) => {
-                            albums.append(&mut part);
                             if part.len() < 500 || part.is_empty() {
+                                albums.append(&mut part);
                                 break;
                             } else {
+                                albums.append(&mut part);
                                 offset += 500;
                             }
                         }
