@@ -556,13 +556,14 @@ impl relm4::component::AsyncComponent for App {
                                         set_spacing: 15,
 
                                         gtk::CenterBox {
+                                            set_tooltip: &gettext("Wether or not send desktop notifications"),
+
                                             #[wrap(Some)]
                                             set_start_widget = &gtk::Label {
                                                 set_text: &gettext("Send desktop notifications\nwhen in background"),
                                             },
                                             #[wrap(Some)]
                                             set_end_widget = &gtk::Switch {
-                                                set_tooltip: &gettext("Wether or not send desktop notifications"),
                                                 set_state: Settings::get().lock().unwrap().send_notifications,
                                                 connect_state_set => move |_switch, value| {
                                                     Settings::get().lock().unwrap().send_notifications = value;
@@ -571,6 +572,8 @@ impl relm4::component::AsyncComponent for App {
                                             },
                                         },
                                         gtk::CenterBox {
+                                            set_tooltip: &gettext("Updates play count, played timestamp on server and the now playing page in the web app"),
+
                                             #[wrap(Some)]
                                             set_start_widget = &gtk::Label {
                                                 set_text: &gettext("Scrobble to server"),
@@ -578,7 +581,6 @@ impl relm4::component::AsyncComponent for App {
                                             #[wrap(Some)]
                                             set_end_widget = &gtk::Switch {
                                                 set_state: Settings::get().lock().unwrap().scrobble,
-                                                set_tooltip: &gettext("Updates play count, played timestamp on server and the now playing page in the web app"),
 
                                                 connect_state_set => move |_switch, value| {
                                                     Settings::get().lock().unwrap().scrobble = value;
