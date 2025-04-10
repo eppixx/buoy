@@ -15,7 +15,7 @@ use relm4::{Component, RelmWidgetExt};
 
 use crate::client::Client;
 use crate::factory::playlist_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlaylistRow, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, TitleColumn,
 };
 use crate::settings::Settings;
 use crate::types::Id;
@@ -244,6 +244,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
         tracks.append_column::<ArtistColumn>();
         tracks.append_column::<AlbumColumn>();
         tracks.append_column::<LengthColumn>();
+        tracks.append_column::<PlayCountColumn>();
         tracks.append_column::<FavColumn>();
 
         let columns = tracks.get_columns();
@@ -618,12 +619,10 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         }
                     });
             }
-            PlaylistsViewIn::UpdatePlayCountSong(id, play_count) => {
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
-                    .filter(|t| t.borrow().item().id == id)
-                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
-            }
+            PlaylistsViewIn::UpdatePlayCountSong(id, play_count) => (0..self.tracks.len())
+                .filter_map(|i| self.tracks.get(i))
+                .filter(|t| t.borrow().item().id == id)
+                .for_each(|track| track.borrow_mut().set_play_count(play_count)),
             PlaylistsViewIn::DownloadClicked => {
                 let Some(row) = self.playlists.widget().selected_row() else {
                     unreachable!("add to queue should not be possible when no playlists selected");

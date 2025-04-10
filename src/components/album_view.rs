@@ -380,12 +380,10 @@ impl relm4::Component for AlbumView {
                         }
                     });
             }
-            AlbumViewIn::UpdatePlayCountSong(id, play_count) => {
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
-                    .filter(|t| t.borrow().item().id == id)
-                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
-            }
+            AlbumViewIn::UpdatePlayCountSong(id, play_count) => (0..self.tracks.len())
+                .filter_map(|i| self.tracks.get(i))
+                .filter(|t| t.borrow().item().id == id)
+                .for_each(|track| track.borrow_mut().set_play_count(play_count)),
             AlbumViewIn::HoverCover(false) => {
                 self.favorite.remove_css_class("neutral-color");
                 if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {

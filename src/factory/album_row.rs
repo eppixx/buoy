@@ -365,7 +365,7 @@ impl relm4::typed_view::column::RelmColumn for PlayCountColumn {
     type Item = AlbumRow;
     type Widgets = (Model, gtk::Label);
 
-    const COLUMN_NAME: &'static str = "Play count";
+    const COLUMN_NAME: &'static str = "Plays";
     const ENABLE_RESIZE: bool = false;
     const ENABLE_EXPAND: bool = false;
 
@@ -384,7 +384,7 @@ impl relm4::typed_view::column::RelmColumn for PlayCountColumn {
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {
-        Some(Box::new(|a, b| a.item.bit_rate.cmp(&b.item.bit_rate)))
+        Some(Box::new(|a, b| a.item.play_count.cmp(&b.item.play_count)))
     }
 }
 

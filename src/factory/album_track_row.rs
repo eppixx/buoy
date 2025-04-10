@@ -22,6 +22,7 @@ use super::SetupFinished;
 pub struct AlbumTrackRow {
     subsonic: Rc<RefCell<Subsonic>>,
     item: submarine::data::Child,
+    play_count: Option<gtk::Label>,
     fav_btn: Option<gtk::Button>,
     title_box: gtk::Viewport,
     sender: relm4::ComponentSender<AlbumView>,
@@ -43,6 +44,7 @@ impl AlbumTrackRow {
         let result = Self {
             subsonic: subsonic.clone(),
             item,
+            play_count: None,
             fav_btn: None,
             title_box: gtk::Viewport::default(),
             sender: sender.clone(),
@@ -66,6 +68,16 @@ impl AlbumTrackRow {
 
     pub fn item_mut(&mut self) -> &mut submarine::data::Child {
         &mut self.item
+    }
+
+    pub fn set_play_count(&mut self, play_count: Option<i64>) {
+        self.item.play_count = play_count;
+
+        // update label
+        if let Some(ref count) = self.play_count {
+            let play_count = play_count.map(|n| n.to_string());
+            count.set_label(&play_count.unwrap_or(String::from("-")));
+        }
     }
 
     pub fn fav_btn(&self) -> &Option<gtk::Button> {
@@ -372,6 +384,11 @@ impl relm4::typed_view::column::RelmColumn for PlayCountColumn {
         let play_count = item.item.play_count;
         let play_count = play_count.map(|n| n.to_string());
         label.set_label(&play_count.unwrap_or(String::from("-")));
+        item.play_count = Some(label.clone());
+    }
+
+    fn unbind(item: &mut Self::Item, (_model, _label): &mut Self::Widgets, _root: &mut Self::Root) {
+        item.play_count = None;
     }
 
     fn sort_fn() -> relm4::typed_view::OrdFn<Self::Item> {

@@ -15,7 +15,7 @@ use crate::{
         cover::{Cover, CoverIn},
         filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
     },
-    factory::track_row::{BitRateColumn, GenreColumn},
+    factory::track_row::{BitRateColumn, GenreColumn, PlayCountColumn},
     types::{Droppable, Id},
 };
 use crate::{
@@ -131,6 +131,7 @@ impl relm4::Component for TracksView {
         tracks.append_column::<AlbumColumn>();
         tracks.append_column::<GenreColumn>();
         tracks.append_column::<LengthColumn>();
+        tracks.append_column::<PlayCountColumn>();
         tracks.append_column::<BitRateColumn>();
         tracks.append_column::<FavColumn>();
 
@@ -433,12 +434,10 @@ impl relm4::Component for TracksView {
                         }
                     });
             }
-            TracksViewIn::UpdatePlayCountSong(id, play_count) => {
-                (0..self.tracks.len())
-                    .filter_map(|i| self.tracks.get(i))
-                    .filter(|t| t.borrow().item().id == id)
-                    .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
-            }
+            TracksViewIn::UpdatePlayCountSong(id, play_count) => (0..self.tracks.len())
+                .filter_map(|i| self.tracks.get(i))
+                .filter(|t| t.borrow().item().id == id)
+                .for_each(|track| track.borrow_mut().set_play_count(play_count)),
             TracksViewIn::FilterChanged => {
                 self.calc_sensitivity_of_buttons(widgets);
 
