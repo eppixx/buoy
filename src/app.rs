@@ -812,6 +812,7 @@ impl relm4::component::AsyncComponent for App {
                         "Deleted cache\nPlease restart to reload the cache",
                     )));
                 }
+                self.queue.emit(QueueIn::Clear);
 
                 sender.output(AppOut::Reload).unwrap();
             }
