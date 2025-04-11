@@ -90,7 +90,12 @@ impl relm4::factory::FactoryComponent for AlbumElement {
         let year_tr = gettext("Year");
 
         // tooltip string
-        let mut tooltip = String::new();
+        let mut tooltip = String::from(album.name);
+        if let Some(artist) = album.artist {
+            tooltip.push_str(" - ");
+            tooltip.push_str(&artist);
+        }
+        tooltip.push('\n');
         if let Some(year) = album.year {
             tooltip.push_str(&year_tr);
             tooltip.push_str(": ");
