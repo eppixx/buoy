@@ -169,11 +169,11 @@ impl relm4::component::AsyncComponent for MainWindow {
         let application = relm4::main_application();
         application.set_accelerators_for_action::<QuitAction>(&["<Primary>Q"]);
         application.set_accelerators_for_action::<ActivateSearchAction>(&["<Primary>F"]);
-        application.set_accelerators_for_action::<SwitchToDashboard>(&["<Primary>1"]);
-        application.set_accelerators_for_action::<SwitchToArtists>(&["<Primary>2"]);
-        application.set_accelerators_for_action::<SwitchToAlbums>(&["<Primary>3"]);
-        application.set_accelerators_for_action::<SwitchToTracks>(&["<Primary>4"]);
-        application.set_accelerators_for_action::<SwitchToPlaylists>(&["<Primary>5"]);
+        application.set_accelerators_for_action::<SwitchToDashboard>(&["<Primary>1", "<Primary>D"]);
+        application.set_accelerators_for_action::<SwitchToArtists>(&["<Primary>2", "<Primary>R"]);
+        application.set_accelerators_for_action::<SwitchToAlbums>(&["<Primary>3", "<Primary>L"]);
+        application.set_accelerators_for_action::<SwitchToTracks>(&["<Primary>4", "<Primary>T"]);
+        application.set_accelerators_for_action::<SwitchToPlaylists>(&["<Primary>5", "<Primary>P"]);
         let app = application.clone();
 
         let quit_action: relm4::actions::RelmAction<QuitAction> =
