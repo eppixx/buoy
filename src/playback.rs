@@ -135,7 +135,9 @@ impl Playback {
                     }
                     Scrobbled::SetTo(Some(time)) => {
                         if let Some(position) = pipeline.query_position::<gst::format::Percent>() {
-                            if position.percent() - time.percent() >= Settings::get().lock().unwrap().scrobble_threshold {
+                            if position.percent() - time.percent()
+                                >= Settings::get().lock().unwrap().scrobble_threshold
+                            {
                                 *lock = Scrobbled::ScrobbleTriggered;
                                 send.try_send(PlaybackOut::ScrobbleThresholdReached)
                                     .unwrap();

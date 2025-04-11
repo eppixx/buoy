@@ -125,14 +125,8 @@ impl Droppable {
             Droppable::QueueSongs(queue_uids) => queue_uids.len(),
             Droppable::Child(_child) => 1,
             Droppable::AlbumWithSongs(album) => album.song.len(),
-            Droppable::Album(album) => subsonic
-                .borrow()
-                .tracks_from_album_id3(album)
-                .len(),
-            Droppable::AlbumChild(child) => subsonic
-                .borrow()
-                .tracks_from_album(child)
-                .len(),
+            Droppable::Album(album) => subsonic.borrow().tracks_from_album_id3(album).len(),
+            Droppable::AlbumChild(child) => subsonic.borrow().tracks_from_album(child).len(),
             Droppable::ArtistWithAlbums(artist) => {
                 let subsonic = subsonic.borrow();
                 artist
@@ -151,7 +145,6 @@ impl Droppable {
             }
             Droppable::Playlist(playlist) => playlist.entry.len(),
             Droppable::PlaylistItems(playlist) => playlist.len(),
-
         }
     }
 }

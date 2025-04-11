@@ -46,20 +46,21 @@ impl Subsonic {
                         Some(offset),
                         None::<&str>,
                     )
-                    .await {
-                        Err(e) => {
-                            println!("error while fetching albums: {e}");
-                        }
-                        Ok(mut part) => {
-                            if part.len() < 500 || part.is_empty() {
-                                albums.append(&mut part);
-                                break;
-                            } else {
-                                albums.append(&mut part);
-                                offset += 500;
-                            }
+                    .await
+                {
+                    Err(e) => {
+                        println!("error while fetching albums: {e}");
+                    }
+                    Ok(mut part) => {
+                        if part.len() < 500 || part.is_empty() {
+                            albums.append(&mut part);
+                            break;
+                        } else {
+                            albums.append(&mut part);
+                            offset += 500;
                         }
                     }
+                }
             }
             albums
         };
@@ -365,7 +366,7 @@ impl Subsonic {
         for playlist in &mut self.playlists {
             for track in &mut playlist.entry {
                 if track.id == candidate.id {
-                track.play_count.map(|count| count + 1);
+                    track.play_count.map(|count| count + 1);
                 }
             }
         }
