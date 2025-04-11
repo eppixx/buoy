@@ -117,6 +117,7 @@ impl relm4::component::AsyncComponent for App {
                             set_spacing: 10,
 
                             gtk::Spinner {
+                                set_height_request: 50,
                                 start: ()
                             },
                             gtk::Label {
