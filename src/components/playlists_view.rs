@@ -553,6 +553,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         .output(PlaylistsViewOut::RenamePlaylist(list))
                         .unwrap();
                 }
+                PlaylistElementOut::Clicked(index) => {
+                    sender.input(PlaylistsViewIn::Selected(index.current_index() as i32));
+                }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
@@ -646,6 +649,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     tracing::error!("index has no playlist");
                     return;
                 };
+
+                // return when list already active
+                if let Some(current) = &self.selected_playlist {
+                    if list.info().base.id == current.base.id {
+                        return;
+                    }
+                }
+
                 list.set_edit_area(true);
                 self.selected_playlist = Some(list.info().clone());
                 let list = list.info();

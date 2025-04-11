@@ -6,7 +6,7 @@ use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, ScaleButton
 use relm4::{
     component::{AsyncComponentController, AsyncController},
     gtk::{
-        self,
+        self, gdk,
         prelude::{
             ApplicationExt, EditableExt, GtkApplicationExt, GtkWindowExt, PopoverExt,
             ToggleButtonExt, WidgetExt,
@@ -501,6 +501,17 @@ impl relm4::component::AsyncComponent for App {
                                     set_tooltip: &gettext("Show playlists"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Playlists),
 
+                                    // switch views when dragging over playlists button
+                                    add_controller = gtk::DropTarget {
+                                        set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
+                                        set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
+                                        connect_enter[sender] => move |_controller, _x, _y| {
+                                            sender.input(AppIn::ClickedNavigationBtn(ClickableViews::Playlists));
+                                            gdk::DragAction::COPY
+                                        }
+                                    },
+
                                     gtk::Box {
                                         set_spacing: 3,
 
@@ -514,7 +525,7 @@ impl relm4::component::AsyncComponent for App {
                                             gtk::Label {
                                                 set_text: &gettext("Playlists"),
                                             }
-                                        }
+                                        },
                                     }
                                 },
                             }

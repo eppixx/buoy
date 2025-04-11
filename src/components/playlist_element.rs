@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self,
+        self, gdk,
         prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
     },
     RelmWidgetExt,
@@ -103,6 +103,7 @@ pub enum PlaylistElementIn {
     ConfirmRename,
     UpdatePlaylistName(submarine::data::Playlist),
     UpdatePlaylistSongs(String, submarine::data::Playlist),
+    Clicked,
 }
 
 #[derive(Debug)]
@@ -110,6 +111,7 @@ pub enum PlaylistElementOut {
     Delete(relm4::factory::DynamicIndex),
     DisplayToast(String),
     RenamePlaylist(submarine::data::Playlist),
+    Clicked(relm4::factory::DynamicIndex),
 }
 
 #[relm4::factory(pub)]
@@ -272,6 +274,16 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         }
                     }
                 }
+            },
+
+            add_controller = gtk::DropTarget {
+                set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
+                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
+                connect_enter[sender] => move |_controller, _x, _y| {
+                    sender.input(PlaylistElementIn::Clicked);
+                    gdk::DragAction::COPY
+                }
             }
         }
     }
@@ -315,6 +327,11 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         gettext("songs")
                     ));
                 }
+            }
+            PlaylistElementIn::Clicked => {
+                sender
+                    .output(PlaylistElementOut::Clicked(self.index.clone()))
+                    .unwrap();
             }
         }
     }
