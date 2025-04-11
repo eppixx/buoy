@@ -118,6 +118,42 @@ impl Droppable {
             }
         }
     }
+
+    pub fn len(&self, subsonic: &Rc<RefCell<Subsonic>>) -> usize {
+        match &self {
+            Droppable::Queue(ids) => ids.len(),
+            Droppable::QueueSongs(queue_uids) => queue_uids.len(),
+            Droppable::Child(_child) => 1,
+            Droppable::AlbumWithSongs(album) => album.song.len(),
+            Droppable::Album(album) => subsonic
+                .borrow()
+                .tracks_from_album_id3(album)
+                .len(),
+            Droppable::AlbumChild(child) => subsonic
+                .borrow()
+                .tracks_from_album(child)
+                .len(),
+            Droppable::ArtistWithAlbums(artist) => {
+                let subsonic = subsonic.borrow();
+                artist
+                    .album
+                    .iter()
+                    .flat_map(|a| subsonic.tracks_from_album_id3(a))
+                    .count()
+            }
+            Droppable::Artist(artist) => {
+                let subsonic = subsonic.borrow();
+                let albums = subsonic.albums_from_artist(artist);
+                albums
+                    .iter()
+                    .flat_map(|a| subsonic.tracks_from_album(a))
+                    .count()
+            }
+            Droppable::Playlist(playlist) => playlist.entry.len(),
+            Droppable::PlaylistItems(playlist) => playlist.len(),
+
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]

@@ -1142,7 +1142,7 @@ impl relm4::component::AsyncComponent for App {
                         .emit(BrowserIn::SearchChanged(widgets.search.text().to_string()));
                 }
             }
-            AppIn::Download(drop) => Download::download(sender.clone(), drop),
+            AppIn::Download(drop) => Download::download(&self.subsonic, sender.clone(), drop),
             AppIn::ClickedNavigationBtn(view) => {
                 reset_navigation_btns(widgets);
 

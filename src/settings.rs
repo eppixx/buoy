@@ -71,6 +71,9 @@ pub struct Settings {
 
     #[serde(default = "default_cover_size")]
     pub cover_size: i32,
+
+    #[serde(default = "default_download_warning_threshold")]
+    pub download_warning_threshold: usize,
 }
 
 fn default_window_width() -> i32 {
@@ -95,6 +98,10 @@ fn default_scrobble_threshold() -> u32 {
 
 fn default_cover_size() -> i32 {
     150
+}
+
+fn default_download_warning_threshold() -> usize {
+    100
 }
 
 // used singleton from https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
