@@ -807,6 +807,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         sender
                             .output(PlaylistsViewOut::DroppedQueueSongs(i))
                             .unwrap();
+                        return;
                     }
 
                     let songs = drop.get_songs(&self.subsonic);
