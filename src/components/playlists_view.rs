@@ -84,11 +84,14 @@ impl PlaylistsView {
         // fetch playlist and see its length so we can delete every index
         // the fetch is needed when removing, because we dont know how big the list was
         match client.get_playlist(&current_playlist.base.id).await {
-            Err(e) => sender
-                .output(PlaylistsViewOut::DisplayToast(format!(
-                    "fetching playlist failed: {e}",
-                )))
-                .unwrap(),
+            Err(e) => {
+                sender
+                    .output(PlaylistsViewOut::DisplayToast(format!(
+                        "fetching playlist failed: {e}",
+                    )))
+                    .unwrap();
+                return
+            }
             Ok(list) => {
                 let temp_delete_indices: Vec<i64> = (0..list.entry.len() as i64).collect();
                 if let Err(e) = client
@@ -107,6 +110,7 @@ impl PlaylistsView {
                             "moving playlist entry, removing failed: {e}",
                         )))
                         .unwrap();
+                    return;
                 }
             }
         }
@@ -132,6 +136,7 @@ impl PlaylistsView {
                     "moving playlist entry, readding failed: {e}",
                 )))
                 .unwrap();
+            return;
         }
         let updated_list = match client.get_playlist(&current_playlist.base.id).await {
             Ok(list) => list,
@@ -802,7 +807,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         sender
                             .output(PlaylistsViewOut::DroppedQueueSongs(i))
                             .unwrap();
-                        return;
                     }
 
                     let songs = drop.get_songs(&self.subsonic);
