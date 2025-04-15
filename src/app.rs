@@ -940,11 +940,6 @@ impl relm4::component::AsyncComponent for App {
                         widgets.album_btn.set_active(true);
                     }
                 },
-                BrowserOut::InsertSelectedQueueSongIntoPlaylist(index) => {
-                    let selected = self.queue.model().selected_songs();
-                    self.browser
-                        .emit(BrowserIn::InsertSongsToPlaylist(index, selected));
-                }
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),

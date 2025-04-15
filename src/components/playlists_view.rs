@@ -17,6 +17,7 @@ use crate::client::Client;
 use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, TitleColumn,
 };
+use crate::factory::queue_song_row::QueueUids;
 use crate::settings::Settings;
 use crate::types::Id;
 use crate::{
@@ -90,7 +91,7 @@ impl PlaylistsView {
                         "fetching playlist failed: {e}",
                     )))
                     .unwrap();
-                return
+                return;
             }
             Ok(list) => {
                 let temp_delete_indices: Vec<i64> = (0..list.entry.len() as i64).collect();
@@ -205,7 +206,6 @@ pub enum PlaylistsViewOut {
     FavoriteClicked(String, bool),
     ClickedArtist(Id),
     ClickedAlbum(Id),
-    DroppedQueueSongs(u32),
 }
 
 #[derive(Debug)]
@@ -462,12 +462,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                 },
 
                                 add_controller = gtk::DropTarget {
-                                    set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                                    set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                                    set_actions: gdk::DragAction::COPY,
+                                    set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
+                                                 , <QueueUids as gtk::prelude::StaticType>::static_type(),
+                                    ],
 
                                     connect_motion[sender] => move |_controller, x, y| {
                                         sender.input(PlaylistsViewIn::DropHover(x, y));
-                                        gdk::DragAction::MOVE
+                                        gdk::DragAction::COPY
                                     },
 
                                     connect_leave[sender] => move |_controller| {
@@ -477,13 +479,20 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                     connect_drop[sender] => move |_controller, value, x, y| {
                                         sender.input(PlaylistsViewIn::DropMotionLeave);
 
-                                        if let Ok(drop) = value.get::<Droppable>() {
+                                        if let Ok(drop) = value.get::<QueueUids>() {
+                                            let drop = Droppable::QueueSongs(drop.0);
+                                            sender.input(PlaylistsViewIn::DropInsert(drop, x, y));
+                                            true
+                                        }
+                                        else if let Ok(drop) = value.get::<Droppable>() {
                                             match &drop {
                                                 Droppable::PlaylistItems(_) => sender.input(PlaylistsViewIn::DropMove(drop, x, y)),
                                                 _ => sender.input(PlaylistsViewIn::DropInsert(drop, x, y)),
                                             }
+                                            true
+                                        } else {
+                                            false
                                         }
-                                        true
                                     }
                                 }
                             }
@@ -802,14 +811,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 //finding the index which is the closest
                 if let Some((diff, i)) = self.find_nearest_widget(y) {
                     let i = if diff < 0.0 { i } else { i + 1 };
-                    //check if queue song was dropped
-                    if let Droppable::QueueSongs(_) = &drop {
-                        sender
-                            .output(PlaylistsViewOut::DroppedQueueSongs(i))
-                            .unwrap();
-                        return;
-                    }
-
                     let songs = drop.get_songs(&self.subsonic);
                     //insert songs
                     for song in songs.iter().rev() {

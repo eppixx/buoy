@@ -132,7 +132,7 @@ impl Model {
         let root = gtk::Viewport::default();
 
         // create DragSource
-        model.drag_src.set_actions(gtk::gdk::DragAction::COPY);
+        model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
 
         // set drag icon
         let subsonic = model.subsonic.clone();

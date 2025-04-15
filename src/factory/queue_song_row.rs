@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self, pango,
+        self, glib, pango,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
     Component, ComponentController, RelmWidgetExt,
@@ -19,7 +19,6 @@ use crate::{
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     subsonic::Subsonic,
-    types::Droppable,
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
@@ -30,6 +29,10 @@ pub struct QueueUid {
     pub child: submarine::data::Child,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "QueueUid")]
+pub struct QueueUids(pub Vec<QueueUid>);
+
 #[derive(Debug, Clone)]
 pub struct QueueSongRow {
     subsonic: Rc<RefCell<Subsonic>>,
@@ -39,6 +42,7 @@ pub struct QueueSongRow {
     play_state: PlayState,
     cover_stack: Option<gtk::Stack>,
     fav_btn: Option<gtk::Button>,
+    drag_src: Option<gtk::DragSource>,
 }
 
 impl QueueSongRow {
@@ -56,6 +60,7 @@ impl QueueSongRow {
             play_state: PlayState::Stop,
             cover_stack: None,
             fav_btn: None,
+            drag_src: None,
         }
     }
 
@@ -114,6 +119,25 @@ impl QueueSongRow {
             }
         }
     }
+
+    pub fn set_multiple_selection(&mut self, uids: Vec<QueueUid>) {
+        let Some(drag_src) = &self.drag_src else {
+            return;
+        };
+
+        if uids.is_empty() {
+            let drop = QueueUids(vec![QueueUid {
+                uid: self.uid,
+                child: self.item.clone(),
+            }]);
+            let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+            drag_src.set_content(Some(&content));
+        } else {
+            let uids = QueueUids(uids);
+            let content = gtk::gdk::ContentProvider::for_value(&uids.to_value());
+            drag_src.set_content(Some(&content));
+        }
+    }
 }
 
 pub struct Model {
@@ -132,13 +156,14 @@ pub struct Model {
 }
 
 impl Model {
-    fn set_from_row(&self, row: &QueueSongRow) {
+    fn set_from_row(&self, row: &mut QueueSongRow) {
         self.subsonic.replace(Some(row.subsonic.clone()));
         self.child.replace(Some(row.item.clone()));
         self.sender.replace(Some(row.sender.clone()));
         self.uid.replace(Some(row.uid));
+        row.drag_src = Some(self.drag_src.clone());
 
-        let drop = Droppable::QueueSongs(vec![QueueUid {
+        let drop = QueueUids(vec![QueueUid {
             uid: row.uid,
             child: row.item.clone(),
         }]);
@@ -212,7 +237,9 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
         };
 
         // create DragSource
-        model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+        model
+            .drag_src
+            .set_actions(gtk::gdk::DragAction::MOVE | gtk::gdk::DragAction::COPY);
 
         // set drag icon
         let subsonic = model.subsonic.clone();
@@ -225,6 +252,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
                 return;
             };
 
+            // set drag icon
             if let Some(cover_id) = &child.cover_art {
                 let cover = subsonic.borrow().cover_icon(cover_id);
                 if let Some(tex) = cover {

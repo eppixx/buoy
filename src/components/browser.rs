@@ -109,7 +109,6 @@ pub enum BrowserOut {
     FavoriteSongClicked(String, bool),
     Download(Droppable),
     ChangedViewTo(views::Views),
-    InsertSelectedQueueSongIntoPlaylist(u32),
 }
 
 #[relm4::component(async, pub)]
@@ -575,9 +574,6 @@ impl relm4::component::AsyncComponent for Browser {
                 PlaylistsViewOut::RenamePlaylist(list) => {
                     sender.input(BrowserIn::RenamePlaylist(list))
                 }
-                PlaylistsViewOut::DroppedQueueSongs(index) => sender
-                    .output(BrowserOut::InsertSelectedQueueSongIntoPlaylist(index))
-                    .unwrap(),
             },
             BrowserIn::RenamePlaylist(list) => {
                 // change server

@@ -15,7 +15,7 @@ use crate::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song_row::QueueSongRow,
+    factory::queue_song_row::{QueueSongRow, QueueUid, QueueUids},
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     player::Command,
@@ -294,12 +294,39 @@ impl relm4::Component for Queue {
                         },
 
                         add_controller = gtk::DropTarget {
-                            set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                            set_actions: gdk::DragAction::MOVE,
+                            set_types: &[<QueueUids as gtk::prelude::StaticType>::static_type()],
 
                             connect_motion[sender] => move |_controller, x, y| {
                                 sender.input(QueueIn::DropHover(x, y));
                                 gdk::DragAction::MOVE
+                            },
+
+                            connect_leave[sender] => move |_controller| {
+                                sender.input(QueueIn::DropMotionLeave)
+                            },
+
+                            connect_drop[sender] => move |_controller, value, x, y| {
+                                sender.input(QueueIn::DropMotionLeave);
+                                println!("dropped queue song");
+
+                                if let Ok(drop) = value.get::<QueueUids>() {
+                                    let drop = Droppable::QueueSongs(drop.0);
+                                    sender.input(QueueIn::DropMove(drop, x, y));
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                        },
+
+                        add_controller = gtk::DropTarget {
+                            set_actions: gdk::DragAction::COPY,
+                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
+                            connect_motion[sender] => move |_controller, x, y| {
+                                sender.input(QueueIn::DropHover(x, y));
+                                gdk::DragAction::COPY
                             },
 
                             connect_leave[sender] => move |_controller| {
@@ -314,8 +341,10 @@ impl relm4::Component for Queue {
                                         Droppable::QueueSongs(_) => sender.input(QueueIn::DropMove(drop, x, y)),
                                         _ => sender.input(QueueIn::DropInsert(drop, x, y)),
                                     }
+                                    true
+                                } else {
+                                    false
                                 }
-                                true
                             }
                         }
                     }
@@ -800,10 +829,29 @@ impl relm4::Component for Queue {
                 sender.output(QueueOut::UpdateControlButtons).unwrap();
             }
             QueueIn::SelectionChanged => {
-                let is_some = (0..self.tracks.len())
-                    .any(|i| self.tracks.view.model().unwrap().is_selected(i));
+                // update content for drag and drop
+                let uids: Vec<_> = (0..self.tracks.len())
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .filter_map(|i| self.tracks.get(i))
+                    .map(|row| QueueUid {
+                        uid: *row.borrow().uid(),
+                        child: row.borrow().item().clone(),
+                    })
+                    .collect();
 
-                widgets.remove_items.set_sensitive(is_some);
+                //reset multiple selection
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow_mut().set_multiple_selection(vec![]));
+
+                // set multiple selection for selected items
+                (0..self.tracks.len())
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow_mut().set_multiple_selection(uids.clone()));
+
+                // update remove item button
+                widgets.remove_items.set_sensitive(!uids.is_empty());
             }
             QueueIn::SetCurrent(index) => {
                 if let Some(index) = index {
