@@ -15,7 +15,6 @@ use crate::{
         cover::{Cover, CoverIn},
         queue::{Queue, QueueIn},
     },
-    css::DragState,
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     subsonic::Subsonic,
@@ -43,6 +42,12 @@ pub struct QueueSongRow {
     cover_stack: Option<gtk::Stack>,
     fav_btn: Option<gtk::Button>,
     drag_src: Option<gtk::DragSource>,
+}
+
+impl super::DragIndicatable for QueueSongRow {
+    fn child_widget(&self) -> &Option<impl gtk::prelude::IsA<gtk::Widget>> {
+        &self.fav_btn
+    }
 }
 
 impl QueueSongRow {
@@ -94,30 +99,6 @@ impl QueueSongRow {
     pub fn activate(&mut self) {
         self.set_play_state(&PlayState::Play);
         self.sender.input(QueueIn::ActivateUid(self.uid));
-    }
-
-    pub fn add_drag_indicator_top(&self) {
-        if let Some(fav_btn) = &self.fav_btn {
-            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
-                DragState::drop_shadow_top(&list_item);
-            }
-        }
-    }
-
-    pub fn add_drag_indicator_bottom(&self) {
-        if let Some(fav_btn) = &self.fav_btn {
-            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
-                DragState::drop_shadow_bottom(&list_item);
-            }
-        }
-    }
-
-    pub fn reset_drag_indicators(&self) {
-        if let Some(fav_btn) = &self.fav_btn {
-            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
-                DragState::reset(&list_item);
-            }
-        }
     }
 
     pub fn set_multiple_selection(&mut self, uids: Vec<QueueUid>) {

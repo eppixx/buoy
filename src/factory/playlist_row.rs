@@ -12,7 +12,6 @@ use relm4::{
 use crate::{
     common::convert_for_label,
     components::playlists_view::{PlaylistsView, PlaylistsViewOut},
-    css::DragState,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
@@ -40,6 +39,12 @@ pub struct PlaylistRow {
 impl PartialEq for PlaylistRow {
     fn eq(&self, other: &Self) -> bool {
         self.item == other.item
+    }
+}
+
+impl super::DragIndicatable for PlaylistRow {
+    fn child_widget(&self) -> &Option<impl gtk::prelude::IsA<gtk::Widget>> {
+        &self.fav_btn
     }
 }
 
@@ -84,30 +89,6 @@ impl PlaylistRow {
 
     pub fn fav_btn(&self) -> &Option<gtk::Button> {
         &self.fav_btn
-    }
-
-    pub fn add_drag_indicator_top(&self) {
-        if let Some(fav_btn) = &self.fav_btn {
-            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
-                DragState::drop_shadow_top(&list_item);
-            }
-        }
-    }
-
-    pub fn add_drag_indicator_bottom(&self) {
-        if let Some(fav_btn) = &self.fav_btn {
-            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
-                DragState::drop_shadow_bottom(&list_item);
-            }
-        }
-    }
-
-    pub fn reset_drag_indicators(&self) {
-        if let Some(fav_btn) = &self.fav_btn {
-            if let Some(list_item) = super::get_list_item_widget(fav_btn) {
-                DragState::reset(&list_item);
-            }
-        }
     }
 }
 

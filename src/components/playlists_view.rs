@@ -18,6 +18,7 @@ use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, TitleColumn,
 };
 use crate::factory::queue_song_row::QueueUids;
+use crate::factory::DragIndicatable;
 use crate::settings::Settings;
 use crate::types::Id;
 use crate::{

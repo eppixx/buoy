@@ -15,7 +15,7 @@ use crate::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::queue_song_row::{QueueSongRow, QueueUid, QueueUids},
+    factory::{queue_song_row::{QueueSongRow, QueueUid, QueueUids}, DragIndicatable},
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     player::Command,
@@ -308,7 +308,6 @@ impl relm4::Component for Queue {
 
                             connect_drop[sender] => move |_controller, value, x, y| {
                                 sender.input(QueueIn::DropMotionLeave);
-                                println!("dropped queue song");
 
                                 if let Ok(drop) = value.get::<QueueUids>() {
                                     let drop = Droppable::QueueSongs(drop.0);
