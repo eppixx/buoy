@@ -32,7 +32,7 @@ use crate::{
     types::Droppable,
 };
 
-use super::playlist_element::PlaylistElementIn;
+use super::playlist_element::{EditState, PlaylistElementIn};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TracksState {
@@ -695,7 +695,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 // set every state in PlaylistElement to normal
                 for list in self.playlists.guard().iter() {
                     list.change_state(&State::Normal);
-                    list.set_edit_area(false);
+                    list.set_edit_area(EditState::NotActive);
                 }
 
                 widgets.track_stack.set_visible_child_name("tracks");
@@ -713,7 +713,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     }
                 }
 
-                list.set_edit_area(true);
+                list.set_edit_area(EditState::Active);
                 self.selected_playlist = Some(list.info().clone());
                 let list = list.info();
 

@@ -30,7 +30,7 @@ enum Content {
     Loading,
     Login,
     App,
-    Error,
+    NoConnection,
 }
 
 impl std::fmt::Display for Content {
@@ -39,7 +39,7 @@ impl std::fmt::Display for Content {
             Self::Loading => write!(f, "Loading"),
             Self::Login => write!(f, "Login"),
             Self::App => write!(f, "App"),
-            Self::Error => write!(f, "Error"),
+            Self::NoConnection => write!(f, "NoConnection"),
         }
     }
 }
@@ -52,8 +52,8 @@ impl TryFrom<String> for Content {
             "Loading" => Ok(Self::Loading),
             "Login" => Ok(Self::Login),
             "App" => Ok(Self::App),
-            "Error" => Ok(Self::Error),
-            e => Err(format!("\"{e}\" is not a valid content")),
+            "NoConnection" => Ok(Self::NoConnection),
+            e => Err(format!("\"{e}\" is not a valid Content")),
         }
     }
 }
@@ -75,7 +75,7 @@ pub enum MainWindowIn {
     Mpris(MprisOut),
     ShowApp,
     ShowLogin,
-    ShowErrorScreen,
+    ShowNoConnection,
     App(AppOut),
     LoginForm(LoginFormOut),
     Logout,
@@ -252,8 +252,8 @@ impl relm4::component::AsyncComponent for MainWindow {
                 tracing::info!("show app");
                 sender.input(MainWindowIn::ShowApp);
             } else {
-                tracing::info!("show error screen");
-                sender.input(MainWindowIn::ShowErrorScreen);
+                tracing::info!("show no connection screen");
+                sender.input(MainWindowIn::ShowNoConnection);
             }
         }
 
@@ -328,7 +328,7 @@ impl relm4::component::AsyncComponent for MainWindow {
                     }
                 },
                 add_enumed[Content::App] = &model.content.clone() -> gtk::Viewport {},
-                add_enumed[Content::Error] = &gtk::Box {
+                add_enumed[Content::NoConnection] = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
 
                     gtk::HeaderBar {
@@ -432,7 +432,9 @@ impl relm4::component::AsyncComponent for MainWindow {
                 AppOut::Reload => sender.input(MainWindowIn::ShowApp),
             },
             MainWindowIn::LoginForm(LoginFormOut::LoggedIn) => sender.input(MainWindowIn::ShowApp),
-            MainWindowIn::ShowErrorScreen => widgets.stack.set_visible_child_enum(&Content::Error),
+            MainWindowIn::ShowNoConnection => {
+                widgets.stack.set_visible_child_enum(&Content::NoConnection)
+            }
             MainWindowIn::Logout => {
                 let mut settings = Settings::get().lock().unwrap();
                 settings.reset_login();
@@ -455,7 +457,7 @@ impl relm4::component::AsyncComponent for MainWindow {
                         sender.input(MainWindowIn::ShowApp);
                     } else {
                         tracing::info!("show error screen");
-                        sender.input(MainWindowIn::ShowErrorScreen);
+                        sender.input(MainWindowIn::ShowNoConnection);
                     }
                 }
             }

@@ -55,15 +55,15 @@ impl TryFrom<String> for State {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum EditState {
-    Clean,
-    Edit,
+    NotActive,
+    Active,
 }
 
 impl std::fmt::Display for EditState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Clean => write!(f, "Clean"),
-            Self::Edit => write!(f, "Edit"),
+            Self::NotActive => write!(f, "NotActive"),
+            Self::Active => write!(f, "Active"),
         }
     }
 }
@@ -73,9 +73,9 @@ impl TryFrom<String> for EditState {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_ref() {
-            "Clean" => Ok(Self::Clean),
-            "Edit" => Ok(Self::Edit),
-            e => Err(format!("\"{e}\" is not a State")),
+            "NotActive" => Ok(Self::NotActive),
+            "Active" => Ok(Self::Active),
+            e => Err(format!("\"{e}\" is not a EditState")),
         }
     }
 }
@@ -100,12 +100,8 @@ impl PlaylistElement {
         &self.playlist
     }
 
-    pub fn set_edit_area(&self, status: bool) {
-        if status {
-            self.edit_area.set_visible_child_enum(&EditState::Edit);
-        } else {
-            self.edit_area.set_visible_child_enum(&EditState::Clean);
-        }
+    pub fn set_edit_area(&self, status: EditState) {
+        self.edit_area.set_visible_child_enum(&status);
     }
 }
 
@@ -201,8 +197,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                     gtk::Box {
                         self.edit_area.clone() -> gtk::Stack {
-                            add_enumed[EditState::Clean] = &gtk::Box {},
-                            add_enumed[EditState::Edit] = &gtk::Box {
+                            add_enumed[EditState::NotActive] = &gtk::Box {},
+                            add_enumed[EditState::Active] = &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
                                 set_valign: gtk::Align::Center,
 
