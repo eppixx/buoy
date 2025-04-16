@@ -36,6 +36,7 @@ pub enum EqualizerIn {
 #[derive(Debug)]
 pub enum EqualizerOut {
     Changed,
+    DisplayToast(String),
 }
 
 #[relm4::component(pub)]
@@ -279,7 +280,13 @@ impl relm4::Component for Equalizer {
                     for (i, band) in Self::get_bands(widgets).iter().enumerate() {
                         settings.equalizer_bands[i] = band.value();
                     }
-                    settings.save();
+                    if let Err(e) = settings.save() {
+                        sender
+                            .output(EqualizerOut::DisplayToast(format!(
+                                "error saving settings: {e}"
+                            )))
+                            .unwrap();
+                    }
                 }
                 sender.output(EqualizerOut::Changed).unwrap();
             }

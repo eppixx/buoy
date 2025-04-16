@@ -148,21 +148,21 @@ impl Settings {
         SETTING.get_or_init(|| Mutex::new(setting))
     }
 
-    pub fn save(&self) {
-        let settings = toml::to_string(self).unwrap();
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
-        let config_path = xdg_dirs
-            .place_config_file(FILE_NAME)
-            .expect("cannot create configuration directory");
-        std::fs::write(config_path, settings).unwrap();
+    pub fn save(&self) -> anyhow::Result<()> {
+        let settings = toml::to_string(self)?;
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
+        let config_path = xdg_dirs.place_config_file(FILE_NAME)?;
+        std::fs::write(config_path, settings)?;
+        Ok(())
     }
 
-    pub fn reset_login(&mut self) {
+    pub fn reset_login(&mut self) -> anyhow::Result<()> {
         self.login_uri = None;
         self.login_username = None;
         self.login_hash = None;
         self.login_salt = None;
-        self.save();
+        self.save()?;
+        Ok(())
     }
 
     pub fn login_set(&self) -> bool {

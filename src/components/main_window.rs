@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gettextrs::gettext;
-use granite::prelude::SettingsExt;
+use granite::prelude::{SettingsExt, ToastExt};
 use relm4::{
     actions::AccelsPlus,
     gtk::{
@@ -80,6 +80,7 @@ pub enum MainWindowIn {
     LoginForm(LoginFormOut),
     Logout,
     RetryLogin,
+    DisplayToast(String),
 }
 
 relm4::new_action_group!(WindowActionGroup, "win");
@@ -277,111 +278,116 @@ impl relm4::component::AsyncComponent for MainWindow {
 
     view! {
         main_window = gtk::Window {
-            #[name = "stack"]
-            gtk::Stack {
-                add_css_class: "main-box",
-                set_transition_type: gtk::StackTransitionType::Crossfade,
-                set_transition_duration: 200,
 
-                // use this as default while loading
-                add_enumed[Content::Loading] = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
+            gtk::Overlay {
+                add_overlay: toasts = &granite::Toast,
 
-                    gtk::HeaderBar {
-                        add_css_class: granite::STYLE_CLASS_FLAT,
-                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    },
-                    gtk::WindowHandle {
-                        set_vexpand: true,
-                        set_valign: gtk::Align::Center,
-                        set_halign: gtk::Align::Center,
+                #[wrap(Some)]
+                set_child: stack = &gtk::Stack {
+                    add_css_class: "main-box",
+                    set_transition_type: gtk::StackTransitionType::Crossfade,
+                    set_transition_duration: 200,
 
-                        gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 10,
+                    // use this as default while loading
+                    add_enumed[Content::Loading] = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
 
-                            gtk::Spinner {
-                                start: ()
-                            },
-                            gtk::Label {
-                                set_text: &gettext("Loading information from server"),
-                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            }
-                        }
-                    }
-                },
-                add_enumed[Content::Login] = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::HeaderBar {
-                        add_css_class: granite::STYLE_CLASS_FLAT,
-                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    },
-
-                    gtk::WindowHandle {
-                        set_vexpand: true,
-
-                        model.login_form.widget() {
-                            set_halign: gtk::Align::Center,
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+                        gtk::WindowHandle {
+                            set_vexpand: true,
                             set_valign: gtk::Align::Center,
-                        }
-                    }
-                },
-                add_enumed[Content::App] = &model.content.clone() -> gtk::Viewport {},
-                add_enumed[Content::NoConnection] = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::HeaderBar {
-                        add_css_class: granite::STYLE_CLASS_FLAT,
-                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    },
-
-                    gtk::WindowHandle {
-                        set_hexpand: true,
-                        set_vexpand: true,
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-
-                        gtk::Box {
-                            set_margin_all: 15,
-                            set_spacing: 20,
                             set_halign: gtk::Align::Center,
-
-                            gtk::Image {
-                                set_icon_name: Some("network-error"),
-                                set_pixel_size: 64,
-                            },
 
                             gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 20,
-                                set_margin_all: 7,
+                                set_spacing: 10,
 
+                                gtk::Spinner {
+                                    start: ()
+                                },
                                 gtk::Label {
+                                    set_text: &gettext("Loading information from server"),
                                     add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                    set_halign: gtk::Align::Start,
-                                    set_text: &gettext("Can't connect to subsonic server"),
-                                },
-                                gtk::Label {
-                                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                    set_wrap: true,
-                                    set_text: &gettext("Make sure the connection to the server is available. You might want to try later or connect to another server"),
-                                },
-                                gtk::Box {
-                                    set_halign: gtk::Align::End,
-                                    set_spacing: 10,
+                                }
+                            }
+                        }
+                    },
+                    add_enumed[Content::Login] = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
 
-                                    gtk::Button {
-                                        set_label: &gettext("Retry connecting"),
-                                        connect_clicked => MainWindowIn::RetryLogin,
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+
+                        gtk::WindowHandle {
+                            set_vexpand: true,
+
+                            model.login_form.widget() {
+                                set_halign: gtk::Align::Center,
+                                set_valign: gtk::Align::Center,
+                            }
+                        }
+                    },
+                    add_enumed[Content::App] = &model.content.clone() -> gtk::Viewport {},
+                    add_enumed[Content::NoConnection] = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+
+                        gtk::HeaderBar {
+                            add_css_class: granite::STYLE_CLASS_FLAT,
+                            add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
+                        },
+
+                        gtk::WindowHandle {
+                            set_hexpand: true,
+                            set_vexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+
+                            gtk::Box {
+                                set_margin_all: 15,
+                                set_spacing: 20,
+                                set_halign: gtk::Align::Center,
+
+                                gtk::Image {
+                                    set_icon_name: Some("network-error"),
+                                    set_pixel_size: 64,
+                                },
+
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_spacing: 20,
+                                    set_margin_all: 7,
+
+                                    gtk::Label {
+                                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                        set_halign: gtk::Align::Start,
+                                        set_text: &gettext("Can't connect to subsonic server"),
                                     },
-                                    gtk::Button {
-                                        add_css_class: "destructive-action",
-                                        set_label: &gettext("Logout"),
-                                        connect_clicked => MainWindowIn::Logout,
+                                    gtk::Label {
+                                        add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                        set_wrap: true,
+                                        set_text: &gettext("Make sure the connection to the server is available. You might want to try later or connect to another server"),
+                                    },
+                                    gtk::Box {
+                                        set_halign: gtk::Align::End,
+                                        set_spacing: 10,
+
+                                        gtk::Button {
+                                            set_label: &gettext("Retry connecting"),
+                                            connect_clicked => MainWindowIn::RetryLogin,
+                                        },
+                                        gtk::Button {
+                                            add_css_class: "destructive-action",
+                                            set_label: &gettext("Logout"),
+                                            connect_clicked => MainWindowIn::Logout,
+                                        }
                                     }
                                 }
-                            },
+                            }
                         }
                     }
                 }
@@ -430,14 +436,20 @@ impl relm4::component::AsyncComponent for MainWindow {
             MainWindowIn::App(msg) => match msg {
                 AppOut::Logout => sender.input(MainWindowIn::ShowLogin),
                 AppOut::Reload => sender.input(MainWindowIn::ShowApp),
+                AppOut::DisplayToast(msg) => sender.input(MainWindowIn::DisplayToast(msg)),
             },
-            MainWindowIn::LoginForm(LoginFormOut::LoggedIn) => sender.input(MainWindowIn::ShowApp),
+            MainWindowIn::LoginForm(msg) => match msg {
+                LoginFormOut::LoggedIn => sender.input(MainWindowIn::ShowApp),
+                LoginFormOut::DisplayToast(msg) => sender.input(MainWindowIn::DisplayToast(msg)),
+            },
             MainWindowIn::ShowNoConnection => {
                 widgets.stack.set_visible_child_enum(&Content::NoConnection)
             }
             MainWindowIn::Logout => {
                 let mut settings = Settings::get().lock().unwrap();
-                settings.reset_login();
+                if let Err(e) = settings.reset_login() {
+                    sender.input(MainWindowIn::DisplayToast(format!("error on logout: {e}")));
+                }
                 crate::client::Client::get_mut().lock().unwrap().reset();
                 sender.input(MainWindowIn::ShowLogin);
             }
@@ -461,6 +473,11 @@ impl relm4::component::AsyncComponent for MainWindow {
                     }
                 }
             }
+            MainWindowIn::DisplayToast(title) => {
+                tracing::error!(title);
+                widgets.toasts.set_title(&title);
+                widgets.toasts.send_notification();
+            }
         }
     }
 
@@ -473,6 +490,8 @@ impl relm4::component::AsyncComponent for MainWindow {
         settings.window_width = widgets.main_window.default_width();
         settings.window_height = widgets.main_window.default_height();
         settings.window_maximized = widgets.main_window.is_maximized();
-        settings.save();
+        if let Err(e) = settings.save() {
+            tracing::error!("error while saving: {e}");
+        }
     }
 }

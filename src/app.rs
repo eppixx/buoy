@@ -1,7 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gettextrs::gettext;
-use granite::prelude::ToastExt;
 use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, ScaleButtonExt};
 use relm4::{
     component::{AsyncComponentController, AsyncController},
@@ -85,6 +84,7 @@ pub enum AppIn {
 pub enum AppOut {
     Logout,
     Reload,
+    DisplayToast(String),
 }
 
 #[relm4::component(async, pub)]
@@ -651,82 +651,78 @@ impl relm4::component::AsyncComponent for App {
                         },
                     },
 
-                    gtk::Overlay {
-                        #[wrap(Some)]
-                        set_child = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
 
-                            append: search_bar = &gtk::Revealer {
-                                set_transition_duration: 200,
-                                set_transition_type: gtk::RevealerTransitionType::SlideUp,
+                        append: search_bar = &gtk::Revealer {
+                            set_transition_duration: 200,
+                            set_transition_type: gtk::RevealerTransitionType::SlideUp,
 
-                                gtk::Box {
-                                    set_spacing: 10,
-                                    set_halign: gtk::Align::Center,
-                                    set_margin_vertical: 2,
+                            gtk::Box {
+                                set_spacing: 10,
+                                set_halign: gtk::Align::Center,
+                                set_margin_vertical: 2,
 
-                                    append: search = &gtk::SearchEntry {
-                                        set_placeholder_text: Some(&gettext("Search...")),
-                                        set_text: &Settings::get().lock().unwrap().search_text,
-                                        set_tooltip: &gettext("Enter your search here"),
-                                        connect_search_changed => AppIn::SearchChanged,
-                                        add_controller = gtk::EventControllerKey {
-                                            connect_key_pressed[sender] => move |_, key, _, _modifier| {
-                                                if key == gtk::gdk::Key::Escape {
-                                                    sender.input(AppIn::SearchActivate(false));
-                                                }
-                                                gtk::glib::signal::Propagation::Proceed
+                                append: search = &gtk::SearchEntry {
+                                    set_placeholder_text: Some(&gettext("Search...")),
+                                    set_text: &Settings::get().lock().unwrap().search_text,
+                                    set_tooltip: &gettext("Enter your search here"),
+                                    connect_search_changed => AppIn::SearchChanged,
+                                    add_controller = gtk::EventControllerKey {
+                                        connect_key_pressed[sender] => move |_, key, _, _modifier| {
+                                            if key == gtk::gdk::Key::Escape {
+                                                sender.input(AppIn::SearchActivate(false));
                                             }
-                                        }
-                                    },
-                                    gtk::CheckButton {
-                                        set_label: Some(&gettext("Use fuzzy search")),
-                                        set_tooltip: &gettext("Shows close and similar search results if activated"),
-                                        set_active: Settings::get().lock().unwrap().fuzzy_search,
-
-                                        connect_toggled[sender] => move |btn| {
-                                            Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
-                                            sender.input(AppIn::SearchChanged);
-                                        }
-                                    },
-                                    gtk::CheckButton {
-                                        set_label: Some(&gettext("Use case sensitivity")),
-                                        set_tooltip: &gettext("Ignores case sensitivity in search term and results"),
-                                        set_active: Settings::get().lock().unwrap().case_sensitive,
-
-                                        connect_toggled[sender] => move |btn| {
-                                            Settings::get().lock().unwrap().case_sensitive = btn.is_active();
-                                            sender.input(AppIn::SearchChanged);
-
+                                            gtk::glib::signal::Propagation::Proceed
                                         }
                                     }
-                                }
-                            },
+                                },
+                                gtk::CheckButton {
+                                    set_label: Some(&gettext("Use fuzzy search")),
+                                    set_tooltip: &gettext("Shows close and similar search results if activated"),
+                                    set_active: Settings::get().lock().unwrap().fuzzy_search,
 
-                            gtk::Overlay {
-                                #[wrap(Some)]
-                                set_child = model.browser.widget(),
+                                    connect_toggled[sender] => move |btn| {
+                                        Settings::get().lock().unwrap().fuzzy_search = btn.is_active();
+                                        sender.input(AppIn::SearchChanged);
+                                    }
+                                },
+                                gtk::CheckButton {
+                                    set_label: Some(&gettext("Use case sensitivity")),
+                                    set_tooltip: &gettext("Ignores case sensitivity in search term and results"),
+                                    set_active: Settings::get().lock().unwrap().case_sensitive,
 
-                                // overlay for showing the cover in the original size
-                                add_overlay: big_cover_overlay = &gtk::Revealer {
-                                    set_transition_type: gtk::RevealerTransitionType::Crossfade,
-                                    set_transition_duration: 1000,
-                                    set_visible: false,
+                                    connect_toggled[sender] => move |btn| {
+                                        Settings::get().lock().unwrap().case_sensitive = btn.is_active();
+                                        sender.input(AppIn::SearchChanged);
 
-                                    // disable overlay when it is clicked
-                                    add_controller = gtk::GestureClick {
-                                        connect_pressed[sender] => move |_ctrl, _btn, _x, _y| {
-                                            sender.input(AppIn::DisableBigCoverOverlay);
-                                        },
-                                    },
-
-                                    #[wrap(Some)]
-                                    set_child: big_cover_picture = &gtk::Picture {}
+                                    }
                                 }
                             }
                         },
-                        add_overlay: toasts = &granite::Toast,
-                    }
+
+                        gtk::Overlay {
+                            #[wrap(Some)]
+                            set_child = model.browser.widget(),
+
+                            // overlay for showing the cover in the original size
+                            add_overlay: big_cover_overlay = &gtk::Revealer {
+                                set_transition_type: gtk::RevealerTransitionType::Crossfade,
+                                set_transition_duration: 1000,
+                                set_visible: false,
+
+                                // disable overlay when it is clicked
+                                add_controller = gtk::GestureClick {
+                                    connect_pressed[sender] => move |_ctrl, _btn, _x, _y| {
+                                        sender.input(AppIn::DisableBigCoverOverlay);
+                                    },
+                                },
+
+                                #[wrap(Some)]
+                                set_child: big_cover_picture = &gtk::Picture {}
+                            }
+                        }
+                    },
                 }
             }
         }
@@ -807,12 +803,15 @@ impl relm4::component::AsyncComponent for App {
                     }
                 }
             },
-            AppIn::Equalizer(_changed) => {
-                self.playback.borrow_mut().sync_equalizer();
-            }
+            AppIn::Equalizer(msg) => match msg {
+                EqualizerOut::Changed => self.playback.borrow_mut().sync_equalizer(),
+                EqualizerOut::DisplayToast(msg) => sender.input(AppIn::DisplayToast(msg)),
+            },
             AppIn::ResetLogin => {
                 let mut settings = Settings::get().lock().unwrap();
-                settings.reset_login();
+                if let Err(e) = settings.reset_login() {
+                    sender.input(AppIn::DisplayToast(format!("error resetting login: {e}")));
+                }
                 sender.output(AppOut::Logout).unwrap();
             }
             AppIn::DeleteCache => {
@@ -951,9 +950,7 @@ impl relm4::component::AsyncComponent for App {
                 }
             },
             AppIn::DisplayToast(title) => {
-                tracing::error!(title);
-                widgets.toasts.set_title(&title);
-                widgets.toasts.send_notification();
+                sender.output(AppOut::DisplayToast(title)).unwrap();
             }
             AppIn::DesktopNotification => {
                 let song = self.queue.model().current();
@@ -1053,7 +1050,9 @@ impl relm4::component::AsyncComponent for App {
                     self.mpris.borrow_mut().set_volume(volume);
                     let mut settings = Settings::get().lock().unwrap();
                     settings.volume = volume;
-                    settings.save();
+                    if let Err(e) = settings.save() {
+                        sender.input(AppIn::DisplayToast(format!("error saving settins: {e}")));
+                    }
                 }
                 Command::Repeat(repeat) => {
                     self.mpris.borrow_mut().set_loop_status(repeat.clone());
@@ -1227,7 +1226,9 @@ impl relm4::component::AsyncComponent for App {
 
         //save window state
         settings.paned_position = widgets.paned.position();
-        settings.save();
+        if let Err(e) = settings.save() {
+            tracing::error!("error saving settings: {e}");
+        }
     }
 }
 

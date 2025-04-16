@@ -1,5 +1,4 @@
 use gettextrs::gettext;
-use granite::prelude::ToastExt;
 use relm4::{
     component,
     gtk::{
@@ -24,6 +23,7 @@ pub enum LoginFormIn {
 #[derive(Debug)]
 pub enum LoginFormOut {
     LoggedIn,
+    DisplayToast(String),
 }
 
 #[component(pub, async)]
@@ -61,14 +61,10 @@ impl relm4::component::AsyncComponent for LoginForm {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 30,
 
-            gtk::Overlay {
-                #[wrap(Some)]
-                set_child = &gtk::Label {
-                    add_css_class: "h3",
-                    set_label: &gettext("Login to a Subsonic server"),
-                    set_halign: gtk::Align::Center,
-                },
-                add_overlay: toasts = &granite::Toast,
+            gtk::Label {
+                add_css_class: "h3",
+                set_label: &gettext("Login to a Subsonic server"),
+                set_halign: gtk::Align::Center,
             },
 
             gtk::Grid {
@@ -146,7 +142,13 @@ impl relm4::component::AsyncComponent for LoginForm {
                             settings.login_username = Some(widgets.user.text().to_string());
                             settings.login_hash = Some(hash);
                             settings.login_salt = Some(salt);
-                            settings.save();
+                            if let Err(e) = settings.save() {
+                                sender
+                                    .output(LoginFormOut::DisplayToast(format!(
+                                        "error while saving settings: {e}"
+                                    )))
+                                    .unwrap();
+                            }
                         }
                         sender.output(LoginFormOut::LoggedIn).unwrap();
                     }
@@ -154,16 +156,17 @@ impl relm4::component::AsyncComponent for LoginForm {
                         use submarine::SubsonicError;
                         let error_str = match e {
                             SubsonicError::Connection(_) => {
-                                &gettext("Connection error. Is the address valid?")
+                                gettext("Connection error. Is the address valid?")
                             }
                             SubsonicError::NoServerFound => {
-                                &gettext("Subsonic server not found. Is the address correct")
+                                gettext("Subsonic server not found. Is the address correct")
                             }
-                            SubsonicError::Server(_) => &gettext("Username or password is wrong"),
-                            e => &format!("{}: {e}", &gettext("Login error")),
+                            SubsonicError::Server(_) => gettext("Username or password is wrong"),
+                            e => format!("{}: {e}", gettext("Login error")),
                         };
-                        widgets.toasts.set_title(error_str);
-                        widgets.toasts.send_notification();
+                        sender
+                            .output(LoginFormOut::DisplayToast(error_str))
+                            .unwrap();
                     }
                 }
             }
@@ -176,7 +179,13 @@ impl relm4::component::AsyncComponent for LoginForm {
                 settings.login_uri = None;
                 settings.login_username = None;
                 settings.login_hash = None;
-                settings.save();
+                if let Err(e) = settings.save() {
+                    sender
+                        .output(LoginFormOut::DisplayToast(format!(
+                            "error while saving settings: {e}"
+                        )))
+                        .unwrap();
+                }
             }
             LoginFormIn::UriChanged => match url::Url::parse(&widgets.uri.text()) {
                 Ok(_) => {
