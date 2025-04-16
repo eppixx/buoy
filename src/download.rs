@@ -142,7 +142,20 @@ impl Download {
         // extract relevant info from Droppable
         let ids: Vec<(String, Id)> = match drop {
             Droppable::Child(child) => vec![(format!("{}.zip", child.title), Id::album(child.id))],
-            Droppable::QueueSongs(_) => unreachable!(),
+            Droppable::QueueSongs(songs) => songs
+                .iter()
+                .map(|item| {
+                    (
+                        format!(
+                            "{} - {} - {}.mp3",
+                            item.uid,
+                            item.child.artist.clone().unwrap_or_default(),
+                            item.child.title
+                        ),
+                        Id::song(&item.child.id),
+                    )
+                })
+                .collect(),
             Droppable::Album(id3) => vec![(format!("{}.zip", id3.name), Id::album(id3.id))],
             Droppable::AlbumChild(child) => {
                 vec![(format!("{}.zip", child.title), Id::album(child.id))]
