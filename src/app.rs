@@ -277,7 +277,8 @@ impl relm4::component::AsyncComponent for App {
         let library = model.subsonic.clone();
         gtk::glib::spawn_future_local(async move {
             loop {
-                tokio::time::sleep(std::time::Duration::from_secs(120)).await;
+                let timeout = Settings::get().lock().unwrap().save_interval_secs;
+                tokio::time::sleep(std::time::Duration::from_secs(timeout)).await;
                 tracing::info!("periodic save");
                 library.borrow().save().unwrap();
             }
