@@ -352,7 +352,10 @@ impl relm4::Component for AlbumView {
                 });
             }
             AlbumViewIn::UpdateFavoriteAlbum(id, state) => {
-                let album = self.subsonic.borrow().find_album(self.id.as_ref()).unwrap();
+                let Some(album) = self.subsonic.borrow().find_album(self.id.as_ref()) else {
+                    sender.output(AlbumViewOut::DisplayToast(format!("error finding album {id}"))).unwrap();
+                    return;
+                };
 
                 match (state, album.id == id) {
                     (true, true) => self.favorite.set_icon_name("starred-symbolic"),

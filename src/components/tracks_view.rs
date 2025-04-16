@@ -715,7 +715,10 @@ impl relm4::Component for TracksView {
             TracksViewIn::FilterAdd => {
                 use glib::object::Cast;
 
-                let list_item = widgets.new_filter.selected_item().unwrap();
+                let Some(list_item) = widgets.new_filter.selected_item() else {
+                    sender.output(TracksViewOut::DisplayToast(format!("no filter selected"))).unwrap();
+                    return;
+                };
                 let boxed = list_item
                     .downcast_ref::<glib::BoxedAnyObject>()
                     .expect("is not a BoxedAnyObject");
@@ -732,6 +735,7 @@ impl relm4::Component for TracksView {
                     sender.input(TracksViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(TracksViewIn::FilterChanged),
+                FilterRowOut::DisplayToast(msg) => sender.output(TracksViewOut::DisplayToast(msg)).unwrap(),
             },
             TracksViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => {

@@ -483,7 +483,9 @@ impl relm4::component::AsyncComponent for MainWindow {
 
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _sender: relm4::Sender<Self::Output>) {
         tracing::info!("shutdown MainWindow");
-        self.playback.borrow_mut().shutdown().unwrap();
+        if let Err(e) = self.playback.borrow_mut().shutdown() {
+            tracing::error!("error on playback shutdown: {e}");
+        }
 
         //save window state
         let mut settings = Settings::get().lock().unwrap();

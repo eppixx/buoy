@@ -525,9 +525,10 @@ impl relm4::Component for Dashboard {
     ) {
         match msg {
             DashboardIn::FilterChanged => {
-                let search_fn = |element: &gtk::FlowBoxChild| -> bool {
+                let search_fn = |element: &gtk::FlowBoxChild|
+                 -> bool {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
-                    let (title, artist) = get_info_of_flowboxchild(element);
+                    let (title, artist) = get_info_of_flowboxchild(element).unwrap();
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
 
                     // when search bar is hidden every element will be shown

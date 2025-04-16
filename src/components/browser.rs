@@ -230,8 +230,7 @@ impl relm4::component::AsyncComponent for Browser {
                     .unwrap();
                 self.history_widget
                     .push(Views::Dashboard(self.dashboard.widget().clone()));
-                self.content
-                    .set_child(Some(self.history_widget.last().unwrap().widget()));
+                self.content.set_child(Some(self.dashboard.widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .unwrap();
@@ -324,9 +323,8 @@ impl relm4::component::AsyncComponent for Browser {
                     .unwrap();
                 self.history_widget
                     .push(Views::Album(album.widget().clone()));
+                self.content.set_child(Some(album.widget()));
                 self.album_views.push(album);
-                self.content
-                    .set_child(Some(self.history_widget.last().unwrap().widget()));
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .unwrap();
@@ -373,10 +371,16 @@ impl relm4::component::AsyncComponent for Browser {
             }
             BrowserIn::Dashboard(output) => match output {
                 DashboardOut::ClickedAlbum(id) => {
-                    let album = self.subsonic.borrow().find_album(id.as_ref()).unwrap();
-                    sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(
-                        Id::album(&album.id),
-                    )));
+                    match self.subsonic.borrow().find_album(id.as_ref()) {
+                        None => {
+                            tracing::error!("clicked album {id} not found");
+                        }
+                        Some(album) => {
+                            sender.input(BrowserIn::AlbumsView(AlbumsViewOut::ClickedAlbum(
+                                Id::album(&album.id),
+                            )));
+                        }
+                    }
                 }
                 DashboardOut::DisplayToast(title) => {
                     sender.output(BrowserOut::DisplayToast(title)).unwrap();
@@ -398,12 +402,11 @@ impl relm4::component::AsyncComponent for Browser {
                         .unwrap();
                     self.history_widget
                         .push(Views::Album(album.widget().clone()));
+                    self.content.set_child(Some(album.widget()));
                     self.album_views.push(album);
-                    self.content
-                        .set_child(Some(self.history_widget.last().unwrap().widget()));
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
-                        .expect("main window.gone");
+                        .unwrap();
                 }
                 AlbumsViewOut::DisplayToast(title) => {
                     sender.output(BrowserOut::DisplayToast(title)).unwrap();
@@ -475,9 +478,8 @@ impl relm4::component::AsyncComponent for Browser {
                         .unwrap();
                     self.history_widget
                         .push(Views::Album(album.widget().clone()));
+                    self.content.set_child(Some(album.widget()));
                     self.album_views.push(album);
-                    self.content
-                        .set_child(Some(self.history_widget.last().unwrap().widget()));
                     sender
                         .output(BrowserOut::BackButtonSensitivity(true))
                         .unwrap();

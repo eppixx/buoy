@@ -635,7 +635,10 @@ impl relm4::component::Component for AlbumsView {
             AlbumsViewIn::FilterAdd => {
                 use glib::object::Cast;
 
-                let list_item = widgets.new_filter.selected_item().unwrap();
+                let Some(list_item) = widgets.new_filter.selected_item() else {
+                    sender.output(AlbumsViewOut::DisplayToast(format!("no filter selected"))).unwrap();
+                    return;
+                };
                 let boxed = list_item
                     .downcast_ref::<glib::BoxedAnyObject>()
                     .expect("is not a BoxedAnyObject");
@@ -652,6 +655,7 @@ impl relm4::component::Component for AlbumsView {
                     sender.input(AlbumsViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(AlbumsViewIn::FilterChanged),
+                FilterRowOut::DisplayToast(msg) => sender.output(AlbumsViewOut::DisplayToast(msg)).unwrap(),
             },
             AlbumsViewIn::AddToQueue => {
                 if self.shown_albums.borrow().is_empty() {

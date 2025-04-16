@@ -259,6 +259,7 @@ pub enum FilterRowIn {
 pub enum FilterRowOut {
     ParameterChanged,
     RemoveFilter(relm4::factory::DynamicIndex),
+    DisplayToast(String),
 }
 
 #[relm4::factory(pub)]
@@ -641,21 +642,23 @@ impl relm4::factory::FactoryComponent for FilterRow {
             Self::Input::ParameterChanged => {
                 use glib::object::Cast;
 
+                let casting_widget = |widget: &gtk::DropDown| -> glib::BoxedAnyObject {
+                    let relation = widget.selected_item().unwrap();
+                    let relation = relation
+                        .downcast::<glib::BoxedAnyObject>()
+                        .expect("Needs to be ListItem");
+                    relation
+                };
+
                 // update local filter
                 match &self.category {
                     Category::Favorite => {
-                        let relation = widgets.favorites.selected_item().unwrap();
-                        let relation = relation
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let relation = casting_widget(&widgets.favorites);
                         let relation: std::cell::Ref<BoolRow> = relation.borrow();
                         self.filter = Some(Filter::Favorite(relation.relation));
                     }
                     Category::Title => {
-                        let relation = widgets.title_dropdown.selected_item().unwrap();
-                        let relation = relation
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let relation = casting_widget(&widgets.title_dropdown);
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
                         self.filter = Some(Filter::Title(
@@ -664,10 +667,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         ));
                     }
                     Category::Artist => {
-                        let relation = widgets.artist_dropdown.selected_item().unwrap();
-                        let relation = relation
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let relation = casting_widget(&widgets.artist_dropdown);
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
                         self.filter = Some(Filter::Artist(
@@ -676,10 +676,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         ));
                     }
                     Category::Album => {
-                        let relation = widgets.album_dropdown.selected_item().unwrap();
-                        let relation = relation
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let relation = casting_widget(&widgets.album_dropdown);
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
                         self.filter = Some(Filter::Album(
@@ -688,10 +685,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         ));
                     }
                     Category::Genre => {
-                        let relation = widgets.genre_dropdown.selected_item().unwrap();
-                        let relation = relation
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let relation = casting_widget(&widgets.genre_dropdown);
                         let relation: std::cell::Ref<TextRow> = relation.borrow();
 
                         self.filter = Some(Filter::Genre(
@@ -700,10 +694,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         ));
                     }
                     Category::Year => {
-                        let order = widgets.year_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.year_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.year_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Year(order.order, number));
@@ -713,10 +704,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                     Category::Cd => {
-                        let order = widgets.cd_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.cd_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.cd_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::Cd(order.order, number));
@@ -726,10 +714,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                     Category::TrackNumber => {
-                        let order = widgets.track_number_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.track_number_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.track_number_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::TrackNumber(order.order, number));
@@ -739,10 +724,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                     Category::DurationMin => {
-                        let order = widgets.duration_min_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.duration_min_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.duration_min_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::DurationMin(order.order, number));
@@ -752,10 +734,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                     Category::DurationSec => {
-                        let order = widgets.duration_sec_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.duration_sec_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.duration_sec_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::DurationSec(order.order, number));
@@ -765,10 +744,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                     Category::BitRate => {
-                        let order = widgets.bit_rate_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.bit_rate_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.bit_rate_entry.text().parse::<usize>() {
                             self.filter = Some(Filter::BitRate(order.order, number));
@@ -778,10 +754,7 @@ impl relm4::factory::FactoryComponent for FilterRow {
                         }
                     }
                     Category::AlbumCount => {
-                        let order = widgets.album_count_dropdown.selected_item().unwrap();
-                        let order = order
-                            .downcast_ref::<glib::BoxedAnyObject>()
-                            .expect("Needs to be ListItem");
+                        let order = casting_widget(&widgets.album_count_dropdown);
                         let order: std::cell::Ref<OrderRow> = order.borrow();
                         if let Ok(number) = widgets.album_count_entry.text().parse::<i32>() {
                             self.filter = Some(Filter::AlbumCount(order.order, number));

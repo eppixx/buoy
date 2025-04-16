@@ -256,17 +256,17 @@ impl relm4::factory::FactoryComponent for AlbumElement {
     }
 }
 
-pub fn get_info_of_flowboxchild(element: &FlowBoxChild) -> (gtk::Label, gtk::Label) {
+pub fn get_info_of_flowboxchild(element: &FlowBoxChild) -> Option<(gtk::Label, gtk::Label)> {
     use gtk::glib::object::Cast;
-    let overlay = element.first_child().unwrap();
-    let button = overlay.first_child().unwrap();
-    let overlay = button.first_child().unwrap();
-    let bo = overlay.first_child().unwrap();
-    let cover = bo.first_child().unwrap();
-    let title = cover.next_sibling().unwrap();
+    let overlay = element.first_child()?;
+    let button = overlay.first_child()?;
+    let overlay = button.first_child()?;
+    let bo = overlay.first_child()?;
+    let cover = bo.first_child()?;
+    let title = cover.next_sibling()?;
     let title = title.downcast::<gtk::Label>().expect("unepected element");
-    let artist = title.next_sibling().unwrap();
+    let artist = title.next_sibling()?;
     let artist = artist.downcast::<gtk::Label>().expect("unexpected element");
 
-    (title, artist)
+    Some((title, artist))
 }

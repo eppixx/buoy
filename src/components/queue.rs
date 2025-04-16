@@ -868,11 +868,9 @@ impl relm4::Component for Queue {
             }
             QueueIn::SetCurrent(index) => {
                 if let Some(index) = index {
-                    self.tracks
-                        .get(index as u32)
-                        .unwrap()
-                        .borrow_mut()
-                        .set_play_state(&PlayState::Pause);
+                    if let Some(track) = self.tracks.get(index as u32) {
+                        track.borrow_mut().set_play_state(&PlayState::Pause);
+                    }
                 }
             }
         }

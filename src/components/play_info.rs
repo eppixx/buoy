@@ -96,9 +96,11 @@ impl relm4::component::Component for PlayInfo {
                     let id = Id::try_from(text);
                     match &id {
                         Err(e) => unreachable!("text is not an id: {e:?}"),
-                        Ok(Id::Playlist(id)) | Ok(Id::Song(id)) => unreachable!("found wrong id: {id}"),
-                        Ok(Id::Artist(_)) => sender.output(PlayInfoOut::ShowArtist(id.unwrap())).unwrap(),
-                        Ok(Id::Album(_)) => sender.output(PlayInfoOut::ShowAlbum(id.unwrap())).unwrap(),
+                        Ok(id) => match id {
+                            Id::Playlist(id) | Id::Song(id) => unreachable!("found wrong id: {id}"),
+                            Id::Artist(_) => sender.output(PlayInfoOut::ShowArtist(id.clone())).unwrap(),
+                            Id::Album(_) => sender.output(PlayInfoOut::ShowAlbum(id.clone())).unwrap(),
+                        }
                     }
                     gtk::glib::signal::Propagation::Stop
                 },

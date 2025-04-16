@@ -1,19 +1,26 @@
 pub fn convert_for_label(time: i64) -> String {
-    let time = chrono::TimeDelta::try_milliseconds(time).unwrap();
+    match convert_for_label_intern(time) {
+        Some(label) => label,
+        None => String::from("-1"),
+    }
+}
+
+fn convert_for_label_intern(time: i64) -> Option<String> {
+    let time = chrono::TimeDelta::try_milliseconds(time)?;
     let hours = time.num_hours();
     let minutes = (time - chrono::TimeDelta::try_hours(hours).unwrap()).num_minutes();
     let seconds = (time
-        - chrono::TimeDelta::try_hours(hours).unwrap()
-        - chrono::TimeDelta::try_minutes(minutes).unwrap())
+        - chrono::TimeDelta::try_hours(hours)?
+        - chrono::TimeDelta::try_minutes(minutes)?)
     .num_seconds();
 
     let mut result = String::new();
     if hours > 0 {
         result.push_str(&format!("{hours}:{minutes:0>2}:{seconds:0>2}"));
-        return result;
+        return Some(result);
     }
     result.push_str(&format!("{minutes}:{seconds:0>2}"));
-    result
+    Some(result)
 }
 
 /// takes a Slice and creates a `ListStore` in a generic fashion; to be used in a `gtk::DropDown` as a store

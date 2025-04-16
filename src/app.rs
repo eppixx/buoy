@@ -201,7 +201,9 @@ impl relm4::component::AsyncComponent for App {
                     )));
                 }
             }
-            playback.borrow_mut().pause().unwrap();
+            if let Err(e) = playback.borrow_mut().pause() {
+                sender.input(AppIn::DisplayToast(format!("error pausing: {e}")));
+            }
         }
 
         tracing::info!("start loading subsonic information");
@@ -275,12 +277,15 @@ impl relm4::component::AsyncComponent for App {
 
         //regularly save
         let library = model.subsonic.clone();
+        let send = sender.clone();
         gtk::glib::spawn_future_local(async move {
             loop {
                 let timeout = Settings::get().lock().unwrap().save_interval_secs;
                 tokio::time::sleep(std::time::Duration::from_secs(timeout)).await;
                 tracing::info!("periodic save");
-                library.borrow().save().unwrap();
+                if let Err(e) = library.borrow().save() {
+                    send.input(AppIn::DisplayToast(format!("error saving library: {e}")));
+                }
             }
         });
 
@@ -1187,7 +1192,15 @@ impl relm4::component::AsyncComponent for App {
             AppIn::LoadBigCoverPicture(cover_id) => {
                 // get url
                 let client = Client::get().unwrap();
-                let buffer = client.get_cover_art(&cover_id, None).await.unwrap();
+                let buffer = match client.get_cover_art(&cover_id, None).await {
+                    Ok(buffer) => buffer,
+                    Err(e) => {
+                        sender.input(AppIn::DisplayToast(format!(
+                            "error fetching cover {cover_id}: {e}"
+                        )));
+                        return;
+                    }
+                };
                 let bytes = gtk::glib::Bytes::from(&buffer);
                 let texture = match gtk::gdk::Texture::from_bytes(&bytes) {
                     Ok(texture) => Some(texture),
@@ -1249,11 +1262,20 @@ async fn show_desktop_notification(
     // get cover image
     let image: Option<notify_rust::Image> = {
         let client = Client::get().unwrap();
-        if let Ok(raw) = client
-            .get_cover_art(child.cover_art.unwrap(), Some(100))
-            .await
-        {
-            let image_buffer = image::load_from_memory(&raw).unwrap().to_rgb8();
+        let Some(cover_art) = &child.cover_art else {
+            return;
+        };
+        //TODO take local image
+        if let Ok(raw) = client.get_cover_art(cover_art, Some(100)).await {
+            let image_buffer = match image::load_from_memory(&raw) {
+                Ok(image) => image.to_rgb8(),
+                Err(e) => {
+                    sender.input(AppIn::DisplayToast(format!(
+                        "error loading image from memory: {e}"
+                    )));
+                    return;
+                }
+            };
             let buffer: Vec<u8> = image_buffer.to_vec();
             notify_rust::Image::from_rgb(
                 image_buffer.width() as i32,

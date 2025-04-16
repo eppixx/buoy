@@ -253,12 +253,22 @@ impl Download {
                     Ok(buffer) => {
                         let mut path = path.clone();
                         path.push(&name);
-                        let mut file = std::fs::OpenOptions::new()
+                        let mut file = match std::fs::OpenOptions::new()
                             .create(true)
                             .truncate(true)
                             .write(true)
                             .open(&path)
-                            .unwrap();
+                        {
+                            Err(e) => {
+                                sender.input(
+                                    <App as relm4::component::AsyncComponent>::Input::DisplayToast(
+                                        format!("error opening file {path:?}: {e}",),
+                                    ),
+                                );
+                                return;
+                            }
+                            Ok(file) => file,
+                        };
                         // save file
                         if let Err(e) = file.write_all(&buffer) {
                             sender.input(

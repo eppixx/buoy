@@ -299,7 +299,7 @@ impl relm4::Component for ArtistView {
             },
             ArtistViewIn::FilterChanged(search) => {
                 self.albums.widget().set_filter_func(move |element| {
-                    let (title, _artist) = get_info_of_flowboxchild(element);
+                    let (title, _artist) = get_info_of_flowboxchild(element).unwrap();
 
                     //actual matching
                     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
