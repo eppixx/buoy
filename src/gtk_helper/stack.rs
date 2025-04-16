@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use relm4::gtk::{self, glib};
+use relm4::gtk;
 
 pub trait StackExt {
     fn add_enumed<T: Display + TryFrom<String>>(
         &self,
-        child: &impl glib::object::IsA<gtk::Widget>,
+        child: &impl gtk::prelude::IsA<gtk::Widget>,
         state: T,
     ) -> gtk::StackPage;
     fn set_visible_child_enum<T: Display + TryFrom<String>>(&self, state: &T);
@@ -15,7 +15,7 @@ pub trait StackExt {
 impl StackExt for gtk::Stack {
     fn add_enumed<T: Display>(
         &self,
-        child: &impl glib::object::IsA<gtk::Widget>,
+        child: &impl gtk::prelude::IsA<gtk::Widget>,
         state: T,
     ) -> gtk::StackPage {
         self.add_named(child, Some(&state.to_string()))

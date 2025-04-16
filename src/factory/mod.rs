@@ -1,4 +1,4 @@
-use relm4::gtk::{self, glib, prelude::WidgetExt};
+use relm4::gtk::{self, prelude::WidgetExt};
 
 use crate::css::DragState;
 
@@ -9,7 +9,7 @@ pub mod playlist_row;
 pub mod queue_song_row;
 pub mod track_row;
 
-fn get_list_item_widget(widget: &impl glib::object::IsA<gtk::Widget>) -> Option<gtk::Widget> {
+fn get_list_item_widget(widget: &impl gtk::prelude::IsA<gtk::Widget>) -> Option<gtk::Widget> {
     let b = widget.parent()?;
     let column_view_cell = b.parent()?;
     column_view_cell.parent()
