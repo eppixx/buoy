@@ -74,6 +74,9 @@ pub struct Settings {
 
     #[serde(default = "default_download_warning_threshold")]
     pub download_warning_threshold: usize,
+
+    #[serde(default = "default_drag_time_timeout")]
+    pub drag_time_timeout_ms: u64,
 }
 
 fn default_window_width() -> i32 {
@@ -102,6 +105,10 @@ fn default_cover_size() -> i32 {
 
 fn default_download_warning_threshold() -> usize {
     100
+}
+
+fn default_drag_time_timeout() -> u64 {
+    1000
 }
 
 // used singleton from https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton

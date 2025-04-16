@@ -9,34 +9,18 @@ use relm4::{
     RelmWidgetExt,
 };
 
-use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, types::Droppable};
+use crate::{
+    factory::{playlist_row::PlaylistUids, queue_song_row::QueueUids},
+    gtk_helper::stack::StackExt,
+    settings::Settings,
+    subsonic::Subsonic,
+    types::Droppable,
+};
 
-#[derive(Debug)]
-pub struct PlaylistElement {
-    subsonic: Rc<RefCell<Subsonic>>,
-    playlist: submarine::data::PlaylistWithSongs,
-    index: relm4::factory::DynamicIndex,
-    drag_src: gtk::DragSource,
-    main_stack: gtk::Stack,
-    edit_area: gtk::Stack,
-}
-
-impl PlaylistElement {
-    pub fn change_state(&self, state: &State) {
-        self.main_stack.set_visible_child_enum(state);
-    }
-
-    pub fn info(&self) -> &submarine::data::PlaylistWithSongs {
-        &self.playlist
-    }
-
-    pub fn set_edit_area(&self, status: bool) {
-        if status {
-            self.edit_area.set_visible_child_enum(&EditState::Edit);
-        } else {
-            self.edit_area.set_visible_child_enum(&EditState::Clean);
-        }
-    }
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum DragState {
+    Ready,
+    Entered,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -96,6 +80,35 @@ impl TryFrom<String> for EditState {
     }
 }
 
+#[derive(Debug)]
+pub struct PlaylistElement {
+    subsonic: Rc<RefCell<Subsonic>>,
+    playlist: submarine::data::PlaylistWithSongs,
+    index: relm4::factory::DynamicIndex,
+    drag_src: gtk::DragSource,
+    main_stack: gtk::Stack,
+    edit_area: gtk::Stack,
+    drag_state: Rc<RefCell<DragState>>,
+}
+
+impl PlaylistElement {
+    pub fn change_state(&self, state: &State) {
+        self.main_stack.set_visible_child_enum(state);
+    }
+
+    pub fn info(&self) -> &submarine::data::PlaylistWithSongs {
+        &self.playlist
+    }
+
+    pub fn set_edit_area(&self, status: bool) {
+        if status {
+            self.edit_area.set_visible_child_enum(&EditState::Edit);
+        } else {
+            self.edit_area.set_visible_child_enum(&EditState::Clean);
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum PlaylistElementIn {
     DeletePressed,
@@ -104,6 +117,8 @@ pub enum PlaylistElementIn {
     UpdatePlaylistName(submarine::data::Playlist),
     UpdatePlaylistSongs(String, submarine::data::Playlist),
     Clicked,
+    DragEnter,
+    DragLeave,
 }
 
 #[derive(Debug)]
@@ -134,6 +149,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             drag_src: gtk::DragSource::default(),
             main_stack: gtk::Stack::default(),
             edit_area: gtk::Stack::default(),
+            drag_state: Rc::new(RefCell::new(DragState::Ready)),
         };
 
         //setup content for DropSource
@@ -277,12 +293,19 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             },
 
             add_controller = gtk::DropTarget {
-                set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                set_actions: gdk::DragAction::COPY,
+                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
+                             , <PlaylistUids as gtk::prelude::StaticType>::static_type()
+                             , <QueueUids as gtk::prelude::StaticType>::static_type()
+                ],
 
                 connect_enter[sender] => move |_controller, _x, _y| {
-                    sender.input(PlaylistElementIn::Clicked);
+                    sender.input(PlaylistElementIn::DragEnter);
                     gdk::DragAction::COPY
+                },
+
+                connect_leave[sender] => move |_controller| {
+                    sender.input(PlaylistElementIn::DragLeave);
                 }
             }
         }
@@ -332,6 +355,21 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 sender
                     .output(PlaylistElementOut::Clicked(self.index.clone()))
                     .unwrap();
+            }
+            PlaylistElementIn::DragEnter => {
+                self.drag_state.replace(DragState::Entered);
+                let state = self.drag_state.clone();
+                let sender = sender.clone();
+                gtk::glib::spawn_future_local(async move {
+                    let timeout = Settings::get().lock().unwrap().drag_time_timeout_ms;
+                    tokio::time::sleep(std::time::Duration::from_millis(timeout)).await;
+                    if *state.borrow() == DragState::Entered {
+                        sender.input(PlaylistElementIn::Clicked);
+                    }
+                });
+            }
+            PlaylistElementIn::DragLeave => {
+                self.drag_state.replace(DragState::Ready);
             }
         }
     }
