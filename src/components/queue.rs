@@ -15,7 +15,11 @@ use crate::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    factory::{queue_song_row::{QueueSongRow, QueueUid, QueueUids}, DragIndicatable},
+    factory::{
+        playlist_row::PlaylistUids,
+        queue_song_row::{QueueSongRow, QueueUid, QueueUids},
+        DragIndicatable,
+    },
     gtk_helper::stack::StackExt,
     play_state::PlayState,
     player::Command,
@@ -242,6 +246,7 @@ impl relm4::Component for Queue {
 
         let widgets = view_output!();
 
+        // connect signal SelectionChanged
         let send = sender.clone();
         model
             .tracks
@@ -293,6 +298,7 @@ impl relm4::Component for Queue {
                             }
                         },
 
+                        // moving queue song
                         add_controller = gtk::DropTarget {
                             set_actions: gdk::DragAction::MOVE,
                             set_types: &[<QueueUids as gtk::prelude::StaticType>::static_type()],
@@ -319,9 +325,12 @@ impl relm4::Component for Queue {
                             }
                         },
 
+                        // adding new songs
                         add_controller = gtk::DropTarget {
                             set_actions: gdk::DragAction::COPY,
-                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
+                                         , <PlaylistUids as gtk::prelude::StaticType>::static_type()
+                            ],
 
                             connect_motion[sender] => move |_controller, x, y| {
                                 sender.input(QueueIn::DropHover(x, y));
@@ -341,7 +350,12 @@ impl relm4::Component for Queue {
                                         _ => sender.input(QueueIn::DropInsert(drop, x, y)),
                                     }
                                     true
-                                } else {
+                                } else if let Ok(drop) = value.get::<PlaylistUids>() {
+                                    let drop = Droppable::PlaylistItems(drop.0);
+                                    sender.input(QueueIn::DropInsert(drop, x, y));
+                                    true
+                                }
+                                else {
                                     false
                                 }
                             }

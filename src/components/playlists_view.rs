@@ -15,7 +15,8 @@ use relm4::{Component, RelmWidgetExt};
 
 use crate::client::Client;
 use crate::factory::playlist_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, TitleColumn,
+    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, PlaylistUid,
+    PlaylistUids, TitleColumn,
 };
 use crate::factory::queue_song_row::QueueUids;
 use crate::factory::DragIndicatable;
@@ -230,6 +231,7 @@ pub enum PlaylistsViewIn {
     DragCssReset,
     RemovePlaylistRow,
     InsertSongsTo(u32, Vec<submarine::data::Child>),
+    SelectionChanged,
 }
 
 #[relm4::component(pub, async)]
@@ -286,12 +288,24 @@ impl relm4::component::AsyncComponent for PlaylistsView {
         };
 
         let widgets = view_output!();
-        model.info_cover.model().add_css_class_image("size100");
 
+        // set some things for InfoCover
+        model.info_cover.model().add_css_class_image("size100");
         model
             .info_cover
             .widget()
             .add_controller(model.info_cover_controller.clone());
+
+        // connect signal SelectionChanged
+        let send = sender.clone();
+        model
+            .tracks
+            .view
+            .model()
+            .unwrap()
+            .connect_selection_changed(move |_model, _, _| {
+                send.input(PlaylistsViewIn::SelectionChanged);
+            });
 
         // add playlists to list
         let mut guard = model.playlists.guard();
@@ -462,6 +476,34 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                     }
                                 },
 
+                                // moving a playlist item
+                                add_controller = gtk::DropTarget {
+                                    set_actions: gdk::DragAction::MOVE,
+                                    set_types: &[<PlaylistUids as gtk::prelude::StaticType>::static_type()],
+
+                                    connect_motion[sender] => move |_controller, x, y| {
+                                        sender.input(PlaylistsViewIn::DropHover(x, y));
+                                        gdk::DragAction::MOVE
+                                    },
+
+                                    connect_leave[sender] => move |_controller| {
+                                        sender.input(PlaylistsViewIn::DropMotionLeave)
+                                    },
+
+                                    connect_drop[sender] => move |_controller, value, x, y| {
+                                        sender.input(PlaylistsViewIn::DropMotionLeave);
+
+                                        if let Ok(drop) = value.get::<PlaylistUids>() {
+                                            let drop = Droppable::PlaylistItems(drop.0);
+                                            sender.input(PlaylistsViewIn::DropMove(drop, x, y));
+                                            true
+                                        } else {
+                                            false
+                                        }
+                                    }
+                                },
+
+                                // adding new songs
                                 add_controller = gtk::DropTarget {
                                     set_actions: gdk::DragAction::COPY,
                                     set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
@@ -484,8 +526,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                             let drop = Droppable::QueueSongs(drop.0);
                                             sender.input(PlaylistsViewIn::DropInsert(drop, x, y));
                                             true
-                                        }
-                                        else if let Ok(drop) = value.get::<Droppable>() {
+                                        } else if let Ok(drop) = value.get::<Droppable>() {
                                             match &drop {
                                                 Droppable::PlaylistItems(_) => sender.input(PlaylistsViewIn::DropMove(drop, x, y)),
                                                 _ => sender.input(PlaylistsViewIn::DropInsert(drop, x, y)),
@@ -871,6 +912,28 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .info_details
                     .set_text(&build_info_string(current_playlist));
                 sender.input(PlaylistsViewIn::DragCssReset);
+            }
+            PlaylistsViewIn::SelectionChanged => {
+                // update content for drag and drop
+                let uids: Vec<_> = (0..self.tracks.len())
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .filter_map(|i| self.tracks.get(i))
+                    .map(|row| PlaylistUid {
+                        uid: *row.borrow().uid(),
+                        child: row.borrow().item().clone(),
+                    })
+                    .collect();
+
+                //reset multiple selection
+                (0..self.tracks.len())
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow_mut().set_multiple_selection(vec![]));
+
+                // set multiple selection for selected items
+                (0..self.tracks.len())
+                    .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
+                    .filter_map(|i| self.tracks.get(i))
+                    .for_each(|track| track.borrow_mut().set_multiple_selection(uids.clone()));
             }
         }
     }

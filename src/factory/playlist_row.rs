@@ -1,9 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self,
+        self, glib,
         prelude::{ButtonExt, ToValue, WidgetExt},
     },
     RelmWidgetExt,
@@ -13,7 +13,7 @@ use crate::{
     common::convert_for_label,
     components::playlists_view::{PlaylistsView, PlaylistsViewOut},
     subsonic::Subsonic,
-    types::{Droppable, Id},
+    types::Id,
 };
 
 use super::SetupFinished;
@@ -26,6 +26,10 @@ pub struct PlaylistUid {
     pub child: submarine::data::Child,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "PlaylistUid")]
+pub struct PlaylistUids(pub Vec<PlaylistUid>);
+
 #[derive(Debug, Clone)]
 pub struct PlaylistRow {
     uid: usize,
@@ -34,6 +38,7 @@ pub struct PlaylistRow {
     play_count: Option<gtk::Label>,
     fav_btn: Option<gtk::Button>,
     sender: relm4::AsyncComponentSender<PlaylistsView>,
+    drag_src: HashMap<String, gtk::DragSource>,
 }
 
 impl PartialEq for PlaylistRow {
@@ -62,6 +67,7 @@ impl PlaylistRow {
             play_count: None,
             fav_btn: None,
             sender: sender.clone(),
+            drag_src: HashMap::new(),
         }
     }
 
@@ -90,6 +96,25 @@ impl PlaylistRow {
     pub fn fav_btn(&self) -> &Option<gtk::Button> {
         &self.fav_btn
     }
+
+    pub fn set_multiple_selection(&mut self, uids: Vec<PlaylistUid>) {
+        if uids.is_empty() {
+            let drop = PlaylistUids(vec![PlaylistUid {
+                uid: self.uid,
+                child: self.item.clone(),
+            }]);
+            let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
+            self.drag_src
+                .iter()
+                .for_each(|(_, drag_src)| drag_src.set_content(Some(&content)));
+        } else {
+            let uids = PlaylistUids(uids);
+            let content = gtk::gdk::ContentProvider::for_value(&uids.to_value());
+            self.drag_src
+                .iter()
+                .for_each(|(_, drag_src)| drag_src.set_content(Some(&content)));
+        }
+    }
 }
 
 pub struct Model {
@@ -110,10 +135,10 @@ impl Model {
             uid: Rc::new(RefCell::new(None)),
         };
 
-        let root = gtk::Viewport::default();
-
-        // create DragSource
-        model.drag_src.set_actions(gtk::gdk::DragAction::MOVE);
+        // setup DragSource
+        model
+            .drag_src
+            .set_actions(gtk::gdk::DragAction::MOVE | gtk::gdk::DragAction::COPY);
 
         // set drag icon
         let subsonic = model.subsonic.clone();
@@ -137,21 +162,22 @@ impl Model {
             }
         });
 
+        let root = gtk::Viewport::default();
         root.add_controller(model.drag_src.clone());
         (root, model)
     }
 
-    fn set_from_row(&self, row: &PlaylistRow) {
+    fn set_from_row(&self, column: String, row: &mut PlaylistRow) {
         self.subsonic.replace(Some(row.subsonic.clone()));
         self.album.replace(Some(row.item.clone()));
         self.sender.replace(Some(row.sender.clone()));
         self.uid.replace(Some(row.uid));
+        row.drag_src.insert(column, self.drag_src.clone());
 
-        let drop = PlaylistUid {
+        let drop = PlaylistUids(vec![PlaylistUid {
             uid: row.uid,
             child: row.item.clone(),
-        };
-        let drop = Droppable::PlaylistItems(vec![drop]);
+        }]);
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         self.drag_src.set_content(Some(&content));
     }
@@ -181,7 +207,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
         label.set_label(&item.item.title);
     }
 
@@ -212,7 +238,7 @@ impl relm4::typed_view::column::RelmColumn for ArtistColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
 
         let stock = gettext("Unknown Artist");
         let artist = item.item.artist.as_deref().unwrap_or(&stock);
@@ -260,7 +286,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
 
         let stock = gettext("Unknown Album");
         let album = item.item.album.as_deref().unwrap_or(&stock);
@@ -308,7 +334,7 @@ impl relm4::typed_view::column::RelmColumn for GenreColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
 
         label.set_label(
             item.item
@@ -342,7 +368,7 @@ impl relm4::typed_view::column::RelmColumn for LengthColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
 
         let length = convert_for_label(i64::from(item.item.duration.unwrap_or(0)) * 1000);
         label.set_label(&length);
@@ -372,7 +398,7 @@ impl relm4::typed_view::column::RelmColumn for PlayCountColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
         let play_count = item.item.play_count;
         let play_count = play_count.map(|n| n.to_string());
         label.set_label(&play_count.unwrap_or(String::from("-")));
@@ -407,7 +433,7 @@ impl relm4::typed_view::column::RelmColumn for BitRateColumn {
     }
 
     fn bind(item: &mut Self::Item, (model, label): &mut Self::Widgets, _root: &mut Self::Root) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
 
         let bitrate = item.item.bit_rate;
         let bitrate = bitrate.map(|n| n.to_string());
@@ -445,7 +471,7 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
         (cell, fav_btn, model, finished): &mut Self::Widgets,
         _root: &mut Self::Root,
     ) {
-        model.set_from_row(item);
+        model.set_from_row(Self::COLUMN_NAME.into(), item);
 
         match item.item.starred.is_some() {
             true => fav_btn.set_icon_name("starred-symbolic"),
