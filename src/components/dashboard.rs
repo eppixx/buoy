@@ -113,7 +113,7 @@ impl relm4::Component for Dashboard {
         albums.sort_by(|a, b| b.created.cmp(&a.created));
         let list: Vec<(Rc<RefCell<Subsonic>>, Id)> = albums
             .iter()
-            .take(10)
+            .take(Settings::get().lock().unwrap().dashboard_line_items)
             .map(|album| (subsonic.clone(), Id::album(&album.id)))
             .collect();
         let mut guard = model.recently_added_list.guard();
@@ -121,6 +121,7 @@ impl relm4::Component for Dashboard {
         drop(guard);
 
         //load recently played albums
+        let dashboard_line_items = Settings::get().lock().unwrap().dashboard_line_items;
         sender.oneshot_command(async move {
             let client = match Client::get() {
                 None => return DashboardCmd::Error(String::from("no client found")),
@@ -130,7 +131,7 @@ impl relm4::Component for Dashboard {
                 client
                     .get_album_list2(
                         submarine::api::get_album_list::Order::Recent,
-                        Some(10),
+                        Some(dashboard_line_items),
                         None,
                         None::<String>,
                     )
@@ -145,7 +146,7 @@ impl relm4::Component for Dashboard {
         albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
         let ids: Vec<Id> = albums
             .iter()
-            .take(10)
+            .take(Settings::get().lock().unwrap().dashboard_line_items)
             .map(|album| Id::album(&album.id))
             .collect();
         let mut guard = model.most_played_list.guard();
@@ -176,7 +177,7 @@ impl relm4::Component for Dashboard {
                     let random_album_scroll = random_album_scroll.clone();
                     let most_played_scroll = most_played_scroll.clone();
 
-                    //scroll the albums when arrow is hovered
+                    //scroll the albums when arrow is activated
                     gtk::glib::source::timeout_add_local(
                         core::time::Duration::from_millis(15),
                         move || {
@@ -577,7 +578,7 @@ impl relm4::Component for Dashboard {
 
                 let ids: Vec<Id> = albums
                     .iter()
-                    .take(10)
+                    .take(Settings::get().lock().unwrap().dashboard_line_items)
                     .map(|album| Id::album(&album.id))
                     .collect();
                 let mut guard = self.random_album_list.guard();

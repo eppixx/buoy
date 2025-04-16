@@ -80,6 +80,9 @@ pub struct Settings {
 
     #[serde(default = "default_save_interval_secs")]
     pub save_interval_secs: u64,
+
+    #[serde(default = "default_dashboard_line_items")]
+    pub dashboard_line_items: usize,
 }
 
 fn default_window_width() -> i32 {
@@ -116,6 +119,10 @@ fn default_drag_time_timeout() -> u64 {
 
 fn default_save_interval_secs() -> u64 {
     120
+}
+
+fn default_dashboard_line_items() -> usize {
+    10
 }
 
 // used singleton from https://stackoverflow.com/questions/27791532/how-do-i-create-a-global-mutable-singleton
