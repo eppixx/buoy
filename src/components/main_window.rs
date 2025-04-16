@@ -343,22 +343,32 @@ impl relm4::component::AsyncComponent for MainWindow {
                         set_valign: gtk::Align::Center,
 
                         gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
+                            set_margin_all: 15,
                             set_spacing: 20,
-                            set_margin_all: 7,
+                            set_halign: gtk::Align::Center,
 
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                set_text: &gettext("Can't connect to subsonic server"),
+                            gtk::Image {
+                                set_icon_name: Some("network-error"),
+                                set_pixel_size: 64,
                             },
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_wrap: true,
-                                set_text: &gettext("Make sure the connection to the server is available. You might want to try later or connect to another server"),
-                            },
-                            gtk::CenterBox {
-                                #[wrap(Some)]
-                                set_end_widget = &gtk::Box {
+
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 20,
+                                set_margin_all: 7,
+
+                                gtk::Label {
+                                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                    set_halign: gtk::Align::Start,
+                                    set_text: &gettext("Can't connect to subsonic server"),
+                                },
+                                gtk::Label {
+                                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                    set_wrap: true,
+                                    set_text: &gettext("Make sure the connection to the server is available. You might want to try later or connect to another server"),
+                                },
+                                gtk::Box {
+                                    set_halign: gtk::Align::End,
                                     set_spacing: 10,
 
                                     gtk::Button {
@@ -370,9 +380,9 @@ impl relm4::component::AsyncComponent for MainWindow {
                                         set_label: &gettext("Logout"),
                                         connect_clicked => MainWindowIn::Logout,
                                     }
-                                },
-                            }
-                        },
+                                }
+                            },
+                        }
                     }
                 }
             }
