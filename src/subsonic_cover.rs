@@ -59,7 +59,13 @@ impl SubsonicCovers {
 
                 let _handle = tokio::spawn(async move {
                     let permit = CONCURRENT_COVER_RELOAD.acquire().await.unwrap();
-                    let buffer = client.get_cover_art(&id, COVER_SIZE).await.unwrap();
+                    let buffer = match client.get_cover_art(&id, COVER_SIZE).await {
+                        Ok(buffer) => buffer,
+                        Err(e) => {
+                            tracing::warn!("error fetching cover {id}: {e}");
+                            return;
+                        }
+                    };
                     drop(permit);
                     let bytes = gtk::glib::Bytes::from(&buffer);
                     let (texture, buffer) = match gdk::Texture::from_bytes(&bytes) {
@@ -119,11 +125,11 @@ impl SubsonicCovers {
 
     pub fn save(&self) -> anyhow::Result<()> {
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache: Vec<u8> = postcard::to_allocvec(self).unwrap();
+        let cache: Vec<u8> = postcard::to_allocvec(self)?;
         let cache_path = xdg_dirs
             .place_cache_file(COVER_CACHE)
             .expect("cannot create cache directory");
-        std::fs::write(cache_path, cache).unwrap();
+        std::fs::write(cache_path, cache)?;
 
         Ok(())
     }
