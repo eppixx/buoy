@@ -172,7 +172,20 @@ impl Download {
                     )
                 })
                 .collect(),
-            Droppable::PlaylistItems(_items) => todo!(),
+            Droppable::PlaylistItems(items) => items
+                .iter()
+                .map(|item| {
+                    (
+                        format!(
+                            "{} - {} - {}.mp3",
+                            item.uid,
+                            item.child.artist.clone().unwrap_or_default(),
+                            item.child.title
+                        ),
+                        Id::song(&item.child.id),
+                    )
+                })
+                .collect(),
         };
 
         //TODO sanitize file names, e.g "/"
