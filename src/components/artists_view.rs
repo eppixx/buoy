@@ -461,7 +461,7 @@ impl relm4::component::Component for ArtistsView {
 
                 let Some(list_item) = widgets.new_filter.selected_item() else {
                     sender
-                        .output(ArtistsViewOut::DisplayToast(format!("no filter selected")))
+                        .output(ArtistsViewOut::DisplayToast("no filter selected".to_string()))
                         .unwrap();
                     return;
                 };

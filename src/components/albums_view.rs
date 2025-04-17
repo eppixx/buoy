@@ -637,7 +637,7 @@ impl relm4::component::Component for AlbumsView {
 
                 let Some(list_item) = widgets.new_filter.selected_item() else {
                     sender
-                        .output(AlbumsViewOut::DisplayToast(format!("no filter selected")))
+                        .output(AlbumsViewOut::DisplayToast("no filter selected".to_string()))
                         .unwrap();
                     return;
                 };

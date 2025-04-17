@@ -951,7 +951,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 if let Some(current_list) = &self.selected_playlist {
                     widgets
                         .info_details
-                        .set_text(&build_info_string(&current_list));
+                        .set_text(&build_info_string(current_list));
                 }
             }
             PlaylistsViewIn::InsertSongsTo(index, songs) => {
@@ -968,7 +968,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 if let Some(current_list) = &self.selected_playlist {
                     widgets
                         .info_details
-                        .set_text(&build_info_string(&current_list));
+                        .set_text(&build_info_string(current_list));
                 }
             }
             PlaylistsViewIn::SelectionChanged => {

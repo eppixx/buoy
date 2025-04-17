@@ -717,7 +717,7 @@ impl relm4::Component for TracksView {
 
                 let Some(list_item) = widgets.new_filter.selected_item() else {
                     sender
-                        .output(TracksViewOut::DisplayToast(format!("no filter selected")))
+                        .output(TracksViewOut::DisplayToast("no filter selected".to_string()))
                         .unwrap();
                     return;
                 };

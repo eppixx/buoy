@@ -644,10 +644,9 @@ impl relm4::factory::FactoryComponent for FilterRow {
 
                 let casting_widget = |widget: &gtk::DropDown| -> glib::BoxedAnyObject {
                     let relation = widget.selected_item().unwrap();
-                    let relation = relation
-                        .downcast::<glib::BoxedAnyObject>()
-                        .expect("Needs to be ListItem");
                     relation
+                        .downcast::<glib::BoxedAnyObject>()
+                        .expect("Needs to be ListItem")
                 };
 
                 // update local filter
