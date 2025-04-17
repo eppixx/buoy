@@ -385,7 +385,7 @@ mod tests {
 
     #[test]
     fn test_edit_state_conversion() {
-        test_self(EditState::Edit);
-        test_self(EditState::Clean);
+        test_self(EditState::Active);
+        test_self(EditState::NotActive);
     }
 }
