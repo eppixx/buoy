@@ -935,16 +935,42 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .for_each(|track| track.borrow().reset_drag_indicators());
             }
             PlaylistsViewIn::RemovePlaylistRow => {
+                let Some(current_list) = &self.selected_playlist else {
+                    return;
+                };
+
                 // find all selected rows
                 let selected_rows: Vec<u32> = (0..self.tracks.len())
                     .filter(|i| self.tracks.view.model().unwrap().is_selected(*i))
                     .collect();
+
+                // remove rows from server
+                let client = Client::get().unwrap();
+                if let Err(e) = client
+                    .update_playlist(
+                        &current_list.base.id,
+                        None::<String>,
+                        None::<String>,
+                        None,
+                        Vec::<String>::new(),
+                        selected_rows.iter().cloned().map(|i| i as i64).collect(),
+                    )
+                    .await
+                {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(format!(
+                            "removing from playlist on server failed: {e}",
+                        )))
+                        .unwrap();
+                    return;
+                }
 
                 // removing rows
                 selected_rows
                     .iter()
                     .rev()
                     .for_each(|i| self.tracks.remove(*i));
+
                 self.sync_current_playlist(&sender).await;
 
                 // update widgets
