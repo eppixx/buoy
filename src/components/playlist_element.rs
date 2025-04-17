@@ -3,13 +3,14 @@ use std::{cell::RefCell, rc::Rc};
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self, gdk,
+        self, gdk, glib,
         prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
     },
     RelmWidgetExt,
 };
 
 use crate::{
+    css,
     factory::{playlist_row::PlaylistUids, queue_song_row::QueueUids},
     gtk_helper::stack::StackExt,
     settings::Settings,
@@ -80,11 +81,16 @@ impl TryFrom<String> for EditState {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "PlaylistElementDragged")]
+pub struct PlaylistElementDragged(pub Box<submarine::data::PlaylistWithSongs>);
+
 #[derive(Debug)]
 pub struct PlaylistElement {
     subsonic: Rc<RefCell<Subsonic>>,
     playlist: submarine::data::PlaylistWithSongs,
     index: relm4::factory::DynamicIndex,
+    list_box_row: gtk::ListBoxRow,
     drag_src: gtk::DragSource,
     main_stack: gtk::Stack,
     edit_area: gtk::Stack,
@@ -116,6 +122,8 @@ pub enum PlaylistElementIn {
     DragEnter,
     DragLeave,
     DropAppend(Droppable),
+    ShowIndicatorUpdate(f64),
+    ShowIndicatorReset,
 }
 
 #[derive(Debug)]
@@ -138,12 +146,13 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
     fn init_model(
         (subsonic, playlist): Self::Init,
         index: &relm4::factory::DynamicIndex,
-        _sender: relm4::FactorySender<Self>,
+        sender: relm4::FactorySender<Self>,
     ) -> Self {
         let model = Self {
             subsonic,
             playlist,
             index: index.clone(),
+            list_box_row: gtk::ListBoxRow::default(),
             drag_src: gtk::DragSource::default(),
             main_stack: gtk::Stack::default(),
             edit_area: gtk::Stack::default(),
@@ -151,10 +160,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         };
 
         //setup content for DropSource
-        let drop = Droppable::Playlist(Box::new(model.playlist.clone()));
+        let drop = PlaylistElementDragged(Box::new(model.playlist.clone()));
         let content = gtk::gdk::ContentProvider::for_value(&drop.to_value());
         model.drag_src.set_content(Some(&content));
-        model.drag_src.set_actions(gtk::gdk::DragAction::COPY);
+        model
+            .drag_src
+            .set_actions(gtk::gdk::DragAction::COPY | gtk::gdk::DragAction::MOVE);
         let cover_art = model.playlist.base.cover_art.clone();
         let subsonic = model.subsonic.clone();
         model.drag_src.connect_drag_begin(move |src, _drag| {
@@ -166,11 +177,12 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             }
         });
 
+        sender.input(PlaylistElementIn::ShowIndicatorReset);
         model
     }
 
     view! {
-        gtk::ListBoxRow {
+        self.list_box_row.clone() -> gtk::ListBoxRow {
             set_widget_name: "playlist-element",
 
             self.main_stack.clone() -> gtk::Stack {
@@ -291,6 +303,27 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             },
 
             add_controller = gtk::DropTarget {
+                set_actions: gdk::DragAction::MOVE,
+                set_types: &[<PlaylistElementDragged as gtk::prelude::StaticType>::static_type()],
+
+                connect_motion[sender] => move |_controller, _x, y| {
+                    sender.input(PlaylistElementIn::ShowIndicatorUpdate(y));
+                    gdk::DragAction::MOVE
+                },
+
+                connect_leave[sender] => move |_controller| {
+                    sender.input(PlaylistElementIn::ShowIndicatorReset);
+                },
+
+                connect_drop[sender] => move |_controller, drop, _x, _y| {
+                    sender.input(PlaylistElementIn::ShowIndicatorReset);
+
+                    //TODO implement dropping
+                    false
+                }
+            },
+
+            add_controller = gtk::DropTarget {
                 set_actions: gdk::DragAction::COPY,
                 set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
                              , <PlaylistUids as gtk::prelude::StaticType>::static_type()
@@ -392,6 +425,17 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 sender
                     .output(PlaylistElementOut::DropAppend(drop, self.playlist.clone()))
                     .unwrap();
+            }
+            PlaylistElementIn::ShowIndicatorReset => {
+                css::DragState::reset(&self.list_box_row);
+            }
+            PlaylistElementIn::ShowIndicatorUpdate(y) => {
+                let height = self.list_box_row.height();
+                if y < height as f64 * 0.5 {
+                    css::DragState::drop_shadow_top(&self.list_box_row);
+                } else {
+                    css::DragState::drop_shadow_bottom(&self.list_box_row);
+                }
             }
         }
     }

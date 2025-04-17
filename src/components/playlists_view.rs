@@ -14,6 +14,7 @@ use relm4::{
 use relm4::{Component, RelmWidgetExt};
 
 use crate::client::Client;
+use crate::components::playlist_element::PlaylistElementDragged;
 use crate::factory::playlist_row::{
     AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, PlaylistUid,
     PlaylistUids, TitleColumn,
@@ -506,7 +507,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                 add_controller = gtk::DropTarget {
                                     set_actions: gdk::DragAction::COPY,
                                     set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
-                                                 , <QueueUids as gtk::prelude::StaticType>::static_type(),
+                                                 , <QueueUids as gtk::prelude::StaticType>::static_type()
+                                                 , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
                                     ],
 
                                     connect_motion[sender] => move |_controller, x, y| {
@@ -523,6 +525,10 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                                         if let Ok(drop) = value.get::<QueueUids>() {
                                             let drop = Droppable::QueueSongs(drop.0);
+                                            sender.input(PlaylistsViewIn::DropInsert(drop, x, y));
+                                            true
+                                        } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
+                                            let drop = Droppable::Playlist(drop.0);
                                             sender.input(PlaylistsViewIn::DropInsert(drop, x, y));
                                             true
                                         } else if let Ok(drop) = value.get::<Droppable>() {

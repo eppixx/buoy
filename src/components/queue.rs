@@ -13,6 +13,7 @@ use relm4::{
 use crate::{
     components::{
         cover::CoverOut,
+        playlist_element::PlaylistElementDragged,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
     factory::{
@@ -330,6 +331,7 @@ impl relm4::Component for Queue {
                             set_actions: gdk::DragAction::COPY,
                             set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
                                          , <PlaylistUids as gtk::prelude::StaticType>::static_type()
+                                         , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
                             ],
 
                             connect_motion[sender] => move |_controller, x, y| {
@@ -349,6 +351,10 @@ impl relm4::Component for Queue {
                                         Droppable::QueueSongs(_) => sender.input(QueueIn::DropMove(drop, x, y)),
                                         _ => sender.input(QueueIn::DropInsert(drop, x, y)),
                                     }
+                                    true
+                                } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
+                                    let drop = Droppable::Playlist(drop.0);
+                                    sender.input(QueueIn::DropInsert(drop, x, y));
                                     true
                                 } else if let Ok(drop) = value.get::<PlaylistUids>() {
                                     let drop = Droppable::PlaylistItems(drop.0);
@@ -383,10 +389,15 @@ impl relm4::Component for Queue {
                         set_actions: gdk::DragAction::COPY,
                         set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
                                      , <PlaylistUids as gtk::prelude::StaticType>::static_type()
+                                     , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
                         ],
 
                         connect_drop[sender] => move |_target, value, _x, _y| {
                             if let Ok(drop) = value.get::<Droppable>() {
+                                sender.input(QueueIn::Append(drop));
+                                true
+                            } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
+                                let drop = Droppable::Playlist(drop.0);
                                 sender.input(QueueIn::Append(drop));
                                 true
                             } else if let Ok(drop) = value.get::<PlaylistUids>() {
