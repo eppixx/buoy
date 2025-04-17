@@ -460,7 +460,9 @@ impl relm4::component::Component for ArtistsView {
                 use glib::object::Cast;
 
                 let Some(list_item) = widgets.new_filter.selected_item() else {
-                    sender.output(ArtistsViewOut::DisplayToast(format!("no filter selected"))).unwrap();
+                    sender
+                        .output(ArtistsViewOut::DisplayToast(format!("no filter selected")))
+                        .unwrap();
                     return;
                 };
                 let boxed = list_item
@@ -479,7 +481,9 @@ impl relm4::component::Component for ArtistsView {
                     sender.input(ArtistsViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(ArtistsViewIn::FilterChanged),
-                FilterRowOut::DisplayToast(msg) => sender.output(ArtistsViewOut::DisplayToast(msg)).unwrap(),
+                FilterRowOut::DisplayToast(msg) => {
+                    sender.output(ArtistsViewOut::DisplayToast(msg)).unwrap()
+                }
             },
             ArtistsViewIn::AddToQueue => {
                 if self.shown_artists.borrow().is_empty() {

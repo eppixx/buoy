@@ -353,7 +353,11 @@ impl relm4::Component for AlbumView {
             }
             AlbumViewIn::UpdateFavoriteAlbum(id, state) => {
                 let Some(album) = self.subsonic.borrow().find_album(self.id.as_ref()) else {
-                    sender.output(AlbumViewOut::DisplayToast(format!("error finding album {id}"))).unwrap();
+                    sender
+                        .output(AlbumViewOut::DisplayToast(format!(
+                            "error finding album {id}"
+                        )))
+                        .unwrap();
                     return;
                 };
 

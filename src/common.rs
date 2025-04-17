@@ -9,10 +9,9 @@ fn convert_for_label_intern(time: i64) -> Option<String> {
     let time = chrono::TimeDelta::try_milliseconds(time)?;
     let hours = time.num_hours();
     let minutes = (time - chrono::TimeDelta::try_hours(hours).unwrap()).num_minutes();
-    let seconds = (time
-        - chrono::TimeDelta::try_hours(hours)?
-        - chrono::TimeDelta::try_minutes(minutes)?)
-    .num_seconds();
+    let seconds =
+        (time - chrono::TimeDelta::try_hours(hours)? - chrono::TimeDelta::try_minutes(minutes)?)
+            .num_seconds();
 
     let mut result = String::new();
     if hours > 0 {

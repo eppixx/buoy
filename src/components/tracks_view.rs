@@ -716,7 +716,9 @@ impl relm4::Component for TracksView {
                 use glib::object::Cast;
 
                 let Some(list_item) = widgets.new_filter.selected_item() else {
-                    sender.output(TracksViewOut::DisplayToast(format!("no filter selected"))).unwrap();
+                    sender
+                        .output(TracksViewOut::DisplayToast(format!("no filter selected")))
+                        .unwrap();
                     return;
                 };
                 let boxed = list_item
@@ -735,7 +737,9 @@ impl relm4::Component for TracksView {
                     sender.input(TracksViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(TracksViewIn::FilterChanged),
-                FilterRowOut::DisplayToast(msg) => sender.output(TracksViewOut::DisplayToast(msg)).unwrap(),
+                FilterRowOut::DisplayToast(msg) => {
+                    sender.output(TracksViewOut::DisplayToast(msg)).unwrap()
+                }
             },
             TracksViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(msg) => {
