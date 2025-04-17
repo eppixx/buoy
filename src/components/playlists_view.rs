@@ -73,8 +73,8 @@ pub struct PlaylistsView {
 }
 
 impl PlaylistsView {
-    async fn update_playlist(&mut self, sender: &relm4::AsyncComponentSender<Self>) {
-        let Some(current_playlist) = &mut self.selected_playlist else {
+    async fn sync_current_playlist(&mut self, sender: &relm4::AsyncComponentSender<Self>) {
+        let Some(list) = &self.selected_playlist else {
             return;
         };
 
@@ -86,7 +86,7 @@ impl PlaylistsView {
         let client = Client::get().unwrap();
         // fetch playlist and see its length so we can delete every index
         // the fetch is needed when removing, because we dont know how big the list was
-        match client.get_playlist(&current_playlist.base.id).await {
+        match client.get_playlist(&list.base.id).await {
             Err(e) => {
                 sender
                     .output(PlaylistsViewOut::DisplayToast(format!(
@@ -99,7 +99,7 @@ impl PlaylistsView {
                 let temp_delete_indices: Vec<i64> = (0..list.entry.len() as i64).collect();
                 if let Err(e) = client
                     .update_playlist(
-                        &current_playlist.base.id,
+                        &list.base.id,
                         None::<String>,
                         None::<String>,
                         None,
@@ -125,7 +125,7 @@ impl PlaylistsView {
             .collect();
         if let Err(e) = client
             .update_playlist(
-                &current_playlist.base.id,
+                &list.base.id,
                 None::<String>,
                 None::<String>,
                 None,
@@ -141,7 +141,7 @@ impl PlaylistsView {
                 .unwrap();
             return;
         }
-        let updated_list = match client.get_playlist(&current_playlist.base.id).await {
+        let updated_list = match client.get_playlist(&list.base.id).await {
             Ok(list) => list,
             Err(e) => {
                 tracing::error!("updated list not found on server: {e}");
@@ -153,11 +153,10 @@ impl PlaylistsView {
         self.subsonic.borrow_mut().replace_playlist(&updated_list);
 
         //sync local cache playlist content
-        *current_playlist = updated_list.clone();
         self.playlists
             .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
-                current_playlist.base.id.clone(),
-                updated_list.base,
+                list.base.id.clone(),
+                updated_list,
             ));
     }
 
@@ -612,6 +611,65 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 PlaylistElementOut::Clicked(index) => {
                     sender.input(PlaylistsViewIn::Selected(index.current_index() as i32));
                 }
+                PlaylistElementOut::DropAppend(drop, list) => {
+                    sender.input(PlaylistsViewIn::DragCssReset);
+
+                    let client = Client::get().unwrap();
+                    let songs = drop.get_songs(&self.subsonic);
+                    let ids = songs.iter().map(|s| s.id.clone()).collect();
+                    // send song to server
+                    if let Err(e) = client
+                        .update_playlist(
+                            &list.base.id,  // id of playlist
+                            None::<String>, // don't change name
+                            None::<String>, // don't change comment
+                            None,           // don't change public/private
+                            ids,            // ids to add
+                            vec![],         // nothing to remove
+                        )
+                        .await
+                    {
+                        sender
+                            .output(PlaylistsViewOut::DisplayToast(format!(
+                                "adding ids to playlist failed: {e}",
+                            )))
+                            .unwrap();
+                        return;
+                    }
+
+                    // get updated info
+                    let updated_list = match client.get_playlist(&list.base.id).await {
+                        Ok(list) => list,
+                        Err(e) => {
+                            tracing::error!("updated list not found on server: {e}");
+                            return;
+                        }
+                    };
+
+                    // update local cache
+                    self.subsonic.borrow_mut().replace_playlist(&updated_list);
+
+                    // update widget info
+                    self.playlists
+                        .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
+                            list.base.id.clone(),
+                            updated_list.clone(),
+                        ));
+                    if let Some(current_list) = &self.selected_playlist {
+                        widgets
+                            .info_details
+                            .set_text(&build_info_string(current_list));
+
+                        // append on shown playlist
+                        if current_list.base.id == updated_list.base.id {
+                            for song in songs.iter() {
+                                let row =
+                                    PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
+                                self.tracks.append(row);
+                            }
+                        }
+                    }
+                }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
@@ -783,6 +841,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .for_each(|track| track.borrow().reset_drag_indicators());
             }
             PlaylistsViewIn::DropMove(drop, _x, y) => {
+                sender.input(PlaylistsViewIn::DragCssReset);
+
                 //finding the index which is the closest to mouse pointer
                 let Some((diff, i)) = self.find_nearest_widget(y) else {
                     sender
@@ -845,11 +905,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .for_each(|(i, _track)| {
                         _ = self.tracks.view.model().unwrap().select_item(i, false)
                     });
-
-                self.update_playlist(&sender).await;
-                sender.input(PlaylistsViewIn::DragCssReset);
+                self.sync_current_playlist(&sender).await;
             }
             PlaylistsViewIn::DropInsert(drop, _x, y) => {
+                sender.input(PlaylistsViewIn::DragCssReset);
+
                 //finding the index which is the closest
                 if let Some((diff, i)) = self.find_nearest_widget(y) {
                     let i = if diff < 0.0 { i } else { i + 1 };
@@ -860,15 +920,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         self.tracks.insert(i, row);
                     }
                 }
+                self.sync_current_playlist(&sender).await;
 
-                self.update_playlist(&sender).await;
-                let Some(current_playlist) = &mut self.selected_playlist else {
-                    return;
-                };
-                widgets
-                    .info_details
-                    .set_text(&build_info_string(current_playlist));
-                sender.input(PlaylistsViewIn::DragCssReset);
+                // update widgets
+                if let Some(current_list) = &self.selected_playlist {
+                    widgets
+                        .info_details
+                        .set_text(&build_info_string(current_list));
+                }
             }
             PlaylistsViewIn::DragCssReset => {
                 (0..self.tracks.len())
@@ -886,32 +945,31 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .iter()
                     .rev()
                     .for_each(|i| self.tracks.remove(*i));
+                self.sync_current_playlist(&sender).await;
 
-                self.update_playlist(&sender).await;
-
-                //update playlist info
-                let Some(current_playlist) = &mut self.selected_playlist else {
-                    return;
-                };
-                widgets
-                    .info_details
-                    .set_text(&build_info_string(current_playlist));
+                // update widgets
+                if let Some(current_list) = &self.selected_playlist {
+                    widgets
+                        .info_details
+                        .set_text(&build_info_string(&current_list));
+                }
             }
             PlaylistsViewIn::InsertSongsTo(index, songs) => {
+                sender.input(PlaylistsViewIn::DragCssReset);
+
                 //insert songs
                 for song in songs.iter().rev() {
                     let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
                     self.tracks.insert(index, row);
                 }
+                self.sync_current_playlist(&sender).await;
 
-                self.update_playlist(&sender).await;
-                let Some(current_playlist) = &mut self.selected_playlist else {
-                    return;
-                };
-                widgets
-                    .info_details
-                    .set_text(&build_info_string(current_playlist));
-                sender.input(PlaylistsViewIn::DragCssReset);
+                // update widgets
+                if let Some(current_list) = &self.selected_playlist {
+                    widgets
+                        .info_details
+                        .set_text(&build_info_string(&current_list));
+                }
             }
             PlaylistsViewIn::SelectionChanged => {
                 // update content for drag and drop

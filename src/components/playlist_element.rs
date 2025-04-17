@@ -111,10 +111,11 @@ pub enum PlaylistElementIn {
     ChangeState(State),
     ConfirmRename,
     UpdatePlaylistName(submarine::data::Playlist),
-    UpdatePlaylistSongs(String, submarine::data::Playlist),
+    UpdatePlaylistSongs(String, submarine::data::PlaylistWithSongs),
     Clicked,
     DragEnter,
     DragLeave,
+    DropAppend(Droppable),
 }
 
 #[derive(Debug)]
@@ -123,6 +124,7 @@ pub enum PlaylistElementOut {
     DisplayToast(String),
     RenamePlaylist(submarine::data::Playlist),
     Clicked(relm4::factory::DynamicIndex),
+    DropAppend(Droppable, submarine::data::PlaylistWithSongs),
 }
 
 #[relm4::factory(pub)]
@@ -302,6 +304,25 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                 connect_leave[sender] => move |_controller| {
                     sender.input(PlaylistElementIn::DragLeave);
+                },
+
+                connect_drop[sender] => move |_controller, value, _x, _y| {
+                    sender.input(PlaylistElementIn::DragLeave);
+
+                    if let Ok(drop) = value.get::<QueueUids>() {
+                        let drop = Droppable::QueueSongs(drop.0);
+                        sender.input(PlaylistElementIn::DropAppend(drop));
+                        true
+                    } else if let Ok(drop) = value.get::<PlaylistUids>() {
+                        let drop = Droppable::PlaylistItems(drop.0);
+                        sender.input(PlaylistElementIn::DropAppend(drop));
+                        true
+                    } else if let Ok(drop) = value.get::<Droppable>() {
+                        sender.input(PlaylistElementIn::DropAppend(drop));
+                        true
+                    } else {
+                        false
+                    }
                 }
             }
         }
@@ -339,7 +360,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             }
             PlaylistElementIn::UpdatePlaylistSongs(id, list) => {
                 if self.playlist.base.id == id {
-                    self.playlist.base = list;
+                    self.playlist = list;
                     widgets.song_number.set_text(&format!(
                         "{} {}",
                         self.playlist.base.song_count,
@@ -366,6 +387,11 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             }
             PlaylistElementIn::DragLeave => {
                 self.drag_state.replace(DragState::Ready);
+            }
+            PlaylistElementIn::DropAppend(drop) => {
+                sender
+                    .output(PlaylistElementOut::DropAppend(drop, self.playlist.clone()))
+                    .unwrap();
             }
         }
     }
