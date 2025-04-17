@@ -381,13 +381,21 @@ impl relm4::Component for Queue {
 
                     add_controller = gtk::DropTarget {
                         set_actions: gdk::DragAction::COPY,
-                        set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+                        set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
+                                     , <PlaylistUids as gtk::prelude::StaticType>::static_type()
+                        ],
 
                         connect_drop[sender] => move |_target, value, _x, _y| {
                             if let Ok(drop) = value.get::<Droppable>() {
                                 sender.input(QueueIn::Append(drop));
+                                true
+                            } else if let Ok(drop) = value.get::<PlaylistUids>() {
+                                let drop = Droppable::PlaylistItems(drop.0);
+                                sender.input(QueueIn::Append(drop));
+                                true
+                            } else {
+                                false
                             }
-                            true
                         }
                     }
                 },
