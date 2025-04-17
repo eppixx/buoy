@@ -750,14 +750,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
             }
             PlaylistsViewIn::Selected(index) => {
-                // set every state in PlaylistElement to normal
-                for list in self.playlists.guard().iter() {
-                    list.change_state(&State::Normal);
-                    list.set_edit_area(EditState::NotActive);
-                }
-
-                widgets.track_stack.set_visible_child_name("tracks");
-
                 let guard = self.playlists.guard();
                 let Some(list) = guard.get(index as usize) else {
                     tracing::error!("index has no playlist");
@@ -770,6 +762,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         return;
                     }
                 }
+
+                // set every state in PlaylistElement to normal
+                for list in guard.iter() {
+                    list.change_state(&State::Normal);
+                    list.set_edit_area(EditState::NotActive);
+                }
+
+                widgets.track_stack.set_visible_child_name("tracks");
 
                 list.set_edit_area(EditState::Active);
                 self.selected_playlist = Some(list.info().clone());
