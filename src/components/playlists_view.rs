@@ -224,10 +224,10 @@ pub enum PlaylistsViewIn {
     UpdatePlayCountSong(String, Option<i64>),
     DownloadClicked,
     Selected(i32),
-    DropHover(f64, f64),
+    DropHover(f64),
     DropMotionLeave,
-    DropMove(Droppable, f64, f64),
-    DropInsert(Droppable, f64, f64),
+    DropMove(Droppable, f64),
+    DropInsert(Droppable, f64),
     DragCssReset,
     RemovePlaylistRow,
     InsertSongsTo(u32, Vec<submarine::data::Child>),
@@ -481,8 +481,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                     set_actions: gdk::DragAction::MOVE,
                                     set_types: &[<PlaylistUids as gtk::prelude::StaticType>::static_type()],
 
-                                    connect_motion[sender] => move |_controller, x, y| {
-                                        sender.input(PlaylistsViewIn::DropHover(x, y));
+                                    connect_motion[sender] => move |_controller, _x, y| {
+                                        sender.input(PlaylistsViewIn::DropHover(y));
                                         gdk::DragAction::MOVE
                                     },
 
@@ -490,12 +490,12 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                         sender.input(PlaylistsViewIn::DropMotionLeave)
                                     },
 
-                                    connect_drop[sender] => move |_controller, value, x, y| {
+                                    connect_drop[sender] => move |_controller, value, _x, y| {
                                         sender.input(PlaylistsViewIn::DropMotionLeave);
 
                                         if let Ok(drop) = value.get::<PlaylistUids>() {
                                             let drop = Droppable::PlaylistItems(drop.0);
-                                            sender.input(PlaylistsViewIn::DropMove(drop, x, y));
+                                            sender.input(PlaylistsViewIn::DropMove(drop, y));
                                             true
                                         } else {
                                             false
@@ -511,8 +511,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                                  , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
                                     ],
 
-                                    connect_motion[sender] => move |_controller, x, y| {
-                                        sender.input(PlaylistsViewIn::DropHover(x, y));
+                                    connect_motion[sender] => move |_controller, _x, y| {
+                                        sender.input(PlaylistsViewIn::DropHover(y));
                                         gdk::DragAction::COPY
                                     },
 
@@ -520,21 +520,21 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                         sender.input(PlaylistsViewIn::DropMotionLeave)
                                     },
 
-                                    connect_drop[sender] => move |_controller, value, x, y| {
+                                    connect_drop[sender] => move |_controller, value, _x, y| {
                                         sender.input(PlaylistsViewIn::DropMotionLeave);
 
                                         if let Ok(drop) = value.get::<QueueUids>() {
                                             let drop = Droppable::QueueSongs(drop.0);
-                                            sender.input(PlaylistsViewIn::DropInsert(drop, x, y));
+                                            sender.input(PlaylistsViewIn::DropInsert(drop, y));
                                             true
                                         } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
                                             let drop = Droppable::Playlist(drop.0);
-                                            sender.input(PlaylistsViewIn::DropInsert(drop, x, y));
+                                            sender.input(PlaylistsViewIn::DropInsert(drop, y));
                                             true
                                         } else if let Ok(drop) = value.get::<Droppable>() {
                                             match &drop {
-                                                Droppable::PlaylistItems(_) => sender.input(PlaylistsViewIn::DropMove(drop, x, y)),
-                                                _ => sender.input(PlaylistsViewIn::DropInsert(drop, x, y)),
+                                                Droppable::PlaylistItems(_) => sender.input(PlaylistsViewIn::DropMove(drop, y)),
+                                                _ => sender.input(PlaylistsViewIn::DropInsert(drop, y)),
                                             }
                                             true
                                         } else {
@@ -900,7 +900,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .filter_map(|i| self.tracks.get(i))
                     .for_each(|entry| entry.borrow().reset_drag_indicators());
             }
-            PlaylistsViewIn::DropHover(_x, y) => {
+            PlaylistsViewIn::DropHover(y) => {
                 //reset drag indicators
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get(i))
@@ -928,7 +928,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .filter_map(|i| self.tracks.get(i))
                     .for_each(|track| track.borrow().reset_drag_indicators());
             }
-            PlaylistsViewIn::DropMove(drop, _x, y) => {
+            PlaylistsViewIn::DropMove(drop, y) => {
                 sender.input(PlaylistsViewIn::DragCssReset);
 
                 //finding the index which is the closest to mouse pointer
@@ -1009,7 +1009,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     });
                 self.sync_current_playlist(&sender).await;
             }
-            PlaylistsViewIn::DropInsert(drop, _x, y) => {
+            PlaylistsViewIn::DropInsert(drop, y) => {
                 sender.input(PlaylistsViewIn::DragCssReset);
 
                 // return when playlist is write protected
