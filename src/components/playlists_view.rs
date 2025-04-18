@@ -100,12 +100,12 @@ impl PlaylistsView {
                 let temp_delete_indices: Vec<i64> = (0..list.entry.len() as i64).collect();
                 if let Err(e) = client
                     .update_playlist(
-                        &list.base.id,
-                        None::<String>,
-                        None::<String>,
-                        None,
-                        Vec::<String>::new(),
-                        temp_delete_indices,
+                        &list.base.id,        // id of playlist
+                        None::<String>,       // don't change name
+                        None::<String>,       // don't change comment
+                        None,                 // don't change public/private
+                        Vec::<String>::new(), // no ids to append
+                        temp_delete_indices,  // removed indices
                     )
                     .await
                 {
@@ -126,12 +126,12 @@ impl PlaylistsView {
             .collect();
         if let Err(e) = client
             .update_playlist(
-                &list.base.id,
-                None::<String>,
-                None::<String>,
-                None,
-                ids,
-                vec![],
+                &list.base.id,  // id of playlist
+                None::<String>, // don't chang name
+                None::<String>, // don't change comment
+                None,           // don't change public/private
+                ids,            // ids to append
+                vec![],         // nothing to remove
             )
             .await
         {
@@ -630,7 +630,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                             None::<String>, // don't change name
                             None::<String>, // don't change comment
                             None,           // don't change public/private
-                            ids,            // ids to add
+                            ids,            // ids to append
                             vec![],         // nothing to remove
                         )
                         .await
@@ -1077,12 +1077,12 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 let client = Client::get().unwrap();
                 if let Err(e) = client
                     .update_playlist(
-                        &current_list.base.id,
-                        None::<String>,
-                        None::<String>,
-                        None,
-                        Vec::<String>::new(),
-                        selected_rows.iter().cloned().map(|i| i as i64).collect(),
+                        &current_list.base.id,                                     // id of playlist
+                        None::<String>,       // don't change name
+                        None::<String>,       // don't change comment
+                        None,                 // don't change public/private
+                        Vec::<String>::new(), // no ids to append
+                        selected_rows.iter().cloned().map(|i| i as i64).collect(), // ids to remove
                     )
                     .await
                 {
