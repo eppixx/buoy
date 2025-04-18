@@ -1039,9 +1039,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 // return when write protected
                 let Some(list) = self.playlists.get(i as usize) else {
                     sender
-                        .output(PlaylistsViewOut::DisplayToast(format!(
-                            "trying to delete an index that doesn't exist",
-                        )))
+                        .output(PlaylistsViewOut::DisplayToast(
+                            "trying to delete an index that doesn't exist".to_string(),
+                        ))
                         .unwrap();
                     return;
                 };
@@ -1084,9 +1084,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 {
                     let Some(list) = guard.get(playlist.index().current_index()) else {
                         sender
-                            .output(PlaylistsViewOut::DisplayToast(format!(
-                                "trying to delete an index that doesn't exist",
-                            )))
+                            .output(PlaylistsViewOut::DisplayToast(
+                                "trying to delete an index that doesn't exist".to_string(),
+                            ))
                             .unwrap();
                         return;
                     };
@@ -1142,9 +1142,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                 let Some(list) = self.playlists.get(index as usize) else {
                     sender
-                        .output(PlaylistsViewOut::DisplayToast(format!(
-                            "trying to delete an index that doesn't exist",
-                        )))
+                        .output(PlaylistsViewOut::DisplayToast(
+                            "trying to delete an index that doesn't exist".to_string(),
+                        ))
                         .unwrap();
                     return;
                 };
