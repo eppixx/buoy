@@ -1,0 +1,44 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-13 00:10+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:4
+msgid "Buoy"
+msgstr ""
+
+#: data/launcher.desktop.in.in:4
+msgid "Music Player"
+msgstr ""
+
+#: data/launcher.desktop.in.in:6
+msgid "Play music from a subsonic server"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:5
+msgid "A Subsonic music client"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:9
+msgid ""
+"Buoy is a client for playing music off of a subsonic server. It is written "
+"in Rust with GTK for elementary OS."
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:15
+msgid "Initial Release"
+msgstr ""
