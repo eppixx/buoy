@@ -815,6 +815,7 @@ impl relm4::component::AsyncComponent for App {
                 if let Err(e) = settings.reset_login() {
                     sender.input(AppIn::DisplayToast(format!("error resetting login: {e}")));
                 }
+                crate::client::Client::get_mut().lock().unwrap().reset();
                 sender.output(AppOut::Logout).unwrap();
             }
             AppIn::DeleteCache => {
