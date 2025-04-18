@@ -109,6 +109,10 @@ impl PlaylistElement {
     pub fn set_edit_area(&self, status: EditState) {
         self.edit_area.set_visible_child_enum(&status);
     }
+
+    pub fn index(&self) -> &relm4::factory::DynamicIndex {
+        &self.index
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -124,6 +128,7 @@ pub enum PlaylistElementIn {
     DropAppend(Droppable),
     ShowIndicatorUpdate(f64),
     ShowIndicatorReset,
+    MoveDropped(PlaylistElementDragged, f64),
 }
 
 #[derive(Debug)]
@@ -133,6 +138,8 @@ pub enum PlaylistElementOut {
     RenamePlaylist(submarine::data::Playlist),
     Clicked(relm4::factory::DynamicIndex),
     DropAppend(Droppable, submarine::data::PlaylistWithSongs),
+    MoveDropAbove(PlaylistElementDragged, relm4::factory::DynamicIndex),
+    MoveDropBelow(PlaylistElementDragged, relm4::factory::DynamicIndex),
 }
 
 #[relm4::factory(pub)]
@@ -315,11 +322,15 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     sender.input(PlaylistElementIn::ShowIndicatorReset);
                 },
 
-                connect_drop[sender] => move |_controller, drop, _x, _y| {
+                connect_drop[sender] => move |_controller, value, _x, y| {
                     sender.input(PlaylistElementIn::ShowIndicatorReset);
 
-                    //TODO implement dropping
-                    false
+                    if let Ok(drop) = value.get::<PlaylistElementDragged>() {
+                        sender.input(PlaylistElementIn::MoveDropped(drop, y));
+                        true
+                    } else {
+                        false
+                    }
                 }
             },
 
@@ -435,6 +446,18 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     css::DragState::drop_shadow_top(&self.list_box_row);
                 } else {
                     css::DragState::drop_shadow_bottom(&self.list_box_row);
+                }
+            }
+            PlaylistElementIn::MoveDropped(drop, y) => {
+                let height = self.list_box_row.height();
+                if y < height as f64 * 0.5 {
+                    sender
+                        .output(PlaylistElementOut::MoveDropAbove(drop, self.index.clone()))
+                        .unwrap();
+                } else {
+                    sender
+                        .output(PlaylistElementOut::MoveDropBelow(drop, self.index.clone()))
+                        .unwrap();
                 }
             }
         }

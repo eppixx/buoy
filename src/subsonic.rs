@@ -343,6 +343,19 @@ impl Subsonic {
         self.save().expect("saving failed");
     }
 
+    pub fn move_playlist(&mut self, src_index: usize, target_index: usize) {
+        let item = self.playlists.remove(src_index);
+
+        let adjusted_index = if src_index < target_index {
+            target_index - 1
+        } else {
+            target_index
+        };
+
+        self.playlists.insert(adjusted_index, item);
+        self.save().expect("saving failed");
+    }
+
     pub fn replace_playlist(&mut self, list: &submarine::data::PlaylistWithSongs) {
         let Some(playlist) = self
             .playlists

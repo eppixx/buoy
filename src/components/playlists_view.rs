@@ -676,6 +676,42 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         }
                     }
                 }
+                PlaylistElementOut::MoveDropAbove(drop, target_index) => {
+                    let mut guard = self.playlists.guard();
+                    let Some(src_element) =
+                        guard.iter().find(|e| e.info().base.id == drop.0.base.id)
+                    else {
+                        tracing::error!("dragged PlaylistElement not found in elements");
+                        return;
+                    };
+                    let src_index = src_element.index();
+
+                    // update cache
+                    self.subsonic
+                        .borrow_mut()
+                        .move_playlist(src_index.current_index(), target_index.current_index());
+
+                    // update widgets
+                    guard.move_to(src_index.current_index(), target_index.current_index());
+                }
+                PlaylistElementOut::MoveDropBelow(drop, target_index) => {
+                    let mut guard = self.playlists.guard();
+                    let Some(src_element) =
+                        guard.iter().find(|e| e.info().base.id == drop.0.base.id)
+                    else {
+                        tracing::error!("dragged PlaylistElement not found in elements");
+                        return;
+                    };
+                    let src_index = src_element.index();
+
+                    // update cache
+                    self.subsonic
+                        .borrow_mut()
+                        .move_playlist(src_index.current_index(), target_index.current_index() + 1);
+
+                    // update widgets
+                    guard.move_to(src_index.current_index(), target_index.current_index() + 1);
+                }
             },
             PlaylistsViewIn::Cover(msg) => match msg {
                 CoverOut::DisplayToast(title) => sender
