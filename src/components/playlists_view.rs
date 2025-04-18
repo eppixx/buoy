@@ -190,24 +190,6 @@ impl PlaylistsView {
 }
 
 #[derive(Debug)]
-pub enum PlaylistsViewOut {
-    ReplaceQueue(submarine::data::PlaylistWithSongs),
-    AddToQueue(submarine::data::PlaylistWithSongs),
-    AppendToQueue(submarine::data::PlaylistWithSongs),
-    DeletePlaylist(
-        relm4::factory::DynamicIndex,
-        submarine::data::PlaylistWithSongs,
-    ),
-    CreatePlaylist,
-    RenamePlaylist(submarine::data::Playlist),
-    DisplayToast(String),
-    Download(Droppable),
-    FavoriteClicked(String, bool),
-    ClickedArtist(Id),
-    ClickedAlbum(Id),
-}
-
-#[derive(Debug)]
 pub enum PlaylistsViewIn {
     FilterChanged(String),
     ReplaceQueue,
@@ -229,6 +211,24 @@ pub enum PlaylistsViewIn {
     RemovePlaylistRow,
     InsertSongsTo(u32, Vec<submarine::data::Child>),
     SelectionChanged,
+}
+
+#[derive(Debug)]
+pub enum PlaylistsViewOut {
+    ReplaceQueue(submarine::data::PlaylistWithSongs),
+    AddToQueue(submarine::data::PlaylistWithSongs),
+    AppendToQueue(submarine::data::PlaylistWithSongs),
+    DeletePlaylist(
+        relm4::factory::DynamicIndex,
+        submarine::data::PlaylistWithSongs,
+    ),
+    CreatePlaylist,
+    RenamePlaylist(submarine::data::Playlist),
+    DisplayToast(String),
+    Download(Droppable),
+    FavoriteClicked(String, bool),
+    ClickedArtist(Id),
+    ClickedAlbum(Id),
 }
 
 #[relm4::component(pub, async)]
