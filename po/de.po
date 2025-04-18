@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-04-18 20:21+0200\n"
-"PO-Revision-Date: 2025-02-11 15:41+0100\n"
+"PO-Revision-Date: 2025-04-18 20:32+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -147,11 +147,11 @@ msgstr "Scrobbeln an den Subsonic Server"
 msgid ""
 "How much of a song needs to be played to be scrobbled to server in percent"
 msgstr ""
+"Wie viel Prozent des Songs abgespielt sein muss, um als gespielt zu gelten."
 
 #: src/app.rs:612
-#, fuzzy
 msgid "Scrobble threshold"
-msgstr "Scrobbeln an den Subsonic Server"
+msgstr "Scrobble Schwelle"
 
 #: src/app.rs:632
 msgid "Delete cache"
@@ -831,7 +831,7 @@ msgstr "Titel"
 
 #: src/factory/playlist_element.rs:247
 msgid "Playlist is unchangeable"
-msgstr ""
+msgstr "Playliste ist unveränderbar"
 
 #: src/factory/playlist_element.rs:262
 msgid "Rename Playlist"
@@ -887,29 +887,27 @@ msgstr "Unbekanntes Genre"
 
 #: src/factory/album_row.rs:279
 msgid "No year"
-msgstr ""
+msgstr "Kein Jahr"
 
 #: src/factory/album_row.rs:313
 msgid "No Cd"
-msgstr ""
+msgstr "Keine CD"
 
 #: src/factory/track_row.rs:195 src/factory/album_track_row.rs:218
-#, fuzzy
 msgid "Track"
 msgstr "Titel"
 
 #: src/factory/track_row.rs:196 src/factory/album_track_row.rs:219
 msgid "on CD"
-msgstr ""
+msgstr "auf CD"
 
 #: src/download.rs:47
-#, fuzzy
 msgid "You're about to download"
-msgstr "Wähle Ort für download"
+msgstr "Download von "
 
 #: src/download.rs:50
 msgid "This may take a while. Do want to proceed?"
-msgstr ""
+msgstr "Dies kann eine Weile dauern. Fortfahren?"
 
 #: src/download.rs:100 src/download.rs:139
 msgid "Cancel"
@@ -919,9 +917,8 @@ msgstr "Abbrechen"
 # Download of Album.zip failed
 # Saving of Album.zip failed
 #: src/download.rs:104
-#, fuzzy
 msgid "Download"
-msgstr "Download von"
+msgstr "Download"
 
 #: src/download.rs:131
 msgid "Choose location for download"

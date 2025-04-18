@@ -310,7 +310,7 @@ impl relm4::typed_view::column::RelmColumn for CdColumn {
         let label = gtk::Label::builder()
             .halign(gtk::Align::Start)
             .ellipsize(gtk::pango::EllipsizeMode::End)
-            .label(gettext("No Cd"))
+            .label(gettext("No CD"))
             .build();
         view.set_child(Some(&label));
         (view, (model, label))

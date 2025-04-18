@@ -6,39 +6,42 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-01-13 00:10+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2025-04-18 20:34+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:4
 msgid "Buoy"
-msgstr ""
+msgstr "Buoy"
 
 #: data/launcher.desktop.in.in:4
 msgid "Music Player"
-msgstr ""
+msgstr "Musik Player"
 
 #: data/launcher.desktop.in.in:6
 msgid "Play music from a subsonic server"
-msgstr ""
+msgstr "Spielt Musik von einem Subsonic Server"
 
 #: data/metadata.appdata.xml.in.in:5
 msgid "A Subsonic music client"
-msgstr ""
+msgstr "Ein Subsonic Musik Client"
 
 #: data/metadata.appdata.xml.in.in:9
 msgid ""
 "Buoy is a client for playing music off of a subsonic server. It is written "
 "in Rust with GTK for elementary OS."
 msgstr ""
+"Buoy ist ein Client um Musik eines Subsonic Servers abzuspielen. Er ist in "
+"Rust mit GTK für elementary OS geschrieben."
 
 #: data/metadata.appdata.xml.in.in:15
 msgid "Initial Release"
-msgstr ""
+msgstr "Initialer Release"
