@@ -111,7 +111,7 @@ impl PlaylistsView {
                 {
                     sender
                         .output(PlaylistsViewOut::DisplayToast(format!(
-                            "moving playlist entry, removing failed: {e}",
+                            "deleting rows from playlist failed: {e}",
                         )))
                         .unwrap();
                     return;
@@ -1094,7 +1094,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     return;
                 }
 
-                // removing rows
+                // removing rows in widgets
                 selected_rows
                     .iter()
                     .rev()
