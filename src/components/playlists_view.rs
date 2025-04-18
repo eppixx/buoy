@@ -137,7 +137,7 @@ impl PlaylistsView {
         {
             sender
                 .output(PlaylistsViewOut::DisplayToast(format!(
-                    "moving playlist entry, readding failed: {e}",
+                    "readding ids to playlist failed: {e}",
                 )))
                 .unwrap();
             return;
@@ -637,7 +637,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     {
                         sender
                             .output(PlaylistsViewOut::DisplayToast(format!(
-                                "adding ids to playlist failed: {e}",
+                                "appending ids to playlist failed: {e}",
                             )))
                             .unwrap();
                         return;
@@ -647,7 +647,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     let updated_list = match client.get_playlist(&list.base.id).await {
                         Ok(list) => list,
                         Err(e) => {
-                            tracing::error!("updated list not found on server: {e}");
+                            sender
+                                .output(PlaylistsViewOut::DisplayToast(format!(
+                                    "updated list not found on server: {e}",
+                                )))
+                                .unwrap();
                             return;
                         }
                     };
@@ -682,7 +686,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     // check for write protection
                     if let Some(list) = guard.get(target_index.current_index()) {
                         if list.write_protected() {
-                            tracing::error!("tried to move a protected playlist");
+                            tracing::info!("tried to move a protected playlist");
                             return;
                         }
                     }
@@ -690,7 +694,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     let Some(src_element) =
                         guard.iter().find(|e| e.info().base.id == drop.0.base.id)
                     else {
-                        tracing::error!("dragged PlaylistElement not found in elements");
+                        sender
+                            .output(PlaylistsViewOut::DisplayToast(
+                                "dragged PlaylistElement not foundin elements".to_string(),
+                            ))
+                            .unwrap();
                         return;
                     };
                     let src_index = src_element.index();
@@ -717,7 +725,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     let Some(src_element) =
                         guard.iter().find(|e| e.info().base.id == drop.0.base.id)
                     else {
-                        tracing::error!("dragged PlaylistElement not found in elements");
+                        sender
+                            .output(PlaylistsViewOut::DisplayToast(
+                                "dragged PlaylistElement not foundin elements".to_string(),
+                            ))
+                            .unwrap();
                         return;
                     };
                     let src_index = src_element.index();
@@ -774,7 +786,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             }
             PlaylistsViewIn::DeletePlaylist(index) => {
                 let Some(list) = self.playlists.get(index.current_index()) else {
-                    tracing::error!("trying to delete an index that doesn't exist");
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(
+                            "trying to delete a plalyist index that doesn't exists".to_string(),
+                        ))
+                        .unwrap();
                     return;
                 };
                 if list.write_protected() {
@@ -820,7 +836,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             PlaylistsViewIn::Selected(index) => {
                 let guard = self.playlists.guard();
                 let Some(list) = guard.get(index as usize) else {
-                    tracing::error!("index has no playlist");
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(format!(
+                            "playlist with index {index} not found",
+                        )))
+                        .unwrap();
                     return;
                 };
 
@@ -1018,7 +1038,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                 // return when write protected
                 let Some(list) = self.playlists.get(i as usize) else {
-                    tracing::error!("trying to delete an index that doesn't exist");
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(format!(
+                            "trying to delete an index that doesn't exist",
+                        )))
+                        .unwrap();
                     return;
                 };
                 if list.write_protected() {
@@ -1059,7 +1083,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .find(|e| e.info().base.id == current_list.base.id)
                 {
                     let Some(list) = guard.get(playlist.index().current_index()) else {
-                        tracing::error!("trying to delete an index that doesn't exist");
+                        sender
+                            .output(PlaylistsViewOut::DisplayToast(format!(
+                                "trying to delete an index that doesn't exist",
+                            )))
+                            .unwrap();
                         return;
                     };
                     if list.write_protected() {
@@ -1113,7 +1141,11 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 sender.input(PlaylistsViewIn::DragCssReset);
 
                 let Some(list) = self.playlists.get(index as usize) else {
-                    tracing::error!("trying to delete an index that doesn't exist");
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(format!(
+                            "trying to delete an index that doesn't exist",
+                        )))
+                        .unwrap();
                     return;
                 };
                 if list.write_protected() {
