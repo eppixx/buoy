@@ -383,6 +383,7 @@ impl Subsonic {
                 }
             }
         }
+        self.save().expect("saving failed");
     }
 
     pub fn cover_raw(&self, id: &str) -> Option<Vec<u8>> {
