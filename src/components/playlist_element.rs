@@ -95,6 +95,7 @@ pub struct PlaylistElement {
     main_stack: gtk::Stack,
     edit_area: gtk::Stack,
     drag_state: Rc<RefCell<DragState>>,
+    write_protected: bool,
 }
 
 impl PlaylistElement {
@@ -107,11 +108,18 @@ impl PlaylistElement {
     }
 
     pub fn set_edit_area(&self, status: EditState) {
+        if self.write_protected {
+            return;
+        }
         self.edit_area.set_visible_child_enum(&status);
     }
 
     pub fn index(&self) -> &relm4::factory::DynamicIndex {
         &self.index
+    }
+
+    pub fn write_protected(&self) -> bool {
+        self.write_protected
     }
 }
 
@@ -155,6 +163,17 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         index: &relm4::factory::DynamicIndex,
         sender: relm4::FactorySender<Self>,
     ) -> Self {
+        let imported_signs = [
+            "Auto-imported", // imported playlist from navidrome
+        ];
+        let write_protected = imported_signs.iter().any(|sign| {
+            playlist
+                .base
+                .comment
+                .as_deref()
+                .unwrap_or_default()
+                .contains(sign)
+        });
         let model = Self {
             subsonic,
             playlist,
@@ -164,6 +183,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             main_stack: gtk::Stack::default(),
             edit_area: gtk::Stack::default(),
             drag_state: Rc::new(RefCell::new(DragState::Ready)),
+            write_protected,
         };
 
         //setup content for DropSource
@@ -218,7 +238,18 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
 
                     gtk::Box {
                         self.edit_area.clone() -> gtk::Stack {
-                            add_enumed[EditState::NotActive] = &gtk::Box {},
+                            add_enumed[EditState::NotActive] = &gtk::Box {
+                                set_halign: gtk::Align::End,
+
+                                if self.write_protected {
+                                    gtk::Image {
+                                        set_icon_name: Some("view-pin"),
+                                        set_tooltip: &gettext("Playlist is unchangeable"),
+                                    }
+                                } else {
+                                    gtk::Box {}
+                                }
+                            },
                             add_enumed[EditState::Active] = &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
                                 set_valign: gtk::Align::Center,
@@ -380,6 +411,9 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
     ) {
         match msg {
             PlaylistElementIn::DeletePressed => {
+                if self.write_protected {
+                    return;
+                }
                 sender
                     .output(PlaylistElementOut::Delete(self.index.clone()))
                     .unwrap();
@@ -433,6 +467,10 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 self.drag_state.replace(DragState::Ready);
             }
             PlaylistElementIn::DropAppend(drop) => {
+                if self.write_protected {
+                    return;
+                }
+
                 sender
                     .output(PlaylistElementOut::DropAppend(drop, self.playlist.clone()))
                     .unwrap();

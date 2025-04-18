@@ -678,6 +678,15 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
                 PlaylistElementOut::MoveDropAbove(drop, target_index) => {
                     let mut guard = self.playlists.guard();
+
+                    // check for write protection
+                    if let Some(list) = guard.get(target_index.current_index()) {
+                        if list.write_protected() {
+                            tracing::error!("tried to move a protected playlist");
+                            return;
+                        }
+                    }
+
                     let Some(src_element) =
                         guard.iter().find(|e| e.info().base.id == drop.0.base.id)
                     else {
@@ -696,6 +705,15 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
                 PlaylistElementOut::MoveDropBelow(drop, target_index) => {
                     let mut guard = self.playlists.guard();
+
+                    // check for write protection
+                    if let Some(list) = guard.get(target_index.current_index()) {
+                        if list.write_protected() {
+                            tracing::error!("tried to move a protected playlist");
+                            return;
+                        }
+                    }
+
                     let Some(src_element) =
                         guard.iter().find(|e| e.info().base.id == drop.0.base.id)
                     else {
@@ -755,6 +773,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .push_back((self.subsonic.clone(), list));
             }
             PlaylistsViewIn::DeletePlaylist(index) => {
+                let Some(list) = self.playlists.get(index.current_index()) else {
+                    tracing::error!("trying to delete an index that doesn't exist");
+                    return;
+                };
+                if list.write_protected() {
+                    return;
+                }
+
                 widgets.track_stack.set_visible_child_name("tracks-stock");
                 self.playlists.guard().remove(index.current_index());
             }
@@ -895,6 +921,20 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     return;
                 };
 
+                // return when playlist is write protected
+                let guard = self.playlists.guard();
+                if let Some(current_list) = &self.selected_playlist {
+                    if let Some(list) = guard
+                        .iter()
+                        .find(|e| e.info().base.id == current_list.base.id)
+                    {
+                        if list.write_protected() {
+                            return;
+                        }
+                    }
+                }
+                std::mem::drop(guard);
+
                 let dragged = match drop {
                     Droppable::PlaylistItems(songs) => songs,
                     _ => unreachable!("can only move QueueSongs"),
@@ -952,16 +992,47 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             PlaylistsViewIn::DropInsert(drop, _x, y) => {
                 sender.input(PlaylistsViewIn::DragCssReset);
 
-                //finding the index which is the closest
-                if let Some((diff, i)) = self.find_nearest_widget(y) {
-                    let i = if diff < 0.0 { i } else { i + 1 };
-                    let songs = drop.get_songs(&self.subsonic);
-                    //insert songs
-                    for song in songs.iter().rev() {
-                        let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
-                        self.tracks.insert(i, row);
+                // return when playlist is write protected
+                let guard = self.playlists.guard();
+                if let Some(current_list) = &self.selected_playlist {
+                    if let Some(list) = guard
+                        .iter()
+                        .find(|e| e.info().base.id == current_list.base.id)
+                    {
+                        if list.write_protected() {
+                            return;
+                        }
                     }
                 }
+                std::mem::drop(guard);
+
+                //finding the index which is the closest
+                let Some((diff, i)) = self.find_nearest_widget(y) else {
+                    sender
+                        .output(PlaylistsViewOut::DisplayToast(String::from(
+                            "could not find widget to drop to",
+                        )))
+                        .unwrap();
+                    return;
+                };
+
+                // return when write protected
+                let Some(list) = self.playlists.get(i as usize) else {
+                    tracing::error!("trying to delete an index that doesn't exist");
+                    return;
+                };
+                if list.write_protected() {
+                    return;
+                }
+
+                let i = if diff < 0.0 { i } else { i + 1 };
+                let songs = drop.get_songs(&self.subsonic);
+                //insert songs
+                for song in songs.iter().rev() {
+                    let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
+                    self.tracks.insert(i, row);
+                }
+
                 self.sync_current_playlist(&sender).await;
 
                 // update widgets
@@ -980,6 +1051,22 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 let Some(current_list) = &self.selected_playlist else {
                     return;
                 };
+
+                // return when write protected
+                let guard = self.playlists.guard();
+                if let Some(playlist) = guard
+                    .iter()
+                    .find(|e| e.info().base.id == current_list.base.id)
+                {
+                    let Some(list) = guard.get(playlist.index().current_index()) else {
+                        tracing::error!("trying to delete an index that doesn't exist");
+                        return;
+                    };
+                    if list.write_protected() {
+                        return;
+                    }
+                };
+                drop(guard);
 
                 // find all selected rows
                 let selected_rows: Vec<u32> = (0..self.tracks.len())
@@ -1024,6 +1111,14 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             }
             PlaylistsViewIn::InsertSongsTo(index, songs) => {
                 sender.input(PlaylistsViewIn::DragCssReset);
+
+                let Some(list) = self.playlists.get(index as usize) else {
+                    tracing::error!("trying to delete an index that doesn't exist");
+                    return;
+                };
+                if list.write_protected() {
+                    return;
+                }
 
                 //insert songs
                 for song in songs.iter().rev() {
