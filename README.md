@@ -4,9 +4,12 @@
 
 ---
 
-## Screenshot
+## Screenshots
 
-![Screenshot of buoy](data/screenshots/dark.png)
+![Screenshot showing the tracks view in light and dark mode](data/screenshots/tracks_dark_light.png)
+![Screenshot showing the dashboard view](data/screenshots/dashboard_light.png)
+![Screenshot showing the playlists view](data/screenshots/playlists_dark.png)
+
 
 ## Installing or developing with meson and ninja
 ### Install the needed depencies
