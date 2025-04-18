@@ -495,7 +495,7 @@ impl relm4::Component for Queue {
                         );
                     }
                 } else {
-                    for song in songs.into_iter().rev() {
+                    for song in songs.into_iter() {
                         self.tracks
                             .append(QueueSongRow::new(&self.subsonic, &song, &sender));
                     }
