@@ -779,7 +779,7 @@ impl relm4::Component for TracksView {
                 } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
                     let drop = Droppable::Queue(tracks);
-                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
+                    sender.output(TracksViewOut::AppendToQueue(drop)).unwrap();
                 }
             }
             TracksViewIn::ReplaceQueue => {
@@ -798,7 +798,7 @@ impl relm4::Component for TracksView {
                 } else {
                     let tracks = self.subsonic.borrow().tracks().clone();
                     let drop = Droppable::Queue(tracks);
-                    sender.output(TracksViewOut::AddToQueue(drop)).unwrap();
+                    sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
                 }
             }
             TracksViewIn::DownloadClicked => {
