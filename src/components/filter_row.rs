@@ -11,8 +11,10 @@ use relm4::{
     RelmWidgetExt,
 };
 
-use crate::components::filter_categories::Category;
-use crate::{common::store_from_category, gtk_helper::stack::StackExt};
+use crate::{
+    common::store_from_category, components::filter_categories::Category,
+    gtk_helper::stack::StackExt,
+};
 
 #[derive(Debug, Clone)]
 pub enum Filter {

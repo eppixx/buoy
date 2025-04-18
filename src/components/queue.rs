@@ -13,10 +13,10 @@ use relm4::{
 use crate::{
     components::{
         cover::CoverOut,
-        playlist_element::PlaylistElementDragged,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
     factory::{
+        playlist_element::PlaylistElementDragged,
         playlist_row::PlaylistUids,
         queue_song_row::{QueueSongRow, QueueUid, QueueUids},
         DragIndicatable,

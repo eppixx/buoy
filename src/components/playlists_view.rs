@@ -2,38 +2,35 @@ use std::{cell::RefCell, rc::Rc};
 
 use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
-use relm4::gtk::gdk;
-use relm4::gtk::glib::prelude::ToValue;
 use relm4::{
     gtk::{
-        self,
+        self, gdk,
+        glib::prelude::ToValue,
         prelude::{BoxExt, ButtonExt, ListBoxRowExt, OrientableExt, SelectionModelExt, WidgetExt},
     },
-    ComponentController,
+    Component, ComponentController, RelmWidgetExt,
 };
-use relm4::{Component, RelmWidgetExt};
 
-use crate::client::Client;
-use crate::components::playlist_element::PlaylistElementDragged;
-use crate::factory::playlist_row::{
-    AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow, PlaylistUid,
-    PlaylistUids, TitleColumn,
-};
-use crate::factory::queue_song_row::QueueUids;
-use crate::factory::DragIndicatable;
-use crate::settings::Settings;
-use crate::types::Id;
 use crate::{
+    client::Client,
     common::convert_for_label,
-    components::{
-        cover::{Cover, CoverIn, CoverOut},
-        playlist_element::{PlaylistElement, PlaylistElementOut, State},
+    components::cover::{Cover, CoverIn, CoverOut},
+    factory::{
+        playlist_element::{
+            EditState, PlaylistElement, PlaylistElementDragged, PlaylistElementIn,
+            PlaylistElementOut, State,
+        },
+        playlist_row::{
+            AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PlayCountColumn, PlaylistRow,
+            PlaylistUid, PlaylistUids, TitleColumn,
+        },
+        queue_song_row::QueueUids,
+        DragIndicatable,
     },
+    settings::Settings,
     subsonic::Subsonic,
-    types::Droppable,
+    types::{Droppable, Id},
 };
-
-use super::playlist_element::{EditState, PlaylistElementIn};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TracksState {

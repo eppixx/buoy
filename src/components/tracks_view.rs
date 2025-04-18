@@ -12,22 +12,18 @@ use relm4::{
 
 use crate::{
     components::{
-        cover::{Cover, CoverIn},
-        filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
+        cover::{Cover, CoverIn, CoverOut},
+        filter_categories::Category,
+        filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
     },
-    factory::track_row::{BitRateColumn, GenreColumn, PlayCountColumn},
-    types::{Droppable, Id},
-};
-use crate::{
-    components::{filter_categories::Category, filter_row::FilterRowIn},
     factory::track_row::{
-        AlbumColumn, ArtistColumn, FavColumn, LengthColumn, PositionColumn, TitleColumn, TrackRow,
+        AlbumColumn, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
+        PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
     },
     settings::Settings,
     subsonic::Subsonic,
+    types::{Droppable, Id},
 };
-
-use super::cover::CoverOut;
 
 #[derive(Debug)]
 pub struct TracksView {

@@ -12,11 +12,10 @@ use relm4::{
 use crate::{
     common::convert_for_label,
     components::album_view::{AlbumView, AlbumViewOut},
+    factory::SetupFinished,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
-
-use super::SetupFinished;
 
 #[derive(Debug)]
 pub struct AlbumTrackRow {

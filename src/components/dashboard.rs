@@ -12,12 +12,14 @@ use relm4::{
     RelmWidgetExt,
 };
 
-use crate::{client::Client, subsonic::Subsonic, types::Id};
 use crate::{
+    client::Client,
     components::album_element::{
         get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
     settings::Settings,
+    subsonic::Subsonic,
+    types::Id,
 };
 
 #[derive(Debug, Clone)]

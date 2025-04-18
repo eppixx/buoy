@@ -16,6 +16,14 @@ use relm4::{
 
 use crate::{
     client::Client,
+    components::{
+        browser::{Browser, BrowserIn, BrowserOut},
+        equalizer::{Equalizer, EqualizerOut},
+        play_controls::{PlayControl, PlayControlIn, PlayControlOut},
+        play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
+        queue::{Queue, QueueIn, QueueOut},
+        seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
+    },
     config,
     download::Download,
     mpris::{Mpris, MprisOut},
@@ -26,16 +34,6 @@ use crate::{
     subsonic::Subsonic,
     types::Droppable,
     views::{ClickableViews, Views},
-};
-use crate::{
-    components::{
-        browser::{Browser, BrowserIn, BrowserOut},
-        equalizer::{Equalizer, EqualizerOut},
-        play_controls::{PlayControl, PlayControlIn, PlayControlOut},
-        play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
-        queue::{Queue, QueueIn, QueueOut},
-        seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
-    },
     Args,
 };
 

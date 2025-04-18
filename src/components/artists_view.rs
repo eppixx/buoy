@@ -11,16 +11,15 @@ use relm4::{
 };
 
 use crate::{
-    components::{filter_categories::Category, filter_row::FilterRowIn},
+    components::{
+        cover::CoverOut,
+        filter_categories::Category,
+        filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
+    },
     factory::artist_row::{AlbumCountColumn, ArtistRow, CoverColumn, FavColumn, TitleColumn},
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
-};
-
-use super::{
-    cover::CoverOut,
-    filter_row::{Filter, FilterRow, FilterRowOut, TextRelation},
 };
 
 #[derive(Debug)]

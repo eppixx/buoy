@@ -10,9 +10,9 @@ use relm4::{
     ComponentController,
 };
 
-use crate::subsonic::Subsonic;
 use crate::{
     components::cover::{Cover, CoverIn, CoverOut},
+    subsonic::Subsonic,
     types::Id,
 };
 

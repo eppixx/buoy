@@ -10,10 +10,9 @@ use relm4::{
     Component, ComponentController, RelmWidgetExt,
 };
 
-use super::descriptive_cover::DescriptiveCoverOut;
 use crate::{
     common::convert_for_label,
-    components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit},
+    components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit, DescriptiveCoverOut},
     subsonic::Subsonic,
     types::{Droppable, Id},
 };

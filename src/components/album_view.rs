@@ -18,12 +18,12 @@ use crate::{
     components::cover::{Cover, CoverIn, CoverOut},
     factory::album_track_row::{
         AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
-        PositionColumn, TitleColumn,
+        PlayCountColumn, PositionColumn, TitleColumn,
     },
+    settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
-use crate::{factory::album_track_row::PlayCountColumn, settings::Settings};
 
 #[derive(Debug)]
 pub struct AlbumView {

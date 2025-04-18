@@ -15,11 +15,10 @@ use crate::{
         artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
         cover::Cover,
     },
+    factory::SetupFinished,
     subsonic::Subsonic,
     types::Droppable,
 };
-
-use super::SetupFinished;
 
 #[derive(Debug)]
 pub struct ArtistRow {

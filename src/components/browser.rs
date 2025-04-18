@@ -13,10 +13,6 @@ use relm4::{
 
 use crate::{
     client::Client,
-    subsonic::Subsonic,
-    types::{Droppable, Id},
-};
-use crate::{
     components::{
         album_view::{AlbumView, AlbumViewIn, AlbumViewOut},
         albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
@@ -26,6 +22,8 @@ use crate::{
         playlists_view::{PlaylistsView, PlaylistsViewIn, PlaylistsViewOut},
         tracks_view::{TracksView, TracksViewIn, TracksViewOut},
     },
+    subsonic::Subsonic,
+    types::{Droppable, Id},
     views,
 };
 

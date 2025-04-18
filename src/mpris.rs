@@ -1,17 +1,20 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use zbus::interface;
 
 use crate::{
     client::Client,
     components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+    config,
     play_state::PlayState,
     player::Command,
+    Args,
 };
-use crate::{config, Args};
 
 /// converts the internally used values to the mpris used ones and vice versa
 pub trait MprisString {

@@ -16,11 +16,10 @@ use crate::{
         albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
         cover::Cover,
     },
+    factory::SetupFinished,
     subsonic::Subsonic,
     types::{Droppable, Id},
 };
-
-use super::SetupFinished;
 
 #[derive(Debug)]
 pub struct AlbumRow {

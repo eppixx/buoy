@@ -14,7 +14,7 @@ use relm4::{
 
 use crate::{
     app::{App, AppIn, AppOut},
-    components::login_form::LoginForm,
+    components::login_form::{LoginForm, LoginFormOut},
     config,
     gtk_helper::stack::StackExt,
     mpris::{Mpris, MprisOut},
@@ -23,8 +23,6 @@ use crate::{
     views::ClickableViews,
     Args,
 };
-
-use super::login_form::LoginFormOut;
 
 enum Content {
     Loading,

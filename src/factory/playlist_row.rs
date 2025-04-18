@@ -12,11 +12,10 @@ use relm4::{
 use crate::{
     common::convert_for_label,
     components::playlists_view::{PlaylistsView, PlaylistsViewOut},
+    factory::SetupFinished,
     subsonic::Subsonic,
     types::Id,
 };
-
-use super::SetupFinished;
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 

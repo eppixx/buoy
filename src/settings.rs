@@ -5,8 +5,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::client::Client;
-use crate::components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle};
+use crate::{
+    client::Client,
+    components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
+};
 
 const PREFIX: &str = "Buoy";
 const FILE_NAME: &str = "config.toml";

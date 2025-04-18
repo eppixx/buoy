@@ -8,8 +8,10 @@ use relm4::{
     Component, ComponentController,
 };
 
-use crate::components::cover::{Cover, CoverOut};
-use crate::subsonic::Subsonic;
+use crate::{
+    components::cover::{Cover, CoverOut},
+    subsonic::Subsonic,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct DescriptiveCoverInit {

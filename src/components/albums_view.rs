@@ -12,8 +12,10 @@ use relm4::{
 
 use crate::{
     components::{
+        cover::CoverOut,
         filter_categories::Category,
         filter_row::{Filter, FilterRowIn},
+        filter_row::{FilterRow, FilterRowOut, TextRelation},
     },
     factory::album_row::{
         AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, PlayCountColumn,
@@ -22,11 +24,6 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
-};
-
-use super::{
-    cover::CoverOut,
-    filter_row::{FilterRow, FilterRowOut, TextRelation},
 };
 
 #[derive(Debug)]
