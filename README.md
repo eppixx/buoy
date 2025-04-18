@@ -8,7 +8,7 @@
 
 ![Screenshot of buoy](data/screenshots/dark.png)
 
-## Develop and install with meson and ninja
+## Installing or developing with meson and ninja
 ### Install the needed depencies
 
 ```bash
@@ -17,20 +17,40 @@ sudo apt install libgtk-4-dev libgranite-7-dev libgstreamer1.0-dev
 
 it is assumed, that rust is already installed.
 
+### Building and installing the release version
 
-### Developing
+It can be installed with the following commands
+```bash
+meson setup build-release --buildtype=release
+ninja -C build-release install # installing will ask for the superuser password
+```
 
-Build with the following
+It can now be run from the desktop launcher or from the terminal with
+```
+buoy
+```
+
+### Build debug version
+
+Build with the following commands
 ```bash
 meson setup build
-cd build
-ninja
+ninja -C build
 ```
 
 Run with
 ```bash
-./src/debug/buoy
+./build/src/debug/buoy
 ```
+
+### Updating the translations
+
+When adding a new file that contains the `gettext` function it needs to be added to `po/POTFILES`.
+Now you can update the translation files with
+```bash
+ninja -C build com.github.eppixx.buoy-update-po
+```
+and update the po files with new translations.
 
 #### Updating `cargo-sources.json`
 
@@ -41,21 +61,7 @@ wget https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/carg
 python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
 ```
 
-### Building and installing the release version
-
-It can be installed with the following commands
-```bash
-meson setup build-release --buildtype=release
-cd build-release
-ninja install
-```
-
-It can now be run from the desktop launcher or with
-```
-buoy
-```
-
-## Building and installing with flatpak
+## Building and installing the release with flatpak
 
 Fetch the flatpak dependencies
 ```bash
