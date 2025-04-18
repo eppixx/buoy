@@ -444,11 +444,18 @@ impl relm4::component::AsyncComponent for MainWindow {
                 widgets.stack.set_visible_child_enum(&Content::NoConnection)
             }
             MainWindowIn::Logout => {
+                tracing::info!("logging out");
+
+                if let Some(ref app) = *self.app.borrow() {
+                    app.emit(AppIn::ClearCache);
+                }
+
                 let mut settings = Settings::get().lock().unwrap();
                 if let Err(e) = settings.reset_login() {
                     sender.input(MainWindowIn::DisplayToast(format!("error on logout: {e}")));
                 }
                 crate::client::Client::get_mut().lock().unwrap().reset();
+
                 sender.input(MainWindowIn::ShowLogin);
             }
             MainWindowIn::RetryLogin => {

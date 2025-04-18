@@ -53,8 +53,8 @@ pub struct App {
 
 #[derive(Debug)]
 pub enum AppIn {
-    ResetLogin,
-    DeleteCache,
+    Logout,
+    ClearCache,
     PlayControlOutput(PlayControlOut),
     Seekbar(SeekbarOut),
     Playback(PlaybackOut),
@@ -631,7 +631,7 @@ impl relm4::component::AsyncComponent for App {
                                                 add_css_class: "destructive-action",
                                                 set_label: &gettext("Delete cache"),
                                                 set_tooltip: &gettext("Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start"),
-                                                connect_clicked => AppIn::DeleteCache,
+                                                connect_clicked => AppIn::ClearCache,
                                             }
                                         },
                                         gtk::Box {
@@ -640,7 +640,7 @@ impl relm4::component::AsyncComponent for App {
                                                 add_css_class: "destructive-action",
                                                 set_label: &gettext("Logout from Server"),
                                                 set_tooltip: &gettext("Logging out will delete the cache and also require to login again to listen to music"),
-                                                connect_clicked => AppIn::ResetLogin,
+                                                connect_clicked => AppIn::Logout,
                                             },
 
                                         },
@@ -810,15 +810,8 @@ impl relm4::component::AsyncComponent for App {
                 EqualizerOut::Changed => self.playback.borrow_mut().sync_equalizer(),
                 EqualizerOut::DisplayToast(msg) => sender.input(AppIn::DisplayToast(msg)),
             },
-            AppIn::ResetLogin => {
-                let mut settings = Settings::get().lock().unwrap();
-                if let Err(e) = settings.reset_login() {
-                    sender.input(AppIn::DisplayToast(format!("error resetting login: {e}")));
-                }
-                crate::client::Client::get_mut().lock().unwrap().reset();
-                sender.output(AppOut::Logout).unwrap();
-            }
-            AppIn::DeleteCache => {
+            AppIn::Logout => sender.output(AppOut::Logout).unwrap(),
+            AppIn::ClearCache => {
                 if let Err(e) = self.subsonic.borrow_mut().delete_cache() {
                     sender.input(AppIn::DisplayToast(format!(
                         "error while deleting cache: {e:?}"
