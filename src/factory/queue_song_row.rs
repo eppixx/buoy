@@ -13,7 +13,7 @@ use crate::{
     common,
     components::{
         cover::{Cover, CoverIn},
-        queue::{Queue, QueueIn},
+        queue::{Queue, QueueIn, QueueOut},
     },
     gtk_helper::stack::StackExt,
     play_state::PlayState,
@@ -279,7 +279,33 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
             false => widgets.fav_btn.set_icon_name("non-starred-symbolic"),
         }
 
-        //TODO connect fav_btn
+        // connect clicking favorite icon
+        let child = widgets.child.clone();
+        let sender = widgets.sender.clone();
+        widgets.fav_btn.connect_clicked(move |btn| {
+            let Some(ref child) = *child.borrow() else {
+                return;
+            };
+            let Some(ref sender) = *sender.borrow() else {
+                return;
+            };
+
+            match btn.icon_name().as_deref() {
+                Some("starred-symbolic") => {
+                    btn.set_icon_name("non-starred-symbolic");
+                    sender
+                        .output(QueueOut::FavoriteClicked(child.id.clone(), false))
+                        .unwrap();
+                }
+                Some("non-starred-symbolic") => {
+                    btn.set_icon_name("starred-symbolic");
+                    sender
+                        .output(QueueOut::FavoriteClicked(child.id.clone(), true))
+                        .unwrap();
+                }
+                _ => unreachable!("unkown icon name"),
+            }
+        });
 
         self.cover_stack = Some(widgets.cover_stack.clone());
         self.fav_btn = Some(widgets.fav_btn.clone());
