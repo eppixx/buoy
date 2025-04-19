@@ -1258,9 +1258,11 @@ async fn show_desktop_notification(
         let Some(cover_art) = &child.cover_art else {
             return;
         };
-        if let Some(raw) = subsonic.borrow().cover_raw(cover_art) {
-            println!("loading cached image");
-            let image_buffer = match image::load_from_memory(&raw) {
+
+        // check cached covers
+        let cached_buffer = subsonic.borrow().cover_raw(cover_art);
+        let image_buffer = if let Some(raw) = cached_buffer {
+            match image::load_from_memory(&raw) {
                 Ok(image) => image.to_rgb8(),
                 Err(e) => {
                     sender.input(AppIn::DisplayToast(format!(
@@ -1268,18 +1270,17 @@ async fn show_desktop_notification(
                     )));
                     return;
                 }
-            };
-            let buffer: Vec<u8> = image_buffer.to_vec();
-            notify_rust::Image::from_rgb(
-                image_buffer.width() as i32,
-                image_buffer.height() as i32,
-                buffer,
-            )
-                .ok()
+            }
         } else {
-            println!("loading server image");
-            if let Ok(raw) = client.get_cover_art(cover_art, Some(100)).await {
-                let image_buffer = match image::load_from_memory(&raw) {
+            // cover not locally found, try server
+            if let Ok(raw) = client.get_cover_art(cover_art, Some(200)).await {
+                // update cache
+                subsonic
+                    .borrow_mut()
+                    .cover_update(cover_art, Some(raw.clone()));
+
+                // convert raw buffer to format notify_rust can use
+                match image::load_from_memory(&raw) {
                     Ok(image) => image.to_rgb8(),
                     Err(e) => {
                         sender.input(AppIn::DisplayToast(format!(
@@ -1287,18 +1288,18 @@ async fn show_desktop_notification(
                         )));
                         return;
                     }
-                };
-                let buffer: Vec<u8> = image_buffer.to_vec();
-                notify_rust::Image::from_rgb(
-                    image_buffer.width() as i32,
-                    image_buffer.height() as i32,
-                    buffer,
-                )
-                    .ok()
+                }
             } else {
-                None
+                tracing::warn!("there is no cover for {cover_art} locally or on server");
+                return;
             }
-        }
+        };
+        notify_rust::Image::from_rgb(
+            image_buffer.width() as i32,
+            image_buffer.height() as i32,
+            image_buffer.to_vec(),
+        )
+        .ok()
     };
 
     // send notification
