@@ -909,12 +909,12 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 self.info_cover_controller.set_content(Some(&content));
                 self.info_cover_controller
                     .set_actions(gtk::gdk::DragAction::COPY);
-                let playlist_id = list.base.cover_art.clone();
+                let cover_art = list.base.cover_art.clone();
                 let subsonic = self.subsonic.clone();
                 self.info_cover_controller
                     .connect_drag_begin(move |src, _drag| {
-                        if let Some(playlist_id) = &playlist_id {
-                            let cover = subsonic.borrow().cover_icon(playlist_id);
+                        if let Some(art) = &cover_art {
+                            let cover = subsonic.borrow().cover_icon(art);
                             if let Some(tex) = cover {
                                 src.set_icon(Some(&tex), 0, 0);
                             }
