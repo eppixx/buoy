@@ -856,11 +856,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             PlaylistsViewIn::Selected(index) => {
                 let guard = self.playlists.guard();
                 let Some(list) = guard.get(index as usize) else {
-                    sender
-                        .output(PlaylistsViewOut::DisplayToast(format!(
-                            "playlist with index {index} not found",
-                        )))
-                        .unwrap();
+                    // do not output a error message, because it also triggers when deleting the last playlist
                     return;
                 };
 
