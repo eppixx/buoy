@@ -224,7 +224,8 @@ pub enum PlaylistsViewOut {
         relm4::factory::DynamicIndex,
         submarine::data::PlaylistWithSongs,
     ),
-    CreatePlaylist,
+    CreateEmptyPlaylist,
+    CreatePlaylist(Droppable),
     RenamePlaylist(submarine::data::Playlist),
     DisplayToast(String),
     Download(Droppable),
@@ -358,7 +359,42 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                             },
 
                             connect_clicked[sender] => move |_btn| {
-                                sender.output(PlaylistsViewOut::CreatePlaylist).unwrap();
+                                sender.output(PlaylistsViewOut::CreateEmptyPlaylist).unwrap();
+                            },
+
+                            add_controller = gtk::DropTarget {
+                                set_actions: gdk::DragAction::COPY,
+                                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
+                                             , <QueueUids as gtk::prelude::StaticType>::static_type()
+                                             , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
+                                ],
+
+                                connect_motion[sender] => move |_controller, _x, y| {
+                                    sender.input(PlaylistsViewIn::DropHover(y));
+                                    gdk::DragAction::COPY
+                                },
+
+                                connect_leave[sender] => move |_controller| {
+                                    sender.input(PlaylistsViewIn::DropMotionLeave)
+                                },
+
+                                connect_drop[sender] => move |_controller, value, _x, _y| {
+                                    sender.input(PlaylistsViewIn::DropMotionLeave);
+
+                                    let drop = if let Ok(drop) = value.get::<QueueUids>() {
+                                        Droppable::QueueSongs(drop.0)
+                                    } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
+                                        Droppable::Playlist(drop.0)
+                                    } else if let Ok(drop) = value.get::<Droppable>() {
+                                        drop
+                                    } else {
+                                        return false;
+                                    };
+
+                                    sender.output(PlaylistsViewOut::CreatePlaylist(drop)).unwrap();
+
+                                    true
+                                }
                             }
                         }
                     }

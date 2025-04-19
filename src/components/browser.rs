@@ -560,9 +560,14 @@ impl relm4::component::AsyncComponent for Browser {
                         view.emit(PlaylistsViewIn::DeletePlaylist(index.clone()));
                     }
                 }
-                PlaylistsViewOut::CreatePlaylist => {
+                PlaylistsViewOut::CreateEmptyPlaylist => {
                     sender.input(BrowserIn::NewPlaylist(gettext("New Playlist"), vec![]));
                 }
+                PlaylistsViewOut::CreatePlaylist(drop) => {
+                    let songs = drop.get_songs(&self.subsonic);
+                    sender.input(BrowserIn::NewPlaylist(gettext("New Playlist"), songs));
+                }
+
                 PlaylistsViewOut::Download(drop) => {
                     sender.output(BrowserOut::Download(drop)).unwrap();
                 }
