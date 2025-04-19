@@ -76,7 +76,10 @@ impl SubsonicCovers {
                             (None, None)
                         }
                     };
-                    sender.send((id, texture, buffer)).await.unwrap();
+                    match sender.send((id, texture, buffer)).await {
+                        Ok(()) => {}
+                        Err(e) => tracing::error!("sending error: {e}"),
+                    }
                 });
                 Response::Processing(receiver)
             }
