@@ -92,6 +92,7 @@ pub struct PlaylistElement {
     index: relm4::factory::DynamicIndex,
     list_box_row: gtk::ListBoxRow,
     drag_src: gtk::DragSource,
+    drag_target_copy: gtk::DropTarget,
     main_stack: gtk::Stack,
     edit_area: gtk::Stack,
     drag_state: Rc<RefCell<DragState>>,
@@ -180,6 +181,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             index: index.clone(),
             list_box_row: gtk::ListBoxRow::default(),
             drag_src: gtk::DragSource::default(),
+            drag_target_copy: gtk::DropTarget::default(),
             main_stack: gtk::Stack::default(),
             edit_area: gtk::Stack::default(),
             drag_state: Rc::new(RefCell::new(DragState::Ready)),
@@ -203,6 +205,15 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 }
             }
         });
+
+        // only activate dropping target when not write protected
+        if !model.write_protected {
+            model.drag_target_copy.set_types(&[
+                <Droppable as gtk::prelude::StaticType>::static_type(),
+                <PlaylistUids as gtk::prelude::StaticType>::static_type(),
+                <QueueUids as gtk::prelude::StaticType>::static_type(),
+            ]);
+        }
 
         sender.input(PlaylistElementIn::ShowIndicatorReset);
         model
@@ -365,12 +376,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                 }
             },
 
-            add_controller = gtk::DropTarget {
+            add_controller = self.drag_target_copy.clone() -> gtk::DropTarget {
                 set_actions: gdk::DragAction::COPY,
-                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
-                             , <PlaylistUids as gtk::prelude::StaticType>::static_type()
-                             , <QueueUids as gtk::prelude::StaticType>::static_type()
-                ],
 
                 connect_enter[sender] => move |_controller, _x, _y| {
                     sender.input(PlaylistElementIn::DragEnter);
