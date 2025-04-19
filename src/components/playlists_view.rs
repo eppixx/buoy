@@ -68,6 +68,8 @@ pub struct PlaylistsView {
     tracks: relm4::typed_view::column::TypedColumnView<PlaylistRow, gtk::MultiSelection>,
     info_cover: relm4::Controller<Cover>,
     info_cover_controller: gtk::DragSource,
+    drop_target_move: gtk::DropTarget,
+    drop_target_copy: gtk::DropTarget,
 }
 
 impl PlaylistsView {
@@ -282,6 +284,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 .launch((subsonic, None))
                 .forward(sender.input_sender(), PlaylistsViewIn::Cover),
             info_cover_controller: gtk::DragSource::default(),
+            drop_target_move: gtk::DropTarget::default(),
+            drop_target_copy: gtk::DropTarget::default(),
         };
 
         let widgets = view_output!();
@@ -474,7 +478,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                 },
 
                                 // moving a playlist item
-                                add_controller = gtk::DropTarget {
+                                add_controller = model.drop_target_move.clone() -> gtk::DropTarget {
                                     set_actions: gdk::DragAction::MOVE,
                                     set_types: &[<PlaylistUids as gtk::prelude::StaticType>::static_type()],
 
@@ -501,7 +505,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                 },
 
                                 // adding new songs
-                                add_controller = gtk::DropTarget {
+                                add_controller = model.drop_target_copy.clone() -> gtk::DropTarget {
                                     set_actions: gdk::DragAction::COPY,
                                     set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
                                                  , <QueueUids as gtk::prelude::StaticType>::static_type()
@@ -823,6 +827,20 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         .unwrap();
                     return;
                 };
+
+                // check for write protection
+                if list.write_protected() {
+                    self.drop_target_copy.set_types(&[]);
+                    self.drop_target_move.set_types(&[]);
+                } else {
+                    self.drop_target_move
+                        .set_types(&[<PlaylistUids as gtk::prelude::StaticType>::static_type()]);
+                    self.drop_target_copy.set_types(&[
+                        <Droppable as gtk::prelude::StaticType>::static_type(),
+                        <QueueUids as gtk::prelude::StaticType>::static_type(),
+                        <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
+                    ]);
+                }
 
                 // return when list already active
                 if let Some(current) = &self.selected_playlist {
