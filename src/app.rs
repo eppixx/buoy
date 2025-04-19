@@ -899,7 +899,7 @@ impl relm4::component::AsyncComponent for App {
                 }
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
                 QueueOut::DesktopNotification(child) => {
-                    show_desktop_notification(*child, sender).await
+                    show_desktop_notification(&self.subsonic, *child, sender).await
                 }
                 QueueOut::FavoriteClicked(id, state) => {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
@@ -952,7 +952,7 @@ impl relm4::component::AsyncComponent for App {
             AppIn::DesktopNotification => {
                 let song = self.queue.model().current();
                 if let Some((_i, song)) = song {
-                    show_desktop_notification(song.item().clone(), sender).await;
+                    show_desktop_notification(&self.subsonic, song.item().clone(), sender).await;
                 }
             }
             AppIn::Mpris(msg) => match msg {
@@ -1238,6 +1238,7 @@ impl relm4::component::AsyncComponent for App {
 }
 
 async fn show_desktop_notification(
+    subsonic: &Rc<RefCell<Subsonic>>,
     child: submarine::data::Child,
     sender: relm4::component::AsyncComponentSender<App>,
 ) {
@@ -1257,8 +1258,8 @@ async fn show_desktop_notification(
         let Some(cover_art) = &child.cover_art else {
             return;
         };
-        //TODO take local image
-        if let Ok(raw) = client.get_cover_art(cover_art, Some(100)).await {
+        if let Some(raw) = subsonic.borrow().cover_raw(cover_art) {
+            println!("loading cached image");
             let image_buffer = match image::load_from_memory(&raw) {
                 Ok(image) => image.to_rgb8(),
                 Err(e) => {
@@ -1274,9 +1275,29 @@ async fn show_desktop_notification(
                 image_buffer.height() as i32,
                 buffer,
             )
-            .ok()
+                .ok()
         } else {
-            None
+            println!("loading server image");
+            if let Ok(raw) = client.get_cover_art(cover_art, Some(100)).await {
+                let image_buffer = match image::load_from_memory(&raw) {
+                    Ok(image) => image.to_rgb8(),
+                    Err(e) => {
+                        sender.input(AppIn::DisplayToast(format!(
+                            "error loading image from memory: {e}"
+                        )));
+                        return;
+                    }
+                };
+                let buffer: Vec<u8> = image_buffer.to_vec();
+                notify_rust::Image::from_rgb(
+                    image_buffer.width() as i32,
+                    image_buffer.height() as i32,
+                    buffer,
+                )
+                    .ok()
+            } else {
+                None
+            }
         }
     };
 
