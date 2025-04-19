@@ -808,7 +808,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 let Some(list) = self.playlists.get(index.current_index()) else {
                     sender
                         .output(PlaylistsViewOut::DisplayToast(
-                            "trying to delete a plalyist index that doesn't exists".to_string(),
+                            "trying to delete a playlist index that doesn't exists".to_string(),
                         ))
                         .unwrap();
                     return;
