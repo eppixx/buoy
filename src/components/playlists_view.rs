@@ -679,15 +679,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
                 PlaylistElementOut::MoveDropAbove(drop, target_index) => {
                     let mut guard = self.playlists.guard();
-
-                    // check for write protection
-                    if let Some(list) = guard.get(target_index.current_index()) {
-                        if list.write_protected() {
-                            tracing::info!("tried to move a protected playlist");
-                            return;
-                        }
-                    }
-
                     let Some(src_element) =
                         guard.iter().find(|e| e.info().base.id == drop.0.base.id)
                     else {
@@ -710,15 +701,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
                 PlaylistElementOut::MoveDropBelow(drop, target_index) => {
                     let mut guard = self.playlists.guard();
-
-                    // check for write protection
-                    if let Some(list) = guard.get(target_index.current_index()) {
-                        if list.write_protected() {
-                            tracing::error!("tried to move a protected playlist");
-                            return;
-                        }
-                    }
-
                     let Some(src_element) =
                         guard.iter().find(|e| e.info().base.id == drop.0.base.id)
                     else {
