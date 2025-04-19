@@ -782,6 +782,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .push_back((self.subsonic.clone(), list));
             }
             PlaylistsViewIn::DeletePlaylist(index) => {
+                //check for write protection
                 let Some(list) = self.playlists.get(index.current_index()) else {
                     sender
                         .output(PlaylistsViewOut::DisplayToast(
@@ -1004,6 +1005,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .for_each(|(i, _track)| {
                         _ = self.tracks.view.model().unwrap().select_item(i, false)
                     });
+
+                // update cache
                 self.sync_current_playlist(&sender).await;
             }
             PlaylistsViewIn::DropInsert(drop, y) => {
@@ -1054,6 +1057,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     self.tracks.insert(i, row);
                 }
 
+                // update cache
                 self.sync_current_playlist(&sender).await;
 
                 // update widgets
@@ -1125,6 +1129,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     .rev()
                     .for_each(|i| self.tracks.remove(*i));
 
+                // update cache
                 self.sync_current_playlist(&sender).await;
 
                 // update widgets
@@ -1149,11 +1154,13 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     return;
                 }
 
-                //insert songs
+                // insert songs
                 for song in songs.iter().rev() {
                     let row = PlaylistRow::new(&self.subsonic, song.clone(), sender.clone());
                     self.tracks.insert(index, row);
                 }
+
+                // update cache
                 self.sync_current_playlist(&sender).await;
 
                 // update widgets
