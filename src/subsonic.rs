@@ -396,7 +396,6 @@ impl Subsonic {
 
     pub fn cover_update(&mut self, id: &str, buffer: Option<Vec<u8>>) {
         self.covers.cover_update(id, buffer);
-        self.save().expect("saving failed");
     }
 
     pub fn cover_icon(&self, id: &str) -> Option<relm4::gtk::gdk::Texture> {
