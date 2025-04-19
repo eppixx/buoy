@@ -10,17 +10,24 @@
 ![Screenshot showing the dashboard view](data/screenshots/dashboard_light.png)
 ![Screenshot showing the playlists view](data/screenshots/playlists_dark.png)
 
+## First Setup
 
-## Installing or developing with meson and ninja
-### Install the needed depencies
+Install the needed dependencies (assuming rust is already installed)
 
 ```bash
-sudo apt install libgtk-4-dev libgranite-7-dev libgstreamer1.0-dev
+sudo apt install libgtk-4-dev libgranite-7-dev libgstreamer1.0-dev meson git gettext desktop-file-utils
 ```
 
-it is assumed, that rust is already installed.
+and clone the repository with
 
-### Building and installing the release version
+```bash
+git clone https://github.com/eppixx/buoy
+cd buoy
+```
+
+## Installing the release version
+
+### Installing with meson
 
 It can be installed with the following commands
 ```bash
@@ -32,6 +39,36 @@ It can now be run from the desktop launcher or from the terminal with
 ```
 buoy
 ```
+
+### Installing with flatpak
+
+Fetch the flatpak dependencies
+```bash
+flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/8
+```
+
+Building the project
+```bash
+flatpak-builder --user flatpak_app com.github.eppixx.buoy.json buoy --force-clean
+```
+
+Run the build version without installing with
+```bash
+flatpak-builder --run flatpak_app com.github.eppixx.buoy.json buoy
+```
+
+Install the local version with
+```bash
+flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.json --force-clean
+
+```
+
+It should now be able to run with a program launcher or from command line with
+```bash
+flatpak run com.github.eppixx.buoy
+```
+
+## Developing
 
 ### Build debug version
 
@@ -63,33 +100,3 @@ sudo apt install python3-aiohttp python3-toml
 wget https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
 python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
 ```
-
-## Building and installing the release with flatpak
-
-Fetch the flatpak dependencies
-```bash
-flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/8
-```
-
-Building the project
-```bash
-flatpak-builder --user flatpak_app com.github.eppixx.buoy.json buoy --force-clean
-```
-
-Run the build version without installing with
-```bash
-flatpak-builder --run flatpak_app com.github.eppixx.buoy.json buoy
-```
-
-Install the local version with
-```bash
-flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.json --force-clean
-
-```
-
-It should now be able to run with a program launcher or from command line with
-```bash
-flatpak run com.github.eppixx.buoy
-```
-
-
