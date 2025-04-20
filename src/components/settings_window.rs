@@ -44,6 +44,7 @@ impl relm4::component::Component for SettingsWindow {
     view! {
         #[name = "settings_window"]
         gtk::Window {
+            set_widget_name: "settings-window",
             set_modal: true,
             set_hide_on_close: true,
 
