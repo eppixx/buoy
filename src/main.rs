@@ -4,6 +4,7 @@ use clap::Parser;
 use components::main_window::MainWindow;
 use config::GETTEXT_PACKAGE;
 use relm4::{gtk, RelmApp};
+use tracing_subscriber::layer::SubscriberExt;
 
 mod app;
 pub mod client;
@@ -24,7 +25,9 @@ pub mod subsonic_cover;
 pub mod types;
 pub mod views;
 
-const LOG_PARA: &str = "info,bouy:trace,submarine:info";
+const DEFAULT_LOG_ENV_PARA: &str = "info,bouy:trace,submarine:info";
+const LOG_PREFIX: &str = "Buoy";
+const LOG_FILE_NAME: &str = "log.txt";
 
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
@@ -59,14 +62,34 @@ fn main() -> anyhow::Result<()> {
     //enable logging
     if args.borrow().debug_logs {
         // use filters from RUST_LOG variable when given, otherwise use default filters
-        let filter = match tracing_subscriber::EnvFilter::builder()
+        let default_filter = tracing_subscriber::EnvFilter::builder()
+            .parse(DEFAULT_LOG_ENV_PARA)
+            .expect("cant parse default parameter");
+        let env_filter = tracing_subscriber::EnvFilter::builder()
             .with_env_var("RUST_LOG")
             .try_from_env()
-        {
-            Ok(filter) => filter,
-            Err(_) => tracing_subscriber::EnvFilter::builder().parse(LOG_PARA)?,
-        };
-        tracing_subscriber::fmt().with_env_filter(filter).init();
+            .unwrap_or(default_filter);
+
+        // setup log file
+        let xdg_dirs = xdg::BaseDirectories::with_prefix(LOG_PREFIX)?;
+        let cache_path = xdg_dirs
+            .place_cache_file(LOG_FILE_NAME)
+            .expect("cannot create cache directory");
+        let log_file = std::fs::File::create(cache_path).expect("cant create log file");
+
+        // create file layer
+        let file_layer = tracing_subscriber::fmt::layer()
+            .with_writer(log_file) // set file to write to
+            .with_ansi(false); // disable color for file output
+
+        // create subscriber
+        let subscriber = tracing_subscriber::Registry::default()
+            .with(env_filter)
+            .with(file_layer)
+            .with(tracing_subscriber::fmt::layer().with_target(false));
+
+        // set subscriber as default output
+        tracing::subscriber::set_global_default(subscriber).expect("failed to set subscriber");
     }
 
     // setup of gettext translations
