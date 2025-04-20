@@ -23,6 +23,7 @@ use crate::{
         play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
         queue::{Queue, QueueIn, QueueOut},
         seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
+        settings_window::{SettingsWindow, SettingsWindowIn, SettingsWindowOut},
     },
     config,
     download::Download,
@@ -49,6 +50,7 @@ pub struct App {
     play_info: Controller<PlayInfo>,
     browser: AsyncController<Browser>,
     equalizer: Controller<Equalizer>,
+    settings_window: Controller<SettingsWindow>,
 }
 
 #[derive(Debug)]
@@ -76,6 +78,10 @@ pub enum AppIn {
     DisableBigCoverOverlay,
     LoadBigCoverPicture(String),
     UpdateCanPlayNextOrPrev,
+    TestButton,
+    BackPressed,
+    OpenSettings,
+    SettingsWindow(SettingsWindowOut),
 }
 
 #[derive(Debug)]
@@ -227,6 +233,9 @@ impl relm4::component::AsyncComponent for App {
         let equalizer = Equalizer::builder()
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
+        let settings_window = SettingsWindow::builder()
+            .launch(())
+            .forward(sender.input_sender(), AppIn::SettingsWindow);
 
         let model = App {
             playback,
@@ -239,10 +248,14 @@ impl relm4::component::AsyncComponent for App {
             play_info,
             browser,
             equalizer,
+            settings_window,
         };
 
-        let browser_sender = model.browser.sender().clone();
+        let equalizer_popover = gtk::Popover::default();
+        equalizer_popover.set_child(Some(model.equalizer.widget()));
         let widgets = view_output!();
+        equalizer_popover.set_parent(&widgets.popover_test);
+
         tracing::info!("loaded main window");
 
         //init widgets
@@ -354,9 +367,7 @@ impl relm4::component::AsyncComponent for App {
                                 add_css_class: "destructive-button-spacer",
                                 set_tooltip: &gettext("Go back to previous page"),
 
-                                connect_clicked[browser_sender] => move |_| {
-                                    browser_sender.emit(BrowserIn::GoBack);
-                                }
+                                connect_clicked => AppIn::BackPressed,
                             },
 
                         },
@@ -540,14 +551,13 @@ impl relm4::component::AsyncComponent for App {
                             set_halign: gtk::Align::End,
                             set_spacing: 5,
 
-                            gtk::MenuButton {
+                            append: popover_test = &gtk::Button {
+                                add_css_class: "size24",
                                 set_icon_name: "media-eq-symbolic",
-                                set_focus_on_click: false,
-                                set_tooltip: &gettext("Open Equalizer"),
-                                #[wrap(Some)]
-                                set_popover = &gtk::Popover {
-                                    model.equalizer.widget(),
-                                },
+
+                                connect_clicked[equalizer_popover] => move |_btn| {
+                                    equalizer_popover.show();
+                                }
                             },
 
                             append: volume_btn = &gtk::VolumeButton {
@@ -557,95 +567,12 @@ impl relm4::component::AsyncComponent for App {
                                 }
                             },
 
-                            gtk::MenuButton {
+                            gtk::Button {
+                                add_css_class: "size24",
                                 set_icon_name: "open-menu-symbolic",
-                                set_focus_on_click: false,
                                 set_tooltip: &gettext("Open settings"),
 
-                                #[wrap(Some)]
-                                set_popover = &gtk::Popover {
-                                    set_position: gtk::PositionType::Right,
-
-                                    gtk::Box {
-                                        set_widget_name: "config-menu",
-                                        set_orientation: gtk::Orientation::Vertical,
-                                        set_spacing: 15,
-
-                                        gtk::CenterBox {
-                                            set_tooltip: &gettext("Wether or not send desktop notifications"),
-
-                                            #[wrap(Some)]
-                                            set_start_widget = &gtk::Label {
-                                                set_text: &gettext("Send desktop notifications\nwhen in background"),
-                                            },
-                                            #[wrap(Some)]
-                                            set_end_widget = &gtk::Switch {
-                                                set_state: Settings::get().lock().unwrap().send_notifications,
-                                                connect_state_set => move |_switch, value| {
-                                                    Settings::get().lock().unwrap().send_notifications = value;
-                                                    gtk::glib::signal::Propagation::Proceed
-                                                }
-                                            },
-                                        },
-                                        gtk::CenterBox {
-                                            set_tooltip: &gettext("Updates play count, played timestamp on server and the now playing page in the web app"),
-
-                                            #[wrap(Some)]
-                                            set_start_widget = &gtk::Label {
-                                                set_text: &gettext("Scrobble to server"),
-                                            },
-                                            #[wrap(Some)]
-                                            set_end_widget = &gtk::Switch {
-                                                set_state: Settings::get().lock().unwrap().scrobble,
-
-                                                connect_state_set => move |_switch, value| {
-                                                    Settings::get().lock().unwrap().scrobble = value;
-                                                    gtk::glib::signal::Propagation::Proceed
-                                                }
-                                            },
-                                        },
-                                        gtk::CenterBox {
-                                            set_tooltip: &gettext("How much of a song needs to be played to be scrobbled to server in percent"),
-
-                                            #[wrap(Some)]
-                                            set_start_widget = &gtk::Label {
-                                                set_text: &gettext("Scrobble threshold"),
-                                            },
-                                            #[wrap(Some)]
-                                            set_end_widget = &gtk::SpinButton {
-                                                set_width_request: 100,
-                                                set_range: (1f64, 100f64),
-                                                set_increments: (1f64, 1f64),
-                                                set_digits: 0,
-                                                set_value: Settings::get().lock().unwrap().scrobble_threshold as f64,
-
-                                                connect_value_changed => move |button| {
-                                                    Settings::get().lock().unwrap().scrobble_threshold = button.value() as u32;
-                                                }
-                                            },
-                                        },
-                                        gtk::Separator {},
-                                        gtk::Box {
-                                            set_halign: gtk::Align::End,
-                                            gtk::Button {
-                                                add_css_class: "destructive-action",
-                                                set_label: &gettext("Delete cache"),
-                                                set_tooltip: &gettext("Deletes the local cache of Covers and Metadata of music. They will be redownloaded from the server on the next start"),
-                                                connect_clicked => AppIn::ClearCache,
-                                            }
-                                        },
-                                        gtk::Box {
-                                            set_halign: gtk::Align::End,
-                                            gtk::Button {
-                                                add_css_class: "destructive-action",
-                                                set_label: &gettext("Logout from Server"),
-                                                set_tooltip: &gettext("Logging out will delete the cache and also require to login again to listen to music"),
-                                                connect_clicked => AppIn::Logout,
-                                            },
-
-                                        },
-                                    },
-                                },
+                                connect_clicked => AppIn::OpenSettings,
                             },
 
                             gtk::WindowControls {
@@ -1216,6 +1143,13 @@ impl relm4::component::AsyncComponent for App {
                     .emit(PlayControlIn::DisableNext(can_next));
                 self.mpris.borrow_mut().can_play_next(can_next);
             }
+            AppIn::OpenSettings => self.settings_window.emit(SettingsWindowIn::Show),
+            AppIn::TestButton => {}
+            AppIn::BackPressed => self.browser.emit(BrowserIn::GoBack),
+            AppIn::SettingsWindow(msg) => match msg {
+                SettingsWindowOut::ClearCache => sender.input(AppIn::ClearCache),
+                SettingsWindowOut::Logout => sender.input(AppIn::Logout),
+            },
         }
     }
 
