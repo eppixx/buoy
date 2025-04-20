@@ -43,6 +43,7 @@ pub struct Settings {
 
     #[serde(default = "default_volume")]
     pub volume: f64,
+    pub mute: bool,
 
     #[serde(default)]
     pub repeat: Repeat,

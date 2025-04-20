@@ -1,14 +1,14 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gettextrs::gettext;
-use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt, ScaleButtonExt};
+use gtk::prelude::{BoxExt, ButtonExt, CheckButtonExt, OrientableExt};
 use relm4::{
     component::{AsyncComponentController, AsyncController},
     gtk::{
         self, gdk,
         prelude::{
-            ApplicationExt, EditableExt, GtkApplicationExt, GtkWindowExt, PopoverExt,
-            ToggleButtonExt, WidgetExt,
+            ApplicationExt, EditableExt, EventControllerExt, GestureSingleExt, GtkApplicationExt,
+            GtkWindowExt, PopoverExt, ToggleButtonExt, WidgetExt,
         },
     },
     Component, ComponentController, Controller, RelmWidgetExt,
@@ -24,6 +24,7 @@ use crate::{
         queue::{Queue, QueueIn, QueueOut},
         seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
         settings_window::{SettingsWindow, SettingsWindowIn, SettingsWindowOut},
+        volume_button::{VolumeButton, VolumeButtonIn, VolumeButtonOut},
     },
     config,
     download::Download,
@@ -50,6 +51,7 @@ pub struct App {
     play_info: Controller<PlayInfo>,
     browser: AsyncController<Browser>,
     equalizer: Controller<Equalizer>,
+    volume_button: Controller<VolumeButton>,
     settings_window: Controller<SettingsWindow>,
 }
 
@@ -78,10 +80,10 @@ pub enum AppIn {
     DisableBigCoverOverlay,
     LoadBigCoverPicture(String),
     UpdateCanPlayNextOrPrev,
-    TestButton,
     BackPressed,
     OpenSettings,
     SettingsWindow(SettingsWindowOut),
+    VolumeButton(VolumeButtonOut),
 }
 
 #[derive(Debug)]
@@ -139,7 +141,7 @@ impl relm4::component::AsyncComponent for App {
         ))
     }
 
-    // Initialize the UI.
+    // Initialize the UI
     async fn init(
         (args, mpris, playback): Self::Init,
         root: Self::Root,
@@ -233,6 +235,9 @@ impl relm4::component::AsyncComponent for App {
         let equalizer = Equalizer::builder()
             .launch(())
             .forward(sender.input_sender(), AppIn::Equalizer);
+        let volume_button = VolumeButton::builder()
+            .launch(())
+            .forward(sender.input_sender(), AppIn::VolumeButton);
         let settings_window = SettingsWindow::builder()
             .launch(())
             .forward(sender.input_sender(), AppIn::SettingsWindow);
@@ -248,20 +253,25 @@ impl relm4::component::AsyncComponent for App {
             play_info,
             browser,
             equalizer,
+            volume_button,
             settings_window,
         };
 
         let equalizer_popover = gtk::Popover::default();
         equalizer_popover.set_child(Some(model.equalizer.widget()));
+        let volume_popover = gtk::Popover::default();
+        volume_popover.set_child(Some(model.volume_button.widget()));
+        let volume_button_sender = model.volume_button.sender();
+        let last_volume_scroll_event = Rc::new(RefCell::new(0));
         let widgets = view_output!();
-        equalizer_popover.set_parent(&widgets.popover_test);
+        equalizer_popover.set_parent(&widgets.equalizer_btn);
+        volume_popover.set_parent(&widgets.volume_btn);
 
         tracing::info!("loaded main window");
 
         //init widgets
         {
             let settings = Settings::get().lock().unwrap();
-            widgets.volume_btn.set_value(settings.volume);
             model.mpris.borrow_mut().set_volume(settings.volume);
 
             //seekbar
@@ -551,7 +561,7 @@ impl relm4::component::AsyncComponent for App {
                             set_halign: gtk::Align::End,
                             set_spacing: 5,
 
-                            append: popover_test = &gtk::Button {
+                            append: equalizer_btn = &gtk::Button {
                                 add_css_class: "size24",
                                 set_icon_name: "media-eq-symbolic",
 
@@ -560,11 +570,48 @@ impl relm4::component::AsyncComponent for App {
                                 }
                             },
 
-                            append: volume_btn = &gtk::VolumeButton {
-                                set_focus_on_click: false,
-                                connect_value_changed[sender] => move |_scale, value| {
-                                    sender.input(AppIn::Player(Command::Volume(value)));
+                            append: volume_btn = &gtk::Button {
+                                add_css_class: "size24",
+                                set_icon_name: "open-menu-symbolic",
+                                set_tooltip: &gettext("Change volume by opening, scrolling or middle clicking"),
+
+                                connect_clicked[volume_popover] => move |_btn| {
+                                    volume_popover.show();
+                                },
+
+                                // change volume on scrolling
+                                add_controller = gtk::EventControllerScroll {
+                                    set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+
+                                    connect_scroll[last_volume_scroll_event, volume_button_sender] => move |controller, _x, y| {
+                                        // make sure scroll events are spaced
+                                        // otherwise the app locks up
+                                        const TIMEOUT: u32 = 70;
+                                        let event_time = controller.current_event_time();
+                                        if event_time - *last_volume_scroll_event.borrow() < TIMEOUT {
+                                            return gtk::glib::signal::Propagation::Proceed;
+                                        }
+                                        *last_volume_scroll_event.borrow_mut() = event_time;
+
+                                        if y < 0.0 {
+                                            volume_button_sender.emit(VolumeButtonIn::Increase);
+                                        } else {
+                                            volume_button_sender.emit(VolumeButtonIn::Decrease);
+                                        }
+
+                                        gtk::glib::signal::Propagation::Proceed
+                                    }
+                                },
+
+                                // mute on middle click
+                                add_controller = gtk::GestureClick {
+                                    set_button: 2, // middle click
+
+                                    connect_released[volume_button_sender] => move |_controller, _number_of_clicks, _x, _y| {
+                                        volume_button_sender.emit(VolumeButtonIn::MuteToggle);
+                                    }
                                 }
+
                             },
 
                             gtk::Button {
@@ -970,12 +1017,16 @@ impl relm4::component::AsyncComponent for App {
                 }
                 Command::Volume(volume) => {
                     self.playback.borrow_mut().set_volume(volume);
-                    widgets.volume_btn.set_value(volume);
+                    self.volume_button
+                        .emit(VolumeButtonIn::ChangeVolumeTo(volume));
                     self.mpris.borrow_mut().set_volume(volume);
                     let mut settings = Settings::get().lock().unwrap();
                     settings.volume = volume;
+                    if volume > 0.01 {
+                        settings.mute = false;
+                    }
                     if let Err(e) = settings.save() {
-                        sender.input(AppIn::DisplayToast(format!("error saving settins: {e}")));
+                        sender.input(AppIn::DisplayToast(format!("error saving settings: {e}")));
                     }
                 }
                 Command::Repeat(repeat) => {
@@ -983,6 +1034,16 @@ impl relm4::component::AsyncComponent for App {
                 }
                 Command::Shuffle(shuffle) => {
                     self.mpris.borrow_mut().set_shuffle(shuffle.clone());
+                }
+                Command::MuteToggle => {
+                    let mut settings = Settings::get().lock().unwrap();
+                    settings.mute = !settings.mute;
+                    let volume = if settings.mute { 0.0 } else { settings.volume };
+                    self.playback.borrow_mut().set_volume(volume);
+                    self.mpris.borrow_mut().set_volume(volume);
+                    if let Err(e) = settings.save() {
+                        sender.input(AppIn::DisplayToast(format!("error saving settings: {e}")));
+                    }
                 }
             },
             AppIn::FavoriteAlbumClicked(id, state) => {
@@ -1144,11 +1205,16 @@ impl relm4::component::AsyncComponent for App {
                 self.mpris.borrow_mut().can_play_next(can_next);
             }
             AppIn::OpenSettings => self.settings_window.emit(SettingsWindowIn::Show),
-            AppIn::TestButton => {}
             AppIn::BackPressed => self.browser.emit(BrowserIn::GoBack),
             AppIn::SettingsWindow(msg) => match msg {
                 SettingsWindowOut::ClearCache => sender.input(AppIn::ClearCache),
                 SettingsWindowOut::Logout => sender.input(AppIn::Logout),
+            },
+            AppIn::VolumeButton(msg) => match msg {
+                VolumeButtonOut::Player(cmd) => sender.input(AppIn::Player(cmd)),
+                VolumeButtonOut::ButtonStateChangedTo(state) => {
+                    widgets.volume_btn.set_icon_name(state.as_ref());
+                }
             },
         }
     }

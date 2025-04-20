@@ -101,6 +101,10 @@ contents > box {
     min-height: 300px;
 }
 
+#volume-button {
+    min-height: 250px;
+}
+
 #config-menu {}
 
 #queue {}

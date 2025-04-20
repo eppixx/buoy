@@ -12,6 +12,7 @@ pub enum Command {
     SetSongPosition(i64),
     /// ranges from 0.0f64 to 1.0f64
     Volume(f64),
+    MuteToggle,
     Repeat(Repeat),
     Shuffle(Shuffle),
 }

@@ -22,3 +22,4 @@ pub mod sequence_button_impl;
 pub mod settings_window;
 pub mod sort_by;
 pub mod tracks_view;
+pub mod volume_button;
