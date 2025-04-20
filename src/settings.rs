@@ -134,10 +134,10 @@ impl Settings {
         if let Some(setting) = SETTING.get() {
             return setting;
         }
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX).unwrap();
-        let config_path = xdg_dirs
-            .place_config_file(FILE_NAME)
-            .expect("cannot create configuration directory");
+        let config_path = dirs::config_dir()
+            .expect("cant create config dir")
+            .join(PREFIX)
+            .join(FILE_NAME);
         let mut config_file = match std::fs::File::open(&config_path) {
             Ok(file) => file,
             Err(_) => std::fs::File::create(config_path).unwrap(),
@@ -151,9 +151,15 @@ impl Settings {
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
+        let config_path = dirs::config_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create config dir",
+            ))?
+            .join(PREFIX)
+            .join(FILE_NAME);
+
         let settings = toml::to_string(self)?;
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let config_path = xdg_dirs.place_config_file(FILE_NAME)?;
         std::fs::write(config_path, settings)?;
         Ok(())
     }

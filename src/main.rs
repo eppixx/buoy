@@ -71,10 +71,10 @@ fn main() -> anyhow::Result<()> {
             .unwrap_or(default_filter);
 
         // setup log file
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(LOG_PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(LOG_FILE_NAME)
-            .expect("cannot create cache directory");
+        let cache_path = dirs::cache_dir()
+            .expect("cant create cache dir")
+            .join(LOG_PREFIX)
+            .join(LOG_FILE_NAME);
         let log_file = std::fs::File::create(cache_path).expect("cant create log file");
 
         // create file layer

@@ -127,21 +127,28 @@ impl SubsonicCovers {
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
         let cache: Vec<u8> = postcard::to_allocvec(self)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(COVER_CACHE)
-            .expect("cannot create cache directory");
+
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(COVER_CACHE);
         std::fs::write(cache_path, cache)?;
 
         Ok(())
     }
 
     pub fn load(&mut self) -> anyhow::Result<()> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(COVER_CACHE)
-            .expect("cannot create cache directory");
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(COVER_CACHE);
         let content = std::fs::read(cache_path)?;
         tracing::info!("loaded subsonic cover cache");
         let result = postcard::from_bytes::<Self>(&content)?;
@@ -152,10 +159,13 @@ impl SubsonicCovers {
     }
 
     pub fn delete_cache(&self) -> anyhow::Result<()> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(COVER_CACHE)
-            .expect("cannot create cache directory");
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(COVER_CACHE);
         std::fs::remove_file(cache_path)?;
         Ok(())
     }

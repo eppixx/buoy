@@ -154,11 +154,13 @@ impl Subsonic {
     }
 
     pub async fn load() -> anyhow::Result<Self> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(MUSIC_INFOS)
-            .expect("cannot create cache directory");
-        // let content = tokio::fs::read_to_string(cache_path).await?;
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(MUSIC_INFOS);
         let content = tokio::fs::read(cache_path).await?;
         tracing::info!("loaded subsonic cache");
         let mut reader = content.as_slice();
@@ -177,10 +179,13 @@ impl Subsonic {
         let mut cache = vec![];
         let mut serializer = rmp_serde::Serializer::new(&mut cache);
         self.serialize(&mut serializer)?;
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(MUSIC_INFOS)
-            .expect("cannot create cache directory");
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(MUSIC_INFOS);
         std::fs::write(cache_path, cache)?;
 
         Ok(())
@@ -407,10 +412,13 @@ impl Subsonic {
         self.covers.delete_cache()?;
 
         // delete music info
-        let xdg_dirs = xdg::BaseDirectories::with_prefix(PREFIX)?;
-        let cache_path = xdg_dirs
-            .place_cache_file(MUSIC_INFOS)
-            .expect("cannot create cache directory");
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant find cache info",
+            ))?
+            .join(PREFIX)
+            .join(MUSIC_INFOS);
         std::fs::remove_file(cache_path)?;
 
         Ok(())
