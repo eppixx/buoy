@@ -273,8 +273,9 @@ impl Playback {
         }
     }
 
-    pub fn sync_volume(&mut self) {
+    fn sync_volume(&mut self) {
         let settings = Settings::get().lock().unwrap();
-        self.volume.set_property("volume", settings.volume);
+        let volume = if settings.mute { 0.0 } else { settings.volume };
+        self.volume.set_property("volume", volume.powi(2));
     }
 }
