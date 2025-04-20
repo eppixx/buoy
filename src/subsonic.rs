@@ -49,7 +49,7 @@ impl Subsonic {
                     .await
                 {
                     Err(e) => {
-                        println!("error while fetching albums: {e}");
+                        tracing::error!("error while fetching albums: {e}");
                     }
                     Ok(mut part) => {
                         if part.len() < 500 || part.is_empty() {
