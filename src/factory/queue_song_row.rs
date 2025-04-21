@@ -180,7 +180,6 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
                         set_text: "no title given",
                         set_hexpand: true,
                         set_width_chars: 3,
-                        set_hexpand: true,
                         set_halign: gtk::Align::Start,
                         set_ellipsize: pango::EllipsizeMode::End,
                     },
