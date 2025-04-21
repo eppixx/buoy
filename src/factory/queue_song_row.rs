@@ -277,6 +277,9 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
             false => widgets.fav_btn.set_icon_name("non-starred-symbolic"),
         }
 
+        // set state
+        widgets.cover_stack.set_visible_child_enum(&self.play_state);
+
         // things that need to be setup once
         if !widgets.finished.0 {
             widgets.finished.0 = true;
@@ -310,6 +313,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
             });
         }
 
+        // set stuff for model
         self.cover_stack = Some(widgets.cover_stack.clone());
         self.fav_btn = Some(widgets.fav_btn.clone());
     }
