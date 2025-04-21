@@ -164,18 +164,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
         index: &relm4::factory::DynamicIndex,
         sender: relm4::FactorySender<Self>,
     ) -> Self {
-        let imported_signs = [
-            "Auto-imported", // imported playlist from navidrome
-        ];
-        let write_protected = imported_signs.iter().any(|sign| {
-            playlist
-                .base
-                .comment
-                .as_deref()
-                .unwrap_or_default()
-                .contains(sign)
-        });
         let model = Self {
+            write_protected: Subsonic::is_smart_playlist(&playlist.base),
             subsonic,
             playlist,
             index: index.clone(),
@@ -185,7 +175,6 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             main_stack: gtk::Stack::default(),
             edit_area: gtk::Stack::default(),
             drag_state: Rc::new(RefCell::new(DragState::Ready)),
-            write_protected,
         };
 
         //setup content for DropSource

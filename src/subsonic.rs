@@ -496,4 +496,21 @@ impl Subsonic {
 
         covers
     }
+
+    // check if playlist is a generated Playlist
+    // there may be different telling signs for different servers
+    pub fn is_smart_playlist(list: &submarine::data::Playlist) -> bool {
+        // check comments of playlist
+        let signs_comment = [
+            "Auto-imported", // imported playlist from navidrome
+        ];
+        if signs_comment
+            .iter()
+            .any(|sign| list.comment.as_deref().unwrap_or_default().contains(sign))
+        {
+            return true;
+        }
+
+        false
+    }
 }
