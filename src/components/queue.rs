@@ -29,13 +29,6 @@ use crate::{
     types::Droppable,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ScrollMotion {
-    None,
-    Down,
-    Up,
-}
-
 enum QueueStack {
     Placeholder,
     Queue,
