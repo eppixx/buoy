@@ -29,6 +29,7 @@ use crate::{
     types::Droppable,
 };
 
+#[derive(Debug, PartialEq, PartialOrd)]
 enum QueueStack {
     Placeholder,
     Queue,
@@ -907,5 +908,17 @@ impl Iterator for QueueRowIterator<'_> {
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::gtk_helper::stack::test_self;
+    use super::QueueStack;
+
+    #[test]
+    fn check_conversion_queue_state() {
+        test_self(QueueStack::Queue);
+        test_self(QueueStack::Placeholder);
     }
 }
