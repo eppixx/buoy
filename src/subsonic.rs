@@ -165,9 +165,25 @@ impl Subsonic {
         tracing::info!("loaded subsonic cache");
         let mut reader = content.as_slice();
         let mut deserializer = rmp_serde::Deserializer::new(&mut reader);
-        let result = Self::deserialize(&mut deserializer)?;
-        tracing::info!("loaded subsonic cache for real");
+        let mut result = Self::deserialize(&mut deserializer)?;
 
+        // update smart playlists
+        let client = Client::get().unwrap();
+        let mut modified_list = false;
+        for playlist in result.playlists.iter_mut() {
+            if Self::is_smart_playlist(&playlist.base) {
+                *playlist = client
+                    .get_playlist(&playlist.base.id)
+                    .await
+                    .expect("could not fetch smart playlist");
+                modified_list = true;
+            }
+        }
+        if modified_list {
+            tracing::info!("updated smart playlist(s)");
+        }
+
+        tracing::info!("loaded subsonic cache done");
         Ok(result)
     }
 
