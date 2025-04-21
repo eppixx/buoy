@@ -155,7 +155,6 @@ impl PlaylistsView {
         //sync local cache playlist content
         self.playlists
             .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
-                list.base.id.clone(),
                 updated_list,
             ));
     }
@@ -699,7 +698,6 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     // update widget info
                     self.playlists
                         .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
-                            list.base.id.clone(),
                             updated_list.clone(),
                         ));
                     if let Some(current_list) = &self.selected_playlist {
@@ -854,14 +852,32 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 }
             }
             PlaylistsViewIn::Selected(index) => {
-                let guard = self.playlists.guard();
-                let Some(list) = guard.get(index as usize) else {
+                let mut guard = self.playlists.guard();
+                let Some(element) = guard.get_mut(index as usize) else {
                     // do not output a error message, because it also triggers when deleting the last playlist
                     return;
                 };
 
-                // check for write protection
-                if list.write_protected() {
+                // check for smart playlist
+                if element.write_protected() {
+                    // update list
+                    let client = Client::get().unwrap();
+                    let list = match client
+                        .get_playlist(&element.info().base.id)
+                        .await {
+                            Err(e) => {
+                                sender.output(PlaylistsViewOut::DisplayToast(format!("could not update smart playlist: {e}"))).unwrap();
+                                return;
+                            }
+                            Ok(list) => list,
+                        };
+
+                    // update cache
+                    self.subsonic.borrow_mut().replace_playlist(&list);
+                    // update widgets
+                    element.replace_list(list.clone());
+                    tracing::info!("updated smart playlist {}", list.base.name);
+
                     self.drop_target_copy.set_types(&[]);
                     self.drop_target_move.set_types(&[]);
                 } else {
@@ -876,10 +892,17 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                 // return when list already active
                 if let Some(current) = &self.selected_playlist {
-                    if list.info().base.id == current.base.id {
+                    if element.info().base.id == current.base.id {
                         return;
                     }
                 }
+                drop(guard);
+
+                let guard = self.playlists.guard();
+                let Some(element) = guard.get(index as usize) else {
+                    // do not output a error message, because it also triggers when deleting the last playlist
+                    return;
+                };
 
                 // set every state in PlaylistElement to normal
                 for list in guard.iter() {
@@ -889,9 +912,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                 widgets.track_stack.set_visible_child_name("tracks");
 
-                list.set_edit_area(EditState::Active);
-                self.selected_playlist = Some(list.info().clone());
-                let list = list.info();
+                element.set_edit_area(EditState::Active);
+                self.selected_playlist = Some(element.info().clone());
+                let list = element.info();
 
                 // set info
                 self.info_cover

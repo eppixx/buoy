@@ -122,6 +122,12 @@ impl PlaylistElement {
     pub fn write_protected(&self) -> bool {
         self.write_protected
     }
+
+    pub fn replace_list(&mut self, list: submarine::data::PlaylistWithSongs) {
+        if self.playlist.base.id == list.base.id {
+            self.playlist = list;
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -130,7 +136,7 @@ pub enum PlaylistElementIn {
     ChangeState(State),
     ConfirmRename,
     UpdatePlaylistName(submarine::data::Playlist),
-    UpdatePlaylistSongs(String, submarine::data::PlaylistWithSongs),
+    UpdatePlaylistSongs(submarine::data::PlaylistWithSongs),
     Clicked,
     DragEnter,
     DragLeave,
@@ -432,8 +438,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     self.playlist.base.name = list.name;
                 }
             }
-            PlaylistElementIn::UpdatePlaylistSongs(id, list) => {
-                if self.playlist.base.id == id {
+            PlaylistElementIn::UpdatePlaylistSongs(list) => {
+                if self.playlist.base.id == list.base.id {
                     self.playlist = list;
                     widgets.song_number.set_text(&format!(
                         "{} {}",
