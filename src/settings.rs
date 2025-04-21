@@ -43,6 +43,7 @@ pub struct Settings {
 
     #[serde(default = "default_volume")]
     pub volume: f64,
+    #[serde(default = "default_mute")]
     pub mute: bool,
 
     #[serde(default)]
@@ -102,6 +103,10 @@ fn default_paned_position() -> i32 {
 
 fn default_volume() -> f64 {
     0.75
+}
+
+fn default_mute() -> bool {
+    true
 }
 
 fn default_scrobble_threshold() -> u32 {
