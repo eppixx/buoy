@@ -10,10 +10,15 @@ use relm4::{
 };
 
 use crate::{
-    common, components::{
+    common,
+    components::{
         cover::{Cover, CoverIn},
         queue::{Queue, QueueIn, QueueOut},
-    }, factory::SetupFinished, gtk_helper::stack::StackExt, play_state::PlayState, subsonic::Subsonic
+    },
+    factory::SetupFinished,
+    gtk_helper::stack::StackExt,
+    play_state::PlayState,
+    subsonic::Subsonic,
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);

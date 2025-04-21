@@ -154,9 +154,7 @@ impl PlaylistsView {
 
         //sync local cache playlist content
         self.playlists
-            .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
-                updated_list,
-            ));
+            .broadcast(PlaylistElementIn::UpdatePlaylistSongs(updated_list));
     }
 
     fn find_nearest_widget(&self, y: f64) -> Option<(f64, u32)> {
@@ -697,9 +695,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                     // update widget info
                     self.playlists
-                        .broadcast(PlaylistElementIn::UpdatePlaylistSongs(
-                            updated_list.clone(),
-                        ));
+                        .broadcast(PlaylistElementIn::UpdatePlaylistSongs(updated_list.clone()));
                     if let Some(current_list) = &self.selected_playlist {
                         widgets
                             .info_details
@@ -862,15 +858,17 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                 if element.write_protected() {
                     // update list
                     let client = Client::get().unwrap();
-                    let list = match client
-                        .get_playlist(&element.info().base.id)
-                        .await {
-                            Err(e) => {
-                                sender.output(PlaylistsViewOut::DisplayToast(format!("could not update smart playlist: {e}"))).unwrap();
-                                return;
-                            }
-                            Ok(list) => list,
-                        };
+                    let list = match client.get_playlist(&element.info().base.id).await {
+                        Err(e) => {
+                            sender
+                                .output(PlaylistsViewOut::DisplayToast(format!(
+                                    "could not update smart playlist: {e}"
+                                )))
+                                .unwrap();
+                            return;
+                        }
+                        Ok(list) => list,
+                    };
 
                     // update cache
                     self.subsonic.borrow_mut().replace_playlist(&list);

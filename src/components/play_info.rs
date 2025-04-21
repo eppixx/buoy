@@ -160,8 +160,10 @@ fn style_label_from_child(child: &Option<submarine::data::Child>) -> (String, Op
         "<span font_size=\"xx-large\" weight=\"bold\">{}</span>",
         glib::markup_escape_text(&child.title)
     );
-    let mut tooltip = format!("<span weight=\"bold\">{}</span>",
-                              glib::markup_escape_text(&child.title));
+    let mut tooltip = format!(
+        "<span weight=\"bold\">{}</span>",
+        glib::markup_escape_text(&child.title)
+    );
 
     match &child.artist {
         None => result.push('\n'),

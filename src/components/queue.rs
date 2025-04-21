@@ -913,8 +913,8 @@ impl Iterator for QueueRowIterator<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::gtk_helper::stack::test_self;
     use super::QueueStack;
+    use crate::gtk_helper::stack::test_self;
 
     #[test]
     fn check_conversion_queue_state() {
