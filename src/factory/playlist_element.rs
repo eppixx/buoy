@@ -130,7 +130,7 @@ pub enum PlaylistElementIn {
     ChangeState(State),
     ConfirmRename,
     UpdatePlaylistName(submarine::data::Playlist),
-    UpdatePlaylistSongs(submarine::data::PlaylistWithSongs),
+    UpdatePlaylist(submarine::data::PlaylistWithSongs),
     Clicked,
     DragEnter,
     DragLeave,
@@ -432,9 +432,10 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                     self.playlist.base.name = list.name;
                 }
             }
-            PlaylistElementIn::UpdatePlaylistSongs(list) => {
+            PlaylistElementIn::UpdatePlaylist(list) => {
                 if self.playlist.base.id == list.base.id {
                     self.playlist = list;
+                    widgets.list_name.set_text(&self.playlist.base.name);
                     widgets.song_number.set_text(&format!(
                         "{} {}",
                         self.playlist.base.song_count,

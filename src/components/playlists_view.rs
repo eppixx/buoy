@@ -154,7 +154,7 @@ impl PlaylistsView {
 
         //sync local cache playlist content
         self.playlists
-            .broadcast(PlaylistElementIn::UpdatePlaylistSongs(updated_list));
+            .broadcast(PlaylistElementIn::UpdatePlaylist(updated_list));
     }
 
     fn find_nearest_widget(&self, y: f64) -> Option<(f64, u32)> {
@@ -695,7 +695,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                     // update widget info
                     self.playlists
-                        .broadcast(PlaylistElementIn::UpdatePlaylistSongs(updated_list.clone()));
+                        .broadcast(PlaylistElementIn::UpdatePlaylist(updated_list.clone()));
                     if let Some(current_list) = &self.selected_playlist {
                         widgets
                             .info_details
@@ -878,7 +878,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     // update widgets
                     self.playlists.send(
                         index as usize,
-                        PlaylistElementIn::UpdatePlaylistSongs(list.clone()),
+                        PlaylistElementIn::UpdatePlaylist(list.clone()),
                     );
                     tracing::info!("updated smart playlist {}", list.base.name);
 
