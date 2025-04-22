@@ -200,7 +200,6 @@ pub enum QueueOut {
     Player(Command),
     CreatePlaylist,
     DisplayToast(String),
-    DesktopNotification(Box<submarine::data::Child>),
     FavoriteClicked(String, bool),
     UpdateControlButtons,
 }

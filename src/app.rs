@@ -872,9 +872,6 @@ impl relm4::component::AsyncComponent for App {
                     ));
                 }
                 QueueOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
-                QueueOut::DesktopNotification(child) => {
-                    show_desktop_notification(&self.subsonic, *child, sender).await
-                }
                 QueueOut::FavoriteClicked(id, state) => {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
