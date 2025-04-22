@@ -31,6 +31,8 @@ pub struct Settings {
     pub queue_current: Option<usize>,
     #[serde(default)] //defaults to 0.0f64
     pub queue_seek: f64,
+    #[serde(default)]
+    pub queue_jump_to_new_song: bool, // jump to new song
 
     #[serde(default)] //defaults to None
     pub login_uri: Option<String>,

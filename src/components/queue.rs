@@ -5,7 +5,10 @@ use rand::prelude::SliceRandom;
 use relm4::{
     gtk::{
         self, gdk,
-        prelude::{AdjustmentExt, BoxExt, ButtonExt, OrientableExt, SelectionModelExt, WidgetExt},
+        prelude::{
+            AdjustmentExt, BoxExt, ButtonExt, OrientableExt, SelectionModelExt, ToggleButtonExt,
+            WidgetExt,
+        },
     },
     ComponentParts, ComponentSender, RelmWidgetExt,
 };
@@ -190,6 +193,7 @@ pub enum QueueIn {
     DropInsert(Droppable, f64, f64),
     SelectionChanged,
     SetCurrent(Option<usize>),
+    DisableJumpToCurrent,
 }
 
 #[derive(Debug)]
@@ -201,7 +205,7 @@ pub enum QueueOut {
     CreatePlaylist,
     DisplayToast(String),
     FavoriteClicked(String, bool),
-    UpdateControlButtons,
+    SongChanged,
 }
 
 #[relm4::component(pub)]
@@ -235,7 +239,12 @@ impl relm4::Component for Queue {
             .iter()
             .map(|song| QueueSongRow::new(&model.subsonic, song, &sender))
             .for_each(|row| model.tracks.append(row));
-        sender.input(QueueIn::SetCurrent(index));
+        // current song
+        if let Some(index) = index {
+            if let Some(track) = model.tracks.get(index as u32) {
+                track.borrow_mut().set_play_state(&PlayState::Pause);
+            }
+        }
         sender.input(QueueIn::Rerandomize);
 
         let widgets = view_output!();
@@ -262,8 +271,7 @@ impl relm4::Component for Queue {
                 .set_visible_child_enum(&QueueStack::Queue);
         }
 
-        sender.input(QueueIn::JumpToCurrent);
-        sender.output(QueueOut::UpdateControlButtons).unwrap();
+        sender.output(QueueOut::SongChanged).unwrap();
         ComponentParts { model, widgets }
     }
 
@@ -273,9 +281,9 @@ impl relm4::Component for Queue {
             set_orientation: gtk::Orientation::Vertical,
 
             append: queue_stack = &gtk::Stack {
-                add_enumed[QueueStack::Queue]: scrolled = &gtk::ScrolledWindow
-                {
+                add_enumed[QueueStack::Queue]: scrolled = &gtk::ScrolledWindow {
                     set_vexpand: true,
+
                     model.tracks.view.clone() {
                         set_widget_name: "queue-list",
 
@@ -359,7 +367,16 @@ impl relm4::Component for Queue {
                                 }
                             }
                         }
-                    }
+                    },
+
+                    add_controller = gtk::EventControllerScroll {
+                        set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+
+                        connect_scroll[sender] => move |_controller, _x, _y| {
+                            sender.input(QueueIn::DisableJumpToCurrent);
+                            gtk::glib::signal::Propagation::Proceed
+                        }
+                    },
                 },
                 add_enumed[QueueStack::Placeholder] = &gtk::CenterBox {
                     set_orientation: gtk::Orientation::Vertical,
@@ -426,11 +443,18 @@ impl relm4::Component for Queue {
                 },
 
                 #[wrap(Some)]
-                set_center_widget = &gtk::Button {
-                        set_icon_name: "view-continuous-symbolic",
-                        set_tooltip: &gettext("Jump to played track in queue"),
-                        set_focus_on_click: false,
-                        connect_clicked => QueueIn::JumpToCurrent,
+                set_center_widget: jump_toggle = &gtk::ToggleButton {
+                    set_icon_name: "view-continuous-symbolic",
+                    set_tooltip: &gettext("Jump to played track in queue"),
+                    set_focus_on_click: false,
+                    set_active: Settings::get().lock().unwrap().queue_jump_to_new_song,
+
+                    connect_toggled[sender] => move |btn| {
+                        Settings::get().lock().unwrap().queue_jump_to_new_song = btn.is_active();
+                        if btn.is_active() {
+                            sender.input(QueueIn::JumpToCurrent);
+                        }
+                    }
                 },
 
                 pack_end = &gtk::Button {
@@ -456,7 +480,7 @@ impl relm4::Component for Queue {
             QueueIn::Replace(drop) => {
                 sender.input(QueueIn::Clear);
                 sender.input(QueueIn::Append(drop));
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::Append(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -475,7 +499,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -503,7 +527,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::Clear => {
                 self.tracks.clear();
@@ -514,7 +538,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Placeholder);
                 sender.output(QueueOut::QueueEmpty).unwrap();
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::Remove => {
                 let selected_rows: Vec<u32> = (0..self.tracks.len())
@@ -540,7 +564,7 @@ impl relm4::Component for Queue {
 
                 sender.input(QueueIn::Rerandomize);
                 sender.input(QueueIn::SelectionChanged);
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::NewState(state) => {
                 if self.tracks.is_empty() {
@@ -612,8 +636,8 @@ impl relm4::Component for Queue {
                             i => self.tracks.get(i + 1).unwrap().borrow_mut().activate(),
                         }
                     }
-                }
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                };
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::PlayPrevious => {
                 if self.tracks.is_empty() {
@@ -667,7 +691,7 @@ impl relm4::Component for Queue {
                         i => self.tracks.get(i - 1).unwrap().borrow_mut().activate(),
                     }
                 }
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::UpdateFavoriteSong(id, state) => {
                 self.iter_tracks()
@@ -730,7 +754,7 @@ impl relm4::Component for Queue {
                         .output(QueueOut::Play(Box::new(track.borrow().item().clone())))
                         .unwrap();
                 }
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::ActivateUid(uid) => {
                 if let Some((index, _row)) = self.index_of_uid(uid) {
@@ -851,7 +875,7 @@ impl relm4::Component for Queue {
                 }
 
                 sender.input(QueueIn::DragCssReset);
-                sender.output(QueueOut::UpdateControlButtons).unwrap();
+                sender.output(QueueOut::SongChanged).unwrap();
             }
             QueueIn::SelectionChanged => {
                 // update content for drag and drop
@@ -885,6 +909,7 @@ impl relm4::Component for Queue {
                     }
                 }
             }
+            QueueIn::DisableJumpToCurrent => widgets.jump_toggle.set_active(false),
         }
     }
 }
