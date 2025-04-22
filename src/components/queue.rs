@@ -24,7 +24,7 @@ use crate::{
         queue_song_row::{QueueSongRow, QueueUid, QueueUids},
         DragIndicatable,
     },
-    gtk_helper::stack::StackExt,
+    gtk_helper::{scroll::ScrolledWindowExt, stack::StackExt},
     play_state::PlayState,
     player::Command,
     settings::Settings,
@@ -718,15 +718,14 @@ impl relm4::Component for Queue {
                     .for_each(|track| track.borrow_mut().item_mut().play_count = play_count);
             }
             QueueIn::JumpToCurrent => {
-                // where the current song in the window will up end from start
-                const CURRENT_POSITION: f64 = 0.4;
                 if let Some((index, _track)) = self.current() {
-                    let adj = widgets.scrolled.vadjustment();
-                    let height = adj.upper();
-                    let scroll_y = height / self.tracks.len() as f64 * index as f64
-                        - f64::from(widgets.scrolled.height()) * CURRENT_POSITION;
-                    adj.set_value(scroll_y);
-                    widgets.scrolled.set_vadjustment(Some(&adj));
+                    let height = widgets.scrolled.vadjustment().upper();
+                    let scroll_y = height / self.tracks.len() as f64 * index as f64;
+                    widgets.scrolled.smooth_scroll_to(
+                        scroll_y / height,
+                        std::time::Duration::from_secs(1),
+                        std::time::Duration::from_millis(16),
+                    );
                 }
             }
             QueueIn::Rerandomize => {
