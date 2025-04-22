@@ -229,6 +229,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                             add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_halign: gtk::Align::Start,
                             set_text: &self.playlist.base.name,
+                            set_width_chars: 3,
+                            set_ellipsize: pango::EllipsizeMode::End,
                         },
                         append: song_number = &gtk::Label {
                             set_halign: gtk::Align::Start,
