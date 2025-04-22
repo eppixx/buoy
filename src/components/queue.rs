@@ -445,7 +445,7 @@ impl relm4::Component for Queue {
                 #[wrap(Some)]
                 set_center_widget: jump_toggle = &gtk::ToggleButton {
                     set_icon_name: "view-continuous-symbolic",
-                    set_tooltip: &gettext("Jump to played track in queue"),
+                    set_tooltip: &gettext("Toggle following played track in queue. Disables on scrolling"),
                     set_focus_on_click: false,
                     set_active: Settings::get().lock().unwrap().queue_jump_to_new_song,
 
