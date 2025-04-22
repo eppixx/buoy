@@ -853,12 +853,15 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     // do not output a error message, because it also triggers when deleting the last playlist
                     return;
                 };
+                let selected_list = element.info().clone();
+                let is_write_protected = element.write_protected();
+                drop(guard);
 
                 // check for smart playlist
-                if element.write_protected() {
+                if is_write_protected {
                     // update list
                     let client = Client::get().unwrap();
-                    let list = match client.get_playlist(&element.info().base.id).await {
+                    let list = match client.get_playlist(&selected_list.base.id).await {
                         Err(e) => {
                             sender
                                 .output(PlaylistsViewOut::DisplayToast(format!(
@@ -873,7 +876,10 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     // update cache
                     self.subsonic.borrow_mut().replace_playlist(&list);
                     // update widgets
-                    element.replace_list(list.clone());
+                    self.playlists.send(
+                        index as usize,
+                        PlaylistElementIn::UpdatePlaylistSongs(list.clone()),
+                    );
                     tracing::info!("updated smart playlist {}", list.base.name);
 
                     self.drop_target_copy.set_types(&[]);
@@ -890,11 +896,10 @@ impl relm4::component::AsyncComponent for PlaylistsView {
 
                 // return when list already active
                 if let Some(current) = &self.selected_playlist {
-                    if element.info().base.id == current.base.id {
+                    if selected_list.base.id == current.base.id {
                         return;
                     }
                 }
-                drop(guard);
 
                 let guard = self.playlists.guard();
                 let Some(element) = guard.get(index as usize) else {

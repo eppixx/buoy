@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use gettextrs::gettext;
 use relm4::{
     gtk::{
-        self, gdk, glib,
+        self, gdk, glib, pango,
         prelude::{BoxExt, ButtonExt, EditableExt, OrientableExt, ToValue, WidgetExt},
     },
     RelmWidgetExt,
@@ -121,12 +121,6 @@ impl PlaylistElement {
 
     pub fn write_protected(&self) -> bool {
         self.write_protected
-    }
-
-    pub fn replace_list(&mut self, list: submarine::data::PlaylistWithSongs) {
-        if self.playlist.base.id == list.base.id {
-            self.playlist = list;
-        }
     }
 }
 
