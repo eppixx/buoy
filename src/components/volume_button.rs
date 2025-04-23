@@ -115,11 +115,11 @@ impl relm4::component::Component for VolumeButton {
                 // set volume, order is important
                 set_value: volume_with_mute,
 
-                add_mark: (1.0, gtk::PositionType::Left, None),
+                add_mark: (1.0, gtk::PositionType::Left, Some("100%")),
                 add_mark: (0.75, gtk::PositionType::Left, None),
-                add_mark: (0.50, gtk::PositionType::Left, None),
+                add_mark: (0.50, gtk::PositionType::Left, Some("50%")),
                 add_mark: (0.25, gtk::PositionType::Left, None),
-                add_mark: (0.0, gtk::PositionType::Left, None),
+                add_mark: (0.0, gtk::PositionType::Left, Some("0%")),
 
                 // connect_value_changed => VolumeButtonIn::VolumeChanged,
                 connect_change_value[sender] => move |_range, _, _| {
