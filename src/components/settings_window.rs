@@ -123,6 +123,25 @@ impl relm4::component::Component for SettingsWindow {
                             }
                         },
                     },
+
+                    gtk::CenterBox {
+                        set_tooltip: &gettext("Show an animation for scrolling to currently played song in queue"),
+
+                        #[wrap(Some)]
+                        set_start_widget = &gtk::Label {
+                            set_text: &gettext("Jump to current song scroll animation"),
+                        },
+                        #[wrap(Some)]
+                        set_end_widget = &gtk::Switch {
+                            set_state: Settings::get().lock().unwrap().queue_animations,
+
+                            connect_state_set => move |_switch, value| {
+                                Settings::get().lock().unwrap().queue_animations = value;
+                                gtk::glib::signal::Propagation::Proceed
+                            }
+                        },
+                    },
+
                     gtk::Separator {},
                     gtk::Box {
                         set_halign: gtk::Align::End,
