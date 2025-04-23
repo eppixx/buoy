@@ -325,158 +325,164 @@ impl relm4::Component for ArtistView {
                 }
             },
 
-            gtk::Box {
-                set_spacing: 10,
-
-                append: most_played_box = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::Label {
-                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                        set_halign: gtk::Align::Start,
-                        set_label: &gettext("Most played"),
-                    },
-
-                    append: most_played_stack = &gtk::Stack {
-                        set_transition_type: gtk::StackTransitionType::Crossfade,
-                        set_transition_duration: 200,
-
-                        add_enumed[LoadingWidgetState::Loading] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_valign: gtk::Align::Center,
-
-                            gtk::Spinner {
-                                add_css_class: "size32",
-                                set_spinning: true,
-                                start: (),
-                            }
-                        },
-                        add_enumed[LoadingWidgetState::NotEmpty] = &gtk::Box {
-                            set_widget_name: "artist-song-box",
-
-                            model.most_played.view.clone() {
-                                set_hexpand: true,
-                            }
-                        },
-                        add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_valign: gtk::Align::Center,
-
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_label: &gettext("No top played songs yet"),
-                            },
-                        },
-
-                        set_visible_child_enum: &LoadingWidgetState::Loading,
-                    }
-                },
-
-                append: random_songs_box = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::Box {
-                        set_spacing: 10,
-
-                        gtk::Label {
-                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            set_halign: gtk::Align::Start,
-                            set_label: &gettext("Random songs")
-                        },
-                        gtk::Button {
-                            set_icon_name: "media-playlist-shuffle-symbolic",
-                            set_tooltip: &gettext("Rerandomize songs"),
-                            connect_clicked => ArtistViewIn::ClickedRandomize,
-                        }
-                    },
-
-                    append: random_songs_stack = &gtk::Stack {
-                        set_transition_type: gtk::StackTransitionType::Crossfade,
-                        set_transition_duration: 200,
-
-                        add_enumed[LoadingWidgetState::NotEmpty] = &gtk::Box {
-                            set_widget_name: "artist-song-box",
-
-                            model.random_songs.view.clone() {
-                                set_hexpand: true,
-                            }
-                        },
-                        add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_valign: gtk::Align::Center,
-
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_label: &gettext("No random songs available"),
-                            },
-                        },
-
-                        set_visible_child_enum: &LoadingWidgetState::Empty,
-                    }
-                },
-
-                append: similar_songs_box = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::Label {
-                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                        set_halign: gtk::Align::Start,
-                        set_label: &gettext("Similar songs")
-                    },
-
-                    append: similar_songs_stack = &gtk::Stack {
-                        set_transition_type: gtk::StackTransitionType::Crossfade,
-                        set_transition_duration: 200,
-
-                        add_enumed[LoadingWidgetState::Loading] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_valign: gtk::Align::Center,
-
-                            gtk::Spinner {
-                                add_css_class: "size32",
-                                set_spinning: true,
-                                start: (),
-                            }
-                        },
-                        add_enumed[LoadingWidgetState::NotEmpty] = &gtk::Box {
-                            set_widget_name: "artist-song-box",
-
-                            model.similar_songs.view.clone() {
-                                set_hexpand: true,
-                            }
-                        },
-                        add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_valign: gtk::Align::Center,
-
-                            gtk::Label {
-                                add_css_class: granite::STYLE_CLASS_H3_LABEL,
-                                set_label: &gettext("Server returned no similar songs"),
-                                set_ellipsize: pango::EllipsizeMode::End,
-                            },
-                            gtk::Label {
-                                set_label: &gettext("There my be additioinal setup steps for your server required"),
-                                set_ellipsize: pango::EllipsizeMode::End,
-
-                            }
-                        },
-
-                        set_visible_child_enum: &LoadingWidgetState::Loading,
-                    }
-                }
-            },
-
-            gtk::Label {
-                add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                set_halign: gtk::Align::Start,
-                set_label: &gettext("All albums"),
-            },
-
             gtk::ScrolledWindow {
                 set_vexpand: true,
 
-                model.albums.widget().clone() {
-                    set_valign: gtk::Align::Start,
+                gtk::Box {
+                    set_spacing: 10,
+                    set_orientation: gtk::Orientation::Vertical,
+
+                    // box for most played, random and similar songs
+                    gtk::Box {
+                        set_spacing: 10,
+
+                        append: most_played_box = &gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_halign: gtk::Align::Start,
+                                set_label: &gettext("Most played"),
+                            },
+
+                            append: most_played_stack = &gtk::Stack {
+                                set_transition_type: gtk::StackTransitionType::Crossfade,
+                                set_transition_duration: 200,
+
+                                add_enumed[LoadingWidgetState::Loading] = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_valign: gtk::Align::Center,
+
+                                    gtk::Spinner {
+                                        add_css_class: "size32",
+                                        set_spinning: true,
+                                        start: (),
+                                    }
+                                },
+                                add_enumed[LoadingWidgetState::NotEmpty] = &gtk::Box {
+                                    set_widget_name: "artist-song-box",
+
+                                    model.most_played.view.clone() {
+                                        set_hexpand: true,
+                                    }
+                                },
+                                add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_valign: gtk::Align::Center,
+
+                                    gtk::Label {
+                                        add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                        set_label: &gettext("No top played songs yet"),
+                                    },
+                                },
+
+                                set_visible_child_enum: &LoadingWidgetState::Loading,
+                            }
+                        },
+
+                        append: random_songs_box = &gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+
+                            gtk::Box {
+                                set_spacing: 10,
+
+                                gtk::Label {
+                                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                    set_halign: gtk::Align::Start,
+                                    set_label: &gettext("Random songs")
+                                },
+                                gtk::Button {
+                                    set_icon_name: "media-playlist-shuffle-symbolic",
+                                    set_tooltip: &gettext("Rerandomize songs"),
+                                    connect_clicked => ArtistViewIn::ClickedRandomize,
+                                }
+                            },
+
+                            append: random_songs_stack = &gtk::Stack {
+                                set_transition_type: gtk::StackTransitionType::Crossfade,
+                                set_transition_duration: 200,
+
+                                add_enumed[LoadingWidgetState::NotEmpty] = &gtk::Box {
+                                    set_widget_name: "artist-song-box",
+
+                                    model.random_songs.view.clone() {
+                                        set_hexpand: true,
+                                    }
+                                },
+                                add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_valign: gtk::Align::Center,
+
+                                    gtk::Label {
+                                        add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                        set_label: &gettext("No random songs available"),
+                                    },
+                                },
+
+                                set_visible_child_enum: &LoadingWidgetState::Empty,
+                            }
+                        },
+
+                        append: similar_songs_box = &gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+
+                            gtk::Label {
+                                add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                set_halign: gtk::Align::Start,
+                                set_label: &gettext("Similar songs")
+                            },
+
+                            append: similar_songs_stack = &gtk::Stack {
+                                set_transition_type: gtk::StackTransitionType::Crossfade,
+                                set_transition_duration: 200,
+
+                                add_enumed[LoadingWidgetState::Loading] = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_valign: gtk::Align::Center,
+
+                                    gtk::Spinner {
+                                        add_css_class: "size32",
+                                        set_spinning: true,
+                                        start: (),
+                                    }
+                                },
+                                add_enumed[LoadingWidgetState::NotEmpty] = &gtk::Box {
+                                    set_widget_name: "artist-song-box",
+
+                                    model.similar_songs.view.clone() {
+                                        set_hexpand: true,
+                                    }
+                                },
+                                add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_valign: gtk::Align::Center,
+
+                                    gtk::Label {
+                                        add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                        set_label: &gettext("Server returned no similar songs"),
+                                        set_ellipsize: pango::EllipsizeMode::End,
+                                    },
+                                    gtk::Label {
+                                        set_label: &gettext("There my be additioinal setup steps for your server required"),
+                                        set_ellipsize: pango::EllipsizeMode::End,
+
+                                    }
+                                },
+
+                                set_visible_child_enum: &LoadingWidgetState::Loading,
+                            }
+                        }
+                    },
+
+                    gtk::Label {
+                        add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                        set_halign: gtk::Align::Start,
+                        set_label: &gettext("All albums"),
+                    },
+
+                    model.albums.widget().clone() {
+                        set_valign: gtk::Align::Start,
+                    }
                 },
             }
         }
