@@ -17,10 +17,41 @@ use crate::{
     components::album_element::{
         get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
+    gtk_helper::stack::StackExt,
     settings::Settings,
     subsonic::Subsonic,
     types::Id,
 };
+
+#[derive(Debug, PartialEq)]
+pub enum RecentlyPlayedState {
+    Empty,
+    NotEmpty,
+    Loading,
+}
+
+impl std::fmt::Display for RecentlyPlayedState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Empty => write!(f, "Empty"),
+            Self::NotEmpty => write!(f, "NotEmpty"),
+            Self::Loading => write!(f, "Loading"),
+        }
+    }
+}
+
+impl TryFrom<String> for RecentlyPlayedState {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_ref() {
+            "Empty" => Ok(Self::Empty),
+            "NotEmpty" => Ok(Self::NotEmpty),
+            "Loading" => Ok(Self::Loading),
+            e => Err(format!("\"{e}\" is not a State")),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 enum Scrolling {
@@ -231,6 +262,13 @@ impl relm4::Component for Dashboard {
             }
         });
 
+        // set uniform size
+        let group = gtk::SizeGroup::new(gtk::SizeGroupMode::Vertical);
+        group.add_widget(&model.recently_added_scroll);
+        group.add_widget(&widgets.recently_stack);
+        group.add_widget(&model.random_album_scroll);
+        group.add_widget(&model.most_played_scroll);
+
         relm4::ComponentParts { model, widgets }
     }
 
@@ -352,26 +390,53 @@ impl relm4::Component for Dashboard {
                                 },
                             }
                         },
-                        model.recently_played_scroll.clone() -> gtk::ScrolledWindow {
-                            set_vscrollbar_policy: gtk::PolicyType::Never,
-                            set_hscrollbar_policy: gtk::PolicyType::External,
-                            set_hexpand: true,
+                        append: recently_stack = &gtk::Stack {
+                            add_enumed[RecentlyPlayedState::NotEmpty] = &model.recently_played_scroll.clone() {
+                                set_vscrollbar_policy: gtk::PolicyType::Never,
+                                set_hscrollbar_policy: gtk::PolicyType::External,
+                                set_hexpand: true,
 
-                            add_controller = gtk::EventControllerScroll {
-                                set_flags: gtk::EventControllerScrollFlags::VERTICAL,
-                                connect_scroll[sender] => move |_event, _x, y| {
-                                    sender.input(DashboardIn::ScrollOuter(y));
-                                    gtk::glib::signal::Propagation::Stop
+                                add_controller = gtk::EventControllerScroll {
+                                    set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+                                    connect_scroll[sender] => move |_event, _x, y| {
+                                        sender.input(DashboardIn::ScrollOuter(y));
+                                        gtk::glib::signal::Propagation::Stop
+                                    }
+                                },
+
+                                model.recently_played_list.widget().clone() {
+                                    set_valign: gtk::Align::Start,
+                                    set_vexpand: true,
+                                    set_max_children_per_line: 100,
+                                    set_min_children_per_line: 20,
+                                },
+                            },
+                            add_enumed[RecentlyPlayedState::Loading] = &gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_valign: gtk::Align::Center,
+
+                                gtk::Spinner {
+                                    add_css_class: "size32",
+                                    set_spinning: true,
+                                    start: (),
                                 }
                             },
+                            add_enumed[RecentlyPlayedState::Empty] = &gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_valign: gtk::Align::Center,
+                                set_spacing: 20,
 
-                            model.recently_played_list.widget().clone() {
-                                set_valign: gtk::Align::Start,
-                                set_vexpand: true,
-                                set_max_children_per_line: 100,
-                                set_min_children_per_line: 20,
+                                gtk::Label {
+                                    set_label: &gettext("Nothing played recently"),
+                                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
+                                },
+                                gtk::Label {
+                                    set_label: &gettext("You might need to turn on scrobbling to populate this area"),
+                                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
+                                }
                             },
-                        },
+                            set_visible_child_enum: &RecentlyPlayedState::Empty,
+                        }
                     },
 
                     gtk::Box {
@@ -611,8 +676,9 @@ impl relm4::Component for Dashboard {
         }
     }
 
-    fn update_cmd(
+    fn update_cmd_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::CommandOutput,
         sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
@@ -621,11 +687,34 @@ impl relm4::Component for Dashboard {
             DashboardCmd::Error(msg) => sender.output(DashboardOut::DisplayToast(msg)).unwrap(),
             DashboardCmd::LoadedRecentlyPlayed(Err(_e)) => {}
             DashboardCmd::LoadedRecentlyPlayed(Ok(list)) => {
+                if list.is_empty() {
+                    widgets
+                        .recently_stack
+                        .set_visible_child_enum(&RecentlyPlayedState::Empty);
+                    return;
+                }
+
                 let ids: Vec<Id> = list.iter().map(|album| Id::album(&album.id)).collect();
+                widgets
+                    .recently_stack
+                    .set_visible_child_enum(&RecentlyPlayedState::NotEmpty);
                 let mut guard = self.recently_played_list.guard();
                 ids.into_iter()
                     .for_each(|id| _ = guard.push_back((self.subsonic.clone(), id)));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gtk_helper::stack::test_self;
+
+    #[test]
+    fn test_recent_played_state_conversion() {
+        test_self(RecentlyPlayedState::Empty);
+        test_self(RecentlyPlayedState::NotEmpty);
+        test_self(RecentlyPlayedState::Loading);
     }
 }
