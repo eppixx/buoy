@@ -7,7 +7,8 @@ use relm4::gtk::{
 };
 
 use crate::{
-    gtk_helper::stack::StackExt, loading_widget::LoadingWidgetState, subsonic::Subsonic,
+    gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},
+    subsonic::Subsonic,
     subsonic_cover,
 };
 

@@ -17,8 +17,7 @@ use crate::{
     components::album_element::{
         get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
-    gtk_helper::stack::StackExt,
-    loading_widget::LoadingWidgetState,
+    gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},
     settings::Settings,
     subsonic::Subsonic,
     types::Id,

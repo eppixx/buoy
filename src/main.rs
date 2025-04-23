@@ -15,7 +15,6 @@ pub mod css;
 mod download;
 mod factory;
 pub mod gtk_helper;
-pub mod loading_widget;
 mod mpris;
 mod play_state;
 mod playback;
