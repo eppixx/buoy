@@ -1,7 +1,7 @@
 use gettextrs::gettext;
 use relm4::gtk::{self, gio, glib, prelude::ListItemExt};
 
-use crate::common::store_from_category;
+use crate::gtk_helper::list_store::ListStoreExt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Category {
@@ -92,12 +92,12 @@ impl Category {
             Self::DurationSec,
             Self::BitRate,
         ];
-        store_from_category(&categories)
+        gtk::gio::ListStore::from_slice(&categories)
     }
 
     pub fn artists() -> gio::ListStore {
         let categories = [Self::Artist, Self::AlbumCount];
-        store_from_category(&categories)
+        gtk::gio::ListStore::from_slice(&categories)
     }
 
     pub fn albums() -> gio::ListStore {
@@ -109,7 +109,7 @@ impl Category {
             Self::Genre,
             Self::DurationMin,
         ];
-        store_from_category(&categories)
+        gtk::gio::ListStore::from_slice(&categories)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {

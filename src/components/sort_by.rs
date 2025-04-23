@@ -1,7 +1,7 @@
 use gettextrs::gettext;
 use relm4::gtk::{self, gio, glib, prelude::ListItemExt};
 
-use crate::common::store_from_category;
+use crate::gtk_helper::list_store::ListStoreExt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SortBy {
@@ -56,7 +56,7 @@ impl SortBy {
             Self::MostAlbums,
             Self::MostAlbumsRev,
         ];
-        store_from_category(&categories)
+        gtk::gio::ListStore::from_slice(&categories)
     }
 
     pub fn albums_store() -> gio::ListStore {
@@ -68,7 +68,7 @@ impl SortBy {
             Self::RecentlyAdded,
             Self::RecentlyAddedRev,
         ];
-        store_from_category(&categories)
+        gtk::gio::ListStore::from_slice(&categories)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {

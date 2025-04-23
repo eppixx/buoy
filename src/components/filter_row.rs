@@ -12,7 +12,7 @@ use relm4::{
 };
 
 use crate::{
-    common::store_from_category, components::filter_categories::Category,
+    components::filter_categories::Category, gtk_helper::list_store::ListStoreExt,
     gtk_helper::stack::StackExt,
 };
 
@@ -54,7 +54,7 @@ impl BoolRow {
                 label: gettext("no"),
             },
         ];
-        store_from_category(&data)
+        gtk::gio::ListStore::from_slice(&data)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {
@@ -126,7 +126,7 @@ impl TextRow {
                 label: gettext("matches"),
             },
         ];
-        store_from_category(&data)
+        gtk::gio::ListStore::from_slice(&data)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {
@@ -187,7 +187,7 @@ impl OrderRow {
                 label: String::from("<"),
             },
         ];
-        store_from_category(&data)
+        gtk::gio::ListStore::from_slice(&data)
     }
 
     pub fn factory() -> gtk::SignalListItemFactory {
