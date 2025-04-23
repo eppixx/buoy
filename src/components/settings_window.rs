@@ -2,7 +2,7 @@ use gettextrs::gettext;
 use relm4::{
     gtk::{
         self,
-        prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, GtkApplicationExt, GtkWindowExt, OrientableExt, WidgetExt},
     },
     RelmWidgetExt,
 };
@@ -46,6 +46,7 @@ impl relm4::component::Component for SettingsWindow {
         gtk::Window {
             set_widget_name: "settings-window",
             set_modal: true,
+            set_transient_for: Some(&relm4::main_application().windows()[0]),
             set_hide_on_close: true,
 
             #[wrap(Some)]
