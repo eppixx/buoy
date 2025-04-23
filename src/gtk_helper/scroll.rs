@@ -52,8 +52,6 @@ impl ScrolledWindowExt for gtk::ScrolledWindow {
 
         // calc start of widget; this scroll so the current played is at the top
         let target_value = adjustment.upper() * scroll_to_percent;
-        // scroll, so that the played is in the middle of widget
-        let target_value = target_value - f64::from(self.height()) * 0.45;
 
         // calc the steps needed
         let total_updates = animation_length.as_secs_f64() / update_delta.as_secs_f64();

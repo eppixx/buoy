@@ -724,11 +724,17 @@ impl relm4::Component for Queue {
                 if let Some((index, _track)) = self.current() {
                     let height = widgets.scrolled.vadjustment().upper();
                     let scroll_y = height / self.tracks.len() as f64 * index as f64;
-                    widgets.scrolled.smooth_scroll_to(
-                        scroll_y / height,
-                        std::time::Duration::from_secs(1),
-                        std::time::Duration::from_millis(16),
-                    );
+                    // adjust so that widget is in the middle of the scrolled window
+                    let scroll_y = scroll_y - f64::from(widgets.scrolled.height()) * 0.45;
+                    if Settings::get().lock().unwrap().queue_animations {
+                        widgets.scrolled.smooth_scroll_to(
+                            scroll_y / height,
+                            std::time::Duration::from_secs(1),
+                            std::time::Duration::from_millis(16),
+                        );
+                    } else {
+                        widgets.scrolled.scroll_to(scroll_y / height);
+                    }
                 }
             }
             QueueIn::Rerandomize => {

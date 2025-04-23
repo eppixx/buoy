@@ -57,6 +57,9 @@ pub struct Settings {
     pub send_notifications: bool,
 
     #[serde(default)]
+    pub queue_animations: bool,
+
+    #[serde(default)]
     pub scrobble: bool,
     #[serde(default = "default_scrobble_threshold")]
     pub scrobble_threshold: u32,
