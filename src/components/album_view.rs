@@ -20,6 +20,8 @@ use crate::{
         AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
         PlayCountColumn, PositionColumn, TitleColumn,
     },
+    gtk_helper::stack::StackExt,
+    loading_widget::LoadingWidgetState,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
@@ -30,11 +32,6 @@ pub struct AlbumView {
     subsonic: Rc<RefCell<Subsonic>>,
     id: Id,
     cover: relm4::Controller<Cover>,
-    favorite: gtk::Button,
-    title: String,
-    artist: Option<String>,
-    info: String,
-    artist_id: Option<String>,
     tracks: relm4::typed_view::column::TypedColumnView<AlbumTrackRow, gtk::MultiSelection>,
 }
 
@@ -129,11 +126,6 @@ impl relm4::Component for AlbumView {
             cover: Cover::builder()
                 .launch((subsonic.clone(), album.cover_art.clone()))
                 .forward(sender.input_sender(), AlbumViewIn::Cover),
-            favorite: gtk::Button::default(),
-            title: gettext("Unkonwn Title"),
-            artist: None,
-            info: String::new(),
-            artist_id: album.artist_id.clone(),
             tracks,
         };
 
@@ -169,7 +161,8 @@ impl relm4::Component for AlbumView {
                 gtk::Overlay {
                     #[wrap(Some)]
                     set_child = &model.cover.widget().clone() -> gtk::Box {},
-                    add_overlay = &model.favorite.clone() {
+
+                    add_overlay: favorite = &gtk::Button {
                         set_halign: gtk::Align::End,
                         set_valign: gtk::Align::End,
                         set_width_request: 24,
@@ -201,31 +194,27 @@ impl relm4::Component for AlbumView {
                         set_orientation: gtk::Orientation::Vertical,
                         set_spacing: 8,
 
-                        gtk::Label {
+                        append: album_title = &gtk::Label {
                             add_css_class: "h2",
-                            #[watch]
-                            set_label: &model.title,
+                            set_label: &gettext("Loading Album"),
                             set_halign: gtk::Align::Start,
                         },
-                        gtk::Label {
-                            #[watch]
-                            set_markup: &format!("by <span style=\"italic\"><a href=\"{}\">{}</a></span>",
-                                model.artist_id.as_deref().unwrap_or("")
-                                , glib::markup_escape_text(model.artist.as_deref().unwrap_or(&gettext("Unkown Artist")))),
+                        append: album_artist = &gtk::Label {
                             set_halign: gtk::Align::Start,
+
                             connect_activate_link[sender] => move |_label, text| {
                                 sender.output(AlbumViewOut::ArtistClicked(Id::artist(text.to_string()))).unwrap();
                                 gtk::glib::signal::Propagation::Stop
                             }
                         },
-                        gtk::Label {
-                            #[watch]
-                            set_label: &model.info,
+                        append: album_info = &gtk::Label {
                             set_halign: gtk::Align::Start,
                         },
                         gtk::Box {
                             set_spacing: 15,
-                            gtk::Button {
+                            append: append_append = &gtk::Button {
+                                set_sensitive: false,
+
                                 gtk::Box {
                                     gtk::Image {
                                         set_icon_name: Some("list-add-symbolic"),
@@ -240,7 +229,9 @@ impl relm4::Component for AlbumView {
                                     sender.output(AlbumViewOut::AppendAlbum(drop)).unwrap();
                                 }
                             },
-                            gtk::Button {
+                            append: insert_album = &gtk::Button {
+                                set_sensitive: false,
+
                                 gtk::Box {
                                     gtk::Image {
                                         set_icon_name: Some("list-add-symbolic"),
@@ -255,7 +246,9 @@ impl relm4::Component for AlbumView {
                                     sender.output(AlbumViewOut::InsertAfterCurrentPlayed(drop)).unwrap();
                                 }
                             },
-                            gtk::Button {
+                            append: replace_queue = &gtk::Button {
+                                set_sensitive: false,
+
                                 gtk::Box {
                                     gtk::Image {
                                         set_icon_name: Some("emblem-symbolic-link-symbolic"),
@@ -270,7 +263,9 @@ impl relm4::Component for AlbumView {
                                     sender.output(AlbumViewOut::ReplaceQueue(drop)).unwrap();
                                 }
                             },
-                            gtk::Button {
+                            append: download_album = &gtk::Button {
+                                set_sensitive: false,
+
                                 gtk::Box {
                                     gtk::Image {
                                         set_icon_name: Some("browser-download-symbolic"),
@@ -291,27 +286,45 @@ impl relm4::Component for AlbumView {
             },
 
             // bottom
-            gtk::ScrolledWindow {
-                set_hexpand: true,
-                set_vexpand: true,
+            append: tracks_stack = &gtk::Stack {
+                set_transition_type: gtk::StackTransitionType::Crossfade,
+                set_transition_duration: 200,
 
-                model.tracks.view.clone() {
-                    set_widget_name: "album-view-tracks",
+                add_enumed[LoadingWidgetState::NotEmpty] = &gtk::ScrolledWindow {
+                    set_hexpand: true,
                     set_vexpand: true,
 
-                    add_controller = gtk::DragSource {
-                        connect_prepare[sender] => move |_drag_src, _x, _y| {
-                            sender.input(AlbumViewIn::RecalcDragSource);
-                            None
+                    model.tracks.view.clone() {
+                        set_widget_name: "album-view-tracks",
+                        set_vexpand: true,
+
+                        add_controller = gtk::DragSource {
+                            connect_prepare[sender] => move |_drag_src, _x, _y| {
+                                sender.input(AlbumViewIn::RecalcDragSource);
+                                None
+                            }
                         }
                     }
-                }
+                },
+                add_enumed[LoadingWidgetState::Loading] = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_valign: gtk::Align::Center,
+
+                    gtk::Spinner {
+                        add_css_class: "size32",
+                        set_spinning: true,
+                        start: (),
+                    }
+                },
+
+                set_visible_child_enum: &LoadingWidgetState::Loading,
             },
         }
     }
 
-    fn update(
+    fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::Input,
         sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
@@ -362,8 +375,8 @@ impl relm4::Component for AlbumView {
                 };
 
                 match (state, album.id == id) {
-                    (true, true) => self.favorite.set_icon_name("starred-symbolic"),
-                    (false, true) => self.favorite.set_icon_name("non-starred-symbolic"),
+                    (true, true) => widgets.favorite.set_icon_name("starred-symbolic"),
+                    (false, true) => widgets.favorite.set_icon_name("non-starred-symbolic"),
                     (_, false) => {} // signal is not for this album
                 }
             }
@@ -392,14 +405,14 @@ impl relm4::Component for AlbumView {
                 .filter(|t| t.borrow().item().id == id)
                 .for_each(|track| track.borrow_mut().set_play_count(play_count)),
             AlbumViewIn::HoverCover(false) => {
-                self.favorite.remove_css_class("neutral-color");
-                if self.favorite.icon_name().as_deref() != Some("starred-symbolic") {
-                    self.favorite.set_visible(false);
+                widgets.favorite.remove_css_class("neutral-color");
+                if widgets.favorite.icon_name().as_deref() != Some("starred-symbolic") {
+                    widgets.favorite.set_visible(false);
                 }
             }
             AlbumViewIn::HoverCover(true) => {
-                self.favorite.add_css_class("neutral-color");
-                self.favorite.set_visible(true);
+                widgets.favorite.add_css_class("neutral-color");
+                widgets.favorite.set_visible(true);
             }
             AlbumViewIn::RecalcDragSource => {
                 let len = self.tracks.selection_model.n_items();
@@ -430,8 +443,9 @@ impl relm4::Component for AlbumView {
         }
     }
 
-    fn update_cmd(
+    fn update_cmd_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         msg: Self::CommandOutput,
         sender: relm4::ComponentSender<Self>,
         _root: &Self::Root,
@@ -448,6 +462,10 @@ impl relm4::Component for AlbumView {
                     let track = AlbumTrackRow::new(&self.subsonic, track.clone(), sender.clone());
                     self.tracks.append(track);
                 }
+                // show tracks
+                widgets
+                    .tracks_stack
+                    .set_visible_child_enum(&LoadingWidgetState::NotEmpty);
 
                 // update dragSource for cover
                 let drop = Droppable::AlbumWithSongs(Box::new(album.clone()));
@@ -467,17 +485,42 @@ impl relm4::Component for AlbumView {
                 });
                 self.cover.widget().add_controller(drag_src);
 
-                //update self
-                self.info = build_info_string(&album);
+                // update cover
                 self.cover
                     .emit(CoverIn::LoadAlbumId3(Box::new(album.clone())));
-                self.title = album.base.name;
-                self.artist = album.base.artist;
-                self.favorite.set_visible(false);
+
+                // update title
+                widgets.album_title.set_label(&album.base.name);
+
+                //update info label
+                widgets.album_info.set_label(&build_info_string(&album));
+
+                // set artist label
+                let markup = format!(
+                    "by <span style=\"italic\"><a href=\"{}\">{}</a></span>",
+                    album.base.artist_id.as_deref().unwrap_or(""),
+                    glib::markup_escape_text(
+                        album
+                            .base
+                            .artist
+                            .as_deref()
+                            .unwrap_or(&gettext("Unkown Artist"))
+                    )
+                );
+                widgets.album_artist.set_markup(&markup);
+
+                // update favorite
+                widgets.favorite.set_visible(false);
                 if album.base.starred.is_some() {
-                    self.favorite.set_icon_name("starred-symbolic");
-                    self.favorite.set_visible(true);
+                    widgets.favorite.set_icon_name("starred-symbolic");
+                    widgets.favorite.set_visible(true);
                 }
+
+                // set sensitivity for buttons
+                widgets.append_append.set_sensitive(true);
+                widgets.insert_album.set_sensitive(true);
+                widgets.replace_queue.set_sensitive(true);
+                widgets.download_album.set_sensitive(true);
             }
         }
     }
