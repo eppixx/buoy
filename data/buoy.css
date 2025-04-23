@@ -176,6 +176,7 @@ contents > box {
 /* row in columnviews */
 #artists-view-tracks > listview > row
 , #queue-list > row
+, #artist-song-box > listview > row
 , #albums-view-tracks > listview > row
 , #album-view-tracks > listview > row
 , #tracks-view-tracks > listview > row
