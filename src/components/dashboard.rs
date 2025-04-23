@@ -18,40 +18,11 @@ use crate::{
         get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
     gtk_helper::stack::StackExt,
+    loading_widget::LoadingWidgetState,
     settings::Settings,
     subsonic::Subsonic,
     types::Id,
 };
-
-#[derive(Debug, PartialEq)]
-pub enum RecentlyPlayedState {
-    Empty,
-    NotEmpty,
-    Loading,
-}
-
-impl std::fmt::Display for RecentlyPlayedState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Empty => write!(f, "Empty"),
-            Self::NotEmpty => write!(f, "NotEmpty"),
-            Self::Loading => write!(f, "Loading"),
-        }
-    }
-}
-
-impl TryFrom<String> for RecentlyPlayedState {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_ref() {
-            "Empty" => Ok(Self::Empty),
-            "NotEmpty" => Ok(Self::NotEmpty),
-            "Loading" => Ok(Self::Loading),
-            e => Err(format!("\"{e}\" is not a State")),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 enum Scrolling {
@@ -391,7 +362,7 @@ impl relm4::Component for Dashboard {
                             }
                         },
                         append: recently_stack = &gtk::Stack {
-                            add_enumed[RecentlyPlayedState::NotEmpty] = &model.recently_played_scroll.clone() {
+                            add_enumed[LoadingWidgetState::NotEmpty] = &model.recently_played_scroll.clone() {
                                 set_vscrollbar_policy: gtk::PolicyType::Never,
                                 set_hscrollbar_policy: gtk::PolicyType::External,
                                 set_hexpand: true,
@@ -411,7 +382,7 @@ impl relm4::Component for Dashboard {
                                     set_min_children_per_line: 20,
                                 },
                             },
-                            add_enumed[RecentlyPlayedState::Loading] = &gtk::Box {
+                            add_enumed[LoadingWidgetState::Loading] = &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
                                 set_valign: gtk::Align::Center,
 
@@ -421,7 +392,7 @@ impl relm4::Component for Dashboard {
                                     start: (),
                                 }
                             },
-                            add_enumed[RecentlyPlayedState::Empty] = &gtk::Box {
+                            add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
                                 set_orientation: gtk::Orientation::Vertical,
                                 set_valign: gtk::Align::Center,
                                 set_spacing: 20,
@@ -435,7 +406,7 @@ impl relm4::Component for Dashboard {
                                     add_css_class: granite::STYLE_CLASS_H3_LABEL,
                                 }
                             },
-                            set_visible_child_enum: &RecentlyPlayedState::Empty,
+                            set_visible_child_enum: &LoadingWidgetState::Empty,
                         }
                     },
 
@@ -690,31 +661,18 @@ impl relm4::Component for Dashboard {
                 if list.is_empty() {
                     widgets
                         .recently_stack
-                        .set_visible_child_enum(&RecentlyPlayedState::Empty);
+                        .set_visible_child_enum(&LoadingWidgetState::Empty);
                     return;
                 }
 
                 let ids: Vec<Id> = list.iter().map(|album| Id::album(&album.id)).collect();
                 widgets
                     .recently_stack
-                    .set_visible_child_enum(&RecentlyPlayedState::NotEmpty);
+                    .set_visible_child_enum(&LoadingWidgetState::NotEmpty);
                 let mut guard = self.recently_played_list.guard();
                 ids.into_iter()
                     .for_each(|id| _ = guard.push_back((self.subsonic.clone(), id)));
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::gtk_helper::stack::test_self;
-
-    #[test]
-    fn test_recent_played_state_conversion() {
-        test_self(RecentlyPlayedState::Empty);
-        test_self(RecentlyPlayedState::NotEmpty);
-        test_self(RecentlyPlayedState::Loading);
     }
 }

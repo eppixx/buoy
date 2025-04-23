@@ -6,7 +6,10 @@ use relm4::gtk::{
     prelude::WidgetExt,
 };
 
-use crate::{gtk_helper::stack::StackExt, subsonic::Subsonic, subsonic_cover};
+use crate::{
+    gtk_helper::stack::StackExt, loading_widget::LoadingWidgetState, subsonic::Subsonic,
+    subsonic_cover,
+};
 
 pub struct Cover {
     subsonic: Rc<RefCell<Subsonic>>,
@@ -19,7 +22,10 @@ pub struct Cover {
 impl std::fmt::Debug for Cover {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Cover")
-            .field("state", &self.stack.visible_child_enum::<State>())
+            .field(
+                "state",
+                &self.stack.visible_child_enum::<LoadingWidgetState>(),
+            )
             .finish()
     }
 }
@@ -32,36 +38,6 @@ impl Cover {
     pub fn change_size(&self, size: i32) {
         self.cover.set_width_request(size);
         self.cover.set_height_request(size);
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum State {
-    Stock,
-    Image,
-    Loading,
-}
-
-impl std::fmt::Display for State {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Stock => write!(f, "Stock"),
-            Self::Image => write!(f, "Image"),
-            Self::Loading => write!(f, "Loading"),
-        }
-    }
-}
-
-impl TryFrom<String> for State {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_ref() {
-            "Stock" => Ok(Self::Stock),
-            "Image" => Ok(Self::Image),
-            "Loading" => Ok(Self::Loading),
-            e => Err(format!("\"{e}\" is not a State")),
-        }
     }
 }
 
@@ -113,14 +89,14 @@ impl relm4::Component for Cover {
     view! {
         gtk::Box {
             model.stack.clone() -> gtk::Stack {
-                add_enumed[State::Stock] = &gtk::Box {
+                add_enumed[LoadingWidgetState::Empty] = &gtk::Box {
                     add_css_class: "bordered",
                     add_css_class: "stock-cover",
                 },
-                add_enumed[State::Image] = &model.cover.clone() -> gtk::Image {
+                add_enumed[LoadingWidgetState::NotEmpty] = &model.cover.clone() -> gtk::Image {
                     add_css_class: "card",
                 },
-                add_enumed[State::Loading] = &gtk::CenterBox {
+                add_enumed[LoadingWidgetState::Loading] = &gtk::CenterBox {
                     add_css_class: "card",
                     #[wrap(Some)]
                     set_center_widget = &gtk::Spinner {
@@ -139,13 +115,17 @@ impl relm4::Component for Cover {
     ) {
         match msg {
             CoverIn::ChangeImage(response) => match response {
-                subsonic_cover::Response::Empty => self.stack.set_visible_child_enum(&State::Stock),
+                subsonic_cover::Response::Empty => self
+                    .stack
+                    .set_visible_child_enum(&LoadingWidgetState::Empty),
                 subsonic_cover::Response::Loaded(pixbuf) => {
                     self.cover.set_paintable(Some(&pixbuf));
-                    self.stack.set_visible_child_enum(&State::Image);
+                    self.stack
+                        .set_visible_child_enum(&LoadingWidgetState::NotEmpty);
                 }
                 subsonic_cover::Response::Processing(receiver) => {
-                    self.stack.set_visible_child_enum(&State::Loading);
+                    self.stack
+                        .set_visible_child_enum(&LoadingWidgetState::Loading);
                     sender.oneshot_command(async move {
                         match receiver.recv().await {
                             Ok((id, Some(texture), Some(buffer))) => {
@@ -157,38 +137,52 @@ impl relm4::Component for Cover {
                     });
                 }
             },
-            CoverIn::LoadId(None) => self.stack.set_visible_child_enum(&State::Stock),
+            CoverIn::LoadId(None) => self
+                .stack
+                .set_visible_child_enum(&LoadingWidgetState::Empty),
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
             }
             CoverIn::LoadSong(child) => match child.album_id {
-                None => self.stack.set_visible_child_enum(&State::Stock),
+                None => self
+                    .stack
+                    .set_visible_child_enum(&LoadingWidgetState::Empty),
                 Some(album_id) => {
                     let album = self.subsonic.borrow().find_album(album_id);
                     match album {
-                        None => self.stack.set_visible_child_enum(&State::Stock),
+                        None => self
+                            .stack
+                            .set_visible_child_enum(&LoadingWidgetState::Empty),
                         Some(album) => match &album.cover_art {
                             Some(id) => sender
                                 .input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(id))),
-                            None => self.stack.set_visible_child_enum(&State::Stock),
+                            None => self
+                                .stack
+                                .set_visible_child_enum(&LoadingWidgetState::Empty),
                         },
                     }
                 }
             },
             CoverIn::LoadAlbumId3(album) => match album.base.cover_art {
-                None => self.stack.set_visible_child_enum(&State::Stock),
+                None => self
+                    .stack
+                    .set_visible_child_enum(&LoadingWidgetState::Empty),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadPlaylist(playlist) => match playlist.base.cover_art {
-                None => self.stack.set_visible_child_enum(&State::Stock),
+                None => self
+                    .stack
+                    .set_visible_child_enum(&LoadingWidgetState::Empty),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
             },
             CoverIn::LoadArtist(artist) => match artist.cover_art {
-                None => self.stack.set_visible_child_enum(&State::Stock),
+                None => self
+                    .stack
+                    .set_visible_child_enum(&LoadingWidgetState::Empty),
                 Some(id) => {
                     sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
                 }
@@ -215,17 +209,5 @@ impl relm4::Component for Cover {
                 self.subsonic.borrow_mut().cover_update(&id, None);
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::gtk_helper::stack::test_self;
-
-    #[test]
-    fn state_enum_conversion() {
-        test_self(State::Stock);
-        test_self(State::Image);
     }
 }
