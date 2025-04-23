@@ -202,20 +202,18 @@ impl relm4::Component for ArtistView {
                         gtk::Box {
                             set_spacing: 15,
 
-                            gtk::Box {
-                                gtk::Button {
-                                    gtk::Box {
-                                        gtk::Image {
-                                            set_icon_name: Some("list-add-symbolic"),
-                                        },
-                                        gtk::Label {
-                                            set_label: &gettext("Append"),
-                                        },
+                            gtk::Button {
+                                gtk::Box {
+                                    gtk::Image {
+                                        set_icon_name: Some("list-add-symbolic"),
                                     },
-                                    set_tooltip: &gettext("Append Artist to end of queue"),
-                                    connect_clicked[sender, artist] => move |_btn| {
-                                        sender.output(ArtistViewOut::AppendArtist(Droppable::Artist(Box::new(artist.clone())))).unwrap();
-                                    }
+                                    gtk::Label {
+                                        set_label: &gettext("Append"),
+                                    },
+                                },
+                                set_tooltip: &gettext("Append Artist to end of queue"),
+                                connect_clicked[sender, artist] => move |_btn| {
+                                    sender.output(ArtistViewOut::AppendArtist(Droppable::Artist(Box::new(artist.clone())))).unwrap();
                                 }
                             },
                             gtk::Button {
