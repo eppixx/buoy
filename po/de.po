@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-04-18 20:21+0200\n"
-"PO-Revision-Date: 2025-04-18 20:32+0200\n"
+"PO-Revision-Date: 2025-04-23 16:43+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -147,7 +147,7 @@ msgstr "Scrobbeln an den Subsonic Server"
 msgid ""
 "How much of a song needs to be played to be scrobbled to server in percent"
 msgstr ""
-"Wie viel Prozent des Songs abgespielt sein muss, um als gespielt zu gelten."
+"Wie viel Prozent des Songs abgespielt sein muss, um als gespielt zu gelten"
 
 #: src/app.rs:612
 msgid "Scrobble threshold"
@@ -903,7 +903,7 @@ msgstr "auf CD"
 
 #: src/download.rs:47
 msgid "You're about to download"
-msgstr "Download von "
+msgstr "Der Download enthält"
 
 #: src/download.rs:50
 msgid "This may take a while. Do want to proceed?"
