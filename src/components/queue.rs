@@ -206,6 +206,7 @@ pub enum QueueOut {
     DisplayToast(String),
     FavoriteClicked(String, bool),
     SongChanged,
+    QueueSongsChanged,
 }
 
 #[relm4::component(pub)]
@@ -480,7 +481,7 @@ impl relm4::Component for Queue {
             QueueIn::Replace(drop) => {
                 sender.input(QueueIn::Clear);
                 sender.input(QueueIn::Append(drop));
-                sender.output(QueueOut::SongChanged).unwrap();
+                sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::Append(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -499,7 +500,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
-                sender.output(QueueOut::SongChanged).unwrap();
+                sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::InsertAfterCurrentlyPlayed(drop) => {
                 let songs = drop.get_songs(&self.subsonic);
@@ -528,6 +529,7 @@ impl relm4::Component for Queue {
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
                 sender.output(QueueOut::SongChanged).unwrap();
+                sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::Clear => {
                 self.tracks.clear();
@@ -538,7 +540,7 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Placeholder);
                 sender.output(QueueOut::QueueEmpty).unwrap();
-                sender.output(QueueOut::SongChanged).unwrap();
+                sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::Remove => {
                 let selected_rows: Vec<u32> = (0..self.tracks.len())
@@ -565,6 +567,7 @@ impl relm4::Component for Queue {
                 sender.input(QueueIn::Rerandomize);
                 sender.input(QueueIn::SelectionChanged);
                 sender.output(QueueOut::SongChanged).unwrap();
+                sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::NewState(state) => {
                 if self.tracks.is_empty() {
@@ -860,6 +863,7 @@ impl relm4::Component for Queue {
                     });
 
                 sender.input(QueueIn::DragCssReset);
+                sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::DropInsert(drop, _x, y) => {
                 //finding the index which is the closest
