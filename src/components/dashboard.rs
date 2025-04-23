@@ -362,6 +362,9 @@ impl relm4::Component for Dashboard {
                             }
                         },
                         append: recently_stack = &gtk::Stack {
+                            set_transition_type: gtk::StackTransitionType::Crossfade,
+                            set_transition_duration: 100,
+
                             add_enumed[LoadingWidgetState::NotEmpty] = &model.recently_played_scroll.clone() {
                                 set_vscrollbar_policy: gtk::PolicyType::Never,
                                 set_hscrollbar_policy: gtk::PolicyType::External,
