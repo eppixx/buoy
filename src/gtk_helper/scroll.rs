@@ -4,8 +4,6 @@ use relm4::gtk::{
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-// static scrolled_ids: Arc<Mutex<HashMap<usize, usize>>> = Arc::new(Mutex::new(HashMap::new()));
-//TODO interrupt previous scrolling
 
 pub trait ScrolledWindowExt {
     fn scroll_to(&self, scroll_to_percent: f64);
