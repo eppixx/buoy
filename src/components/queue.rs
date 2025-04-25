@@ -186,6 +186,7 @@ pub enum QueueIn {
     UpdateFavoriteSong(String, bool),
     UpdatePlayCountSong(String, Option<i64>),
     JumpToCurrent,
+    DirectJumpToCurrent,
     Rerandomize,
     Cover(CoverOut),
     DragCssReset,
@@ -761,6 +762,15 @@ impl relm4::Component for Queue {
                     } else {
                         widgets.scrolled.scroll_to(scroll_y / height);
                     }
+                }
+            }
+            QueueIn::DirectJumpToCurrent => {
+                if let Some((index, _track)) = self.current() {
+                    let height = widgets.scrolled.vadjustment().upper();
+                    let scroll_y = height / self.tracks.len() as f64 * index as f64;
+                    // adjust so that widget is in the middle of the scrolled window
+                    let scroll_y = scroll_y - f64::from(widgets.scrolled.height()) * 0.45;
+                    widgets.scrolled.scroll_to(scroll_y / height);
                 }
             }
             QueueIn::Rerandomize => {

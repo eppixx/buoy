@@ -304,6 +304,16 @@ impl relm4::component::AsyncComponent for App {
             relm4::main_application().quit();
         }
 
+        //setup some stuff delayed
+        let queue = model.queue.sender().clone();
+        gtk::glib::spawn_future_local(async move {
+            // delay
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+            // scroll to current
+            queue.emit(QueueIn::DirectJumpToCurrent);
+        });
+
         relm4::component::AsyncComponentParts { model, widgets }
     }
 
