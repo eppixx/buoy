@@ -173,8 +173,6 @@ impl relm4::component::AsyncComponent for App {
                 }
             };
 
-            //TODO set playback seek
-
             // controls
             let controls = match settings.queue_current {
                 Some(_) => PlayState::Pause,
@@ -278,17 +276,6 @@ impl relm4::component::AsyncComponent for App {
             model
                 .seekbar
                 .emit(SeekbarIn::SeekTo(settings.queue_seek as i64));
-            if model.playback.borrow().is_track_set() {
-                if let Err(e) = model
-                    .playback
-                    .borrow_mut()
-                    .set_position(settings.queue_seek as i64)
-                {
-                    tracing::error!("playback set position error {e}");
-                    //TODO find out why this fails sometimes
-                    model.seekbar.emit(SeekbarIn::SeekTo(0));
-                }
-            }
 
             // playcontrol
             if model.queue.model().songs().is_empty() {
