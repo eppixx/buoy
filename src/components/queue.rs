@@ -555,7 +555,6 @@ impl relm4::Component for Queue {
                     .queue_stack
                     .set_visible_child_enum(&QueueStack::Queue);
                 sender.input(QueueIn::DragCssReset);
-                sender.output(QueueOut::SongChanged).unwrap();
                 sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::Clear => {
@@ -593,7 +592,6 @@ impl relm4::Component for Queue {
 
                 sender.input(QueueIn::Rerandomize);
                 sender.input(QueueIn::SelectionChanged);
-                sender.output(QueueOut::SongChanged).unwrap();
                 sender.output(QueueOut::QueueSongsChanged).unwrap();
             }
             QueueIn::NewState(state) => {
