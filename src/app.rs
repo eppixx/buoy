@@ -755,7 +755,7 @@ impl relm4::component::AsyncComponent for App {
                         self.browser
                             .emit(BrowserIn::UpdatePlayCountSong(child.id.clone(), play_count));
 
-                        //TODO check if play count album changed
+                        // check if play count album changed
                         let Some(album) = self.subsonic.borrow().album_of_song(&child) else {
                             return;
                         };
