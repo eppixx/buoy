@@ -6,8 +6,8 @@ use relm4::{
     gtk::{
         self, gdk,
         prelude::{
-            AdjustmentExt, BoxExt, ButtonExt, OrientableExt, SelectionModelExt, ToggleButtonExt,
-            WidgetExt,
+            AdjustmentExt, BoxExt, ButtonExt, GestureSingleExt, OrientableExt, SelectionModelExt,
+            ToggleButtonExt, WidgetExt,
         },
     },
     ComponentParts, ComponentSender, RelmWidgetExt,
@@ -24,7 +24,10 @@ use crate::{
         queue_song_row::{QueueSongRow, QueueUid, QueueUids},
         DragIndicatable,
     },
-    gtk_helper::{scroll::ScrolledWindowExt, stack::StackExt},
+    gtk_helper::{
+        scroll::{AutomaticScrolling, ScrolledWindowExt},
+        stack::StackExt,
+    },
     play_state::PlayState,
     player::Command,
     settings::Settings,
@@ -64,6 +67,7 @@ pub struct Queue {
     subsonic: Rc<RefCell<Subsonic>>,
     randomized_indices: Vec<usize>,
     tracks: relm4::typed_view::list::TypedListView<QueueSongRow, gtk::MultiSelection>,
+    scrolling: Rc<RefCell<AutomaticScrolling>>,
 }
 
 impl Queue {
@@ -233,6 +237,7 @@ impl relm4::Component for Queue {
             subsonic,
             randomized_indices: vec![],
             tracks,
+            scrolling: Rc::new(RefCell::new(AutomaticScrolling::default())),
         };
 
         //init queue
@@ -259,6 +264,19 @@ impl relm4::Component for Queue {
             .unwrap()
             .connect_selection_changed(move |_model, _, _| {
                 send.input(QueueIn::SelectionChanged);
+            });
+
+        // connect signal ScrolledWindow scrolled
+        let scroll_status = model.scrolling.clone();
+        let send = sender.clone();
+        widgets
+            .scrolled
+            .vadjustment()
+            .connect_value_changed(move |_adj| {
+                if *scroll_status.borrow() != AutomaticScrolling::Ready {
+                    return;
+                }
+                send.input(QueueIn::DisableJumpToCurrent);
             });
 
         sender.input(QueueIn::DragCssReset);
@@ -367,13 +385,22 @@ impl relm4::Component for Queue {
                                     false
                                 }
                             }
+                        },
+
+                        add_controller = gtk::GestureClick {
+                            set_button: 1,
+
+                            connect_pressed[sender] => move |_controller, _n, _x, _y| {
+                                sender.input(QueueIn::DisableJumpToCurrent);
+                            }
                         }
                     },
 
                     add_controller = gtk::EventControllerScroll {
                         set_flags: gtk::EventControllerScrollFlags::VERTICAL,
 
-                        connect_scroll[sender] => move |_controller, _x, _y| {
+                        connect_scroll[sender, scrolled] => move |_controller, _x, _y| {
+                            scrolled.set_widget_name("");
                             sender.input(QueueIn::DisableJumpToCurrent);
                             gtk::glib::signal::Propagation::Proceed
                         }
@@ -731,6 +758,7 @@ impl relm4::Component for Queue {
                             scroll_y / height,
                             std::time::Duration::from_secs(1),
                             std::time::Duration::from_millis(16),
+                            Some((std::time::Duration::from_millis(50), self.scrolling.clone())),
                         );
                     } else {
                         widgets.scrolled.scroll_to(scroll_y / height);
@@ -918,7 +946,10 @@ impl relm4::Component for Queue {
                     }
                 }
             }
-            QueueIn::DisableJumpToCurrent => widgets.jump_toggle.set_active(false),
+            QueueIn::DisableJumpToCurrent => {
+                self.scrolling.replace(AutomaticScrolling::Ready);
+                widgets.jump_toggle.set_active(false);
+            }
         }
     }
 }

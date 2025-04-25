@@ -1,9 +1,24 @@
+use std::{cell::RefCell, rc::Rc};
+
 use relm4::gtk::{
     self,
     prelude::{AdjustmentExt, WidgetExt},
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AutomaticScrolling {
+    Ready,
+    GracePeriod,
+    Scrolling,
+}
+
+impl Default for AutomaticScrolling {
+    fn default() -> Self {
+        Self::Ready
+    }
+}
 
 pub trait ScrolledWindowExt {
     fn scroll_to(&self, scroll_to_percent: f64);
@@ -12,6 +27,7 @@ pub trait ScrolledWindowExt {
         scroll_to_percent: f64,
         time: std::time::Duration,
         updates: std::time::Duration,
+        status: Option<(std::time::Duration, Rc<RefCell<AutomaticScrolling>>)>,
     );
 }
 
@@ -28,6 +44,7 @@ impl ScrolledWindowExt for gtk::ScrolledWindow {
         scroll_to_percent: f64,
         animation_length: std::time::Duration,
         update_delta: std::time::Duration,
+        status: Option<(std::time::Duration, Rc<RefCell<AutomaticScrolling>>)>,
     ) {
         let uid = UID.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
 
@@ -60,24 +77,49 @@ impl ScrolledWindowExt for gtk::ScrolledWindow {
         let scroll = self.clone();
         let mut updates_done = 0.0;
         gtk::glib::spawn_future_local(async move {
+            // set status to scrolling
+            if let Some((_, status)) = &status {
+                status.replace(AutomaticScrolling::Scrolling);
+            }
+
             loop {
                 tokio::time::sleep(update_delta).await;
 
                 // check if another animation has started
                 if let Ok(widget_id) = scroll.widget_name().parse::<usize>() {
                     if widget_id != uid {
+                        // note: if another scroll interrupts this one, status is still scrolling
                         return;
                     }
                 }
 
                 // do the animation frame
                 if updates_done <= total_updates {
+                    // scrolling ended externally
+                    if let Some((_, status)) = &status {
+                        if *status.borrow() == AutomaticScrolling::Ready {
+                            scroll.set_widget_name("");
+                            return;
+                        }
+                    }
+
+                    // do the scrolling
                     let new_value = start_value + step_value * updates_done;
                     adjustment.set_value(new_value);
                     updates_done += 1.0;
                     continue;
                 } else {
+                    // set target value
                     adjustment.set_value(target_value);
+                    if let Some((grace, status)) = &status {
+                        // wait the grace period for the next update
+                        status.replace(AutomaticScrolling::GracePeriod);
+                        tokio::time::sleep(*grace).await;
+                        status.replace(AutomaticScrolling::Ready);
+                    }
+
+                    // reset widget
+                    scroll.set_widget_name("");
                     break;
                 }
             }
