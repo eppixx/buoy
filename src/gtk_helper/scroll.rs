@@ -105,7 +105,7 @@ impl ScrolledWindowExt for gtk::ScrolledWindow {
 
                     // do the scrolling
                     let new_value = start_value + step_value * updates_done;
-                    adjustment.set_value(new_value);
+                    adjustment.set_value(new_value.floor());
                     updates_done += 1.0;
                     continue;
                 } else {
