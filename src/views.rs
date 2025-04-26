@@ -1,5 +1,6 @@
 use crate::components::browser;
 
+// views that are reachable through navigation buttons
 #[derive(Debug)]
 pub enum ClickableViews {
     Dashboard,
@@ -9,6 +10,7 @@ pub enum ClickableViews {
     Playlists,
 }
 
+// contains all views that can appear in Browser
 #[derive(Debug)]
 pub enum Views {
     Clickable(ClickableViews),
