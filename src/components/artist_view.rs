@@ -30,8 +30,6 @@ pub struct ArtistView {
     id: Id,
     cover: relm4::Controller<Cover>,
     favorite: gtk::Button,
-    title: String,
-    bio: String,
     albums: relm4::factory::FactoryVecDeque<AlbumElement>,
     most_played: relm4::typed_view::list::TypedListView<ArtistSongRow, gtk::SingleSelection>,
     random_songs: relm4::typed_view::list::TypedListView<ArtistSongRow, gtk::SingleSelection>,
@@ -93,8 +91,6 @@ impl relm4::Component for ArtistView {
                 .launch((subsonic.clone(), artist.clone().cover_art))
                 .forward(sender.input_sender(), ArtistViewIn::Cover),
             favorite: gtk::Button::default(),
-            title: artist.name.clone(),
-            bio: String::new(),
             albums: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::FlowBox::default())
                 .forward(sender.input_sender(), ArtistViewIn::AlbumElement),
@@ -249,13 +245,10 @@ impl relm4::Component for ArtistView {
 
                         gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                            #[watch]
-                            set_label: &model.title,
+                            set_label: &artist.name,
                             set_halign: gtk::Align::Start,
                         },
-                        gtk::Label {
-                            #[watch]
-                            set_markup: &gtk::glib::markup_escape_text(&model.bio),
+                        append: biography = &gtk::Label {
                             set_halign: gtk::Align::Start,
                             set_single_line_mode: false,
                             set_lines: -1,
@@ -579,10 +572,13 @@ impl relm4::Component for ArtistView {
                 )))
                 .unwrap(),
             ArtistViewCmd::LoadedArtistInfo(Ok(artist)) => {
-                self.bio = artist
+                let bio = artist
                     .base
                     .biography
                     .unwrap_or(gettext("No biography found"));
+                widgets
+                    .biography
+                    .set_markup(&gtk::glib::markup_escape_text(&bio));
             }
             ArtistViewCmd::LoadedSimilarSongs(Err(e)) => sender
                 .output(ArtistViewOut::DisplayToast(format!(
