@@ -248,7 +248,7 @@ impl relm4::Component for ArtistView {
                         set_spacing: 5,
 
                         gtk::Label {
-                            add_css_class: "h2",
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
                             #[watch]
                             set_label: &model.title,
                             set_halign: gtk::Align::Start,

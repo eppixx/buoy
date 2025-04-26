@@ -113,7 +113,7 @@ impl relm4::Component for Equalizer {
             set_spacing: 30,
 
             gtk::Label {
-                add_css_class: "h3",
+                add_css_class: granite::STYLE_CLASS_H3_LABEL,
                 set_label: &gettext("Equalizer"),
             },
 

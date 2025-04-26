@@ -194,7 +194,7 @@ impl relm4::Component for AlbumView {
                         set_spacing: 8,
 
                         append: album_title = &gtk::Label {
-                            add_css_class: "h2",
+                            add_css_class: granite::STYLE_CLASS_H2_LABEL,
                             set_label: &gettext("Loading Album"),
                             set_halign: gtk::Align::Start,
                         },
