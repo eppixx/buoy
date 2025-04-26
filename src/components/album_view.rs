@@ -199,6 +199,7 @@ impl relm4::Component for AlbumView {
                             set_halign: gtk::Align::Start,
                         },
                         append: album_artist = &gtk::Label {
+                            add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_halign: gtk::Align::Start,
 
                             connect_activate_link[sender] => move |_label, text| {
