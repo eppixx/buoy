@@ -58,6 +58,7 @@ impl relm4::component::Component for SettingsWindow {
 
                 #[wrap(Some)]
                 set_title_widget = &gtk::Label {
+                    add_css_class: granite::STYLE_CLASS_H3_LABEL,
                     set_label: &gettext("Settings"),
                 }
             },
