@@ -246,6 +246,11 @@ impl relm4::component::AsyncComponent for Browser {
                     );
                 }
 
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Clickable(
+                        views::ClickableViews::Artists,
+                    )))
+                    .unwrap();
                 self.history_widget.push(Views::Artists(
                     self.artists.as_ref().unwrap().widget().clone(),
                 ));
@@ -340,6 +345,11 @@ impl relm4::component::AsyncComponent for Browser {
                     );
                 }
 
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Clickable(
+                        views::ClickableViews::Tracks,
+                    )))
+                    .unwrap();
                 self.history_widget.push(Views::Tracks(
                     self.tracks.as_ref().unwrap().widget().clone(),
                 ));
@@ -358,6 +368,11 @@ impl relm4::component::AsyncComponent for Browser {
                     PlaylistsView::builder()
                         .launch(self.subsonic.clone())
                         .forward(sender.input_sender(), BrowserIn::PlaylistsView);
+                sender
+                    .output(BrowserOut::ChangedViewTo(views::Views::Clickable(
+                        views::ClickableViews::Playlists,
+                    )))
+                    .unwrap();
                 self.history_widget
                     .push(Views::Playlists(playlists.widget().clone()));
                 self.playlists_views.push(playlists);

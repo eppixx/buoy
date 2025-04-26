@@ -900,19 +900,22 @@ impl relm4::component::AsyncComponent for App {
                     sender.input(AppIn::FavoriteSongClicked(id, state));
                 }
                 BrowserOut::Download(drop) => sender.input(AppIn::Download(drop)),
-                BrowserOut::ChangedViewTo(view) => match view {
-                    Views::Clickable(view) => sender.input(AppIn::ClickedNavigationBtn(view)),
-                    Views::Artist => {
-                        reset_navigation_btns(widgets);
-                        widgets.artist_rvl.set_reveal_child(true);
-                        widgets.artist_btn.set_active(true);
+                BrowserOut::ChangedViewTo(view) => {
+                    sender.input(AppIn::SearchActivate(false));
+                    match view {
+                        Views::Clickable(view) => sender.input(AppIn::ClickedNavigationBtn(view)),
+                        Views::Artist => {
+                            reset_navigation_btns(widgets);
+                            widgets.artist_rvl.set_reveal_child(true);
+                            widgets.artist_btn.set_active(true);
+                        }
+                        Views::Album => {
+                            reset_navigation_btns(widgets);
+                            widgets.album_rvl.set_reveal_child(true);
+                            widgets.album_btn.set_active(true);
+                        }
                     }
-                    Views::Album => {
-                        reset_navigation_btns(widgets);
-                        widgets.album_rvl.set_reveal_child(true);
-                        widgets.album_btn.set_active(true);
-                    }
-                },
+                }
             },
             AppIn::PlayInfo(msg) => match msg {
                 PlayInfoOut::DisplayToast(title) => sender.input(AppIn::DisplayToast(title)),
