@@ -34,6 +34,13 @@ contents > box {
     border-right: 1px solid Gray;
 }
 
+.round-badge {
+    border-radius: 20px;
+    padding-left: 7px;
+    padding-right: 7px;
+    background-color: Gray;
+}
+
 .neutral-color {
     background-color: rgb(75, 75, 75);
 }

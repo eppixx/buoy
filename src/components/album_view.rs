@@ -210,6 +210,12 @@ impl relm4::Component for AlbumView {
                         append: album_info = &gtk::Label {
                             set_halign: gtk::Align::Start,
                         },
+                        append: album_genres = &gtk::Box {
+                            set_spacing: 10,
+                            gtk::Label {
+                                set_label: &gettext("Genre:"),
+                            }
+                        },
                         gtk::Box {
                             set_spacing: 15,
                             append: append_append = &gtk::Button {
@@ -495,6 +501,20 @@ impl relm4::Component for AlbumView {
                 //update info label
                 widgets.album_info.set_label(&build_info_string(&album));
 
+                album
+                    .base
+                    .genres
+                    .iter()
+                    .flat_map(|map| {
+                        map.iter()
+                            .filter_map(|(key, value)| (*key == "name").then_some(value))
+                    })
+                    .for_each(|genre| {
+                        let genre = gtk::Label::new(Some(genre));
+                        genre.add_css_class("round-badge");
+                        widgets.album_genres.append(&genre);
+                    });
+
                 // set artist label
                 let markup = format!(
                     "by <span style=\"italic\"><a href=\"{}\">{}</a></span>",
@@ -547,12 +567,6 @@ fn build_info_string(child: &submarine::data::AlbumWithSongsId3) -> String {
         result.push_str(&played.to_string());
         result.push(' ');
         result.push_str(&gettext("times"));
-    }
-    if let Some(genre) = &child.base.genre {
-        result.push_str(" • ");
-        result.push_str(&gettext("Genre"));
-        result.push_str(": ");
-        result.push_str(&genre.to_string());
     }
     result
 }
