@@ -67,6 +67,7 @@ pub enum DashboardIn {
     ClickedRandomize,
     UpdateFavoriteAlbum(String, bool),
     ScrollOuter(f64),
+    UpdateRecentlyPlayed,
 }
 
 #[derive(Debug)]
@@ -122,25 +123,6 @@ impl relm4::Component for Dashboard {
         let mut guard = model.recently_added_list.guard();
         list.into_iter().for_each(|info| _ = guard.push_back(info));
         drop(guard);
-
-        //load recently played albums
-        let dashboard_line_items = Settings::get().lock().unwrap().dashboard_line_items;
-        sender.oneshot_command(async move {
-            let client = match Client::get() {
-                None => return DashboardCmd::Error(String::from("no client found")),
-                Some(client) => client,
-            };
-            DashboardCmd::LoadedRecentlyPlayed(
-                client
-                    .get_album_list2(
-                        submarine::api::get_album_list::Order::Recent,
-                        Some(dashboard_line_items),
-                        None,
-                        None::<String>,
-                    )
-                    .await,
-            )
-        });
 
         //load random albums
         sender.input(DashboardIn::ClickedRandomize);
@@ -567,7 +549,9 @@ impl relm4::Component for Dashboard {
             DashboardIn::FilterChanged => {
                 let search_fn = |element: &gtk::FlowBoxChild| -> bool {
                     let mut search = Settings::get().lock().unwrap().search_text.clone();
-                    let (title, artist) = get_info_of_flowboxchild(element).unwrap();
+                    let Some((title, artist)) = get_info_of_flowboxchild(element) else {
+                        return true;
+                    };
                     let mut title_artist = format!("{} {}", title.text(), artist.text());
 
                     // when search bar is hidden every element will be shown
@@ -592,6 +576,7 @@ impl relm4::Component for Dashboard {
                     }
                 };
 
+                // apply search_fn as filter to FlowBox
                 self.recently_added_list.widget().set_filter_func(search_fn);
                 self.recently_played_list
                     .widget()
@@ -646,6 +631,25 @@ impl relm4::Component for Dashboard {
                         .emit_scroll_child(gtk::ScrollType::StepDown, false);
                 }
             }
+            DashboardIn::UpdateRecentlyPlayed => {
+                let dashboard_line_items = Settings::get().lock().unwrap().dashboard_line_items;
+                sender.oneshot_command(async move {
+                    let client = match Client::get() {
+                        None => return DashboardCmd::Error(String::from("no client found")),
+                        Some(client) => client,
+                    };
+                    DashboardCmd::LoadedRecentlyPlayed(
+                        client
+                            .get_album_list2(
+                                submarine::api::get_album_list::Order::Recent,
+                                Some(dashboard_line_items),
+                                None,
+                                None::<String>,
+                            )
+                            .await,
+                    )
+                });
+            }
         }
     }
 
@@ -667,6 +671,10 @@ impl relm4::Component for Dashboard {
                     return;
                 }
 
+                // remove previous entries
+                self.recently_played_list.guard().clear();
+
+                // add new entries
                 let ids: Vec<Id> = list.iter().map(|album| Id::album(&album.id)).collect();
                 widgets
                     .recently_stack

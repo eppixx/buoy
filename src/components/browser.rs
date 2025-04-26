@@ -232,6 +232,8 @@ impl relm4::component::AsyncComponent for Browser {
                 sender
                     .output(BrowserOut::BackButtonSensitivity(true))
                     .unwrap();
+
+                self.dashboard.emit(DashboardIn::UpdateRecentlyPlayed);
             }
             BrowserIn::ShowArtists => {
                 if let Some(&Views::Artists(_)) = self.history_widget.last() {
