@@ -408,7 +408,7 @@ impl relm4::Component for Dashboard {
                                     add_css_class: granite::STYLE_CLASS_H3_LABEL,
                                 }
                             },
-                            set_visible_child_enum: &LoadingWidgetState::Empty,
+                            set_visible_child_enum: &LoadingWidgetState::Loading,
                         }
                     },
 
