@@ -1,9 +1,15 @@
 [package]
 name = "buoy"
-version = "0.1.0"
+version = "0.9.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Thomas Eppers"]
+description = "A GTK client for connecting, showing and playing from a subsonic music server"
+readme = "Readme.md"
+repository = "https://github.com/eppixx/buoy"
+documentation = "https://docs.rs/buoy"
+license = "MIT"
+keywords = ["subsonic", "gtk", "music", "streaming", "client"]
+categories = ["multimedia::audio"]
 
 [dependencies]
 # common components
