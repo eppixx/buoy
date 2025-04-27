@@ -3058,8 +3058,9 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "submarine"
-version = "0.1.0"
-source = "git+https://github.com/eppixx/submarine#fb9d03e13cc13e15b72ac7929a5e6f98699966aa"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3b64cdef6c866513248bc55d3041abede05fceedd45ad48bb143c1d8719322f"
 dependencies = [
  "cfg-if",
  "chrono",
