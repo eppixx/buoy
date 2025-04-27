@@ -52,6 +52,16 @@ pub struct Args {
 fn main() -> anyhow::Result<()> {
     let args = Rc::new(RefCell::new(Args::parse()));
 
+    // setup folder cache and config
+    let cache_path = dirs::cache_dir()
+        .expect("cant create cache dir")
+        .join(LOG_PREFIX);
+    std::fs::create_dir_all(&cache_path).expect("could not create cache folder");
+    let config_path = dirs::config_dir()
+        .expect("cant create config dir")
+        .join(LOG_PREFIX);
+    std::fs::create_dir_all(config_path).expect("could not create config folder");
+
     // invert debug logging when compiled with debug mode
     #[cfg(debug_assertions)]
     {
@@ -71,12 +81,7 @@ fn main() -> anyhow::Result<()> {
             .unwrap_or(default_filter);
 
         // setup log file
-        let cache_path = dirs::cache_dir()
-            .expect("cant create cache dir")
-            .join(LOG_PREFIX)
-            .join(LOG_FILE_NAME);
-        let parent = cache_path.parent().expect("config file has no parent");
-        std::fs::create_dir_all(parent).expect("could not create config folder");
+        let cache_path = cache_path.join(LOG_FILE_NAME);
         let log_file = std::fs::File::create(cache_path).expect("cant create log file");
 
         // create file layer

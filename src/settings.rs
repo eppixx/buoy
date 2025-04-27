@@ -151,12 +151,7 @@ impl Settings {
             .join(FILE_NAME);
         let mut config_file = match std::fs::File::open(&config_path) {
             Ok(file) => file,
-            Err(_) => {
-                // might need to create config folder
-                let parent = config_path.parent().expect("config file has no parent");
-                std::fs::create_dir_all(parent).expect("could not create config folder");
-                std::fs::File::create(config_path).expect("could not create config file")
-            }
+            Err(_) => std::fs::File::create(config_path).expect("could not create config file"),
         };
         let mut content = String::new();
         config_file.read_to_string(&mut content).unwrap_or_default();
