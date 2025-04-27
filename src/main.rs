@@ -75,6 +75,8 @@ fn main() -> anyhow::Result<()> {
             .expect("cant create cache dir")
             .join(LOG_PREFIX)
             .join(LOG_FILE_NAME);
+        let parent = cache_path.parent().expect("config file has no parent");
+        std::fs::create_dir_all(parent).expect("could not create config folder");
         let log_file = std::fs::File::create(cache_path).expect("cant create log file");
 
         // create file layer
