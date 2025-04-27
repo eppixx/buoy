@@ -47,6 +47,7 @@ url = "2.5.4"
 notify-rust = { version = "4.11.7", features = ["images"] }
 image = "0.25.6"
 
+keyframe = "1.1.1"
 
 [profile.release]
 strip = "debuginfo"

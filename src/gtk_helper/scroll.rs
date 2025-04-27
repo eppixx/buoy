@@ -70,8 +70,6 @@ impl ScrolledWindowExt for gtk::ScrolledWindow {
 
         // calc the steps needed
         let total_updates = animation_length.as_secs_f64() / update_delta.as_secs_f64();
-        // calc the scrol_value increments for every step
-        let step_value = (target_value - start_value) / total_updates;
 
         // spawn thread that updates the scrolling
         let scroll = self.clone();
@@ -104,7 +102,12 @@ impl ScrolledWindowExt for gtk::ScrolledWindow {
                     }
 
                     // do the scrolling
-                    let new_value = start_value + step_value * updates_done;
+                    let new_value = keyframe::ease(
+                        keyframe::functions::EaseInOutQuart,
+                        start_value,
+                        target_value,
+                        updates_done / total_updates,
+                    );
                     adjustment.set_value(new_value.floor());
                     updates_done += 1.0;
                     continue;
