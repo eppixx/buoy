@@ -383,7 +383,8 @@ impl Subsonic {
             .iter_mut()
             .find(|playlist| playlist.base.id == list.base.id)
         else {
-            todo!("do smth when playlist does not exist");
+            tracing::error!("tried to replace playlist, but no playlist to replace");
+            return;
         };
 
         playlist.entry = list.entry.clone();

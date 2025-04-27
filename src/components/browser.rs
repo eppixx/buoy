@@ -171,7 +171,6 @@ impl relm4::component::AsyncComponent for Browser {
                 if let Some(tracks) = &self.tracks {
                     tracks.emit(TracksViewIn::FilterChanged);
                 }
-                //TODO change to filter changed
                 for view in &self.album_views {
                     view.emit(AlbumViewIn::FilterChanged(search.clone()));
                 }
