@@ -760,7 +760,10 @@ impl relm4::Component for Queue {
                             Some((std::time::Duration::from_millis(50), self.scrolling.clone())),
                         );
                     } else {
-                        widgets.scrolled.scroll_to(scroll_y / height);
+                        widgets.scrolled.scroll_to(
+                            scroll_y / height,
+                            Some((std::time::Duration::from_millis(50), self.scrolling.clone())),
+                        );
                     }
                 }
             }
@@ -770,7 +773,10 @@ impl relm4::Component for Queue {
                     let scroll_y = height / self.tracks.len() as f64 * index as f64;
                     // adjust so that widget is in the middle of the scrolled window
                     let scroll_y = scroll_y - f64::from(widgets.scrolled.height()) * 0.45;
-                    widgets.scrolled.scroll_to(scroll_y / height);
+                    widgets.scrolled.scroll_to(
+                        scroll_y / height,
+                        Some((std::time::Duration::from_millis(50), self.scrolling.clone())),
+                    );
                 }
             }
             QueueIn::Rerandomize => {

@@ -21,7 +21,11 @@ impl Default for AutomaticScrolling {
 }
 
 pub trait ScrolledWindowExt {
-    fn scroll_to(&self, scroll_to_percent: f64);
+    fn scroll_to(
+        &self,
+        scroll_to_percent: f64,
+        status: Option<(std::time::Duration, Rc<RefCell<AutomaticScrolling>>)>,
+    );
     fn smooth_scroll_to(
         &self,
         scroll_to_percent: f64,
@@ -32,11 +36,25 @@ pub trait ScrolledWindowExt {
 }
 
 impl ScrolledWindowExt for gtk::ScrolledWindow {
-    fn scroll_to(&self, scroll_to_percent: f64) {
+    fn scroll_to(
+        &self,
+        scroll_to_percent: f64,
+        status: Option<(std::time::Duration, Rc<RefCell<AutomaticScrolling>>)>,
+    ) {
+        if let Some((_, status)) = &status {
+            status.replace(AutomaticScrolling::Scrolling);
+        }
         let adj = self.vadjustment();
         let scroll_to_y = adj.upper() * scroll_to_percent;
         adj.set_value(scroll_to_y);
         self.set_vadjustment(Some(&adj));
+        gtk::glib::spawn_future_local(async move {
+            if let Some((grace, status)) = &status {
+                status.replace(AutomaticScrolling::GracePeriod);
+                tokio::time::sleep(*grace).await;
+                status.replace(AutomaticScrolling::Ready);
+            }
+        });
     }
 
     fn smooth_scroll_to(
