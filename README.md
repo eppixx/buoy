@@ -42,14 +42,40 @@ buoy
 
 ### Installing with flatpak
 
+These instructions don't need elevated priviliges because they use `--user`.
+This also means, that it installs everything for the local user.
+If you don't want that, remove `--user` from the instructions.
+
+
 Fetch the flatpak dependencies
 ```bash
-flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/8
+sudo apt install flatpak-builder
+# you may need to add flathub as remote
+flatpak --user remote-add --if-not-exists elementary https://flatpak.elementary.io/repo.flatpakrepo
+flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+# install actual dependencies
+flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8 io.elementary.Sdk/x86_64/7.3
+flatpak --user install -y --noninteractive org.freedesktop.Sdk.Extension.rust-stable/x86_64/23.08
+
 ```
+
+#### Updating `cargo-sources.json`
+
+When initailizing for the first time or changing `Cargo.toml`, `cargo-sources.json` needs to be updated for the flatpak version with
+```bash
+wget https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
+python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
+```
+You might need to install some dependencies
+```bash
+sudo apt install python3-aiohttp python3-toml
+```
+
+#### Building and installing
 
 Building the project
 ```bash
-flatpak-builder --user flatpak_app com.github.eppixx.buoy.json buoy --force-clean
+flatpak-builder --user flatpak_app com.github.eppixx.buoy.json --force-clean
 ```
 
 Run the build version without installing with
@@ -57,7 +83,7 @@ Run the build version without installing with
 flatpak-builder --run flatpak_app com.github.eppixx.buoy.json buoy
 ```
 
-Install the local version with
+Install with
 ```bash
 flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.json --force-clean
 
