@@ -79,7 +79,9 @@ impl relm4::component::Component for SettingsWindow {
                         },
                         #[wrap(Some)]
                         set_end_widget = &gtk::Switch {
+                            set_valign: gtk::Align::Center,
                             set_state: Settings::get().lock().unwrap().send_notifications,
+
                             connect_state_set => move |_switch, value| {
                                 Settings::get().lock().unwrap().send_notifications = value;
                                 gtk::glib::signal::Propagation::Proceed
@@ -96,6 +98,7 @@ impl relm4::component::Component for SettingsWindow {
                         },
                         #[wrap(Some)]
                         set_end_widget = &gtk::Switch {
+                            set_valign: gtk::Align::Center,
                             set_state: Settings::get().lock().unwrap().scrobble,
 
                             connect_state_set => move |_switch, value| {
@@ -135,6 +138,7 @@ impl relm4::component::Component for SettingsWindow {
                         },
                         #[wrap(Some)]
                         set_end_widget = &gtk::Switch {
+                            set_valign: gtk::Align::Center,
                             set_state: Settings::get().lock().unwrap().queue_animations,
 
                             connect_state_set => move |_switch, value| {
