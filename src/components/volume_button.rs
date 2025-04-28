@@ -22,10 +22,10 @@ pub enum ButtonState {
 impl ButtonState {
     fn from_volume(volume: f64) -> Self {
         match volume {
-            f64::MIN..0.01 => ButtonState::Mute(String::from("audio-volume-muted")),
-            0.01..0.33 => ButtonState::Low(String::from("audio-volume-low")),
-            0.33..0.66 => ButtonState::Mute(String::from("audio-volume-medium")),
-            0.66..f64::MAX => ButtonState::Mute(String::from("audio-volume-high")),
+            f64::MIN..0.01 => ButtonState::Mute(String::from("audio-volume-muted-symbolic")),
+            0.01..0.33 => ButtonState::Low(String::from("audio-volume-low-symbolic")),
+            0.33..0.66 => ButtonState::Mute(String::from("audio-volume-medium-symbolic")),
+            0.66..f64::MAX => ButtonState::Mute(String::from("audio-volume-high-symbolic")),
             _ => unreachable!("NaN should never be possible"),
         }
     }
