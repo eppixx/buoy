@@ -320,6 +320,7 @@ impl relm4::Component for ArtistView {
 
             gtk::ScrolledWindow {
                 set_vexpand: true,
+                set_margin_horizontal: 7,
 
                 gtk::Box {
                     set_spacing: 10,
