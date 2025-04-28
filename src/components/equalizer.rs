@@ -127,6 +127,8 @@ impl relm4::Component for Equalizer {
 
                 #[wrap(Some)]
                 set_end_widget: enabled = &gtk::Switch {
+                    set_valign: gtk::Align::Center,
+
                     connect_state_set[sender] => move |_swtich, state| {
                         sender.input(EqualizerIn::Enabled(state));
                         gtk::glib::Propagation::Proceed
