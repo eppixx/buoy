@@ -80,6 +80,7 @@ impl relm4::SimpleComponent for PlayControl {
                 set_valign: gtk::Align::End,
 
                 model.random_btn.clone() -> gtk::Button {
+                    add_css_class: "flat",
                     set_focus_on_click: false,
                     set_margin_end: 10,
 
@@ -135,10 +136,11 @@ impl relm4::SimpleComponent for PlayControl {
 
             append = &gtk::Box {
                 set_valign: gtk::Align::End,
-                set_margin_start: 10,
 
                 model.repeat_btn.clone() {
+                    add_css_class: "flat",
                     set_focus_on_click: false,
+                    set_margin_start: 10,
 
                     connect_clicked[sender] => move |btn| {
                         let mut repeat = Repeat::from_str(&btn.icon_name().unwrap()).unwrap();
