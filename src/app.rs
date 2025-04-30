@@ -364,14 +364,14 @@ impl relm4::component::AsyncComponent for App {
                 #[wrap(Some)]
                 set_end_child = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
+                    set_margin_top: 3,
+                    set_margin_end: 3,
 
-                    gtk::HeaderBar {
-                        add_css_class: granite::STYLE_CLASS_FLAT,
-                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                        set_show_title_buttons: false,
+                    gtk::CenterBox {
                         set_halign: gtk::Align::Fill,
 
-                        pack_start = &gtk::Box {
+                        #[wrap(Some)]
+                        set_start_widget = &gtk::Box {
                             append: back_btn = &gtk::Button {
                                 set_icon_name: "go-previous-symbolic",
                                 add_css_class: "flat",
@@ -385,7 +385,7 @@ impl relm4::component::AsyncComponent for App {
                         },
 
                         #[wrap(Some)]
-                        set_title_widget = &gtk::Box {
+                        set_center_widget = &gtk::Box {
                             set_widget_name: "navigation-buttons",
                             set_hexpand: true,
                             set_halign: gtk::Align::Center,
@@ -559,7 +559,8 @@ impl relm4::component::AsyncComponent for App {
                             }
                         },
 
-                        pack_end = &gtk::Box {
+                        #[wrap(Some)]
+                        set_end_widget = &gtk::Box {
                             set_hexpand: true,
                             set_halign: gtk::Align::End,
                             set_spacing: 5,
