@@ -565,6 +565,7 @@ impl relm4::component::AsyncComponent for App {
                                 add_css_class: "flat",
                                 add_css_class: "size24",
                                 set_icon_name: "media-eq-symbolic",
+                                set_tooltip: &gettext("Open Equalizer settings"),
 
                                 connect_clicked[equalizer_popover] => move |_btn| {
                                     equalizer_popover.show();
