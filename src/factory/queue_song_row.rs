@@ -197,10 +197,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
                     }
                 },
                 append: length = &gtk::Label,
-                append: fav_btn = &gtk::Button {
-                    set_tooltip: &gettext("Click to (un)favorite song"),
-                    set_focus_on_click: false,
-                },
+                append: fav_btn = &super::create_fav_btn() {},
             }
         }
 

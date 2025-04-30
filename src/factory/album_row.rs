@@ -400,10 +400,7 @@ impl relm4::typed_view::column::RelmColumn for FavColumn {
 
     fn setup(_item: &gtk::ListItem) -> (Self::Root, Self::Widgets) {
         let (view, model) = Model::new();
-        let fav_btn = gtk::Button::new();
-        fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
-        fav_btn.set_focus_on_click(false);
-
+        let fav_btn = super::create_fav_btn();
         let cell = Rc::new(RefCell::new(String::new()));
         view.set_child(Some(&fav_btn));
         (view, (cell, fav_btn, model, SetupFinished(false)))

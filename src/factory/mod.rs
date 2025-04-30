@@ -1,4 +1,5 @@
-use relm4::gtk::{self, prelude::WidgetExt};
+use gettextrs::gettext;
+use relm4::{gtk::{self, prelude::WidgetExt}, RelmWidgetExt};
 
 use crate::css::DragState;
 
@@ -15,6 +16,14 @@ fn get_list_item_widget(widget: &impl gtk::prelude::IsA<gtk::Widget>) -> Option<
     let b = widget.parent()?;
     let column_view_cell = b.parent()?;
     column_view_cell.parent()
+}
+
+fn create_fav_btn() -> gtk::Button {
+    let fav_btn = gtk::Button::new();
+    fav_btn.set_tooltip(&gettext("Click to (un)favorite song"));
+    fav_btn.set_focus_on_click(false);
+    fav_btn.add_css_class("flat");
+    fav_btn
 }
 
 pub struct SetupFinished(bool);
