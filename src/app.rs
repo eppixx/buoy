@@ -361,7 +361,7 @@ impl relm4::component::AsyncComponent for App {
                 set_end_child = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     set_margin_top: 3,
-                    set_margin_end: 3,
+                    set_margin_horizontal: 3,
 
                     gtk::CenterBox {
                         set_halign: gtk::Align::Fill,
@@ -372,6 +372,7 @@ impl relm4::component::AsyncComponent for App {
                                 set_icon_name: "go-previous-symbolic",
                                 add_css_class: "flat",
                                 add_css_class: "size24",
+                                add_css_class: "round-button",
                                 add_css_class: "destructive-button-spacer",
                                 set_tooltip: &gettext("Go back to previous page"),
 
@@ -388,9 +389,10 @@ impl relm4::component::AsyncComponent for App {
                             set_spacing: 15,
 
                             append: search_btn = &gtk::ToggleButton {
-                                set_icon_name: "system-search-symbolic",
                                 add_css_class: "flat",
                                 add_css_class: "size24",
+                                add_css_class: "round-button",
+                                set_icon_name: "system-search-symbolic",
                                 set_tooltip: &gettext("Open search bar"),
 
                                 connect_toggled[sender] => move |button| {
@@ -404,6 +406,7 @@ impl relm4::component::AsyncComponent for App {
                             gtk::Box {
                                 append: dashboard_btn = &gtk::ToggleButton {
                                     add_css_class: "flat",
+                                    add_css_class: "circular",
                                     set_tooltip: &gettext("Go to dashboard"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Dashboard),
 
@@ -425,6 +428,7 @@ impl relm4::component::AsyncComponent for App {
                                 },
                                 append: artists_btn = &gtk::ToggleButton {
                                     add_css_class: "flat",
+                                    add_css_class: "circular",
                                     set_tooltip: &gettext("Show artists"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Artists),
 
@@ -451,6 +455,7 @@ impl relm4::component::AsyncComponent for App {
                                     #[wrap(Some)]
                                     set_child: artist_btn = &gtk::ToggleButton {
                                         add_css_class: "flat",
+                                        add_css_class: "circular",
 
                                         gtk::Box {
                                             set_spacing: 3,
@@ -463,6 +468,7 @@ impl relm4::component::AsyncComponent for App {
                                 },
                                 append: albums_btn = &gtk::ToggleButton {
                                     add_css_class: "flat",
+                                    add_css_class: "circular",
                                     set_tooltip: &gettext("Show albums"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Albums),
 
@@ -489,6 +495,7 @@ impl relm4::component::AsyncComponent for App {
                                     #[wrap(Some)]
                                     set_child: album_btn = &gtk::ToggleButton {
                                         add_css_class: "flat",
+                                        add_css_class: "circular",
 
                                         gtk::Box {
                                             set_spacing: 3,
@@ -501,6 +508,7 @@ impl relm4::component::AsyncComponent for App {
                                 },
                                 append: tracks_btn = &gtk::ToggleButton {
                                     add_css_class: "flat",
+                                    add_css_class: "circular",
                                     set_tooltip: &gettext("Show tracks"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Tracks),
 
@@ -522,6 +530,7 @@ impl relm4::component::AsyncComponent for App {
                                 },
                                 append: playlists_btn = &gtk::ToggleButton {
                                     add_css_class: "flat",
+                                    add_css_class: "circular",
                                     set_tooltip: &gettext("Show playlists"),
                                     connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Playlists),
 
@@ -564,6 +573,7 @@ impl relm4::component::AsyncComponent for App {
                             append: equalizer_btn = &gtk::Button {
                                 add_css_class: "flat",
                                 add_css_class: "size24",
+                                add_css_class: "round-button",
                                 set_icon_name: "media-eq-symbolic",
                                 set_tooltip: &gettext("Open Equalizer settings"),
 
@@ -575,7 +585,7 @@ impl relm4::component::AsyncComponent for App {
                             append: volume_btn = &gtk::Button {
                                 add_css_class: "flat",
                                 add_css_class: "size24",
-                                set_icon_name: "open-menu-symbolic",
+                                add_css_class: "round-button",
                                 set_tooltip: &gettext("Change volume by opening, scrolling or middle clicking"),
 
                                 connect_clicked[volume_popover] => move |_btn| {
@@ -620,6 +630,7 @@ impl relm4::component::AsyncComponent for App {
                             gtk::Button {
                                 add_css_class: "flat",
                                 add_css_class: "size24",
+                                add_css_class: "round-button",
                                 set_icon_name: "open-menu-symbolic",
                                 set_tooltip: &gettext("Open settings"),
 
@@ -638,6 +649,7 @@ impl relm4::component::AsyncComponent for App {
                         append: search_bar = &gtk::Revealer {
                             set_transition_duration: 200,
                             set_transition_type: gtk::RevealerTransitionType::SlideUp,
+                            set_margin_top: 3,
 
                             gtk::Box {
                                 set_spacing: 10,
