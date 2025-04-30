@@ -7,7 +7,7 @@ use relm4::{
         self,
         prelude::{ButtonExt, WidgetExt},
     },
-    Component, ComponentController, RelmWidgetExt,
+    Component, ComponentController,
 };
 
 use crate::{

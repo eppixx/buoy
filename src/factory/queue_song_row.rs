@@ -6,7 +6,7 @@ use relm4::{
         self, glib, pango,
         prelude::{BoxExt, ButtonExt, OrientableExt, ToValue, WidgetExt},
     },
-    Component, ComponentController, RelmWidgetExt,
+    Component, ComponentController,
 };
 
 use crate::{

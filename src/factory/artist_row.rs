@@ -1,13 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use gettextrs::gettext;
 use granite::prelude::ToValue;
 use relm4::{
     gtk::{
         self,
         prelude::{ButtonExt, WidgetExt},
     },
-    Component, ComponentController, RelmWidgetExt,
+    Component, ComponentController,
 };
 
 use crate::{

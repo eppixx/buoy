@@ -1,12 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use gettextrs::gettext;
-use relm4::{
-    gtk::{
-        self, glib,
-        prelude::{ButtonExt, ToValue, WidgetExt},
-    },
-    RelmWidgetExt,
+use relm4::gtk::{
+    self, glib,
+    prelude::{ButtonExt, ToValue, WidgetExt},
 };
 
 use crate::{

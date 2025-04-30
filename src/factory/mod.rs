@@ -1,5 +1,8 @@
 use gettextrs::gettext;
-use relm4::{gtk::{self, prelude::WidgetExt}, RelmWidgetExt};
+use relm4::{
+    gtk::{self, prelude::WidgetExt},
+    RelmWidgetExt,
+};
 
 use crate::css::DragState;
 
