@@ -365,6 +365,7 @@ impl relm4::component::AsyncComponent for App {
                         pack_start = &gtk::Box {
                             append: back_btn = &gtk::Button {
                                 set_icon_name: "go-previous-symbolic",
+                                add_css_class: "flat",
                                 add_css_class: "size24",
                                 add_css_class: "destructive-button-spacer",
                                 set_tooltip: &gettext("Go back to previous page"),
@@ -383,6 +384,7 @@ impl relm4::component::AsyncComponent for App {
 
                             append: search_btn = &gtk::ToggleButton {
                                 set_icon_name: "system-search-symbolic",
+                                add_css_class: "flat",
                                 add_css_class: "size24",
                                 set_tooltip: &gettext("Open search bar"),
 
@@ -554,6 +556,7 @@ impl relm4::component::AsyncComponent for App {
                             set_spacing: 5,
 
                             append: equalizer_btn = &gtk::Button {
+                                add_css_class: "flat",
                                 add_css_class: "size24",
                                 set_icon_name: "media-eq-symbolic",
 
@@ -563,6 +566,7 @@ impl relm4::component::AsyncComponent for App {
                             },
 
                             append: volume_btn = &gtk::Button {
+                                add_css_class: "flat",
                                 add_css_class: "size24",
                                 set_icon_name: "open-menu-symbolic",
                                 set_tooltip: &gettext("Change volume by opening, scrolling or middle clicking"),
@@ -607,6 +611,7 @@ impl relm4::component::AsyncComponent for App {
                             },
 
                             gtk::Button {
+                                add_css_class: "flat",
                                 add_css_class: "size24",
                                 set_icon_name: "open-menu-symbolic",
                                 set_tooltip: &gettext("Open settings"),
