@@ -56,6 +56,12 @@ contents > box {
     min-height: 32px;
 }
 
+/* play controls */
+.size42 {
+    min-width: 42px;
+    min-height: 42px;
+}
+
 .size100 {
     min-width: 100px;
     min-height: 100px;

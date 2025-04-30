@@ -99,6 +99,7 @@ impl relm4::SimpleComponent for PlayControl {
             append = &model.prev_btn.clone() {
                 add_css_class: "play-control-main-button",
                 add_css_class: "circular",
+                add_css_class: "size42",
                 set_icon_name: "media-skip-backward-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
@@ -109,6 +110,7 @@ impl relm4::SimpleComponent for PlayControl {
             append = &model.play_btn.clone() {
                 add_css_class: "play-control-main-button",
                 add_css_class: "circular",
+                add_css_class: "size42",
                 set_icon_name: "media-playback-stop-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |btn| {
@@ -127,6 +129,7 @@ impl relm4::SimpleComponent for PlayControl {
             append = &model.next_btn.clone() {
                 add_css_class: "play-control-main-button",
                 add_css_class: "circular",
+                add_css_class: "size42",
                 set_icon_name: "media-skip-forward-symbolic",
                 set_focus_on_click: false,
                 connect_clicked[sender] => move |_| {
