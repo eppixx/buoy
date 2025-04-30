@@ -335,15 +335,24 @@ impl relm4::component::AsyncComponent for App {
                             set_orientation: gtk::Orientation::Vertical,
                             set_spacing: 12,
 
-                            gtk::HeaderBar {
-                                add_css_class: granite::STYLE_CLASS_FLAT,
-                                add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                                set_show_title_buttons: false,
-                                pack_start = &gtk::WindowControls {
-                                    set_side: gtk::PackType::Start,
-                                }
+                            gtk::Overlay {
+                                #[wrap(Some)]
+                                set_child = model.play_info.widget() {
+                                    set_margin_top: 10,
+                                },
+
+                                add_overlay = &gtk::CenterBox {
+                                    set_margin_top: 3,
+                                    set_margin_start: 3,
+
+                                    #[wrap(Some)]
+                                    set_start_widget = &gtk::WindowControls {
+                                        set_valign: gtk::Align::Start,
+                                        set_side: gtk::PackType::Start,
+                                    },
+                                },
                             },
-                            model.play_info.widget(),
+
                             model.play_controls.widget(),
                             model.seekbar.widget(),
                         },
