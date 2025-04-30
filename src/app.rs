@@ -109,10 +109,6 @@ impl relm4::component::AsyncComponent for App {
                     set_orientation: gtk::Orientation::Vertical,
                     set_hexpand: true,
 
-                    gtk::HeaderBar {
-                        add_css_class: granite::STYLE_CLASS_FLAT,
-                        add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    },
                     gtk::WindowHandle {
                         set_vexpand: true,
                         set_valign: gtk::Align::Center,
