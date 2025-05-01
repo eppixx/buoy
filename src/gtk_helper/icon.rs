@@ -16,7 +16,8 @@ impl<'a> Default for Icon<'a> {
             #[cfg(test)]
             ("test", String::from("testi")),
             // real icons
-            ("playlist-symbolic", String::from("playlists-symbolic"))
+            ("playlist-symbolic", String::from("playlists-symbolic")),
+            ("media-eq-symbolic", String::from("equalizer-symbolic"))
         ];
         Self {
             fallbacks: fallbacks.into(),
