@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
-   sodipodi:docname="media-playlist-no-repeat-symbolic.svg"
+   sodipodi:docname="repeat-symbolic.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -193,20 +193,16 @@
      id="layer1">
     <path
        transform="matrix(-0.91713325,0,0,-0.85204433,32.834568,31.043415)"
-       style="fill:none;stroke:#666666;stroke-width:3.39370384;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#RoundedArrow)"
+       style="fill:none;stroke:#000000;stroke-width:3.39370384;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#RoundedArrow)"
        id="path7"
-       d="m 32.505775,11.721726 -0.03915,8.33579 c -0.02204,4.692162 -3.85125,8.473977 -8.543322,8.437576 l -9.905387,-0.07685"
+       d="m 32.505775,11.721726 -0.03915,8.33579 c -0.02204,4.692161 -3.85125,8.473977 -8.543322,8.437575 l -9.905387,-0.07685"
        inkscape:path-effect="#path-effect8;#path-effect10"
        inkscape:original-d="m 32.505775,11.721726 -0.07909,16.839335 -18.40877,-0.142816"
        sodipodi:nodetypes="ccc" />
     <path
        transform="matrix(0.91713325,0,0,0.85204433,-0.51210349,1.1901964)"
-       style="fill:none;stroke:#666666;stroke-width:3.39370384;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#RoundedArrow)"
+       style="fill:none;stroke:#000000;stroke-width:3.39370384;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#RoundedArrow)"
        id="path10"
-       d="m 32.505775,11.721726 -0.03915,8.33579 c -0.02204,4.692162 -3.85125,8.473977 -8.543322,8.437576 l -9.905387,-0.07685" />
-    <path
-       style="fill:none;stroke:#555761;stroke-width:2.37306;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="M 3.3436735,3.3436735 28.656327,28.656327"
-       id="path11" />
+       d="m 32.505775,11.721726 -0.03915,8.33579 c -0.02204,4.692161 -3.85125,8.473977 -8.543322,8.437575 l -9.905387,-0.07685" />
   </g>
 </svg>
