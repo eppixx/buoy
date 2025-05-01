@@ -32,3 +32,7 @@ install_data(
   'svg/equalizer-symbolic.svg',
   install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
 )
+install_data(
+  'svg/media-playlist-no-repeat-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+)

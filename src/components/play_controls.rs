@@ -149,6 +149,7 @@ impl relm4::SimpleComponent for PlayControl {
                         let mut repeat = Repeat::from_str(&btn.icon_name().unwrap()).unwrap();
                         repeat.next();
                         btn.set_icon_name(repeat.current());
+                        btn.set_tooltip_text(repeat.tooltip());
                         let mut settings = Settings::get().lock().unwrap();
                         settings.repeat = repeat.clone();
                         sender.output(PlayControlOut::Player(Command::Repeat(repeat))).unwrap();
