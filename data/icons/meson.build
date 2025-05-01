@@ -22,3 +22,13 @@ install_data(
   install_dir: join_paths(get_option('datadir'), 'icons', symbolic_dir),
   rename: ('@0@-symbolic.svg').format(application_id)
 )
+
+# Install fallback icons
+install_data(
+  'svg/playlists-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+)
+install_data(
+  'svg/equalizer-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+)

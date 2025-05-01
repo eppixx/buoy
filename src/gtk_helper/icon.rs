@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use relm4::gtk;
 
-static ICON: OnceLock<Icon> = OnceLock::new();
+static ICONS: OnceLock<Icon> = OnceLock::new();
 
 pub struct Icon<'a> {
     fallbacks: std::collections::HashMap<&'a str, String>,
@@ -16,7 +16,7 @@ impl<'a> Default for Icon<'a> {
             #[cfg(test)]
             ("test", String::from("testi")),
             // real icons
-            ("playlist-symbolic", String::from("document-open"))
+            ("playlist-symbolic", String::from("playlists-symbolic"))
         ];
         Self {
             fallbacks: fallbacks.into(),
@@ -26,14 +26,15 @@ impl<'a> Default for Icon<'a> {
 
 impl<'a> Icon<'a> {
     pub fn from_str(name: &str) -> &str {
-        let theme = gtk::IconTheme::default();
+        let theme = gtk::IconTheme::for_display(&gtk::gdk::Display::default().unwrap());
         if theme.has_icon(name) {
             return name;
         }
 
         // icon is not in theme, lookup possible backup
-        let icon_map = ICON.get_or_init(|| Icon::default());
-        if let Some(icon_name) = icon_map.fallbacks.get(name) {
+        let icons = ICONS.get_or_init(|| Icon::default());
+        if let Some(icon_name) = icons.fallbacks.get(name) {
+            tracing::warn!("using fallback icon for {name}");
             icon_name
         } else {
             name
