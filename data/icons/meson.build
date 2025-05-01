@@ -30,13 +30,17 @@ install_data(
 )
 install_data(
   'svg/media-eq-symbolic.svg',
-  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/actions'
 )
 install_data(
   'svg/media-playlist-no-repeat-symbolic.svg',
-  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/status'
 )
 install_data(
   'svg/media-playlist-repeat-symbolic.svg',
-  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/status'
+)
+install_data(
+  'svg/audio-x-generic-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/mimes'
 )

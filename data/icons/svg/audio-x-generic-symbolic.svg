@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="32"
+   height="32"
+   viewBox="0 0 32 32"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   sodipodi:docname="audio-x-generic-symbolic.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     inkscape:zoom="11.313709"
+     inkscape:cx="0.97227182"
+     inkscape:cy="28.726213"
+     inkscape:window-width="1920"
+     inkscape:window-height="1019"
+     inkscape:window-x="0"
+     inkscape:window-y="30"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect6"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,2.2050545,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,2.1322952,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect5"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+  </defs>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g2-6"
+       transform="matrix(0.04707859,-0.00995889,0.01145098,0.04094418,11.667371,6.9629146)"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1">
+      <path
+         class="st0"
+         d="m 39.583,427.108 c -206.54527,-676.85955 -206.54527,-676.85955 0,0 z"
+         id="path1-2"
+         sodipodi:nodetypes="ss"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+    </g>
+    <ellipse
+       style="fill:#000000;fill-opacity:1;stroke:#080000;stroke-width:3.29426;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="path2"
+       ry="2.1961749"
+       rx="3.3972077"
+       cy="21.766331"
+       cx="7.9713831" />
+    <path
+       id="path3"
+       style="fill:#080000;fill-opacity:1;stroke:none;stroke-linejoin:round;stroke-opacity:1"
+       d="M 8.7753906,6.0741951 V 21.279297 H 10.990234 V 8.3694297 l 12.355701,2.4368113 2.52e-4,13.603876 2.265625,-0.01208 V 9.1201783 a 2.5635512,2.5635512 50.247197 0 0 -2.096628,-2.52067 L 10.943561,4.2707677 A 1.834107,1.834107 140.2472 0 0 8.7753906,6.0741951 Z"
+       inkscape:original-d="M 8.7753906,3.8691406 V 21.279297 H 10.990234 V 8.3694297 l 12.355701,2.4368113 2.52e-4,13.603876 2.265625,-0.01208 V 6.9878831 Z"
+       inkscape:path-effect="#path-effect6"
+       sodipodi:nodetypes="ccccccccc"
+       transform="matrix(1.0980874,0,0,1.0980874,0.94712296,-1.6001968)" />
+    <ellipse
+       style="fill:#000000;fill-opacity:1;stroke:#080000;stroke-width:3.29435;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="path2-7"
+       ry="2.1961341"
+       rx="3.3974385"
+       cy="25.100901"
+       cx="24.028341" />
+  </g>
+</svg>
