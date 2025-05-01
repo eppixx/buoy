@@ -28,6 +28,7 @@ use crate::{
     },
     config,
     download::Download,
+    gtk_helper::icon::Icon,
     mpris::{Mpris, MprisOut},
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
@@ -549,7 +550,8 @@ impl relm4::component::AsyncComponent for App {
                                         set_spacing: 3,
 
                                         gtk::Image {
-                                            set_icon_name: Some("playlist-symbolic"),
+                                            // set_icon_name: Some("playlist-symbolic"),
+                                            set_icon_name: Some(Icon::from_str("playlist-symbolic")),
                                         },
                                         append: playlists_rvl = &gtk::Revealer {
                                             set_transition_duration: 200,

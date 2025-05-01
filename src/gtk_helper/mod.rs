@@ -1,3 +1,4 @@
+pub mod icon;
 pub mod list_store;
 pub mod loading_widget;
 pub mod scroll;
