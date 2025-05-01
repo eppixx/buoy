@@ -28,7 +28,6 @@ use crate::{
     },
     config,
     download::Download,
-    gtk_helper::icon::Icon,
     mpris::{Mpris, MprisOut},
     play_state::PlayState,
     playback::{Playback, PlaybackOut},
@@ -550,7 +549,7 @@ impl relm4::component::AsyncComponent for App {
                                         set_spacing: 3,
 
                                         gtk::Image {
-                                            set_icon_name: Some(Icon::from_str("playlist-symbolic")),
+                                            set_icon_name: Some("playlist-symbolic"),
                                         },
                                         append: playlists_rvl = &gtk::Revealer {
                                             set_transition_duration: 200,
@@ -575,7 +574,7 @@ impl relm4::component::AsyncComponent for App {
                                 add_css_class: "flat",
                                 add_css_class: "size24",
                                 add_css_class: "round-button",
-                                set_icon_name: Icon::from_str("media-eq-symbolic"),
+                                set_icon_name: "media-eq-symbolic",
                                 set_tooltip: &gettext("Open Equalizer settings"),
 
                                 connect_clicked[equalizer_popover] => move |_btn| {

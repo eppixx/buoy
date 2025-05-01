@@ -25,14 +25,18 @@ install_data(
 
 # Install fallback icons
 install_data(
-  'svg/playlists-symbolic.svg',
+  'svg/playlist-symbolic.svg',
   install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
 )
 install_data(
-  'svg/equalizer-symbolic.svg',
+  'svg/media-eq-symbolic.svg',
   install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
 )
 install_data(
   'svg/media-playlist-no-repeat-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
+)
+install_data(
+  'svg/media-playlist-repeat-symbolic.svg',
   install_dir: get_option('datadir') / 'icons/hicolor/scalable/places'
 )
