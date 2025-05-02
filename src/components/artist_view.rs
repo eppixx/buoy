@@ -260,10 +260,8 @@ impl relm4::Component for ArtistView {
                             gtk::Button {
                                 gtk::Box {
                                     gtk::Image {
-                                        set_icon_name: Some("list-add-symbolic"),
-                                    },
-                                    gtk::Label {
-                                        set_label: &gettext("Append"),
+                                        set_icon_name: Some("queue-append-symbolic"),
+                                        set_pixel_size: 20,
                                     },
                                 },
                                 set_tooltip: &gettext("Append Artist to end of queue"),
@@ -274,11 +272,9 @@ impl relm4::Component for ArtistView {
                             gtk::Button {
                                 gtk::Box {
                                     gtk::Image {
-                                        set_icon_name: Some("list-add-symbolic"),
+                                        set_icon_name: Some("queue-insert-symbolic"),
+                                        set_pixel_size: 20,
                                     },
-                                    gtk::Label {
-                                        set_label: &gettext("Play next"),
-                                    }
                                 },
                                 set_tooltip: &gettext("Insert Artist after currently played or paused item"),
                                 connect_clicked[sender, artist] => move |_btn| {
@@ -288,11 +284,9 @@ impl relm4::Component for ArtistView {
                             gtk::Button {
                                 gtk::Box {
                                     gtk::Image {
-                                        set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                        set_icon_name: Some("queue-replace-symbolic"),
+                                        set_pixel_size: 20,
                                     },
-                                    gtk::Label {
-                                        set_label: &gettext("Replace queue"),
-                                    }
                                 },
                                 set_tooltip: &gettext("Replaces current queue with this artist"),
                                 connect_clicked[sender, artist] => move |_btn| {
@@ -303,10 +297,8 @@ impl relm4::Component for ArtistView {
                                 gtk::Box {
                                     gtk::Image {
                                         set_icon_name: Some("browser-download-symbolic"),
+                                        set_pixel_size: 20,
                                     },
-                                    gtk::Label {
-                                        set_label: &gettext("Download Artist"),
-                                    }
                                 },
                                 set_tooltip: &gettext("Click to select a folder to download this artist to"),
                                 connect_clicked[sender, artist] => move |_btn| {

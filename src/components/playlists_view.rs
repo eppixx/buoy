@@ -443,11 +443,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
+                                                    set_icon_name: Some("queue-append-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Append"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Append playlist to end of queue"),
                                             connect_clicked => PlaylistsViewIn::AppendToQueue,
@@ -455,11 +453,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
+                                                    set_icon_name: Some("queue-insert-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Play next"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Insert playlist after currently played or paused item"),
                                             connect_clicked => PlaylistsViewIn::AddToQueue,
@@ -467,11 +463,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                    set_icon_name: Some("queue-replace-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Replace queue"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Replaces current queue with this playlist"),
                                             connect_clicked => PlaylistsViewIn::ReplaceQueue,
@@ -480,10 +474,8 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                                             gtk::Box {
                                                 gtk::Image {
                                                     set_icon_name: Some("browser-download-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Download Playlist"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Click to select a folder to download this album to"),
                                             connect_clicked => PlaylistsViewIn::DownloadClicked,

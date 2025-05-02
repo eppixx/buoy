@@ -199,11 +199,9 @@ impl relm4::component::Component for ArtistsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
+                                                    set_icon_name: Some("queue-append-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Append"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Append artists to end of queue"),
                                             connect_clicked => ArtistsViewIn::AppendToQueue,
@@ -212,11 +210,9 @@ impl relm4::component::Component for ArtistsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
+                                                    set_icon_name: Some("queue-insert-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Play next"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Insert artists after currently played or paused item"),
                                             connect_clicked => ArtistsViewIn::AddToQueue,
@@ -225,11 +221,9 @@ impl relm4::component::Component for ArtistsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                    set_icon_name: Some("queue-replace-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Replace queue"),
-                                                }
                                             },
                                             set_tooltip: &gettext("Replaces current queue with artists"),
                                             connect_clicked => ArtistsViewIn::ReplaceQueue,

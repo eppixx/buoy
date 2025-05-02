@@ -231,11 +231,9 @@ impl relm4::component::Component for AlbumsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
+                                                    set_icon_name: Some("queue-append-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Append"),
-                                                }
                                             },
                                             connect_clicked => AlbumsViewIn::AppendToQueue,
                                         },
@@ -243,11 +241,9 @@ impl relm4::component::Component for AlbumsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
+                                                    set_icon_name: Some("queue-insert-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Play next"),
-                                                }
                                             },
                                             connect_clicked => AlbumsViewIn::AddToQueue,
                                         },
@@ -255,11 +251,9 @@ impl relm4::component::Component for AlbumsView {
                                         gtk::Button {
                                             gtk::Box {
                                                 gtk::Image {
-                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
+                                                    set_icon_name: Some("queue-replace-symbolic"),
+                                                    set_pixel_size: 20,
                                                 },
-                                                gtk::Label {
-                                                    set_label: &gettext("Replace queue"),
-                                                }
                                             },
                                             connect_clicked => AlbumsViewIn::ReplaceQueue,
                                         }

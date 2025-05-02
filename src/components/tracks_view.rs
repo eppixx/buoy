@@ -262,54 +262,32 @@ impl relm4::Component for TracksView {
                                     gtk::Box {
                                         set_spacing: 15,
 
-                                        #[name = "append_to_queue"]
-                                        gtk::Button {
-                                            gtk::Box {
-                                                gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
-                                                },
-                                                gtk::Label {
-                                                    set_label: &gettext("Append"),
-                                                }
+                                        append: append_to_queue = &gtk::Button {
+                                            gtk::Image {
+                                                set_icon_name: Some("queue-append-symbolic"),
+                                                set_pixel_size: 20,
                                             },
+                                            set_tooltip: &gettext("Append Tracks to end of queue"),
                                             connect_clicked => TracksViewIn::AppendToQueue,
                                         },
-                                        #[name = "add_to_queue"]
-                                        gtk::Button {
-                                            gtk::Box {
-                                                gtk::Image {
-                                                    set_icon_name: Some("list-add-symbolic"),
-                                                },
-                                                gtk::Label {
-                                                    set_label: &gettext("Play next"),
-                                                }
+
+                                        append: add_to_queue = &gtk::Button {
+                                            gtk::Image {
+                                                set_icon_name: Some("queue-insert-symbolic"),
+                                                set_pixel_size: 20,
                                             },
+                                            set_tooltip: &gettext("Insert Tracks after currently played or paused item"),
                                             connect_clicked => TracksViewIn::AddToQueue,
                                         },
-                                        #[name = "replace_queue"]
-                                        gtk::Button {
-                                            gtk::Box {
-                                                gtk::Image {
-                                                    set_icon_name: Some("emblem-symbolic-link-symbolic"),
-                                                },
-                                                gtk::Label {
-                                                    set_label: &gettext("Replace queue"),
-                                                }
+
+                                        append: replace_queue = &gtk::Button {
+                                            gtk::Image {
+                                                set_icon_name: Some("queue-replace-symbolic"),
+                                                set_pixel_size: 20,
                                             },
+                                            set_tooltip: &gettext("Replaces current queue with tracks"),
                                             connect_clicked => TracksViewIn::ReplaceQueue,
                                         },
-                                        gtk::Button {
-                                            gtk::Box {
-                                                gtk::Image {
-                                                    set_icon_name: Some("browser-download-symbolic"),
-                                                },
-                                                gtk::Label {
-                                                    set_label: &gettext("Download Tracks"),
-                                                }
-                                            },
-                                            set_tooltip: &gettext("Click to select a folder to download shown tracks to"),
-                                            connect_clicked => TracksViewIn::DownloadClicked,
-                                        }
                                     }
                                 }
                             },
