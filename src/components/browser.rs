@@ -698,10 +698,12 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.playlists_views {
                     view.emit(PlaylistsViewIn::NewPlaylist(list.clone()));
                 }
-                sender.output(BrowserOut::DisplayToast(format!(
-                    "{}: {name}",
-                    gettext("Created a new playlilst")
-                ))).unwrap();
+                sender
+                    .output(BrowserOut::DisplayToast(format!(
+                        "{}: {name}",
+                        gettext("Created a new playlilst")
+                    )))
+                    .unwrap();
             }
             BrowserIn::UpdateFavoriteSong(id, state) => {
                 //notify all views with songs in them
