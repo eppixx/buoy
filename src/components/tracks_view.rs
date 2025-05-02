@@ -92,6 +92,7 @@ pub enum TracksViewIn {
     ToggleFilters,
     TrackClicked(usize),
     RecalcDragSource,
+    CreatePlaylist,
 }
 
 #[derive(Debug)]
@@ -104,6 +105,7 @@ pub enum TracksViewOut {
     FavoriteClicked(String, bool),
     ClickedArtist(Id),
     ClickedAlbum(Id),
+    CreatePlaylist(String, Vec<submarine::data::Child>),
 }
 
 #[relm4::component(pub)]
@@ -286,6 +288,14 @@ impl relm4::Component for TracksView {
                                             },
                                             set_tooltip: &gettext("Replaces current queue with tracks"),
                                             connect_clicked => TracksViewIn::ReplaceQueue,
+                                        },
+                                        gtk::Button {
+                                            gtk::Image {
+                                                set_icon_name: Some("list-add-symbolic"),
+                                                set_pixel_size: 20,
+                                            },
+                                            set_tooltip: &gettext("Create a playlist with shown tracks"),
+                                            connect_clicked => TracksViewIn::CreatePlaylist,
                                         },
                                     }
                                 }
@@ -819,6 +829,23 @@ impl relm4::Component for TracksView {
                     .iter()
                     .filter_map(|i| self.tracks.get(*i))
                     .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
+            }
+            TracksViewIn::CreatePlaylist => {
+                if self.shown_tracks.borrow().is_empty() {
+                    return;
+                }
+                let tracks = self
+                    .shown_tracks
+                    .borrow()
+                    .iter()
+                    .filter_map(|id| self.subsonic.borrow().find_track(id))
+                    .collect();
+                sender
+                    .output(TracksViewOut::CreatePlaylist(
+                        gettext("New playlist from tracks"),
+                        tracks,
+                    ))
+                    .unwrap();
             }
         }
     }

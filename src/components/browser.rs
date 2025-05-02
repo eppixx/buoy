@@ -537,6 +537,9 @@ impl relm4::component::AsyncComponent for Browser {
                     .unwrap(),
                 TracksViewOut::ClickedArtist(id) => sender.input(BrowserIn::ShowArtist(id)),
                 TracksViewOut::ClickedAlbum(id) => sender.input(BrowserIn::ShowAlbum(id)),
+                TracksViewOut::CreatePlaylist(name, tracks) => {
+                    sender.input(BrowserIn::NewPlaylist(name, tracks))
+                }
             },
             BrowserIn::PlaylistsView(msg) => match msg {
                 PlaylistsViewOut::DisplayToast(title) => {
