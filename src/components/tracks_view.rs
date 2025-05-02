@@ -89,7 +89,6 @@ pub enum TracksViewIn {
     AppendToQueue,
     AddToQueue,
     ReplaceQueue,
-    DownloadClicked,
     ToggleFilters,
     TrackClicked(usize),
     RecalcDragSource,
@@ -778,19 +777,6 @@ impl relm4::Component for TracksView {
                     let drop = Droppable::Queue(tracks);
                     sender.output(TracksViewOut::ReplaceQueue(drop)).unwrap();
                 }
-            }
-            TracksViewIn::DownloadClicked => {
-                if self.shown_tracks.borrow().is_empty() {
-                    return;
-                }
-                let tracks = self
-                    .shown_tracks
-                    .borrow()
-                    .iter()
-                    .filter_map(|id| self.subsonic.borrow().find_track(id))
-                    .collect();
-                let drop = Droppable::Queue(tracks);
-                sender.output(TracksViewOut::Download(drop)).unwrap();
             }
             TracksViewIn::ToggleFilters => {
                 sender.input(TracksViewIn::FilterChanged);
