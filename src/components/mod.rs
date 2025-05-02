@@ -23,3 +23,4 @@ pub mod settings_window;
 pub mod sort_by;
 pub mod tracks_view;
 pub mod volume_button;
+pub mod warning_dialog;

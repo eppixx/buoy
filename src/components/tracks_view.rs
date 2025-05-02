@@ -5,7 +5,10 @@ use gettextrs::gettext;
 use relm4::{
     gtk::{
         self, glib,
-        prelude::{BoxExt, ButtonExt, ListModelExt, OrientableExt, SelectionModelExt, WidgetExt},
+        prelude::{
+            BoxExt, ButtonExt, GtkWindowExt, ListModelExt, OrientableExt, SelectionModelExt,
+            WidgetExt,
+        },
     },
     ComponentController, RelmWidgetExt,
 };
@@ -15,6 +18,7 @@ use crate::{
         cover::{Cover, CoverIn, CoverOut},
         filter_categories::Category,
         filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
+        warning_dialog::WarningDialog,
     },
     factory::track_row::{
         AlbumColumn, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
@@ -834,18 +838,57 @@ impl relm4::Component for TracksView {
                 if self.shown_tracks.borrow().is_empty() {
                     return;
                 }
-                let tracks = self
+                let tracks: Vec<_> = self
                     .shown_tracks
                     .borrow()
                     .iter()
                     .filter_map(|id| self.subsonic.borrow().find_track(id))
                     .collect();
-                sender
-                    .output(TracksViewOut::CreatePlaylist(
-                        gettext("New playlist from tracks"),
-                        tracks,
-                    ))
-                    .unwrap();
+
+                // might show warning
+                if tracks.len() >= 2000 {
+                    relm4::view! {
+                        #[template]
+                        warning = WarningDialog {
+                            #[template_child]
+                            warning_text {
+                                set_label: &gettext("You're aboput to create a playlist with over 2000 songs\nDo want to proceed?"),
+                            },
+                            #[template_child]
+                            cancel_btn {
+                                set_label: &gettext("Cancel"),
+                            },
+                            #[template_child]
+                            proceed_btn {
+                                set_label: &gettext("Create Playlist"),
+                            }
+                        }
+                    }
+
+                    let win = warning.clone();
+                    warning.cancel_btn.connect_clicked(move |_btn| {
+                        win.close();
+                    });
+                    let win = warning.clone();
+                    warning.proceed_btn.connect_clicked(move |_btn| {
+                        sender
+                            .output(TracksViewOut::CreatePlaylist(
+                                gettext("New playlist from tracks"),
+                                tracks.clone(),
+                            ))
+                            .unwrap();
+                        win.close();
+                    });
+
+                    warning.dialog.show();
+                } else {
+                    sender
+                        .output(TracksViewOut::CreatePlaylist(
+                            gettext("New playlist from tracks"),
+                            tracks.clone(),
+                        ))
+                        .unwrap();
+                }
             }
         }
     }
