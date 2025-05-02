@@ -1,20 +1,17 @@
 use std::{cell::RefCell, io::Write, rc::Rc};
 
 use gettextrs::gettext;
-use relm4::{
-    gtk::{
-        self,
-        prelude::{
-            BoxExt, ButtonExt, DialogExt, FileChooserExt, FileExt, GtkApplicationExt, GtkWindowExt,
-            OrientableExt, WidgetExt,
-        },
+use relm4::gtk::{
+    self,
+    prelude::{
+        ButtonExt, DialogExt, FileChooserExt, FileExt, GtkApplicationExt, GtkWindowExt, WidgetExt,
     },
-    RelmWidgetExt,
 };
 
 use crate::{
     app::App,
     client::Client,
+    components::warning_dialog::WarningDialog,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
@@ -51,77 +48,35 @@ impl Download {
         );
 
         relm4::view! {
-            download_warning = gtk::Window {
-                set_modal: true,
-                set_transient_for: Some(&relm4::main_application().windows()[0]),
-
-                #[wrap(Some)]
-                set_titlebar = &gtk::HeaderBar {
-                    add_css_class: granite::STYLE_CLASS_FLAT,
-                    add_css_class: granite::STYLE_CLASS_DEFAULT_DECORATION,
-                    set_show_title_buttons: false,
-                    set_visible: false,
+            #[template]
+            window = WarningDialog {
+                #[template_child]
+                warning_text {
+                    set_label: &warning,
                 },
-
-                gtk::WindowHandle {
-                    gtk::Box {
-                        set_margin_all: 15,
-                        set_spacing: 20,
-
-                        gtk::Image {
-                            set_icon_name: Some("dialog-warning"),
-                            set_pixel_size: 64,
-                        },
-
-                        gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 20,
-
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 5,
-
-                                gtk::Label {
-                                    set_label: "Warning",
-                                    add_css_class: granite::STYLE_CLASS_H2_LABEL,
-                                    set_halign: gtk::Align::Start,
-                                },
-
-                                gtk::Label {
-                                    set_label: &warning,
-                                }
-                            },
-                            gtk::Box {
-                                set_halign: gtk::Align::End,
-                                set_spacing: 10,
-
-
-                                append: cancel_btn = &gtk::Button {
-                                    set_label: &gettext("Cancel"),
-                                },
-
-                                append: proceed_btn = &gtk::Button {
-                                    set_label: &gettext("Download"),
-                                }
-                            }
-                        }
-                    }
+                #[template_child]
+                cancel_btn {
+                    set_label: &gettext("Cancel"),
+                },
+                #[template_child]
+                proceed_btn {
+                    set_label: &gettext("Download"),
                 }
             }
-        };
+        }
 
-        let win = download_warning.clone();
-        cancel_btn.connect_clicked(move |_btn| {
+        let win = window.clone();
+        window.cancel_btn.connect_clicked(move |_btn| {
             win.close();
         });
 
-        let win = download_warning.clone();
-        proceed_btn.connect_clicked(move |_btn| {
+        let win = window.clone();
+        window.proceed_btn.connect_clicked(move |_btn| {
             win.close();
             Self::show_file_chooser(sender.clone(), drop.clone());
         });
 
-        download_warning.show();
+        window.dialog.show();
     }
 
     fn show_file_chooser(sender: relm4::component::AsyncComponentSender<App>, drop: Droppable) {
