@@ -363,283 +363,285 @@ impl relm4::component::AsyncComponent for App {
                     set_margin_top: 3,
                     set_margin_horizontal: 3,
 
-                    gtk::CenterBox {
-                        set_halign: gtk::Align::Fill,
+                    gtk::WindowHandle {
+                        gtk::CenterBox {
+                            set_halign: gtk::Align::Fill,
 
-                        #[wrap(Some)]
-                        set_start_widget = &gtk::Box {
-                            append: back_btn = &gtk::Button {
-                                set_icon_name: "go-previous-symbolic",
-                                add_css_class: "flat",
-                                add_css_class: "size24",
-                                add_css_class: "round-button",
-                                add_css_class: "destructive-button-spacer",
-                                set_tooltip: &gettext("Go back to previous page"),
+                            #[wrap(Some)]
+                            set_start_widget = &gtk::Box {
+                                append: back_btn = &gtk::Button {
+                                    set_icon_name: "go-previous-symbolic",
+                                    add_css_class: "flat",
+                                    add_css_class: "size24",
+                                    add_css_class: "round-button",
+                                    add_css_class: "destructive-button-spacer",
+                                    set_tooltip: &gettext("Go back to previous page"),
 
-                                connect_clicked => AppIn::BackPressed,
+                                    connect_clicked => AppIn::BackPressed,
+                                },
+
                             },
 
-                        },
+                            #[wrap(Some)]
+                            set_center_widget = &gtk::Box {
+                                set_widget_name: "navigation-buttons",
+                                set_hexpand: true,
+                                set_halign: gtk::Align::Center,
+                                set_spacing: 15,
 
-                        #[wrap(Some)]
-                        set_center_widget = &gtk::Box {
-                            set_widget_name: "navigation-buttons",
-                            set_hexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_spacing: 15,
+                                append: search_btn = &gtk::ToggleButton {
+                                    add_css_class: "flat",
+                                    add_css_class: "size24",
+                                    add_css_class: "round-button",
+                                    set_icon_name: "system-search-symbolic",
+                                    set_tooltip: &gettext("Open search bar"),
 
-                            append: search_btn = &gtk::ToggleButton {
-                                add_css_class: "flat",
-                                add_css_class: "size24",
-                                add_css_class: "round-button",
-                                set_icon_name: "system-search-symbolic",
-                                set_tooltip: &gettext("Open search bar"),
-
-                                connect_toggled[sender] => move |button| {
-                                    match button.is_active() {
-                                        true => sender.input(AppIn::SearchActivate(true)),
-                                        false => sender.input(AppIn::SearchActivate(false)),
+                                    connect_toggled[sender] => move |button| {
+                                        match button.is_active() {
+                                            true => sender.input(AppIn::SearchActivate(true)),
+                                            false => sender.input(AppIn::SearchActivate(false)),
+                                        }
                                     }
+                                },
+
+                                gtk::Box {
+                                    append: dashboard_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+                                        add_css_class: "circular",
+                                        set_tooltip: &gettext("Go to dashboard"),
+                                        connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Dashboard),
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("go-home-symbolic"),
+                                            },
+                                            append: dashboard_rvl = &gtk::Revealer {
+                                                set_transition_duration: 200,
+                                                set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Dashboard"),
+                                                }
+                                            }
+                                        }
+                                    },
+                                    append: artists_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+                                        add_css_class: "circular",
+                                        set_tooltip: &gettext("Show artists"),
+                                        connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Artists),
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("avatar-default-symbolic"),
+                                            },
+                                            append: artists_rvl = &gtk::Revealer {
+                                                set_transition_duration: 200,
+                                                set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Artists"),
+                                                }
+                                            }
+                                        }
+                                    },
+                                    append: artist_rvl = &gtk::Revealer {
+                                        set_transition_duration: 200,
+                                        set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                        #[wrap(Some)]
+                                        set_child: artist_btn = &gtk::ToggleButton {
+                                            add_css_class: "flat",
+                                            add_css_class: "circular",
+
+                                            gtk::Box {
+                                                set_spacing: 3,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Artist"),
+                                                }
+                                            }
+                                        }
+                                    },
+                                    append: albums_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+                                        add_css_class: "circular",
+                                        set_tooltip: &gettext("Show albums"),
+                                        connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Albums),
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("media-optical-cd-audio-symbolic"),
+                                            },
+                                            append: albums_rvl = &gtk::Revealer {
+                                                set_transition_duration: 200,
+                                                set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Albums"),
+                                                }
+                                            }
+                                        }
+                                    },
+                                    append: album_rvl = &gtk::Revealer {
+                                        set_transition_duration: 200,
+                                        set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                        #[wrap(Some)]
+                                        set_child: album_btn = &gtk::ToggleButton {
+                                            add_css_class: "flat",
+                                            add_css_class: "circular",
+
+                                            gtk::Box {
+                                                set_spacing: 3,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Album"),
+                                                }
+                                            }
+                                        }
+                                    },
+                                    append: tracks_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+                                        add_css_class: "circular",
+                                        set_tooltip: &gettext("Show tracks"),
+                                        connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Tracks),
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("audio-x-generic-symbolic"),
+                                            },
+                                            append: tracks_rvl = &gtk::Revealer {
+                                                set_transition_duration: 200,
+                                                set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Tracks"),
+                                                }
+                                            }
+                                        }
+                                    },
+                                    append: playlists_btn = &gtk::ToggleButton {
+                                        add_css_class: "flat",
+                                        add_css_class: "circular",
+                                        set_tooltip: &gettext("Show playlists"),
+                                        connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Playlists),
+
+                                        // switch views when dragging over playlists button
+                                        add_controller = gtk::DropTarget {
+                                            set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
+                                            set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
+
+                                            connect_enter[sender] => move |_controller, _x, _y| {
+                                                sender.input(AppIn::ClickedNavigationBtn(ClickableViews::Playlists));
+                                                gdk::DragAction::COPY
+                                            }
+                                        },
+
+                                        gtk::Box {
+                                            set_spacing: 3,
+
+                                            gtk::Image {
+                                                set_icon_name: Some("playlist-symbolic"),
+                                            },
+                                            append: playlists_rvl = &gtk::Revealer {
+                                                set_transition_duration: 200,
+                                                set_transition_type: gtk::RevealerTransitionType::SlideRight,
+
+                                                gtk::Label {
+                                                    set_text: &gettext("Playlists"),
+                                                }
+                                            },
+                                        }
+                                    },
                                 }
                             },
 
-                            gtk::Box {
-                                append: dashboard_btn = &gtk::ToggleButton {
+                            #[wrap(Some)]
+                            set_end_widget = &gtk::Box {
+                                set_hexpand: true,
+                                set_halign: gtk::Align::End,
+                                set_spacing: 5,
+
+                                append: equalizer_btn = &gtk::Button {
                                     add_css_class: "flat",
-                                    add_css_class: "circular",
-                                    set_tooltip: &gettext("Go to dashboard"),
-                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Dashboard),
+                                    add_css_class: "size24",
+                                    add_css_class: "round-button",
+                                    set_icon_name: "media-eq-symbolic",
+                                    set_tooltip: &gettext("Open Equalizer settings"),
 
-                                    gtk::Box {
-                                        set_spacing: 3,
-
-                                        gtk::Image {
-                                            set_icon_name: Some("go-home-symbolic"),
-                                        },
-                                        append: dashboard_rvl = &gtk::Revealer {
-                                            set_transition_duration: 200,
-                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
-
-                                            gtk::Label {
-                                                set_text: &gettext("Dashboard"),
-                                            }
-                                        }
+                                    connect_clicked[equalizer_popover] => move |_btn| {
+                                        equalizer_popover.show();
                                     }
                                 },
-                                append: artists_btn = &gtk::ToggleButton {
+
+                                append: volume_btn = &gtk::Button {
                                     add_css_class: "flat",
-                                    add_css_class: "circular",
-                                    set_tooltip: &gettext("Show artists"),
-                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Artists),
+                                    add_css_class: "size24",
+                                    add_css_class: "round-button",
+                                    set_tooltip: &gettext("Change volume by opening, scrolling or middle clicking"),
 
-                                    gtk::Box {
-                                        set_spacing: 3,
+                                    connect_clicked[volume_popover] => move |_btn| {
+                                        volume_popover.show();
+                                    },
 
-                                        gtk::Image {
-                                            set_icon_name: Some("avatar-default-symbolic"),
-                                        },
-                                        append: artists_rvl = &gtk::Revealer {
-                                            set_transition_duration: 200,
-                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
+                                    // change volume on scrolling
+                                    add_controller = gtk::EventControllerScroll {
+                                        set_flags: gtk::EventControllerScrollFlags::VERTICAL,
 
-                                            gtk::Label {
-                                                set_text: &gettext("Artists"),
+                                        connect_scroll[last_volume_scroll_event, volume_button_sender] => move |controller, _x, y| {
+                                            // make sure scroll events are spaced
+                                            // otherwise the app locks up
+                                            const TIMEOUT: u32 = 70;
+                                            let event_time = controller.current_event_time();
+                                            if event_time - *last_volume_scroll_event.borrow() < TIMEOUT {
+                                                return gtk::glib::signal::Propagation::Proceed;
                                             }
-                                        }
-                                    }
-                                },
-                                append: artist_rvl = &gtk::Revealer {
-                                    set_transition_duration: 200,
-                                    set_transition_type: gtk::RevealerTransitionType::SlideRight,
+                                            *last_volume_scroll_event.borrow_mut() = event_time;
 
-                                    #[wrap(Some)]
-                                    set_child: artist_btn = &gtk::ToggleButton {
-                                        add_css_class: "flat",
-                                        add_css_class: "circular",
-
-                                        gtk::Box {
-                                            set_spacing: 3,
-
-                                            gtk::Label {
-                                                set_text: &gettext("Artist"),
+                                            if y < 0.0 {
+                                                volume_button_sender.emit(VolumeButtonIn::Increase);
+                                            } else {
+                                                volume_button_sender.emit(VolumeButtonIn::Decrease);
                                             }
-                                        }
-                                    }
-                                },
-                                append: albums_btn = &gtk::ToggleButton {
-                                    add_css_class: "flat",
-                                    add_css_class: "circular",
-                                    set_tooltip: &gettext("Show albums"),
-                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Albums),
 
-                                    gtk::Box {
-                                        set_spacing: 3,
-
-                                        gtk::Image {
-                                            set_icon_name: Some("media-optical-cd-audio-symbolic"),
-                                        },
-                                        append: albums_rvl = &gtk::Revealer {
-                                            set_transition_duration: 200,
-                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
-
-                                            gtk::Label {
-                                                set_text: &gettext("Albums"),
-                                            }
-                                        }
-                                    }
-                                },
-                                append: album_rvl = &gtk::Revealer {
-                                    set_transition_duration: 200,
-                                    set_transition_type: gtk::RevealerTransitionType::SlideRight,
-
-                                    #[wrap(Some)]
-                                    set_child: album_btn = &gtk::ToggleButton {
-                                        add_css_class: "flat",
-                                        add_css_class: "circular",
-
-                                        gtk::Box {
-                                            set_spacing: 3,
-
-                                            gtk::Label {
-                                                set_text: &gettext("Album"),
-                                            }
-                                        }
-                                    }
-                                },
-                                append: tracks_btn = &gtk::ToggleButton {
-                                    add_css_class: "flat",
-                                    add_css_class: "circular",
-                                    set_tooltip: &gettext("Show tracks"),
-                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Tracks),
-
-                                    gtk::Box {
-                                        set_spacing: 3,
-
-                                        gtk::Image {
-                                            set_icon_name: Some("audio-x-generic-symbolic"),
-                                        },
-                                        append: tracks_rvl = &gtk::Revealer {
-                                            set_transition_duration: 200,
-                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
-
-                                            gtk::Label {
-                                                set_text: &gettext("Tracks"),
-                                            }
-                                        }
-                                    }
-                                },
-                                append: playlists_btn = &gtk::ToggleButton {
-                                    add_css_class: "flat",
-                                    add_css_class: "circular",
-                                    set_tooltip: &gettext("Show playlists"),
-                                    connect_clicked => AppIn::ClickedNavigationBtn(ClickableViews::Playlists),
-
-                                    // switch views when dragging over playlists button
-                                    add_controller = gtk::DropTarget {
-                                        set_actions: gdk::DragAction::MOVE | gdk::DragAction::COPY,
-                                        set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()],
-
-                                        connect_enter[sender] => move |_controller, _x, _y| {
-                                            sender.input(AppIn::ClickedNavigationBtn(ClickableViews::Playlists));
-                                            gdk::DragAction::COPY
+                                            gtk::glib::signal::Propagation::Proceed
                                         }
                                     },
 
-                                    gtk::Box {
-                                        set_spacing: 3,
+                                    // mute on middle click
+                                    add_controller = gtk::GestureClick {
+                                        set_button: 2, // middle click
 
-                                        gtk::Image {
-                                            set_icon_name: Some("playlist-symbolic"),
-                                        },
-                                        append: playlists_rvl = &gtk::Revealer {
-                                            set_transition_duration: 200,
-                                            set_transition_type: gtk::RevealerTransitionType::SlideRight,
-
-                                            gtk::Label {
-                                                set_text: &gettext("Playlists"),
-                                            }
-                                        },
+                                        connect_released[volume_button_sender] => move |_controller, _number_of_clicks, _x, _y| {
+                                            volume_button_sender.emit(VolumeButtonIn::MuteToggle);
+                                        }
                                     }
+
                                 },
-                            }
-                        },
 
-                        #[wrap(Some)]
-                        set_end_widget = &gtk::Box {
-                            set_hexpand: true,
-                            set_halign: gtk::Align::End,
-                            set_spacing: 5,
+                                gtk::Button {
+                                    add_css_class: "flat",
+                                    add_css_class: "size24",
+                                    add_css_class: "round-button",
+                                    set_icon_name: "open-menu-symbolic",
+                                    set_tooltip: &gettext("Open settings"),
 
-                            append: equalizer_btn = &gtk::Button {
-                                add_css_class: "flat",
-                                add_css_class: "size24",
-                                add_css_class: "round-button",
-                                set_icon_name: "media-eq-symbolic",
-                                set_tooltip: &gettext("Open Equalizer settings"),
+                                    connect_clicked => AppIn::OpenSettings,
+                                },
 
-                                connect_clicked[equalizer_popover] => move |_btn| {
-                                    equalizer_popover.show();
+                                gtk::WindowControls {
+                                    set_side: gtk::PackType::End,
                                 }
                             },
-
-                            append: volume_btn = &gtk::Button {
-                                add_css_class: "flat",
-                                add_css_class: "size24",
-                                add_css_class: "round-button",
-                                set_tooltip: &gettext("Change volume by opening, scrolling or middle clicking"),
-
-                                connect_clicked[volume_popover] => move |_btn| {
-                                    volume_popover.show();
-                                },
-
-                                // change volume on scrolling
-                                add_controller = gtk::EventControllerScroll {
-                                    set_flags: gtk::EventControllerScrollFlags::VERTICAL,
-
-                                    connect_scroll[last_volume_scroll_event, volume_button_sender] => move |controller, _x, y| {
-                                        // make sure scroll events are spaced
-                                        // otherwise the app locks up
-                                        const TIMEOUT: u32 = 70;
-                                        let event_time = controller.current_event_time();
-                                        if event_time - *last_volume_scroll_event.borrow() < TIMEOUT {
-                                            return gtk::glib::signal::Propagation::Proceed;
-                                        }
-                                        *last_volume_scroll_event.borrow_mut() = event_time;
-
-                                        if y < 0.0 {
-                                            volume_button_sender.emit(VolumeButtonIn::Increase);
-                                        } else {
-                                            volume_button_sender.emit(VolumeButtonIn::Decrease);
-                                        }
-
-                                        gtk::glib::signal::Propagation::Proceed
-                                    }
-                                },
-
-                                // mute on middle click
-                                add_controller = gtk::GestureClick {
-                                    set_button: 2, // middle click
-
-                                    connect_released[volume_button_sender] => move |_controller, _number_of_clicks, _x, _y| {
-                                        volume_button_sender.emit(VolumeButtonIn::MuteToggle);
-                                    }
-                                }
-
-                            },
-
-                            gtk::Button {
-                                add_css_class: "flat",
-                                add_css_class: "size24",
-                                add_css_class: "round-button",
-                                set_icon_name: "open-menu-symbolic",
-                                set_tooltip: &gettext("Open settings"),
-
-                                connect_clicked => AppIn::OpenSettings,
-                            },
-
-                            gtk::WindowControls {
-                                set_side: gtk::PackType::End,
-                            }
                         },
                     },
 
