@@ -44,3 +44,15 @@ install_data(
   'svg/audio-x-generic-symbolic.svg',
   install_dir: get_option('datadir') / 'icons/hicolor/scalable/mimes'
 )
+install_data(
+  'svg/queue-replace-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/actions'
+)
+install_data(
+  'svg/queue-append-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/actions'
+)
+install_data(
+  'svg/queue-insert-symbolic.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/actions'
+)
