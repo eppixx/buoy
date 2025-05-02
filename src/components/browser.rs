@@ -631,7 +631,7 @@ impl relm4::component::AsyncComponent for Browser {
 
                 //decide wether to create a playlist whole or in chunks
                 let list = if list.len() < CHUNKS {
-                    match client.create_playlist(name, ids).await {
+                    match client.create_playlist(&name, ids).await {
                         Err(e) => {
                             sender
                                 .output(BrowserOut::DisplayToast(format!(
@@ -645,7 +645,7 @@ impl relm4::component::AsyncComponent for Browser {
                 } else {
                     tracing::info!("create a new playlist on server in chunks");
                     let first: Vec<_> = ids.iter().take(CHUNKS).collect();
-                    let mut playlist = match client.create_playlist(name, first).await {
+                    let mut playlist = match client.create_playlist(&name, first).await {
                         Err(e) => {
                             sender
                                 .output(BrowserOut::DisplayToast(format!(
@@ -698,6 +698,10 @@ impl relm4::component::AsyncComponent for Browser {
                 for view in &self.playlists_views {
                     view.emit(PlaylistsViewIn::NewPlaylist(list.clone()));
                 }
+                sender.output(BrowserOut::DisplayToast(format!(
+                    "{}: {name}",
+                    gettext("Created a new playlilst")
+                ))).unwrap();
             }
             BrowserIn::UpdateFavoriteSong(id, state) => {
                 //notify all views with songs in them
