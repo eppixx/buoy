@@ -20,7 +20,6 @@ use crate::{
         filter_row::{FilterRow, FilterRowIn, FilterRowOut},
         warning_dialog::WarningDialog,
     },
-    filter::{Filter, TextRelation},
     factory::track_row::{
         AlbumColumn, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
         PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
