@@ -252,6 +252,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -266,6 +267,7 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
                                     set_margin_end: 10,
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -316,6 +318,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -330,6 +333,7 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
                                     set_margin_end: 10,
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -419,6 +423,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -434,6 +439,7 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
                                     set_margin_end: 10,
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -486,6 +492,7 @@ impl relm4::Component for Dashboard {
                                 gtk::Image {
                                     set_icon_name: Some("go-previous-symbolic"),
                                     set_size_request: (40, 30),
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
@@ -500,6 +507,7 @@ impl relm4::Component for Dashboard {
                                     set_icon_name: Some("go-next-symbolic"),
                                     set_size_request: (40, 30),
                                     set_margin_end: 10,
+                                    set_tooltip: &gettext("Press and hold mouse button to scroll"),
 
                                     add_controller = gtk::GestureClick {
                                         connect_pressed[scroll_sender] => move |_btn, _, _, _| {
