@@ -80,6 +80,20 @@ impl TracksView {
                 .set_tooltip(&gettext("Replaces current queue with shown tracks"));
         }
     }
+
+    fn update_count_labels(
+        &self,
+        track_label: &gtk::Label,
+        album_label: &gtk::Label,
+        artist_label: &gtk::Label,
+    ) {
+        let tracks_len = self.shown_tracks.len();
+        let artists_len = self.shown_artists.len();
+        let albums_len = self.shown_albums.len();
+        track_label.set_text(&format!("{}: {tracks_len}", gettext("Shown tracks")));
+        artist_label.set_text(&format!("{}: {albums_len}", gettext("Shown artists")));
+        album_label.set_text(&format!("{}: {artists_len}", gettext("Shown albums")));
+    }
 }
 
 #[derive(Debug)]
@@ -201,12 +215,9 @@ impl relm4::Component for TracksView {
         let widgets = view_output!();
 
         //update labels and buttons
-        set_count_labels(
-            &model.shown_tracks,
+        model.update_count_labels(
             &widgets.shown_tracks,
-            &model.shown_albums,
             &widgets.shown_albums,
-            &model.shown_artists,
             &widgets.shown_artists,
         );
 
@@ -617,12 +628,9 @@ impl relm4::Component for TracksView {
 
                 // update widgets
                 self.calc_sensitivity_of_buttons(widgets);
-                set_count_labels(
-                    &self.shown_tracks,
+                self.update_count_labels(
                     &widgets.shown_tracks,
-                    &self.shown_albums,
                     &widgets.shown_albums,
-                    &self.shown_artists,
                     &widgets.shown_artists,
                 );
             }
@@ -823,17 +831,4 @@ impl relm4::Component for TracksView {
             }
         }
     }
-}
-
-fn set_count_labels(
-    tracks: &[String],
-    track_label: &gtk::Label,
-    albums: &HashSet<Option<String>>,
-    album_label: &gtk::Label,
-    artists: &HashSet<Option<String>>,
-    artist_label: &gtk::Label,
-) {
-    track_label.set_text(&format!("{}: {}", gettext("Shown tracks"), tracks.len()));
-    artist_label.set_text(&format!("{}: {}", gettext("Shown artists"), artists.len()));
-    album_label.set_text(&format!("{}: {}", gettext("Shown albums"), albums.len()));
 }
