@@ -174,8 +174,7 @@ impl Subsonic {
             if Self::is_smart_playlist(&playlist.base) {
                 *playlist = client
                     .get_playlist(&playlist.base.id)
-                    .await
-                    .expect("could not fetch smart playlist");
+                    .await?;
                 modified_list = true;
             }
         }
