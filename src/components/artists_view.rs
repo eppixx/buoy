@@ -1,6 +1,5 @@
 use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
-use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
 use relm4::{
     gtk::{
