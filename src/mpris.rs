@@ -9,9 +9,9 @@ use zbus::interface;
 
 use crate::{
     client::Client,
+    common::play_state::PlayState,
     components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     config,
-    play_state::PlayState,
     player::Command,
     Args,
 };

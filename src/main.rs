@@ -15,7 +15,6 @@ mod download;
 mod factory;
 pub mod gtk_helper;
 mod mpris;
-mod play_state;
 mod playback;
 pub mod player;
 pub mod settings;

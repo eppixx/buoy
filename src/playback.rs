@@ -10,7 +10,7 @@ use std::{
 use gstreamer::{self as gst, prelude::*};
 use relm4::gtk;
 
-use crate::{play_state::PlayState, settings::Settings};
+use crate::{common::play_state::PlayState, settings::Settings};
 
 #[derive(Debug)]
 pub struct Playback {

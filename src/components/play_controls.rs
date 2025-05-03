@@ -10,11 +10,11 @@ use relm4::{
 };
 
 use crate::{
+    common::play_state::PlayState,
     components::{
         sequence_button::Sequence,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
     },
-    play_state::PlayState,
     player::Command,
     settings::Settings,
 };

@@ -14,6 +14,7 @@ use relm4::{
 };
 
 use crate::{
+    common::play_state::PlayState,
     components::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
@@ -28,7 +29,6 @@ use crate::{
         scroll::{AutomaticScrolling, ScrolledWindowExt},
         stack::StackExt,
     },
-    play_state::PlayState,
     player::Command,
     settings::Settings,
     subsonic::Subsonic,

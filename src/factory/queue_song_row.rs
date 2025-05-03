@@ -10,14 +10,13 @@ use relm4::{
 };
 
 use crate::{
-    common,
+    common::{self, play_state::PlayState},
     components::{
         cover::{Cover, CoverIn},
         queue::{Queue, QueueIn, QueueOut},
     },
     factory::SetupFinished,
     gtk_helper::stack::StackExt,
-    play_state::PlayState,
     subsonic::Subsonic,
 };
 
