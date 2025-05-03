@@ -27,7 +27,7 @@ pub struct ArtistsView {
     subsonic: Rc<RefCell<Subsonic>>,
     filters: Rc<RefCell<relm4::factory::FactoryVecDeque<FilterRow>>>,
     entries: relm4::typed_view::column::TypedColumnView<ArtistRow, gtk::SingleSelection>,
-    shown_artists: Rc<RefCell<HashSet<String>>>,
+    shown_artists: HashSet<String>,
 }
 
 impl ArtistsView {
@@ -40,7 +40,7 @@ impl ArtistsView {
 
         if (!self.active_filters() && self.entries.len() >= allowed_queue_modifier_len)
             || (self.active_filters()
-                && self.shown_artists.borrow().len() >= allowed_queue_modifier_len as usize)
+                && self.shown_artists.len() >= allowed_queue_modifier_len as usize)
         {
             widgets.add_to_queue.set_sensitive(false);
             widgets
@@ -142,7 +142,7 @@ impl relm4::component::Component for ArtistsView {
                     .launch(gtk::ListBox::default())
                     .forward(sender.input_sender(), Self::Input::FilterRow),
             )),
-            shown_artists: Rc::new(RefCell::new(HashSet::new())),
+            shown_artists: HashSet::new(),
         };
 
         model
@@ -154,7 +154,7 @@ impl relm4::component::Component for ArtistsView {
         //add artists
         let list = model.subsonic.borrow().artists().to_vec();
         for artist in list.iter() {
-            model.shown_artists.borrow_mut().insert(artist.name.clone());
+            model.shown_artists.insert(artist.name.clone());
             let artist = ArtistRow::new(&model.subsonic, artist.clone(), sender.clone());
             model.entries.append(artist);
         }
@@ -166,7 +166,7 @@ impl relm4::component::Component for ArtistsView {
         widgets.shown_artists.set_label(&format!(
             "{}: {}",
             gettext("Shown artists"),
-            model.shown_artists.borrow().len()
+            model.shown_artists.len()
         ));
         model.calc_sensitivity_of_buttons(&widgets);
 
@@ -249,7 +249,7 @@ impl relm4::component::Component for ArtistsView {
 
                                     append: shown_artists = &gtk::Label {
                                         set_halign: gtk::Align::Start,
-                                        set_text: &format!("{}: {}", gettext("Shown artists:"), model.shown_artists.borrow().len()),
+                                        set_text: &format!("{}: {}", gettext("Shown artists:"), model.shown_artists.len()),
                                     },
                                     gtk::Box {
                                         set_spacing: 15,
@@ -393,16 +393,19 @@ impl relm4::component::Component for ArtistsView {
             }
             ArtistsViewIn::UpdateWidgetsSearchFilterChanged => {
                 // update widgets
-                self.shown_artists.borrow_mut().clear();
+                self.shown_artists.clear();
                 (0..self.entries.len())
                     .filter_map(|i| self.entries.get_visible(i))
                     .for_each(|track| {
                         self.shown_artists
-                            .borrow_mut()
                             .insert(track.borrow().item().name.clone());
                     });
 
-                update_label(&widgets.shown_artists, &self.shown_artists);
+                widgets.shown_artists.set_text(&format!(
+                    "{}: {}",
+                    gettext("Shown artists"),
+                    self.shown_artists.len()
+                ));
                 self.calc_sensitivity_of_buttons(widgets);
             }
             ArtistsViewIn::UpdateFavoriteArtist(id, state) => {
@@ -470,7 +473,7 @@ impl relm4::component::Component for ArtistsView {
                 }
             },
             ArtistsViewIn::AddToQueue => {
-                if self.shown_artists.borrow().is_empty() {
+                if self.shown_artists.is_empty() {
                     return;
                 }
                 let artists: Vec<submarine::data::ArtistId3> =
@@ -484,7 +487,7 @@ impl relm4::component::Component for ArtistsView {
                 }
             }
             ArtistsViewIn::AppendToQueue => {
-                if self.shown_artists.borrow().is_empty() {
+                if self.shown_artists.is_empty() {
                     return;
                 }
                 let artists: Vec<submarine::data::ArtistId3> =
@@ -498,7 +501,7 @@ impl relm4::component::Component for ArtistsView {
                 }
             }
             ArtistsViewIn::ReplaceQueue => {
-                if self.shown_artists.borrow().is_empty() {
+                if self.shown_artists.is_empty() {
                     return;
                 }
                 let artists: Vec<submarine::data::ArtistId3> =
@@ -525,12 +528,4 @@ impl relm4::component::Component for ArtistsView {
             }
         }
     }
-}
-
-fn update_label(label: &gtk::Label, counter: &Rc<RefCell<HashSet<String>>>) {
-    label.set_text(&format!(
-        "{}: {}",
-        gettext("Shown artists"),
-        counter.borrow().len()
-    ));
 }

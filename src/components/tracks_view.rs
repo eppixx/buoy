@@ -36,9 +36,9 @@ pub struct TracksView {
     filters: Rc<RefCell<relm4::factory::FactoryVecDeque<FilterRow>>>,
 
     info_cover: relm4::Controller<Cover>,
-    shown_tracks: Rc<RefCell<Vec<String>>>,
-    shown_artists: Rc<RefCell<HashSet<Option<String>>>>,
-    shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
+    shown_tracks: Vec<String>,
+    shown_artists: HashSet<Option<String>>,
+    shown_albums: HashSet<Option<String>>,
 }
 
 impl TracksView {
@@ -51,7 +51,7 @@ impl TracksView {
 
         if (!self.active_filters() && self.tracks.len() >= allowed_queue_modifier_len)
             || (self.active_filters()
-                && self.shown_tracks.borrow().len() >= allowed_queue_modifier_len as usize)
+                && self.shown_tracks.len() >= allowed_queue_modifier_len as usize)
         {
             widgets.add_to_queue.set_sensitive(false);
             widgets
@@ -179,11 +179,9 @@ impl relm4::Component for TracksView {
             info_cover: Cover::builder()
                 .launch((subsonic.clone(), None))
                 .forward(sender.input_sender(), TracksViewIn::Cover),
-            shown_tracks: Rc::new(RefCell::new(Vec::with_capacity(
-                subsonic.borrow().tracks().len(),
-            ))),
-            shown_artists: Rc::new(RefCell::new(HashSet::new())),
-            shown_albums: Rc::new(RefCell::new(HashSet::new())),
+            shown_tracks: Vec::with_capacity(subsonic.borrow().tracks().len()),
+            shown_artists: HashSet::new(),
+            shown_albums: HashSet::new(),
         };
         model.info_cover.model().add_css_class_image("size100");
 
@@ -192,12 +190,9 @@ impl relm4::Component for TracksView {
         let tracks: Vec<TrackRow> = list
             .iter()
             .map(|track| {
-                model.shown_tracks.borrow_mut().push(track.id.clone());
-                model.shown_albums.borrow_mut().insert(track.album.clone());
-                model
-                    .shown_artists
-                    .borrow_mut()
-                    .insert(track.artist.clone());
+                model.shown_tracks.push(track.id.clone());
+                model.shown_albums.insert(track.album.clone());
+                model.shown_artists.insert(track.artist.clone());
                 TrackRow::new(&model.subsonic, track.clone(), &sender)
             })
             .collect();
@@ -426,15 +421,15 @@ impl relm4::Component for TracksView {
 
                                     append: shown_tracks = &gtk::Label {
                                         set_halign: gtk::Align::Start,
-                                        set_text: &format!("{}: {}", gettext("Shown tracks"), model.shown_tracks.borrow().len()),
+                                        set_text: &format!("{}: {}", gettext("Shown tracks"), model.shown_tracks.len()),
                                     },
                                     append: shown_artists = &gtk::Label {
                                         set_halign: gtk::Align::Start,
-                                        set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
+                                        set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.len()),
                                     },
                                     append: shown_albums = &gtk::Label {
                                         set_halign: gtk::Align::Start,
-                                        set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
+                                        set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.len()),
                                     },
 
                                     gtk::Box {
@@ -608,16 +603,16 @@ impl relm4::Component for TracksView {
             }
             TracksViewIn::UpdateWidgetsSearchFilterChanged => {
                 // recalc shown info
-                self.shown_tracks.borrow_mut().clear();
-                self.shown_albums.borrow_mut().clear();
-                self.shown_artists.borrow_mut().clear();
+                self.shown_tracks.clear();
+                self.shown_albums.clear();
+                self.shown_artists.clear();
                 (0..self.tracks.len())
                     .filter_map(|i| self.tracks.get_visible(i))
                     .for_each(|track| {
                         let track = track.borrow().item().clone();
-                        self.shown_artists.borrow_mut().insert(track.artist);
-                        self.shown_albums.borrow_mut().insert(track.album);
-                        self.shown_tracks.borrow_mut().push(track.name);
+                        self.shown_artists.insert(track.artist);
+                        self.shown_albums.insert(track.album);
+                        self.shown_tracks.push(track.name);
                     });
 
                 // update widgets
@@ -677,12 +672,11 @@ impl relm4::Component for TracksView {
             },
             TracksViewIn::AddToQueue => {
                 if self.active_filters() {
-                    if self.shown_tracks.borrow().is_empty() {
+                    if self.shown_tracks.is_empty() {
                         return;
                     }
                     let tracks = self
                         .shown_tracks
-                        .borrow()
                         .iter()
                         .filter_map(|id| self.subsonic.borrow().find_track(id))
                         .collect();
@@ -696,12 +690,11 @@ impl relm4::Component for TracksView {
             }
             TracksViewIn::AppendToQueue => {
                 if self.active_filters() {
-                    if self.shown_tracks.borrow().is_empty() {
+                    if self.shown_tracks.is_empty() {
                         return;
                     }
                     let tracks = self
                         .shown_tracks
-                        .borrow()
                         .iter()
                         .filter_map(|id| self.subsonic.borrow().find_track(id))
                         .collect();
@@ -715,12 +708,11 @@ impl relm4::Component for TracksView {
             }
             TracksViewIn::ReplaceQueue => {
                 if self.active_filters() {
-                    if self.shown_tracks.borrow().is_empty() {
+                    if self.shown_tracks.is_empty() {
                         return;
                     }
                     let tracks = self
                         .shown_tracks
-                        .borrow()
                         .iter()
                         .filter_map(|id| self.subsonic.borrow().find_track(id))
                         .collect();
@@ -775,12 +767,11 @@ impl relm4::Component for TracksView {
                     .for_each(|row| row.borrow_mut().set_drag_src(drop.clone()));
             }
             TracksViewIn::CreatePlaylist => {
-                if self.shown_tracks.borrow().is_empty() {
+                if self.shown_tracks.is_empty() {
                     return;
                 }
                 let tracks: Vec<_> = self
                     .shown_tracks
-                    .borrow()
                     .iter()
                     .filter_map(|id| self.subsonic.borrow().find_track(id))
                     .collect();
@@ -835,26 +826,14 @@ impl relm4::Component for TracksView {
 }
 
 fn set_count_labels(
-    tracks: &Rc<RefCell<Vec<String>>>,
+    tracks: &[String],
     track_label: &gtk::Label,
-    albums: &Rc<RefCell<HashSet<Option<String>>>>,
+    albums: &HashSet<Option<String>>,
     album_label: &gtk::Label,
-    artists: &Rc<RefCell<HashSet<Option<String>>>>,
+    artists: &HashSet<Option<String>>,
     artist_label: &gtk::Label,
 ) {
-    track_label.set_text(&format!(
-        "{}: {}",
-        gettext("Shown tracks"),
-        tracks.borrow().len()
-    ));
-    artist_label.set_text(&format!(
-        "{}: {}",
-        gettext("Shown artists"),
-        artists.borrow().len()
-    ));
-    album_label.set_text(&format!(
-        "{}: {}",
-        gettext("Shown albums"),
-        albums.borrow().len()
-    ));
+    track_label.set_text(&format!("{}: {}", gettext("Shown tracks"), tracks.len()));
+    artist_label.set_text(&format!("{}: {}", gettext("Shown artists"), artists.len()));
+    album_label.set_text(&format!("{}: {}", gettext("Shown albums"), albums.len()));
 }

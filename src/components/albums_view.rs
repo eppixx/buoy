@@ -30,8 +30,8 @@ pub struct AlbumsView {
     subsonic: Rc<RefCell<Subsonic>>,
     entries: relm4::typed_view::column::TypedColumnView<AlbumRow, gtk::SingleSelection>,
     filters: Rc<RefCell<relm4::factory::FactoryVecDeque<FilterRow>>>,
-    shown_artists: Rc<RefCell<HashSet<Option<String>>>>,
-    shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
+    shown_artists: HashSet<Option<String>>,
+    shown_albums: HashSet<Option<String>>,
 }
 
 impl AlbumsView {
@@ -44,7 +44,7 @@ impl AlbumsView {
 
         if (!self.active_filters() && self.entries.len() >= allowed_queue_modifier_len)
             || (self.active_filters()
-                && self.shown_artists.borrow().len() >= allowed_queue_modifier_len as usize)
+                && self.shown_artists.len() >= allowed_queue_modifier_len as usize)
         {
             widgets.add_to_queue.set_sensitive(false);
             widgets
@@ -165,18 +165,15 @@ impl relm4::component::Component for AlbumsView {
                     .launch(gtk::ListBox::default())
                     .forward(sender.input_sender(), Self::Input::FilterRow),
             )),
-            shown_artists: Rc::new(RefCell::new(HashSet::new())),
-            shown_albums: Rc::new(RefCell::new(HashSet::new())),
+            shown_artists: HashSet::new(),
+            shown_albums: HashSet::new(),
         };
 
         //add some albums
         let list = model.subsonic.borrow().albums().to_vec();
         for album in list.iter() {
-            model.shown_albums.borrow_mut().insert(album.album.clone());
-            model
-                .shown_artists
-                .borrow_mut()
-                .insert(album.artist.clone());
+            model.shown_albums.insert(album.album.clone());
+            model.shown_artists.insert(album.artist.clone());
             let album = AlbumRow::new(&model.subsonic, album.clone(), sender.clone());
             model.entries.append(album);
         }
@@ -375,11 +372,11 @@ impl relm4::component::Component for AlbumsView {
 
                                     append: shown_albums = &gtk::Label {
                                         set_halign: gtk::Align::Start,
-                                        set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.borrow().len()),
+                                        set_text: &format!("{}: {}", gettext("Shown albums"), model.shown_albums.len()),
                                     },
                                     append: shown_artists = &gtk::Label {
                                         set_halign: gtk::Align::Start,
-                                        set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.borrow().len()),
+                                        set_text: &format!("{}: {}", gettext("Shown artists"), model.shown_artists.len()),
                                     },
 
                                     gtk::Box {
@@ -522,14 +519,14 @@ impl relm4::component::Component for AlbumsView {
             }
             AlbumsViewIn::UpdateWidgetsSearchFilterChanged => {
                 // recalc shown info
-                self.shown_artists.borrow_mut().clear();
-                self.shown_albums.borrow_mut().clear();
+                self.shown_artists.clear();
+                self.shown_albums.clear();
                 (0..self.entries.len())
                     .filter_map(|i| self.entries.get_visible(i))
                     .for_each(|track| {
                         let track = track.borrow().item().clone();
-                        self.shown_artists.borrow_mut().insert(track.artist);
-                        self.shown_albums.borrow_mut().insert(track.album);
+                        self.shown_artists.insert(track.artist);
+                        self.shown_albums.insert(track.album);
                     });
 
                 // update widgets
@@ -612,7 +609,7 @@ impl relm4::component::Component for AlbumsView {
                 }
             },
             AlbumsViewIn::AddToQueue => {
-                if self.shown_albums.borrow().is_empty() {
+                if self.shown_albums.is_empty() {
                     return;
                 }
                 let albums: Vec<submarine::data::Child> =
@@ -626,7 +623,7 @@ impl relm4::component::Component for AlbumsView {
                 }
             }
             AlbumsViewIn::AppendToQueue => {
-                if self.shown_albums.borrow().is_empty() {
+                if self.shown_albums.is_empty() {
                     return;
                 }
                 let albums: Vec<submarine::data::Child> =
@@ -640,7 +637,7 @@ impl relm4::component::Component for AlbumsView {
                 }
             }
             AlbumsViewIn::ReplaceQueue => {
-                if self.shown_albums.borrow().is_empty() {
+                if self.shown_albums.is_empty() {
                     return;
                 }
                 let albums: Vec<submarine::data::Child> =
@@ -671,18 +668,10 @@ impl relm4::component::Component for AlbumsView {
 
 fn update_labels(
     album_label: &gtk::Label,
-    albums: &Rc<RefCell<HashSet<Option<String>>>>,
+    albums: &HashSet<Option<String>>,
     artist_label: &gtk::Label,
-    artists: &Rc<RefCell<HashSet<Option<String>>>>,
+    artists: &HashSet<Option<String>>,
 ) {
-    album_label.set_text(&format!(
-        "{}: {}",
-        gettext("Shown albums"),
-        albums.borrow().len()
-    ));
-    artist_label.set_text(&format!(
-        "{}: {}",
-        gettext("Shown artists"),
-        artists.borrow().len()
-    ));
+    album_label.set_text(&format!("{}: {}", gettext("Shown albums"), albums.len()));
+    artist_label.set_text(&format!("{}: {}", gettext("Shown artists"), artists.len()));
 }
