@@ -430,7 +430,9 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                             add_css_class: "playlist-view-info",
                             set_spacing: 15,
 
-                            model.info_cover.widget().clone() -> gtk::Box {},
+                            model.info_cover.widget().clone() -> gtk::Box {
+                                set_valign: gtk::Align::Start,
+                            },
 
                             // playlist info
                             gtk::WindowHandle {

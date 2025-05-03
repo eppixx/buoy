@@ -207,6 +207,11 @@ impl relm4::Component for ArtistView {
                 set_spacing: 15,
 
                 gtk::Overlay {
+                    set_valign: gtk::Align::Start,
+
+                    #[wrap(Some)]
+                    set_child = &model.cover.widget().clone() -> gtk::Box {},
+
                     add_overlay = &model.favorite.clone() {
                         set_halign: gtk::Align::End,
                         set_valign: gtk::Align::End,
@@ -222,12 +227,6 @@ impl relm4::Component for ArtistView {
                             };
                             sender.output(ArtistViewOut::FavoriteArtistClicked(artist.id.clone(), state)).unwrap();
                         }
-                    },
-
-                    #[wrap(Some)]
-                    set_child = &gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        model.cover.widget().clone() -> gtk::Box {},
                     },
 
                     add_controller = gtk::EventControllerMotion {

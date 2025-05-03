@@ -166,6 +166,8 @@ impl relm4::Component for AlbumView {
                 set_spacing: 15,
 
                 gtk::Overlay {
+                    set_valign: gtk::Align::Start,
+
                     #[wrap(Some)]
                     set_child = &model.cover.widget().clone() -> gtk::Box {},
 

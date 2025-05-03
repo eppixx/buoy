@@ -294,7 +294,9 @@ impl relm4::Component for TracksView {
                                 set_spacing: 15,
                                 set_margin_horizontal: 7,
 
-                                model.info_cover.widget().clone() -> gtk::Box {},
+                                model.info_cover.widget().clone() -> gtk::Box {
+                                    set_valign: gtk::Align::Start,
+                                },
 
                                 //tracks info
                                 gtk::Box {
