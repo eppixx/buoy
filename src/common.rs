@@ -30,6 +30,24 @@ pub fn sort_fn<T: PartialOrd>(a: &T, b: &T) -> relm4::gtk::Ordering {
     }
 }
 
+pub fn search_matching(mut test: String, mut search: String) -> bool {
+    let settings = crate::settings::Settings::get().lock().unwrap();
+    //check for case sensitivity
+    if !settings.case_sensitive {
+        test = test.to_lowercase();
+        search = search.to_lowercase();
+    }
+
+    //actual matching
+    if settings.fuzzy_search {
+        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+        let score = fuzzy_matcher::FuzzyMatcher::fuzzy_match(&matcher, &test, &search);
+        score.is_some()
+    } else {
+        test.contains(&search)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::convert_for_label;
