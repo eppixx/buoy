@@ -30,14 +30,14 @@ use crate::{
 pub struct AlbumsView {
     subsonic: Rc<RefCell<Subsonic>>,
     entries: relm4::typed_view::column::TypedColumnView<AlbumRow, gtk::SingleSelection>,
-    filters: relm4::factory::FactoryVecDeque<FilterRow>,
+    filters: Rc<RefCell<relm4::factory::FactoryVecDeque<FilterRow>>>,
     shown_artists: Rc<RefCell<HashSet<Option<String>>>>,
     shown_albums: Rc<RefCell<HashSet<Option<String>>>>,
 }
 
 impl AlbumsView {
     fn active_filters(&self) -> bool {
-        self.filters.iter().any(|f| f.active())
+        self.filters.borrow().iter().any(|f| f.active())
     }
 
     fn calc_sensitivity_of_buttons(&self, widgets: &<AlbumsView as relm4::Component>::Widgets) {
@@ -78,7 +78,9 @@ impl AlbumsView {
 
 #[derive(Debug)]
 pub enum AlbumsViewIn {
+    SearchChanged,
     FilterChanged,
+    UpdateWidgetsSearchFilterChanged,
     UpdateFavoriteAlbum(String, bool),
     UpdatePlayCountAlbum(String, Option<i64>),
     Cover(CoverOut),
@@ -159,9 +161,11 @@ impl relm4::component::Component for AlbumsView {
         let mut model = Self {
             subsonic,
             entries,
-            filters: relm4::factory::FactoryVecDeque::builder()
-                .launch(gtk::ListBox::default())
-                .forward(sender.input_sender(), Self::Input::FilterRow),
+            filters: Rc::new(RefCell::new(
+                relm4::factory::FactoryVecDeque::builder()
+                    .launch(gtk::ListBox::default())
+                    .forward(sender.input_sender(), Self::Input::FilterRow),
+            )),
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
             shown_albums: Rc::new(RefCell::new(HashSet::new())),
         };
@@ -178,7 +182,11 @@ impl relm4::component::Component for AlbumsView {
             model.entries.append(album);
         }
 
-        model.filters.guard().push_back(Category::Favorite);
+        model
+            .filters
+            .borrow_mut()
+            .guard()
+            .push_back(Category::Favorite);
         let widgets = view_output!();
 
         //update labels and buttons
@@ -189,6 +197,185 @@ impl relm4::component::Component for AlbumsView {
             &model.shown_artists,
         );
         model.calc_sensitivity_of_buttons(&widgets);
+
+        // add filter
+        let filters = model.filters.clone();
+        let show_filters = widgets.filters.clone();
+        model.entries.add_filter(move |track| {
+            if filters.borrow().is_empty() || !show_filters.reveals_child() {
+                return true;
+            }
+
+            for filter in filters
+                .borrow()
+                .iter()
+                .filter_map(|row| row.filter().as_ref())
+            {
+                match filter {
+                    //TODO add matching for regular expressions
+                    Filter::Favorite(None) => {}
+                    Filter::Favorite(Some(state)) => {
+                        if *state != track.item().starred.is_some() {
+                            return false;
+                        }
+                    }
+                    Filter::Album(_, value) if value.is_empty() => {} // filter matches
+                    Filter::Album(relation, value) => match relation {
+                        TextRelation::ExactNot if Some(value) == track.item().album.as_ref() => {
+                            return false
+                        }
+                        TextRelation::Exact if Some(value) != track.item().album.as_ref() => {
+                            return false
+                        }
+                        TextRelation::ContainsNot => {
+                            if let Some(album) = &track.item().album {
+                                if album.contains(value) {
+                                    return false;
+                                }
+                            }
+                        }
+                        TextRelation::Contains => {
+                            if let Some(album) = &track.item().album {
+                                if !album.contains(value) {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
+                        _ => {} // filter matches
+                    },
+                    Filter::Artist(_, value) if value.is_empty() => {} // filter matches
+                    Filter::Artist(relation, value) => match relation {
+                        TextRelation::ExactNot if Some(value) == track.item().artist.as_ref() => {
+                            return false
+                        }
+                        TextRelation::Exact if Some(value) != track.item().artist.as_ref() => {
+                            return false
+                        }
+                        TextRelation::ContainsNot => {
+                            if let Some(artist) = &track.item().artist {
+                                if artist.contains(value) {
+                                    return false;
+                                }
+                            }
+                        }
+                        TextRelation::Contains => {
+                            if let Some(artist) = &track.item().artist {
+                                if !artist.contains(value) {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
+                        _ => {} // filter matches
+                    },
+                    Filter::Year(order, value) => {
+                        if let Some(year) = &track.item().year {
+                            if year.cmp(value) != *order {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                    Filter::Cd(_, 0) => {
+                        if track.item().disc_number.is_some() {
+                            return false;
+                        }
+                    }
+                    Filter::Cd(order, value) => {
+                        if let Some(disc) = &track.item().disc_number {
+                            if disc.cmp(value) != *order {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                    Filter::Genre(_, value) if value.is_empty() => {}
+                    Filter::Genre(relation, value) => match relation {
+                        TextRelation::ExactNot if Some(value) == track.item().genre.as_ref() => {
+                            return false
+                        }
+                        TextRelation::Exact if Some(value) != track.item().genre.as_ref() => {
+                            return false
+                        }
+                        TextRelation::ContainsNot => {
+                            if let Some(genre) = &track.item().genre {
+                                if genre.contains(value) {
+                                    return false;
+                                }
+                            }
+                        }
+                        TextRelation::Contains => {
+                            if let Some(genre) = &track.item().genre {
+                                if !genre.contains(value) {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
+                        _ => {} // filter matches
+                    },
+                    Filter::DurationMin(order, value) => {
+                        let value = value * 60;
+                        if let Some(duration) = &track.item().duration {
+                            if duration.cmp(&value) != *order {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                    _ => unreachable!("there are filters that shouldnt be"),
+                }
+            }
+            true
+        });
+
+        // add search filter
+        model.entries.add_filter(move |track| {
+            let settings = Settings::get().lock().unwrap();
+            let mut search = settings.search_text.clone();
+
+            // when search bar is hidden every element will be shown
+            if !settings.search_active {
+                return true;
+            }
+
+            let mut title_artist_album = format!(
+                "{} {} {}",
+                track.item().title.clone(),
+                track.item().artist.clone().unwrap_or_default(),
+                track.item().album.clone().unwrap_or_default()
+            );
+
+            //check for case sensitivity
+            if !settings.case_sensitive {
+                title_artist_album = title_artist_album.to_lowercase();
+                search = search.to_lowercase();
+            }
+
+            //actual matching
+            let fuzzy_search = settings.fuzzy_search;
+            if fuzzy_search {
+                let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                let score = matcher.fuzzy_match(&title_artist_album, &search);
+                if score.is_some() {
+                    true
+                } else {
+                    false
+                }
+            } else if title_artist_album.contains(&search) {
+                true
+            } else {
+                false
+            }
+        });
+
         relm4::component::ComponentParts { model, widgets }
     }
 
@@ -308,7 +495,7 @@ impl relm4::component::Component for AlbumsView {
                         }
                     },
 
-                    model.filters.widget().clone() -> gtk::ListBox {
+                    model.filters.borrow().widget().clone() -> gtk::ListBox {
                         set_margin_all: 5,
                         add_css_class: granite::STYLE_CLASS_FRAME,
                         add_css_class: granite::STYLE_CLASS_RICH_LIST,
@@ -354,243 +541,34 @@ impl relm4::component::Component for AlbumsView {
         _root: &Self::Root,
     ) {
         match msg {
+            AlbumsViewIn::SearchChanged => {
+                self.entries.notify_filter_changed(1);
+                sender.input(AlbumsViewIn::UpdateWidgetsSearchFilterChanged);
+            }
             AlbumsViewIn::FilterChanged => {
-                self.calc_sensitivity_of_buttons(widgets);
-                let shown_albums = self.shown_albums.clone();
-                let shown_artists = self.shown_artists.clone();
-                let shown_artists_widget = widgets.shown_artists.clone();
-                let shown_albums_widget = widgets.shown_albums.clone();
-                update_labels(
-                    &shown_albums_widget,
-                    &shown_albums,
-                    &shown_artists_widget,
-                    &shown_artists,
-                );
-
-                self.entries.pop_filter();
-                let filters: Vec<Filter> = self
-                    .filters
-                    .iter()
-                    .filter_map(|row| row.filter().as_ref())
-                    .cloned()
-                    .collect();
-                if (filters.is_empty() || !widgets.filters.reveals_child())
-                    && !Settings::get().lock().unwrap().search_active
-                {
-                    update_labels(
-                        &shown_albums_widget,
-                        &shown_albums,
-                        &shown_artists_widget,
-                        &shown_artists,
-                    );
-                    return;
-                }
-
+                self.entries.notify_filter_changed(0);
+                sender.input(AlbumsViewIn::UpdateWidgetsSearchFilterChanged);
+            }
+            AlbumsViewIn::UpdateWidgetsSearchFilterChanged => {
+                // recalc shown info
                 self.shown_artists.borrow_mut().clear();
                 self.shown_albums.borrow_mut().clear();
+                (0..self.entries.len())
+                    .filter_map(|i| self.entries.get_visible(i))
+                    .for_each(|track| {
+                        let track = track.borrow().item().clone();
+                        self.shown_artists.borrow_mut().insert(track.artist);
+                        self.shown_albums.borrow_mut().insert(track.album);
+                    });
 
-                self.entries.add_filter(move |track| {
-                    let mut search = Settings::get().lock().unwrap().search_text.clone();
-                    let title = track.item().title.clone();
-
-                    for filter in &filters {
-                        match filter {
-                            //TODO add matching for regular expressions
-                            Filter::Favorite(None) => {}
-                            Filter::Favorite(Some(state)) => {
-                                if *state != track.item().starred.is_some() {
-                                    return false;
-                                }
-                            }
-                            Filter::Album(_, value) if value.is_empty() => {} // filter matches
-                            Filter::Album(relation, value) => match relation {
-                                TextRelation::ExactNot
-                                    if Some(value) == track.item().album.as_ref() =>
-                                {
-                                    return false
-                                }
-                                TextRelation::Exact
-                                    if Some(value) != track.item().album.as_ref() =>
-                                {
-                                    return false
-                                }
-                                TextRelation::ContainsNot => {
-                                    if let Some(album) = &track.item().album {
-                                        if album.contains(value) {
-                                            return false;
-                                        }
-                                    }
-                                }
-                                TextRelation::Contains => {
-                                    if let Some(album) = &track.item().album {
-                                        if !album.contains(value) {
-                                            return false;
-                                        }
-                                    } else {
-                                        return false;
-                                    }
-                                }
-                                _ => {} // filter matches
-                            },
-                            Filter::Artist(_, value) if value.is_empty() => {} // filter matches
-                            Filter::Artist(relation, value) => match relation {
-                                TextRelation::ExactNot
-                                    if Some(value) == track.item().artist.as_ref() =>
-                                {
-                                    return false
-                                }
-                                TextRelation::Exact
-                                    if Some(value) != track.item().artist.as_ref() =>
-                                {
-                                    return false
-                                }
-                                TextRelation::ContainsNot => {
-                                    if let Some(artist) = &track.item().artist {
-                                        if artist.contains(value) {
-                                            return false;
-                                        }
-                                    }
-                                }
-                                TextRelation::Contains => {
-                                    if let Some(artist) = &track.item().artist {
-                                        if !artist.contains(value) {
-                                            return false;
-                                        }
-                                    } else {
-                                        return false;
-                                    }
-                                }
-                                _ => {} // filter matches
-                            },
-                            Filter::Year(order, value) => {
-                                if let Some(year) = &track.item().year {
-                                    if year.cmp(value) != *order {
-                                        return false;
-                                    }
-                                } else {
-                                    return false;
-                                }
-                            }
-                            Filter::Cd(_, 0) => {
-                                if track.item().disc_number.is_some() {
-                                    return false;
-                                }
-                            }
-                            Filter::Cd(order, value) => {
-                                if let Some(disc) = &track.item().disc_number {
-                                    if disc.cmp(value) != *order {
-                                        return false;
-                                    }
-                                } else {
-                                    return false;
-                                }
-                            }
-                            Filter::Genre(_, value) if value.is_empty() => {}
-                            Filter::Genre(relation, value) => match relation {
-                                TextRelation::ExactNot
-                                    if Some(value) == track.item().genre.as_ref() =>
-                                {
-                                    return false
-                                }
-                                TextRelation::Exact
-                                    if Some(value) != track.item().genre.as_ref() =>
-                                {
-                                    return false
-                                }
-                                TextRelation::ContainsNot => {
-                                    if let Some(genre) = &track.item().genre {
-                                        if genre.contains(value) {
-                                            return false;
-                                        }
-                                    }
-                                }
-                                TextRelation::Contains => {
-                                    if let Some(genre) = &track.item().genre {
-                                        if !genre.contains(value) {
-                                            return false;
-                                        }
-                                    } else {
-                                        return false;
-                                    }
-                                }
-                                _ => {} // filter matches
-                            },
-                            Filter::DurationMin(order, value) => {
-                                let value = value * 60;
-                                if let Some(duration) = &track.item().duration {
-                                    if duration.cmp(&value) != *order {
-                                        return false;
-                                    }
-                                } else {
-                                    return false;
-                                }
-                            }
-                            _ => unreachable!("there are filters that shouldnt be"),
-                        }
-                    }
-
-                    // when search bar is hidden every element will be shown
-                    if !Settings::get().lock().unwrap().search_active {
-                        shown_artists
-                            .borrow_mut()
-                            .insert(track.item().artist.clone());
-                        shown_albums.borrow_mut().insert(track.item().album.clone());
-                        update_labels(
-                            &shown_albums_widget,
-                            &shown_albums,
-                            &shown_artists_widget,
-                            &shown_artists,
-                        );
-                        return true;
-                    }
-
-                    let mut title_artist_album = format!(
-                        "{title} {} {}",
-                        track.item().artist.clone().unwrap_or_default(),
-                        track.item().album.clone().unwrap_or_default()
-                    );
-                    //check for case sensitivity
-                    if !Settings::get().lock().unwrap().case_sensitive {
-                        title_artist_album = title_artist_album.to_lowercase();
-                        search = search.to_lowercase();
-                    }
-
-                    //actual matching
-                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
-                    if fuzzy_search {
-                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                        let score = matcher.fuzzy_match(&title_artist_album, &search);
-                        if score.is_some() {
-                            shown_artists
-                                .borrow_mut()
-                                .insert(track.item().artist.clone());
-                            shown_albums.borrow_mut().insert(track.item().album.clone());
-                            update_labels(
-                                &shown_albums_widget,
-                                &shown_albums,
-                                &shown_artists_widget,
-                                &shown_artists,
-                            );
-                            true
-                        } else {
-                            false
-                        }
-                    } else if title_artist_album.contains(&search) {
-                        shown_artists
-                            .borrow_mut()
-                            .insert(track.item().artist.clone());
-                        shown_albums.borrow_mut().insert(track.item().album.clone());
-                        update_labels(
-                            &shown_albums_widget,
-                            &shown_albums,
-                            &shown_artists_widget,
-                            &shown_artists,
-                        );
-                        true
-                    } else {
-                        false
-                    }
-                });
+                // update widgets
+                update_labels(
+                    &widgets.shown_albums,
+                    &self.shown_albums,
+                    &widgets.shown_artists,
+                    &self.shown_artists,
+                );
+                self.calc_sensitivity_of_buttons(widgets);
             }
             AlbumsViewIn::UpdateFavoriteAlbum(id, state) => {
                 (0..self.entries.len())
@@ -639,14 +617,22 @@ impl relm4::component::Component for AlbumsView {
                     .expect("is not a BoxedAnyObject");
                 let category: std::cell::Ref<Category> = boxed.borrow();
 
-                let index = self.filters.guard().push_back(category.clone());
+                let index = self
+                    .filters
+                    .borrow_mut()
+                    .guard()
+                    .push_back(category.clone());
                 self.filters
+                    .borrow()
                     .send(index.current_index(), FilterRowIn::SetTo(category.clone()));
                 sender.input(AlbumsViewIn::FilterChanged);
             }
             AlbumsViewIn::FilterRow(msg) => match msg {
                 FilterRowOut::RemoveFilter(index) => {
-                    self.filters.guard().remove(index.current_index());
+                    self.filters
+                        .borrow_mut()
+                        .guard()
+                        .remove(index.current_index());
                     sender.input(AlbumsViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(AlbumsViewIn::FilterChanged),
