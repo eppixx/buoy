@@ -12,13 +12,16 @@ use relm4::{
 };
 
 use crate::{
-    components::filter_categories::Category, filter::{Filter, TextRelation}, gtk_helper::{list_store::ListStoreExt, stack::StackExt}
+    components::filter_categories::Category,
+    filter::{Filter, TextRelation},
+    gtk_helper::{list_store::ListStoreExt, stack::StackExt},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct BoolRow {
     relation: Option<bool>,
     label: String,
+    tooltip: String,
 }
 
 impl BoolRow {
@@ -27,14 +30,17 @@ impl BoolRow {
             BoolRow {
                 relation: None,
                 label: gettext("both"),
+                tooltip: gettext("Shows item, when favorite is either yes or no"),
             },
             BoolRow {
                 relation: Some(true),
                 label: gettext("yes"),
+                tooltip: gettext("Only shows item, when favorite is yes"),
             },
             BoolRow {
                 relation: Some(false),
                 label: gettext("no"),
+                tooltip: gettext("Only shows item, when favorite is no"),
             },
         ];
         gtk::gio::ListStore::from_slice(&data)
@@ -69,6 +75,11 @@ impl BoolRow {
                 .expect("is not a Label");
             // set label from OrderRow
             label.set_label(&gettext(&boxed.borrow::<BoolRow>().label));
+
+            // set tooltip to ToggleButton
+            let stack = label.parent().unwrap().parent().unwrap();
+            let toggle = stack.parent().unwrap().parent().unwrap();
+            toggle.set_tooltip(&boxed.borrow::<BoolRow>().tooltip);
         });
 
         factory
@@ -79,6 +90,7 @@ impl BoolRow {
 struct TextRow {
     relation: TextRelation,
     label: String,
+    tooltip: String,
 }
 
 impl TextRow {
@@ -87,18 +99,22 @@ impl TextRow {
             TextRow {
                 relation: TextRelation::Contains,
                 label: gettext("contains"),
+                tooltip: gettext("Shows item, when entry is a substring of item"),
             },
             TextRow {
                 relation: TextRelation::ContainsNot,
                 label: gettext("contains not"),
+                tooltip: gettext("Shows item, when entry is not a substring of item"),
             },
             TextRow {
                 relation: TextRelation::ExactNot,
                 label: gettext("matches not"),
+                tooltip: gettext("Shows item, when entry is not a complete match of item"),
             },
             TextRow {
                 relation: TextRelation::Exact,
                 label: gettext("matches"),
+                tooltip: gettext("Shows item, when entry is a complete match of item"),
             },
         ];
         gtk::gio::ListStore::from_slice(&data)
@@ -133,6 +149,11 @@ impl TextRow {
                 .expect("is not a Label");
             // set label from OrderRow
             label.set_label(&boxed.borrow::<TextRow>().label);
+
+            // set tooltip to ToggleButton
+            let stack = label.parent().unwrap().parent().unwrap();
+            let toggle = stack.parent().unwrap().parent().unwrap();
+            toggle.set_tooltip(&boxed.borrow::<TextRow>().tooltip);
         });
 
         factory
@@ -143,6 +164,7 @@ impl TextRow {
 struct OrderRow {
     order: Ordering,
     label: String,
+    tooltip: String,
 }
 
 // adapted from https://gtk-rs.org/gtk4-rs/stable/latest/book/list_widgets.html
@@ -152,14 +174,17 @@ impl OrderRow {
             OrderRow {
                 order: Ordering::Greater,
                 label: String::from(">"),
+                tooltip: gettext("Shows item, when category is greater than entry"),
             },
             OrderRow {
                 order: Ordering::Equal,
                 label: String::from("="),
+                tooltip: gettext("Shows item, when category is equal to entry"),
             },
             OrderRow {
                 order: Ordering::Less,
                 label: String::from("<"),
+                tooltip: gettext("Shows item, when category is less than entry"),
             },
         ];
         gtk::gio::ListStore::from_slice(&data)
@@ -194,6 +219,11 @@ impl OrderRow {
                 .expect("is not a Label");
             // set label from OrderRow
             label.set_label(&boxed.borrow::<OrderRow>().label);
+
+            // set tooltip to ToggleButton
+            let stack = label.parent().unwrap().parent().unwrap();
+            let toggle = stack.parent().unwrap().parent().unwrap();
+            toggle.set_tooltip(&boxed.borrow::<OrderRow>().tooltip);
         });
 
         factory
