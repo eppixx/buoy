@@ -1,5 +1,6 @@
 pub mod album_view;
 pub mod albums_view;
+pub mod app;
 pub mod artist_view;
 pub mod artists_view;
 pub mod browser;

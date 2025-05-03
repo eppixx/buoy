@@ -13,8 +13,10 @@ use relm4::{
 };
 
 use crate::{
-    app::{App, AppIn, AppOut},
-    components::login_form::{LoginForm, LoginFormOut},
+    components::{
+        app::{App, AppIn, AppOut},
+        login_form::{LoginForm, LoginFormOut},
+    },
     config,
     gtk_helper::stack::StackExt,
     mpris::{Mpris, MprisOut},

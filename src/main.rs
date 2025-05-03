@@ -6,7 +6,6 @@ use config::GETTEXT_PACKAGE;
 use relm4::{gtk, RelmApp};
 use tracing_subscriber::layer::SubscriberExt;
 
-mod app;
 pub mod client;
 pub mod common;
 pub mod components;

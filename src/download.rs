@@ -9,9 +9,8 @@ use relm4::gtk::{
 };
 
 use crate::{
-    app::App,
     client::Client,
-    components::warning_dialog::WarningDialog,
+    components::{app::App, warning_dialog::WarningDialog},
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
