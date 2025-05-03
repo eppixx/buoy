@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
 use itertools::Itertools;
 use rand::seq::IteratorRandom;
@@ -14,6 +13,7 @@ use relm4::{
 
 use crate::{
     client::Client,
+    common,
     components::{
         album_element::{get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut},
         cover::{Cover, CoverIn, CoverOut},
@@ -40,7 +40,7 @@ pub struct ArtistView {
 pub enum ArtistViewIn {
     AlbumElement(AlbumElementOut),
     Cover(CoverOut),
-    FilterChanged(String),
+    SearchChanged(String),
     UpdateFavoriteArtist(String, bool),
     UpdateFavoriteAlbum(String, bool),
     HoverCover(bool),
@@ -498,14 +498,10 @@ impl relm4::Component for ArtistView {
                     sender.output(ArtistViewOut::DisplayToast(title)).unwrap();
                 }
             },
-            ArtistViewIn::FilterChanged(search) => {
+            ArtistViewIn::SearchChanged(search) => {
                 self.albums.widget().set_filter_func(move |element| {
                     let (title, _artist) = get_info_of_flowboxchild(element).unwrap();
-
-                    //actual matching
-                    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                    let score = matcher.fuzzy_match(&title.text(), &search);
-                    score.is_some()
+                    common::search_matching(title.text().to_string(), search.clone())
                 });
             }
             ArtistViewIn::UpdateFavoriteArtist(id, state) => {
