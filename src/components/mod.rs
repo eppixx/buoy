@@ -8,7 +8,6 @@ pub mod dashboard;
 pub mod descriptive_cover;
 pub mod equalizer;
 pub mod filter_categories;
-pub mod filter_row;
 pub mod login_form;
 pub mod main_window;
 pub mod play_controls;

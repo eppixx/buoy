@@ -17,12 +17,14 @@ use crate::{
     components::{
         cover::{Cover, CoverIn, CoverOut},
         filter_categories::Category,
-        filter_row::{FilterRow, FilterRowIn, FilterRowOut},
         warning_dialog::WarningDialog,
     },
-    factory::track_row::{
-        AlbumColumn, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
-        PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
+    factory::{
+        filter_row::{FilterRow, FilterRowIn, FilterRowOut},
+        track_row::{
+            AlbumColumn, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
+            PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
+        },
     },
     settings::Settings,
     subsonic::Subsonic,

@@ -11,14 +11,13 @@ use relm4::{
 
 use crate::{
     common,
-    components::{
-        cover::CoverOut,
-        filter_categories::Category,
+    components::{cover::CoverOut, filter_categories::Category},
+    factory::{
+        album_row::{
+            AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn,
+            PlayCountColumn, TitleColumn, YearColumn,
+        },
         filter_row::{FilterRow, FilterRowIn, FilterRowOut},
-    },
-    factory::album_row::{
-        AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, PlayCountColumn,
-        TitleColumn, YearColumn,
     },
     settings::Settings,
     subsonic::Subsonic,
