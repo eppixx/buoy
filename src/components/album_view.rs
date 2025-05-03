@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
 use relm4::{
     gtk::{
@@ -14,7 +13,7 @@ use relm4::{
 
 use crate::{
     client::Client,
-    common::convert_for_label,
+    common::{self, convert_for_label},
     components::cover::{Cover, CoverIn, CoverOut},
     factory::album_track_row::{
         AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
@@ -148,35 +147,14 @@ impl relm4::Component for AlbumView {
 
         // add search filter
         model.tracks.add_filter(move |row| {
-            let settings = Settings::get().lock().unwrap();
-
-            // show all rows when search is deactive
-            if !settings.search_active {
-                return true;
-            }
-
-            let mut search = settings.search_text.clone();
-            let mut test = format!(
+            let search = Settings::get().lock().unwrap().search_text.clone();
+            let test = format!(
                 "{} {} {}",
                 row.item().title,
                 row.item().artist.as_deref().unwrap_or_default(),
                 row.item().album.as_deref().unwrap_or_default()
             );
-
-            //check for case sensitivity
-            if !settings.case_sensitive {
-                test = test.to_lowercase();
-                search = search.to_lowercase();
-            }
-
-            //actual matching
-            if settings.fuzzy_search {
-                let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                let score = matcher.fuzzy_match(&test, &search);
-                score.is_some()
-            } else {
-                test.contains(&search)
-            }
+            common::search_matching(test, search)
         });
 
         relm4::ComponentParts { model, widgets }
