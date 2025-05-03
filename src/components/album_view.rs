@@ -148,12 +148,7 @@ impl relm4::Component for AlbumView {
         // add search filter
         model.tracks.add_filter(move |row| {
             let search = Settings::get().lock().unwrap().search_text.clone();
-            let test = format!(
-                "{} {} {}",
-                row.item().title,
-                row.item().artist.as_deref().unwrap_or_default(),
-                row.item().album.as_deref().unwrap_or_default()
-            );
+            let test = row.item().title.clone();
             common::search_matching(test, search)
         });
 
