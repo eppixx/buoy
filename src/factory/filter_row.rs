@@ -12,8 +12,8 @@ use relm4::{
 };
 
 use crate::{
-    components::filter_categories::Category,
     filter::{Filter, TextRelation},
+    filter_categories::Category,
     gtk_helper::{list_store::ListStoreExt, stack::StackExt},
 };
 

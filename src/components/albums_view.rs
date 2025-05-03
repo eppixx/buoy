@@ -11,7 +11,7 @@ use relm4::{
 
 use crate::{
     common,
-    components::{cover::CoverOut, filter_categories::Category},
+    components::cover::CoverOut,
     factory::{
         album_row::{
             AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn,
@@ -19,6 +19,7 @@ use crate::{
         },
         filter_row::{FilterRow, FilterRowIn, FilterRowOut},
     },
+    filter_categories::Category,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},

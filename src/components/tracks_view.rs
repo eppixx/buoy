@@ -16,7 +16,6 @@ use crate::{
     common,
     components::{
         cover::{Cover, CoverIn, CoverOut},
-        filter_categories::Category,
         warning_dialog::WarningDialog,
     },
     factory::{
@@ -26,6 +25,7 @@ use crate::{
             PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
         },
     },
+    filter_categories::Category,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
