@@ -10,6 +10,12 @@
 ![Screenshot showing the dashboard view](data/screenshots/dashboard_light.png)
 ![Screenshot showing the playlists view](data/screenshots/playlists_dark.png)
 
+## Requirements
+
+You need access to a subsonic server. The recommended option is [Navidrome](https://www.navidrome.org/).
+If you don't have access, you may install it locally.
+
+
 ## First Setup
 
 Install the needed dependencies (assuming rust is already installed)
@@ -35,7 +41,7 @@ meson setup build-release --buildtype=release
 ninja -C build-release install # installing will ask for the superuser password
 ```
 
-It can now be run from the desktop launcher or from the terminal with
+Bouy can now be run from the desktop launcher or from the terminal with
 ```
 buoy
 ```
