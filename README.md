@@ -127,15 +127,3 @@ Now you can update the translation files with
 ninja -C build com.github.eppixx.buoy-update-po
 ```
 and update the po files with new translations.
-
-#### Updating `cargo-sources.json`
-
-When changing `Cargo.toml` `cargo-sources.json` needs to be updated for the flatpak version with
-```bash
-wget https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
-python3 ./flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
-```
-You might need to install some dependencies
-```bash
-sudo apt install python3-aiohttp python3-toml
-```
