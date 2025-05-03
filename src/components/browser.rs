@@ -163,7 +163,7 @@ impl relm4::component::AsyncComponent for Browser {
             BrowserIn::SearchChanged(search) => {
                 self.dashboard.emit(DashboardIn::FilterChanged);
                 if let Some(artists) = &self.artists {
-                    artists.emit(ArtistsViewIn::FilterChanged);
+                    artists.emit(ArtistsViewIn::SearchChanged);
                 }
                 if let Some(albums) = &self.albums {
                     albums.emit(AlbumsViewIn::FilterChanged);

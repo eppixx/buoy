@@ -25,14 +25,14 @@ use crate::{
 #[derive(Debug)]
 pub struct ArtistsView {
     subsonic: Rc<RefCell<Subsonic>>,
-    filters: relm4::factory::FactoryVecDeque<FilterRow>,
+    filters: Rc<RefCell<relm4::factory::FactoryVecDeque<FilterRow>>>,
     entries: relm4::typed_view::column::TypedColumnView<ArtistRow, gtk::SingleSelection>,
     shown_artists: Rc<RefCell<HashSet<String>>>,
 }
 
 impl ArtistsView {
     fn active_filters(&self) -> bool {
-        self.filters.iter().any(|f| f.active())
+        self.filters.borrow().iter().any(|f| f.active())
     }
 
     fn calc_sensitivity_of_buttons(&self, widgets: &<ArtistsView as relm4::Component>::Widgets) {
@@ -83,6 +83,7 @@ pub enum ArtistsViewOut {
 
 #[derive(Debug)]
 pub enum ArtistsViewIn {
+    SearchChanged,
     FilterChanged,
     UpdateFavoriteArtist(String, bool),
     Cover(CoverOut),
@@ -135,13 +136,19 @@ impl relm4::component::Component for ArtistsView {
         let mut model = Self {
             subsonic,
             entries,
-            filters: relm4::factory::FactoryVecDeque::builder()
-                .launch(gtk::ListBox::default())
-                .forward(sender.input_sender(), Self::Input::FilterRow),
+            filters: Rc::new(RefCell::new(
+                relm4::factory::FactoryVecDeque::builder()
+                    .launch(gtk::ListBox::default())
+                    .forward(sender.input_sender(), Self::Input::FilterRow),
+            )),
             shown_artists: Rc::new(RefCell::new(HashSet::new())),
         };
 
-        model.filters.guard().push_back(Category::Favorite);
+        model
+            .filters
+            .borrow_mut()
+            .guard()
+            .push_back(Category::Favorite);
 
         //add artists
         let list = model.subsonic.borrow().artists().to_vec();
@@ -154,13 +161,94 @@ impl relm4::component::Component for ArtistsView {
         // create view
         let widgets = view_output!();
 
-        //update labels and buttons
+        // update labels and buttons
         widgets.shown_artists.set_label(&format!(
             "{}: {}",
             gettext("Shown artists"),
             model.shown_artists.borrow().len()
         ));
         model.calc_sensitivity_of_buttons(&widgets);
+
+        // add filter
+        let filters = model.filters.clone();
+        let shown_artists = model.shown_artists.clone();
+        let show_filters = widgets.filters.clone();
+        model.entries.add_filter(move |track| {
+            if filters.borrow().is_empty() || !show_filters.reveals_child() {
+                return true;
+            }
+
+            for filter in filters
+                .borrow()
+                .iter()
+                .filter_map(|row| row.filter().as_ref())
+            {
+                match filter {
+                    //TODO add matching for regular expressions
+                    Filter::Favorite(None) => {}
+                    Filter::Favorite(Some(state)) => {
+                        if *state != track.item().starred.is_some() {
+                            return false;
+                        }
+                    }
+                    Filter::Artist(_, value) if value.is_empty() => {}
+                    Filter::Artist(relation, value) => match relation {
+                        TextRelation::ExactNot if value == &track.item().name => return false,
+                        TextRelation::Exact if value != &track.item().name => return false,
+                        TextRelation::ContainsNot if track.item().name.contains(value) => {
+                            return false
+                        }
+                        TextRelation::Contains if !track.item().name.contains(value) => {
+                            return false
+                        }
+                        _ => {} // filter matches
+                    },
+                    Filter::AlbumCount(order, value) => {
+                        if track.item().album_count.cmp(value) != *order {
+                            return false;
+                        }
+                    }
+                    _ => unreachable!("there are filters that shouldnt be"),
+                }
+            }
+            true
+        });
+
+        // add search filter
+        model.entries.add_filter(move |track| {
+            let mut search = Settings::get().lock().unwrap().search_text.clone();
+
+            // when search bar is hidden every element will be shown
+            if !Settings::get().lock().unwrap().search_active {
+                shown_artists.borrow_mut().insert(track.item().name.clone());
+                return true;
+            }
+
+            let mut artist = track.item().name.clone();
+            //check for case sensitivity
+            if !Settings::get().lock().unwrap().case_sensitive {
+                artist = artist.to_lowercase();
+                search = search.to_lowercase();
+            }
+
+            //actual matching
+            let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+            if fuzzy_search {
+                let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                let score = matcher.fuzzy_match(&artist, &search);
+                if score.is_some() {
+                    shown_artists.borrow_mut().insert(track.item().name.clone());
+                    true
+                } else {
+                    false
+                }
+            } else if artist.contains(&search) {
+                shown_artists.borrow_mut().insert(track.item().name.clone());
+                true
+            } else {
+                false
+            }
+        });
 
         relm4::component::ComponentParts { model, widgets }
     }
@@ -278,7 +366,7 @@ impl relm4::component::Component for ArtistsView {
                         }
                     },
 
-                    model.filters.widget().clone() -> gtk::ListBox {
+                    model.filters.borrow().widget().clone() -> gtk::ListBox {
                         set_margin_all: 5,
                         add_css_class: granite::STYLE_CLASS_FRAME,
                         add_css_class: granite::STYLE_CLASS_RICH_LIST,
@@ -324,105 +412,37 @@ impl relm4::component::Component for ArtistsView {
         _root: &Self::Root,
     ) {
         match msg {
-            ArtistsViewIn::FilterChanged => {
-                self.calc_sensitivity_of_buttons(widgets);
+            ArtistsViewIn::SearchChanged => {
+                self.entries.notify_filter_changed(1);
 
-                let update_label = |label: &gtk::Label, counter: &Rc<RefCell<HashSet<String>>>| {
-                    label.set_text(&format!(
-                        "{}: {}",
-                        gettext("Shown artists"),
-                        counter.borrow().len()
-                    ));
-                };
-
-                let shown_artists = self.shown_artists.clone();
-                let shown_artists_widget = widgets.shown_artists.clone();
-                update_label(&shown_artists_widget, &shown_artists);
-
-                self.entries.pop_filter();
-                let filters: Vec<Filter> = self
-                    .filters
-                    .iter()
-                    .filter_map(|row| row.filter().as_ref())
-                    .cloned()
-                    .collect();
-                if (filters.is_empty() || !widgets.filters.reveals_child())
-                    && !Settings::get().lock().unwrap().search_active
-                {
-                    update_label(&shown_artists_widget, &shown_artists);
-                    return;
-                }
-
+                // update widgets
                 self.shown_artists.borrow_mut().clear();
+                (0..self.entries.len())
+                    .filter_map(|i| self.entries.get_visible(i))
+                    .for_each(|track| {
+                        self.shown_artists
+                            .borrow_mut()
+                            .insert(track.borrow().item().name.clone());
+                    });
 
-                self.entries.add_filter(move |track| {
-                    let mut search = Settings::get().lock().unwrap().search_text.clone();
-                    for filter in &filters {
-                        match filter {
-                            //TODO add matching for regular expressions
-                            Filter::Favorite(None) => {}
-                            Filter::Favorite(Some(state)) => {
-                                if *state != track.item().starred.is_some() {
-                                    return false;
-                                }
-                            }
-                            Filter::Artist(_, value) if value.is_empty() => {}
-                            Filter::Artist(relation, value) => match relation {
-                                TextRelation::ExactNot if value == &track.item().name => {
-                                    return false
-                                }
-                                TextRelation::Exact if value != &track.item().name => return false,
-                                TextRelation::ContainsNot if track.item().name.contains(value) => {
-                                    return false
-                                }
-                                TextRelation::Contains if !track.item().name.contains(value) => {
-                                    return false
-                                }
-                                _ => {} // filter matches
-                            },
-                            Filter::AlbumCount(order, value) => {
-                                if track.item().album_count.cmp(value) != *order {
-                                    return false;
-                                }
-                            }
-                            _ => unreachable!("there are filters that shouldnt be"),
-                        }
-                    }
+                update_label(&widgets.shown_artists, &self.shown_artists);
+                self.calc_sensitivity_of_buttons(widgets);
+            }
+            ArtistsViewIn::FilterChanged => {
+                self.entries.notify_filter_changed(0);
 
-                    // when search bar is hidden every element will be shown
-                    if !Settings::get().lock().unwrap().search_active {
-                        shown_artists.borrow_mut().insert(track.item().name.clone());
-                        update_label(&shown_artists_widget, &shown_artists);
-                        return true;
-                    }
+                // update widgets
+                self.shown_artists.borrow_mut().clear();
+                (0..self.entries.len())
+                    .filter_map(|i| self.entries.get_visible(i))
+                    .for_each(|track| {
+                        self.shown_artists
+                            .borrow_mut()
+                            .insert(track.borrow().item().name.clone());
+                    });
 
-                    let mut artist = track.item().name.clone();
-                    //check for case sensitivity
-                    if !Settings::get().lock().unwrap().case_sensitive {
-                        artist = artist.to_lowercase();
-                        search = search.to_lowercase();
-                    }
-
-                    //actual matching
-                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
-                    if fuzzy_search {
-                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                        let score = matcher.fuzzy_match(&artist, &search);
-                        if score.is_some() {
-                            shown_artists.borrow_mut().insert(track.item().name.clone());
-                            update_label(&shown_artists_widget, &shown_artists);
-                            true
-                        } else {
-                            false
-                        }
-                    } else if artist.contains(&search) {
-                        shown_artists.borrow_mut().insert(track.item().name.clone());
-                        update_label(&shown_artists_widget, &shown_artists);
-                        true
-                    } else {
-                        false
-                    }
-                });
+                update_label(&widgets.shown_artists, &self.shown_artists);
+                self.calc_sensitivity_of_buttons(widgets);
             }
             ArtistsViewIn::UpdateFavoriteArtist(id, state) => {
                 (0..self.entries.len())
@@ -465,14 +485,22 @@ impl relm4::component::Component for ArtistsView {
                     .expect("is not a BoxedAnyObject");
                 let category: std::cell::Ref<Category> = boxed.borrow();
 
-                let index = self.filters.guard().push_back(category.clone());
+                let index = self
+                    .filters
+                    .borrow_mut()
+                    .guard()
+                    .push_back(category.clone());
                 self.filters
+                    .borrow()
                     .send(index.current_index(), FilterRowIn::SetTo(category.clone()));
                 sender.input(ArtistsViewIn::FilterChanged);
             }
             ArtistsViewIn::FilterRow(msg) => match msg {
                 FilterRowOut::RemoveFilter(index) => {
-                    self.filters.guard().remove(index.current_index());
+                    self.filters
+                        .borrow_mut()
+                        .guard()
+                        .remove(index.current_index());
                     sender.input(ArtistsViewIn::FilterChanged);
                 }
                 FilterRowOut::ParameterChanged => sender.input(ArtistsViewIn::FilterChanged),
@@ -536,4 +564,12 @@ impl relm4::component::Component for ArtistsView {
             }
         }
     }
+}
+
+fn update_label(label: &gtk::Label, counter: &Rc<RefCell<HashSet<String>>>) {
+    label.set_text(&format!(
+        "{}: {}",
+        gettext("Shown artists"),
+        counter.borrow().len()
+    ));
 }
