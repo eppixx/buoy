@@ -32,6 +32,12 @@ pub fn sort_fn<T: PartialOrd>(a: &T, b: &T) -> relm4::gtk::Ordering {
 
 pub fn search_matching(mut test: String, mut search: String) -> bool {
     let settings = crate::settings::Settings::get().lock().unwrap();
+
+    // show all rows when search is deactive
+    if !settings.search_active {
+        return true;
+    }
+
     //check for case sensitivity
     if !settings.case_sensitive {
         test = test.to_lowercase();
