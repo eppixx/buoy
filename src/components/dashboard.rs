@@ -39,17 +39,9 @@ enum Scrolling {
 #[derive(Debug)]
 pub struct Dashboard {
     subsonic: Rc<RefCell<Subsonic>>,
-
-    recently_added_scroll: gtk::ScrolledWindow,
     recently_added_list: relm4::factory::FactoryVecDeque<AlbumElement>,
-
-    recently_played_scroll: gtk::ScrolledWindow,
     recently_played_list: relm4::factory::FactoryVecDeque<AlbumElement>,
-
-    random_album_scroll: gtk::ScrolledWindow,
     random_album_list: relm4::factory::FactoryVecDeque<AlbumElement>,
-
-    most_played_scroll: gtk::ScrolledWindow,
     most_played_list: relm4::factory::FactoryVecDeque<AlbumElement>,
 }
 
@@ -90,23 +82,15 @@ impl relm4::Component for Dashboard {
     ) -> relm4::ComponentParts<Self> {
         let mut model = Self {
             subsonic: subsonic.clone(),
-
-            recently_added_scroll: gtk::ScrolledWindow::default(),
             recently_added_list: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::FlowBox::default())
                 .forward(sender.input_sender(), DashboardIn::AlbumElement),
-
-            recently_played_scroll: gtk::ScrolledWindow::default(),
             recently_played_list: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::FlowBox::default())
                 .forward(sender.input_sender(), DashboardIn::AlbumElement),
-
-            random_album_scroll: gtk::ScrolledWindow::default(),
             random_album_list: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::FlowBox::default())
                 .forward(sender.input_sender(), DashboardIn::AlbumElement),
-
-            most_played_scroll: gtk::ScrolledWindow::default(),
             most_played_list: relm4::factory::FactoryVecDeque::builder()
                 .launch(gtk::FlowBox::default())
                 .forward(sender.input_sender(), DashboardIn::AlbumElement),
@@ -143,10 +127,10 @@ impl relm4::Component for Dashboard {
         let widgets = view_output!();
 
         //update scrolling of boxes
-        let recently_added_scroll = model.recently_added_scroll.clone();
-        let recently_played_scroll = model.recently_played_scroll.clone();
-        let random_album_scroll = model.random_album_scroll.clone();
-        let most_played_scroll = model.most_played_scroll.clone();
+        let recently_added_scroll = widgets.recently_added_scroll.clone();
+        let recently_played_scroll = widgets.recently_played_scroll.clone();
+        let random_album_scroll = widgets.random_album_scroll.clone();
+        let most_played_scroll = widgets.most_played_scroll.clone();
 
         gtk::glib::spawn_future_local(async move {
             let scrollings = Rc::new(RefCell::new(Scrolling::None));
@@ -216,10 +200,10 @@ impl relm4::Component for Dashboard {
 
         // set uniform size
         let group = gtk::SizeGroup::new(gtk::SizeGroupMode::Vertical);
-        group.add_widget(&model.recently_added_scroll);
+        group.add_widget(&widgets.recently_added_scroll);
         group.add_widget(&widgets.recently_stack);
-        group.add_widget(&model.random_album_scroll);
-        group.add_widget(&model.most_played_scroll);
+        group.add_widget(&widgets.random_album_scroll);
+        group.add_widget(&widgets.most_played_scroll);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -280,7 +264,7 @@ impl relm4::Component for Dashboard {
                                 },
                             },
                         },
-                        model.recently_added_scroll.clone() -> gtk::ScrolledWindow {
+                        append: recently_added_scroll = &gtk::ScrolledWindow {
                             set_vscrollbar_policy: gtk::PolicyType::Never,
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
@@ -350,7 +334,7 @@ impl relm4::Component for Dashboard {
                             set_transition_type: gtk::StackTransitionType::Crossfade,
                             set_transition_duration: 100,
 
-                            add_enumed[LoadingWidgetState::NotEmpty] = &model.recently_played_scroll.clone() {
+                            add_enumed[LoadingWidgetState::NotEmpty]: recently_played_scroll = &gtk::ScrolledWindow {
                                 set_vscrollbar_policy: gtk::PolicyType::Never,
                                 set_hscrollbar_policy: gtk::PolicyType::External,
                                 set_hexpand: true,
@@ -453,7 +437,7 @@ impl relm4::Component for Dashboard {
                             },
                         },
 
-                        model.random_album_scroll.clone() -> gtk::ScrolledWindow {
+                        append: random_album_scroll = &gtk::ScrolledWindow {
                             set_vscrollbar_policy: gtk::PolicyType::Never,
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
@@ -520,7 +504,7 @@ impl relm4::Component for Dashboard {
                                 },
                             }
                         },
-                        model.most_played_scroll.clone() -> gtk::ScrolledWindow {
+                        append: most_played_scroll = &gtk::ScrolledWindow {
                             set_vscrollbar_policy: gtk::PolicyType::Never,
                             set_hscrollbar_policy: gtk::PolicyType::External,
                             set_hexpand: true,
