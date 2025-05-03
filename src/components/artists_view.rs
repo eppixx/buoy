@@ -85,6 +85,7 @@ pub enum ArtistsViewOut {
 pub enum ArtistsViewIn {
     SearchChanged,
     FilterChanged,
+    UpdateWidgetsSearchFilterChanged,
     UpdateFavoriteArtist(String, bool),
     Cover(CoverOut),
     FilterRow(FilterRowOut),
@@ -411,23 +412,13 @@ impl relm4::component::Component for ArtistsView {
         match msg {
             ArtistsViewIn::SearchChanged => {
                 self.entries.notify_filter_changed(1);
-
-                // update widgets
-                self.shown_artists.borrow_mut().clear();
-                (0..self.entries.len())
-                    .filter_map(|i| self.entries.get_visible(i))
-                    .for_each(|track| {
-                        self.shown_artists
-                            .borrow_mut()
-                            .insert(track.borrow().item().name.clone());
-                    });
-
-                update_label(&widgets.shown_artists, &self.shown_artists);
-                self.calc_sensitivity_of_buttons(widgets);
+                sender.input(ArtistsViewIn::UpdateWidgetsSearchFilterChanged);
             }
             ArtistsViewIn::FilterChanged => {
                 self.entries.notify_filter_changed(0);
-
+                sender.input(ArtistsViewIn::UpdateWidgetsSearchFilterChanged);
+            }
+            ArtistsViewIn::UpdateWidgetsSearchFilterChanged => {
                 // update widgets
                 self.shown_artists.borrow_mut().clear();
                 (0..self.entries.len())
