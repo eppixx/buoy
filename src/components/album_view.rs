@@ -170,8 +170,7 @@ impl relm4::Component for AlbumView {
             }
 
             //actual matching
-            let fuzzy_search = settings.fuzzy_search;
-            if fuzzy_search {
+            if settings.fuzzy_search {
                 let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                 let score = matcher.fuzzy_match(&test, &search);
                 score.is_some()
