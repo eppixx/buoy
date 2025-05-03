@@ -301,6 +301,7 @@ impl relm4::component::Component for AlbumsView {
                             set_end_widget = &gtk::Box {
                                 set_spacing: 10,
                                 set_margin_end: 10,
+                                set_tooltip: &gettext("Activate to show filter panel"),
 
                                 gtk::Label {
                                     set_text: &gettext("Filters:"),
