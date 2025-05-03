@@ -50,7 +50,7 @@ If you don't want that, remove `--user` from the instructions.
 Fetch the flatpak dependencies
 ```bash
 sudo apt install flatpak-builder
-# you may need to add flathub as remote
+# you may need to add elementary and flathub as remote
 flatpak --user remote-add --if-not-exists elementary https://flatpak.elementary.io/repo.flatpakrepo
 flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 # install actual dependencies
