@@ -16,7 +16,6 @@ mod factory;
 pub mod gtk_helper;
 mod mpris;
 mod playback;
-pub mod player;
 pub mod settings;
 pub mod subsonic;
 pub mod subsonic_cover;

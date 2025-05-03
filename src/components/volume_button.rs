@@ -7,7 +7,7 @@ use relm4::{
     RelmWidgetExt,
 };
 
-use crate::{player::Command, settings::Settings};
+use crate::{common::player::Command, settings::Settings};
 
 const STEP: f64 = 0.05;
 

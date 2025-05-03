@@ -1,6 +1,7 @@
 pub mod filter;
 pub mod filter_categories;
 pub mod play_state;
+pub mod player;
 
 pub fn convert_for_label(time: i64) -> String {
     match convert_for_label_intern(time) {

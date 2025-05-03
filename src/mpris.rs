@@ -9,11 +9,9 @@ use zbus::interface;
 
 use crate::{
     client::Client,
-    common::play_state::PlayState,
+    common::{play_state::PlayState, player::Command},
     components::sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
-    config,
-    player::Command,
-    Args,
+    config, Args,
 };
 
 /// converts the internally used values to the mpris used ones and vice versa
