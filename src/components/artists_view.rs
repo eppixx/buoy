@@ -171,7 +171,6 @@ impl relm4::component::Component for ArtistsView {
 
         // add filter
         let filters = model.filters.clone();
-        let shown_artists = model.shown_artists.clone();
         let show_filters = widgets.filters.clone();
         model.entries.add_filter(move |track| {
             if filters.borrow().is_empty() || !show_filters.reveals_child() {
@@ -216,34 +215,32 @@ impl relm4::component::Component for ArtistsView {
 
         // add search filter
         model.entries.add_filter(move |track| {
-            let mut search = Settings::get().lock().unwrap().search_text.clone();
+            let settings = Settings::get().lock().unwrap();
+            let mut search = settings.search_text.clone();
 
             // when search bar is hidden every element will be shown
-            if !Settings::get().lock().unwrap().search_active {
-                shown_artists.borrow_mut().insert(track.item().name.clone());
+            if !settings.search_active {
                 return true;
             }
 
             let mut artist = track.item().name.clone();
             //check for case sensitivity
-            if !Settings::get().lock().unwrap().case_sensitive {
+            if !settings.case_sensitive {
                 artist = artist.to_lowercase();
                 search = search.to_lowercase();
             }
 
             //actual matching
-            let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
+            let fuzzy_search = settings.fuzzy_search;
             if fuzzy_search {
                 let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
                 let score = matcher.fuzzy_match(&artist, &search);
                 if score.is_some() {
-                    shown_artists.borrow_mut().insert(track.item().name.clone());
                     true
                 } else {
                     false
                 }
             } else if artist.contains(&search) {
-                shown_artists.borrow_mut().insert(track.item().name.clone());
                 true
             } else {
                 false
