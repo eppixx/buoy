@@ -11,14 +11,16 @@ use relm4::{
 };
 
 use crate::{
-    common::convert_for_label,
+    common::{
+        convert_for_label,
+        types::{Droppable, Id},
+    },
     components::{
         albums_view::{AlbumsView, AlbumsViewIn, AlbumsViewOut},
         cover::Cover,
     },
     factory::SetupFinished,
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 #[derive(Debug)]

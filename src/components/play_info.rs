@@ -11,9 +11,9 @@ use relm4::{
 };
 
 use crate::{
+    common::types::Id,
     components::cover::{Cover, CoverIn, CoverOut},
     subsonic::Subsonic,
-    types::Id,
 };
 
 #[derive(Debug)]

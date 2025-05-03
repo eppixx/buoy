@@ -10,8 +10,11 @@ use relm4::{
 };
 
 use crate::{
-    common,
-    common::filter_categories::Category,
+    common::{
+        self,
+        filter_categories::Category,
+        types::{Droppable, Id},
+    },
     components::cover::CoverOut,
     factory::{
         artist_row::{AlbumCountColumn, ArtistRow, CoverColumn, FavColumn, TitleColumn},
@@ -19,7 +22,6 @@ use crate::{
     },
     settings::Settings,
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 #[derive(Debug)]

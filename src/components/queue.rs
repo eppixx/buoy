@@ -14,7 +14,7 @@ use relm4::{
 };
 
 use crate::{
-    common::{play_state::PlayState, player::Command},
+    common::{play_state::PlayState, player::Command, types::Droppable},
     components::{
         cover::CoverOut,
         sequence_button_impl::{repeat::Repeat, shuffle::Shuffle},
@@ -31,7 +31,6 @@ use crate::{
     },
     settings::Settings,
     subsonic::Subsonic,
-    types::Droppable,
 };
 
 #[derive(Debug, PartialEq, PartialOrd)]

@@ -14,13 +14,13 @@ use relm4::{
 
 use crate::{
     client::Client,
+    common::types::Id,
     factory::album_element::{
         get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
     gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},
     settings::Settings,
     subsonic::Subsonic,
-    types::Id,
 };
 
 #[derive(Debug, Clone)]

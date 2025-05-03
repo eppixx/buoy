@@ -13,7 +13,10 @@ use relm4::{
 
 use crate::{
     client::Client,
-    common::{self, convert_for_label},
+    common::{
+        self, convert_for_label,
+        types::{Droppable, Id},
+    },
     components::cover::{Cover, CoverIn, CoverOut},
     factory::album_track_row::{
         AlbumTrackRow, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
@@ -22,7 +25,6 @@ use crate::{
     gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},
     settings::Settings,
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 #[derive(Debug)]

@@ -10,13 +10,13 @@ use relm4::{
 };
 
 use crate::{
+    common::types::Droppable,
     components::{
         artists_view::{ArtistsView, ArtistsViewIn, ArtistsViewOut},
         cover::Cover,
     },
     factory::SetupFinished,
     subsonic::Subsonic,
-    types::Droppable,
 };
 
 #[derive(Debug)]

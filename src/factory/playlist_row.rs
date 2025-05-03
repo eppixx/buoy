@@ -7,11 +7,10 @@ use relm4::gtk::{
 };
 
 use crate::{
-    common::convert_for_label,
+    common::{convert_for_label, types::Id},
     components::playlists_view::{PlaylistsView, PlaylistsViewOut},
     factory::SetupFinished,
     subsonic::Subsonic,
-    types::Id,
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);

@@ -16,7 +16,7 @@ use relm4::{
 
 use crate::{
     client::Client,
-    common::{play_state::PlayState, player::Command},
+    common::{play_state::PlayState, player::Command, types::Droppable},
     components::{
         browser::{Browser, BrowserIn, BrowserOut},
         equalizer::{Equalizer, EqualizerOut},
@@ -33,7 +33,6 @@ use crate::{
     playback::{Playback, PlaybackOut},
     settings::Settings,
     subsonic::Subsonic,
-    types::Droppable,
     views::{ClickableViews, Views},
     Args,
 };

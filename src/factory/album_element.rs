@@ -11,10 +11,12 @@ use relm4::{
 };
 
 use crate::{
-    common::convert_for_label,
+    common::{
+        convert_for_label,
+        types::{Droppable, Id},
+    },
     components::descriptive_cover::{DescriptiveCover, DescriptiveCoverInit, DescriptiveCoverOut},
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 #[derive(Debug)]

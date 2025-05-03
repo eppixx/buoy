@@ -10,11 +10,13 @@ use relm4::{
 };
 
 use crate::{
-    common::convert_for_label,
+    common::{
+        convert_for_label,
+        types::{Droppable, Id},
+    },
     components::tracks_view::{TracksView, TracksViewIn, TracksViewOut},
     factory::SetupFinished,
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);

@@ -10,12 +10,12 @@ use relm4::{
 };
 
 use crate::{
-    common, css,
+    common::{self, types::Droppable},
+    css,
     factory::{playlist_row::PlaylistUids, queue_song_row::QueueUids},
     gtk_helper::stack::StackExt,
     settings::Settings,
     subsonic::Subsonic,
-    types::Droppable,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]

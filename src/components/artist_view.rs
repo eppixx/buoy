@@ -13,7 +13,10 @@ use relm4::{
 
 use crate::{
     client::Client,
-    common,
+    common::{
+        self,
+        types::{Droppable, Id},
+    },
     components::cover::{Cover, CoverIn, CoverOut},
     factory::{
         album_element::{get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut},
@@ -21,7 +24,6 @@ use crate::{
     },
     gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 #[derive(Debug)]

@@ -12,7 +12,10 @@ use relm4::{
 
 use crate::{
     client::Client,
-    common::{self, convert_for_label},
+    common::{
+        self, convert_for_label,
+        types::{Droppable, Id},
+    },
     components::cover::{Cover, CoverIn, CoverOut},
     factory::{
         playlist_element::{
@@ -28,7 +31,6 @@ use crate::{
     },
     settings::Settings,
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

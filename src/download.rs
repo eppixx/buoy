@@ -10,10 +10,10 @@ use relm4::gtk::{
 
 use crate::{
     client::Client,
+    common::types::{Droppable, Id},
     components::{app::App, warning_dialog::WarningDialog},
     settings::Settings,
     subsonic::Subsonic,
-    types::{Droppable, Id},
 };
 
 pub struct Download {}
