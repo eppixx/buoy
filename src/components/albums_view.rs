@@ -11,11 +11,11 @@ use relm4::{
 };
 
 use crate::{
+    common,
     components::{
         cover::CoverOut,
         filter_categories::Category,
-        filter_row::{Filter, FilterRowIn},
-        filter_row::{FilterRow, FilterRowOut, TextRelation},
+        filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
     },
     factory::album_row::{
         AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, PlayCountColumn,
@@ -338,42 +338,14 @@ impl relm4::component::Component for AlbumsView {
 
         // add search filter
         model.entries.add_filter(move |track| {
-            let settings = Settings::get().lock().unwrap();
-            let mut search = settings.search_text.clone();
-
-            // when search bar is hidden every element will be shown
-            if !settings.search_active {
-                return true;
-            }
-
-            let mut title_artist_album = format!(
+            let search = Settings::get().lock().unwrap().search_text.clone();
+            let title_artist_album = format!(
                 "{} {} {}",
                 track.item().title.clone(),
                 track.item().artist.clone().unwrap_or_default(),
                 track.item().album.clone().unwrap_or_default()
             );
-
-            //check for case sensitivity
-            if !settings.case_sensitive {
-                title_artist_album = title_artist_album.to_lowercase();
-                search = search.to_lowercase();
-            }
-
-            //actual matching
-            let fuzzy_search = settings.fuzzy_search;
-            if fuzzy_search {
-                let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                let score = matcher.fuzzy_match(&title_artist_album, &search);
-                if score.is_some() {
-                    true
-                } else {
-                    false
-                }
-            } else if title_artist_album.contains(&search) {
-                true
-            } else {
-                false
-            }
+            common::search_matching(title_artist_album, search)
         });
 
         relm4::component::ComponentParts { model, widgets }
