@@ -41,7 +41,7 @@ pub enum AlbumViewIn {
     UpdateFavoriteAlbum(String, bool),
     UpdateFavoriteSong(String, bool),
     UpdatePlayCountSong(String, Option<i64>),
-    FilterChanged(String),
+    FilterChanged,
     HoverCover(bool),
     RecalcDragSource,
 }
@@ -119,7 +119,7 @@ impl relm4::Component for AlbumView {
             .unwrap()
             .set_title(Some(&gettext("Favorite")));
 
-        let model = Self {
+        let mut model = Self {
             subsonic: subsonic.clone(),
             id: id.clone(),
             cover: Cover::builder()
@@ -145,6 +145,40 @@ impl relm4::Component for AlbumView {
             .connect_selection_changed(move |_selection_model, _x, _y| {
                 sender.input(AlbumViewIn::RecalcDragSource);
             });
+
+        // add search filter
+        model.tracks.add_filter(move |row| {
+            let settings = Settings::get().lock().unwrap();
+
+            // show all rows when search is deactive
+            if !settings.search_active {
+                return true;
+            }
+
+            let mut search = settings.search_text.clone();
+            let mut test = format!(
+                "{} {} {}",
+                row.item().title,
+                row.item().artist.as_deref().unwrap_or_default(),
+                row.item().album.as_deref().unwrap_or_default()
+            );
+
+            //check for case sensitivity
+            if !settings.case_sensitive {
+                test = test.to_lowercase();
+                search = search.to_lowercase();
+            }
+
+            //actual matching
+            let fuzzy_search = settings.fuzzy_search;
+            if fuzzy_search {
+                let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+                let score = matcher.fuzzy_match(&test, &search);
+                score.is_some()
+            } else {
+                test.contains(&search)
+            }
+        });
 
         relm4::ComponentParts { model, widgets }
     }
@@ -334,33 +368,8 @@ impl relm4::Component for AlbumView {
                     sender.output(AlbumViewOut::DisplayToast(title)).unwrap();
                 }
             },
-            AlbumViewIn::FilterChanged(search) => {
-                self.tracks.clear_filters();
-                self.tracks.add_filter(move |row| {
-                    let mut search = search.clone();
-                    let mut test = format!(
-                        "{} {} {}",
-                        row.item().title,
-                        row.item().artist.as_deref().unwrap_or_default(),
-                        row.item().album.as_deref().unwrap_or_default()
-                    );
-
-                    //check for case sensitivity
-                    if !Settings::get().lock().unwrap().case_sensitive {
-                        test = test.to_lowercase();
-                        search = search.to_lowercase();
-                    }
-
-                    //actual matching
-                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
-                    if fuzzy_search {
-                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                        let score = matcher.fuzzy_match(&test, &search);
-                        score.is_some()
-                    } else {
-                        test.contains(&search)
-                    }
-                });
+            AlbumViewIn::FilterChanged => {
+                self.tracks.notify_filter_changed(0);
             }
             AlbumViewIn::UpdateFavoriteAlbum(id, state) => {
                 let Some(album) = self.subsonic.borrow().find_album(self.id.as_ref()) else {

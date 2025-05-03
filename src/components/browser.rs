@@ -172,7 +172,7 @@ impl relm4::component::AsyncComponent for Browser {
                     tracks.emit(TracksViewIn::FilterChanged);
                 }
                 for view in &self.album_views {
-                    view.emit(AlbumViewIn::FilterChanged(search.clone()));
+                    view.emit(AlbumViewIn::FilterChanged);
                 }
                 for view in &self.artist_views {
                     view.emit(ArtistViewIn::FilterChanged(search.clone()));
