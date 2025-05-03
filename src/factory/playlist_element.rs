@@ -10,7 +10,7 @@ use relm4::{
 };
 
 use crate::{
-    css,
+    common, css,
     factory::{playlist_row::PlaylistUids, queue_song_row::QueueUids},
     gtk_helper::stack::StackExt,
     settings::Settings,
@@ -122,6 +122,16 @@ impl PlaylistElement {
     pub fn write_protected(&self) -> bool {
         self.write_protected
     }
+
+    fn create_sublabel(&self) -> String {
+        format!(
+            "{}: {}  •  {}: {}",
+            gettext("Songs"),
+            self.playlist.base.song_count,
+            gettext("Length"),
+            common::convert_for_label(i64::from(self.playlist.base.duration) * 1000)
+        )
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -225,16 +235,16 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
                         set_hexpand: true,
                         set_homogeneous: true,
 
-                        append: list_name = &gtk::Label {
+                        append: title = &gtk::Label {
                             add_css_class: granite::STYLE_CLASS_H3_LABEL,
                             set_halign: gtk::Align::Start,
                             set_text: &self.playlist.base.name,
                             set_width_chars: 3,
                             set_ellipsize: pango::EllipsizeMode::End,
                         },
-                        append: song_number = &gtk::Label {
+                        append: sub_title = &gtk::Label {
                             set_halign: gtk::Align::Start,
-                            set_text: &format!("{} {}", self.playlist.base.song_count, gettext("songs")),
+                            set_text: &self.create_sublabel(),
                         }
                     },
 
@@ -429,7 +439,7 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             }
             PlaylistElementIn::UpdatePlaylistName(list) => {
                 if self.playlist.base.id == list.id {
-                    widgets.list_name.set_text(&list.name);
+                    widgets.title.set_text(&list.name);
                     widgets.edit_entry.set_text(&list.name);
                     self.playlist.base.name = list.name;
                 }
@@ -437,12 +447,8 @@ impl relm4::factory::FactoryComponent for PlaylistElement {
             PlaylistElementIn::UpdatePlaylist(list) => {
                 if self.playlist.base.id == list.base.id {
                     self.playlist = list;
-                    widgets.list_name.set_text(&self.playlist.base.name);
-                    widgets.song_number.set_text(&format!(
-                        "{} {}",
-                        self.playlist.base.song_count,
-                        gettext("songs")
-                    ));
+                    widgets.title.set_text(&self.playlist.base.name);
+                    widgets.sub_title.set_text(&self.create_sublabel());
                 }
             }
             PlaylistElementIn::Clicked => {
