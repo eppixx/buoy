@@ -41,7 +41,7 @@ pub enum AlbumViewIn {
     UpdateFavoriteAlbum(String, bool),
     UpdateFavoriteSong(String, bool),
     UpdatePlayCountSong(String, Option<i64>),
-    FilterChanged,
+    SearchChanged,
     HoverCover(bool),
     RecalcDragSource,
 }
@@ -368,7 +368,7 @@ impl relm4::Component for AlbumView {
                     sender.output(AlbumViewOut::DisplayToast(title)).unwrap();
                 }
             },
-            AlbumViewIn::FilterChanged => {
+            AlbumViewIn::SearchChanged => {
                 self.tracks.notify_filter_changed(0);
             }
             AlbumViewIn::UpdateFavoriteAlbum(id, state) => {
