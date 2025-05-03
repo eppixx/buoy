@@ -12,9 +12,9 @@ use relm4::{
 };
 
 use crate::{
-    filter_categories::Category,
     common::{
         filter::{Filter, TextRelation},
+        filter_categories::Category,
     },
     gtk_helper::{list_store::ListStoreExt, stack::StackExt},
 };

@@ -1,4 +1,6 @@
 pub mod filter;
+pub mod filter_categories;
+
 pub fn convert_for_label(time: i64) -> String {
     match convert_for_label_intern(time) {
         Some(label) => label,

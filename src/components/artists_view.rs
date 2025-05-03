@@ -11,12 +11,12 @@ use relm4::{
 
 use crate::{
     common,
+    common::filter_categories::Category,
     components::cover::CoverOut,
     factory::{
         artist_row::{AlbumCountColumn, ArtistRow, CoverColumn, FavColumn, TitleColumn},
         filter_row::{FilterRow, FilterRowIn, FilterRowOut},
     },
-    filter_categories::Category,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},

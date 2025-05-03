@@ -14,6 +14,7 @@ use relm4::{
 
 use crate::{
     common,
+    common::filter_categories::Category,
     components::{
         cover::{Cover, CoverIn, CoverOut},
         warning_dialog::WarningDialog,
@@ -25,7 +26,6 @@ use crate::{
             PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
         },
     },
-    filter_categories::Category,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},

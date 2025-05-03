@@ -13,7 +13,6 @@ pub mod config;
 pub mod css;
 mod download;
 mod factory;
-pub mod filter_categories;
 pub mod gtk_helper;
 mod mpris;
 mod play_state;

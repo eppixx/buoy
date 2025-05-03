@@ -11,6 +11,7 @@ use relm4::{
 
 use crate::{
     common,
+    common::filter_categories::Category,
     components::cover::CoverOut,
     factory::{
         album_row::{
@@ -19,7 +20,6 @@ use crate::{
         },
         filter_row::{FilterRow, FilterRowIn, FilterRowOut},
     },
-    filter_categories::Category,
     settings::Settings,
     subsonic::Subsonic,
     types::{Droppable, Id},
