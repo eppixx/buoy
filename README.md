@@ -60,9 +60,8 @@ sudo apt install flatpak-builder
 flatpak --user remote-add --if-not-exists elementary https://flatpak.elementary.io/repo.flatpakrepo
 flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 # install actual dependencies
-flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/7.3 io.elementary.Sdk/x86_64/7.3
-flatpak --user install -y --noninteractive org.freedesktop.Sdk.Extension.rust-stable/x86_64/23.08
-
+flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8.1 io.elementary.Sdk/x86_64/8.1
+flatpak --user install -y --noninteractive org.freedesktop.Sdk.Extension.rust-stable/x86_64/24.08
 ```
 
 #### Updating `cargo-sources.json`
@@ -81,17 +80,17 @@ sudo apt install python3-aiohttp python3-toml
 
 Building the project
 ```bash
-flatpak-builder --user flatpak_app com.github.eppixx.buoy.json --force-clean
+flatpak-builder --user flatpak_app com.github.eppixx.buoy.yaml --force-clean
 ```
 
 Run the build version without installing with
 ```bash
-flatpak-builder --run flatpak_app com.github.eppixx.buoy.json buoy
+flatpak-builder --run flatpak_app com.github.eppixx.buoy.yaml buoy
 ```
 
 Install with
 ```bash
-flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.json --force-clean
+flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.yaml --force-clean
 
 ```
 
