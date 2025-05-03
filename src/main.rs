@@ -19,7 +19,6 @@ mod playback;
 pub mod settings;
 pub mod subsonic;
 pub mod subsonic_cover;
-pub mod views;
 
 const DEFAULT_LOG_ENV_PARA: &str = "info,bouy:trace,submarine:info";
 const LOG_PREFIX: &str = "Buoy";

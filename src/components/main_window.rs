@@ -13,6 +13,7 @@ use relm4::{
 };
 
 use crate::{
+    common::views::ClickableViews,
     components::{
         app::{App, AppIn, AppOut},
         login_form::{LoginForm, LoginFormOut},
@@ -22,7 +23,6 @@ use crate::{
     mpris::{Mpris, MprisOut},
     playback::{Playback, PlaybackOut},
     settings::Settings,
-    views::ClickableViews,
     Args,
 };
 
