@@ -11,6 +11,7 @@ use relm4::{
 };
 
 use crate::{
+    common,
     components::{
         cover::CoverOut,
         filter_categories::Category,
@@ -216,36 +217,9 @@ impl relm4::component::Component for ArtistsView {
 
         // add search filter
         model.entries.add_filter(move |track| {
-            let settings = Settings::get().lock().unwrap();
-            let mut search = settings.search_text.clone();
-
-            // when search bar is hidden every element will be shown
-            if !settings.search_active {
-                return true;
-            }
-
-            let mut artist = track.item().name.clone();
-            //check for case sensitivity
-            if !settings.case_sensitive {
-                artist = artist.to_lowercase();
-                search = search.to_lowercase();
-            }
-
-            //actual matching
-            let fuzzy_search = settings.fuzzy_search;
-            if fuzzy_search {
-                let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                let score = matcher.fuzzy_match(&artist, &search);
-                if score.is_some() {
-                    true
-                } else {
-                    false
-                }
-            } else if artist.contains(&search) {
-                true
-            } else {
-                false
-            }
+            let search = Settings::get().lock().unwrap().search_text.clone();
+            let artist = track.item().name.clone();
+            common::search_matching(artist, search)
         });
 
         relm4::component::ComponentParts { model, widgets }
