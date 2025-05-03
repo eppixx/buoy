@@ -12,25 +12,8 @@ use relm4::{
 };
 
 use crate::{
-    components::filter_categories::Category, gtk_helper::list_store::ListStoreExt,
-    gtk_helper::stack::StackExt,
+    components::filter_categories::Category, filter::{Filter, TextRelation}, gtk_helper::{list_store::ListStoreExt, stack::StackExt}
 };
-
-#[derive(Debug, Clone)]
-pub enum Filter {
-    Favorite(Option<bool>),
-    Title(TextRelation, String),
-    Year(Ordering, i32),
-    Cd(Ordering, i32),
-    TrackNumber(Ordering, usize),
-    Artist(TextRelation, String),
-    Album(TextRelation, String),
-    Genre(TextRelation, String),
-    BitRate(Ordering, usize),
-    DurationSec(Ordering, i32),
-    DurationMin(Ordering, i32),
-    AlbumCount(Ordering, i32),
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct BoolRow {
@@ -90,14 +73,6 @@ impl BoolRow {
 
         factory
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TextRelation {
-    Contains,
-    ContainsNot,
-    ExactNot,
-    Exact,
 }
 
 #[derive(Debug, Clone)]

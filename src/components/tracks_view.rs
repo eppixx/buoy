@@ -17,9 +17,10 @@ use crate::{
     components::{
         cover::{Cover, CoverIn, CoverOut},
         filter_categories::Category,
-        filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
+        filter_row::{FilterRow, FilterRowIn, FilterRowOut},
         warning_dialog::WarningDialog,
     },
+    filter::{Filter, TextRelation},
     factory::track_row::{
         AlbumColumn, ArtistColumn, BitRateColumn, FavColumn, GenreColumn, LengthColumn,
         PlayCountColumn, PositionColumn, TitleColumn, TrackRow,
@@ -239,153 +240,20 @@ impl relm4::Component for TracksView {
         // add filter
         let filters = model.filters.clone();
         let show_filters = widgets.filters.clone();
-        model.tracks.add_filter(move |track| {
+        model.tracks.add_filter(move |row| {
             if filters.borrow().is_empty() || !show_filters.reveals_child() {
                 return true;
             }
 
-            for filter in filters
+            if filters
                 .borrow()
                 .iter()
                 .filter_map(|row| row.filter().as_ref())
+                .any(|filter| !filter.match_track(row.item()))
             {
-                match filter {
-                    //TODO add matching for regular expressions
-                    Filter::Favorite(None) => {}
-                    Filter::Favorite(Some(state)) => {
-                        if *state != track.item().starred.is_some() {
-                            return false;
-                        }
-                    }
-                    Filter::Title(_, value) if value.is_empty() => {} // filter matches
-                    Filter::Title(relation, value) => match relation {
-                        TextRelation::ExactNot if value == &track.item().title => return false,
-                        TextRelation::Exact if value != &track.item().title => return false,
-                        TextRelation::ContainsNot if track.item().title.contains(value) => {
-                            return false
-                        }
-                        TextRelation::Contains if !track.item().title.contains(value) => {
-                            return false
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::Album(_, value) if value.is_empty() => {} // filter matches
-                    Filter::Album(relation, value) => match relation {
-                        TextRelation::ExactNot if Some(value) == track.item().album.as_ref() => {
-                            return false
-                        }
-                        TextRelation::Exact if Some(value) != track.item().album.as_ref() => {
-                            return false
-                        }
-                        TextRelation::ContainsNot => {
-                            if let Some(album) = &track.item().album {
-                                if album.contains(value) {
-                                    return false;
-                                }
-                            }
-                        }
-                        TextRelation::Contains => {
-                            if let Some(album) = &track.item().album {
-                                if !album.contains(value) {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::Artist(_, value) if value.is_empty() => {} // filter matches
-                    Filter::Artist(relation, value) => match relation {
-                        TextRelation::ExactNot if Some(value) == track.item().artist.as_ref() => {
-                            return false
-                        }
-                        TextRelation::Exact if Some(value) != track.item().artist.as_ref() => {
-                            return false
-                        }
-                        TextRelation::ContainsNot => {
-                            if let Some(artist) = &track.item().artist {
-                                if artist.contains(value) {
-                                    return false;
-                                }
-                            }
-                        }
-                        TextRelation::Contains => {
-                            if let Some(artist) = &track.item().artist {
-                                if !artist.contains(value) {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::Year(order, value) => {
-                        if let Some(year) = &track.item().year {
-                            if year.cmp(value) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    Filter::Cd(order, value) => {
-                        if let Some(disc) = &track.item().disc_number {
-                            if disc.cmp(value) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    Filter::Genre(_, value) if value.is_empty() => {}
-                    Filter::Genre(relation, value) => match relation {
-                        TextRelation::ExactNot if Some(value) == track.item().genre.as_ref() => {
-                            return false
-                        }
-                        TextRelation::Exact if Some(value) != track.item().genre.as_ref() => {
-                            return false
-                        }
-                        TextRelation::ContainsNot => {
-                            if let Some(genre) = &track.item().genre {
-                                if genre.contains(value) {
-                                    return false;
-                                }
-                            }
-                        }
-                        TextRelation::Contains => {
-                            if let Some(genre) = &track.item().genre {
-                                if !genre.contains(value) {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::DurationMin(order, value) => {
-                        if let Some(duration) = &track.item().duration {
-                            if duration.cmp(value) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    Filter::BitRate(order, value) => {
-                        if let Some(bitrate) = &track.item().bit_rate {
-                            if bitrate.cmp(&(*value as i32)) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    _ => unreachable!("there are filters that shouldnt be"),
-                }
+                return false;
             }
+
             true
         });
 

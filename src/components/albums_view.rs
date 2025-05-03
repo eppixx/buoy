@@ -14,7 +14,7 @@ use crate::{
     components::{
         cover::CoverOut,
         filter_categories::Category,
-        filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
+        filter_row::{FilterRow, FilterRowIn, FilterRowOut},
     },
     factory::album_row::{
         AlbumRow, ArtistColumn, CoverColumn, FavColumn, GenreColumn, LengthColumn, PlayCountColumn,
@@ -197,138 +197,20 @@ impl relm4::component::Component for AlbumsView {
         // add filter
         let filters = model.filters.clone();
         let show_filters = widgets.filters.clone();
-        model.entries.add_filter(move |track| {
+        model.entries.add_filter(move |row| {
             if filters.borrow().is_empty() || !show_filters.reveals_child() {
                 return true;
             }
 
-            for filter in filters
+            if filters
                 .borrow()
                 .iter()
                 .filter_map(|row| row.filter().as_ref())
+                .any(|filter| !filter.match_album(row.item()))
             {
-                match filter {
-                    //TODO add matching for regular expressions
-                    Filter::Favorite(None) => {}
-                    Filter::Favorite(Some(state)) => {
-                        if *state != track.item().starred.is_some() {
-                            return false;
-                        }
-                    }
-                    Filter::Album(_, value) if value.is_empty() => {} // filter matches
-                    Filter::Album(relation, value) => match relation {
-                        TextRelation::ExactNot if Some(value) == track.item().album.as_ref() => {
-                            return false
-                        }
-                        TextRelation::Exact if Some(value) != track.item().album.as_ref() => {
-                            return false
-                        }
-                        TextRelation::ContainsNot => {
-                            if let Some(album) = &track.item().album {
-                                if album.contains(value) {
-                                    return false;
-                                }
-                            }
-                        }
-                        TextRelation::Contains => {
-                            if let Some(album) = &track.item().album {
-                                if !album.contains(value) {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::Artist(_, value) if value.is_empty() => {} // filter matches
-                    Filter::Artist(relation, value) => match relation {
-                        TextRelation::ExactNot if Some(value) == track.item().artist.as_ref() => {
-                            return false
-                        }
-                        TextRelation::Exact if Some(value) != track.item().artist.as_ref() => {
-                            return false
-                        }
-                        TextRelation::ContainsNot => {
-                            if let Some(artist) = &track.item().artist {
-                                if artist.contains(value) {
-                                    return false;
-                                }
-                            }
-                        }
-                        TextRelation::Contains => {
-                            if let Some(artist) = &track.item().artist {
-                                if !artist.contains(value) {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::Year(order, value) => {
-                        if let Some(year) = &track.item().year {
-                            if year.cmp(value) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    Filter::Cd(_, 0) => {
-                        if track.item().disc_number.is_some() {
-                            return false;
-                        }
-                    }
-                    Filter::Cd(order, value) => {
-                        if let Some(disc) = &track.item().disc_number {
-                            if disc.cmp(value) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    Filter::Genre(_, value) if value.is_empty() => {}
-                    Filter::Genre(relation, value) => match relation {
-                        TextRelation::ExactNot if Some(value) == track.item().genre.as_ref() => {
-                            return false
-                        }
-                        TextRelation::Exact if Some(value) != track.item().genre.as_ref() => {
-                            return false
-                        }
-                        TextRelation::ContainsNot => {
-                            if let Some(genre) = &track.item().genre {
-                                if genre.contains(value) {
-                                    return false;
-                                }
-                            }
-                        }
-                        TextRelation::Contains => {
-                            if let Some(genre) = &track.item().genre {
-                                if !genre.contains(value) {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::DurationMin(order, value) => {
-                        let value = value * 60;
-                        if let Some(duration) = &track.item().duration {
-                            if duration.cmp(&value) != *order {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                    _ => unreachable!("there are filters that shouldnt be"),
-                }
+                return false;
             }
+
             true
         });
 

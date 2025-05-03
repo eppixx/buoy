@@ -14,7 +14,7 @@ use crate::{
     components::{
         cover::CoverOut,
         filter_categories::Category,
-        filter_row::{Filter, FilterRow, FilterRowIn, FilterRowOut, TextRelation},
+        filter_row::{FilterRow, FilterRowIn, FilterRowOut},
     },
     factory::artist_row::{AlbumCountColumn, ArtistRow, CoverColumn, FavColumn, TitleColumn},
     settings::Settings,
@@ -173,44 +173,20 @@ impl relm4::component::Component for ArtistsView {
         // add filter
         let filters = model.filters.clone();
         let show_filters = widgets.filters.clone();
-        model.entries.add_filter(move |track| {
+        model.entries.add_filter(move |row| {
             if filters.borrow().is_empty() || !show_filters.reveals_child() {
                 return true;
             }
 
-            for filter in filters
+            if filters
                 .borrow()
                 .iter()
                 .filter_map(|row| row.filter().as_ref())
+                .any(|filter| !filter.match_artist(row.item()))
             {
-                match filter {
-                    //TODO add matching for regular expressions
-                    Filter::Favorite(None) => {}
-                    Filter::Favorite(Some(state)) => {
-                        if *state != track.item().starred.is_some() {
-                            return false;
-                        }
-                    }
-                    Filter::Artist(_, value) if value.is_empty() => {}
-                    Filter::Artist(relation, value) => match relation {
-                        TextRelation::ExactNot if value == &track.item().name => return false,
-                        TextRelation::Exact if value != &track.item().name => return false,
-                        TextRelation::ContainsNot if track.item().name.contains(value) => {
-                            return false
-                        }
-                        TextRelation::Contains if !track.item().name.contains(value) => {
-                            return false
-                        }
-                        _ => {} // filter matches
-                    },
-                    Filter::AlbumCount(order, value) => {
-                        if track.item().album_count.cmp(value) != *order {
-                            return false;
-                        }
-                    }
-                    _ => unreachable!("there are filters that shouldnt be"),
-                }
+                return false;
             }
+
             true
         });
 
