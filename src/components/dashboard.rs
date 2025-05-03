@@ -14,7 +14,7 @@ use relm4::{
 
 use crate::{
     client::Client,
-    components::album_element::{
+    factory::album_element::{
         get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut,
     },
     gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},

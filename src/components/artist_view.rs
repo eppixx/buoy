@@ -14,11 +14,11 @@ use relm4::{
 use crate::{
     client::Client,
     common,
-    components::{
+    components::cover::{Cover, CoverIn, CoverOut},
+    factory::{
         album_element::{get_info_of_flowboxchild, AlbumElement, AlbumElementIn, AlbumElementOut},
-        cover::{Cover, CoverIn, CoverOut},
+        artist_song_row::ArtistSongRow,
     },
-    factory::artist_song_row::ArtistSongRow,
     gtk_helper::{loading_widget::LoadingWidgetState, stack::StackExt},
     subsonic::Subsonic,
     types::{Droppable, Id},

@@ -6,6 +6,7 @@ use relm4::{
 
 use crate::css::DragState;
 
+pub mod album_element;
 pub mod album_row;
 pub mod album_track_row;
 pub mod artist_row;

@@ -26,12 +26,6 @@ pub struct AlbumElement {
     favorite_ribbon: gtk::Box,
 }
 
-impl AlbumElement {
-    pub fn change_size(&self, size: i32) {
-        self.cover.model().change_size(size);
-    }
-}
-
 #[derive(Debug, Clone)]
 pub enum AlbumElementIn {
     DescriptiveCover(DescriptiveCoverOut),
