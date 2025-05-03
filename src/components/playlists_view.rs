@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use fuzzy_matcher::FuzzyMatcher;
 use gettextrs::gettext;
 use relm4::{
     gtk::{
@@ -13,7 +12,7 @@ use relm4::{
 
 use crate::{
     client::Client,
-    common::convert_for_label,
+    common::{self, convert_for_label},
     components::cover::{Cover, CoverIn, CoverOut},
     factory::{
         playlist_element::{
@@ -190,7 +189,7 @@ impl PlaylistsView {
 
 #[derive(Debug)]
 pub enum PlaylistsViewIn {
-    FilterChanged(String),
+    SearchChanged,
     ReplaceQueue,
     AddToQueue,
     AppendToQueue,
@@ -312,6 +311,18 @@ impl relm4::component::AsyncComponent for PlaylistsView {
             guard.push_back((model.subsonic.clone(), playlist.clone()));
         }
         drop(guard);
+
+        // add search filter
+        model.tracks.add_filter(move |track| {
+            let search = Settings::get().lock().unwrap().search_text.clone();
+            let title_artist_album = format!(
+                "{} {} {}",
+                track.item().title.clone(),
+                track.item().artist.clone().unwrap_or_default(),
+                track.item().album.clone().unwrap_or_default()
+            );
+            common::search_matching(title_artist_album, search)
+        });
 
         relm4::component::AsyncComponentParts { model, widgets }
     }
@@ -584,34 +595,7 @@ impl relm4::component::AsyncComponent for PlaylistsView {
         _root: &Self::Root,
     ) {
         match msg {
-            PlaylistsViewIn::FilterChanged(search) => {
-                self.tracks.clear_filters();
-                self.tracks.add_filter(move |row| {
-                    let mut search = search.clone();
-                    let mut test = format!(
-                        "{} {} {}",
-                        row.item().title,
-                        row.item().artist.as_deref().unwrap_or_default(),
-                        row.item().album.as_deref().unwrap_or_default()
-                    );
-
-                    //check for case sensitivity
-                    if !Settings::get().lock().unwrap().case_sensitive {
-                        test = test.to_lowercase();
-                        search = search.to_lowercase();
-                    }
-
-                    //actual matching
-                    let fuzzy_search = Settings::get().lock().unwrap().fuzzy_search;
-                    if fuzzy_search {
-                        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
-                        let score = matcher.fuzzy_match(&test, &search);
-                        score.is_some()
-                    } else {
-                        test.contains(&search)
-                    }
-                });
-            }
+            PlaylistsViewIn::SearchChanged => _ = self.tracks.notify_filter_changed(0),
             PlaylistsViewIn::PlaylistElement(msg) => match msg {
                 PlaylistElementOut::DisplayToast(msg) => {
                     sender.output(PlaylistsViewOut::DisplayToast(msg)).unwrap();

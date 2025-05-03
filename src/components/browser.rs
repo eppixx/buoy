@@ -178,7 +178,7 @@ impl relm4::component::AsyncComponent for Browser {
                     view.emit(ArtistViewIn::SearchChanged(search.clone()));
                 }
                 for view in &self.playlists_views {
-                    view.emit(PlaylistsViewIn::FilterChanged(search.clone()));
+                    view.emit(PlaylistsViewIn::SearchChanged);
                 }
             }
             BrowserIn::GoBack => {
