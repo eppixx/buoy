@@ -172,9 +172,7 @@ impl Subsonic {
         let mut modified_list = false;
         for playlist in result.playlists.iter_mut() {
             if Self::is_smart_playlist(&playlist.base) {
-                *playlist = client
-                    .get_playlist(&playlist.base.id)
-                    .await?;
+                *playlist = client.get_playlist(&playlist.base.id).await?;
                 modified_list = true;
             }
         }

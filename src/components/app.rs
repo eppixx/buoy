@@ -1250,12 +1250,18 @@ impl relm4::component::AsyncComponent for App {
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _sender: relm4::Sender<Self::Output>) {
         tracing::info!("shutdown app");
 
+        if let Err(e) = self.queue.model().save() {
+            tracing::error!("could not save queue: {e}");
+        }
+
         let mut settings = Settings::get().lock().unwrap();
 
         //save queue
-        settings.queue_ids = self.queue.model().songs();
-        settings.queue_current = self.queue.model().current().map(|(i, _t)| i);
-        settings.queue_seek = self.seekbar.model().current();
+        //TODO remove queue_ids from settings
+        // settings.queue_ids = self.queue.model().songs();
+        //TODO remove queue_current from settings
+        // settings.queue_current = self.queue.model().current().map(|(i, _t)| i);
+        // settings.queue_seek = self.seekbar.model().current();
 
         //save window state
         settings.paned_position = widgets.paned.position();

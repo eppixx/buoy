@@ -12,6 +12,7 @@ use relm4::{
     },
     ComponentParts, ComponentSender, RelmWidgetExt,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{
     common::{play_state::PlayState, player::Command, types::Droppable},
@@ -32,6 +33,15 @@ use crate::{
     settings::Settings,
     subsonic::Subsonic,
 };
+
+const PREFIX: &str = "Buoy";
+const QUEUE_INFOS: &str = "Queue-Infos";
+
+#[derive(Debug, Serialize, Deserialize)]
+struct QueueCache {
+    songs: Vec<submarine::data::Child>,
+    current: Option<usize>,
+}
 
 #[derive(Debug, PartialEq, PartialOrd)]
 enum QueueStack {
@@ -168,6 +178,77 @@ impl Queue {
             .find(|(_i, t)| *t.borrow().uid() == uid)
             .map(|(i, track)| (i, track.borrow().clone()))
     }
+
+    pub fn save(&self) -> anyhow::Result<()> {
+        let songs = self.songs();
+        let current = self.current().map(|(i, _t)| i);
+
+        let queue = QueueCache { songs, current };
+
+        let mut cache = vec![];
+        let mut serializer = rmp_serde::Serializer::new(&mut cache);
+        queue.serialize(&mut serializer)?;
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(QUEUE_INFOS);
+        std::fs::write(cache_path, cache)?;
+
+        Ok(())
+    }
+
+    pub fn load(&mut self, sender: &relm4::ComponentSender<Queue>) -> anyhow::Result<()> {
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant create cache dir",
+            ))?
+            .join(PREFIX)
+            .join(QUEUE_INFOS);
+
+        // if there is no cache start empty
+        if !cache_path.exists() {
+            return Ok(());
+        }
+
+        let content = std::fs::read(cache_path)?;
+        let mut reader = content.as_slice();
+        let mut deserializer = rmp_serde::Deserializer::new(&mut reader);
+        let queue_cache = QueueCache::deserialize(&mut deserializer)?;
+
+        // set queue from cache
+        queue_cache.songs.iter().for_each(|song| {
+            self.tracks
+                .append(QueueSongRow::new(&self.subsonic, song, &sender));
+        });
+        sender.input(QueueIn::SetCurrent(queue_cache.current));
+
+        Ok(())
+    }
+
+    pub fn delete_cache(&self) -> anyhow::Result<()> {
+        // delete queue info
+        let cache_path = dirs::cache_dir()
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "cant find queue cache info",
+            ))?
+            .join(PREFIX)
+            .join(QUEUE_INFOS);
+
+        // if there is no cache then there is no cache to delete
+        if !cache_path.exists() {
+            return Ok(());
+        }
+
+        // actual delete
+        std::fs::remove_file(cache_path)?;
+
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -240,15 +321,9 @@ impl relm4::Component for Queue {
         };
 
         //init queue
-        songs
-            .iter()
-            .map(|song| QueueSongRow::new(&model.subsonic, song, &sender))
-            .for_each(|row| model.tracks.append(row));
-        // current song
-        if let Some(index) = index {
-            if let Some(track) = model.tracks.get(index as u32) {
-                track.borrow_mut().set_play_state(&PlayState::Pause);
-            }
+        if let Err(e) = model.load(&sender) {
+            let error = format!("Error loading queue cache: {e}");
+            sender.output(QueueOut::DisplayToast(error)).unwrap();
         }
         sender.input(QueueIn::Rerandomize);
 
