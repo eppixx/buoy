@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="desktop">
+<component type="desktop-application">
   <id>@APP_ID_UNQUOTED@</id>
   <name>Buoy</name>
-  <summary>A Subsonic music client </summary>
-  <metadata_license>CC0-1.0</metadata_license>
+  <summary>A Subsonic music client</summary>
+  <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
   <description>
-    <p>Buoy is a client for playing music off of a subsonic server. It is written in Rust with GTK for elementary OS.</p>
+    <p>Bouy is a GTK client to browse and play from a subsonic music server. It&apos;s designed to handle large music collections</p>
   </description>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="0.1.0" date="2023-02-21">
+    <release version="0.9.0" date="2024-05-04">
       <description>
-        <p>Initial Release</p>
+        <p>Pre Release</p>
       </description>
     </release>
   </releases>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/eppixx/buoy/develop/Screenshot.png</image>
+      <image>https://raw.githubusercontent.com/eppixx/buoy/develop/data/screenshots/dashboard_dark_light.png</image>
+    </screenshot>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/eppixx/buoy/develop/data/screenshots/album_dark.png</image>
+    </screenshot>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/eppixx/buoy/develop/data/screenshots/playlists_light.png</image>
     </screenshot>
   </screenshots>
   <url type="homepage">https://github.com/eppixx/buoy/tree/develop</url>
