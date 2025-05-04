@@ -435,6 +435,12 @@ impl Subsonic {
             ))?
             .join(PREFIX)
             .join(MUSIC_INFOS);
+
+        // if there is no cache then there is no cache to delete
+        if !cache_path.exists() {
+            return Ok(());
+        }
+
         std::fs::remove_file(cache_path)?;
 
         Ok(())
