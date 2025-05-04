@@ -222,9 +222,14 @@ impl Queue {
         // set queue from cache
         queue_cache.songs.iter().for_each(|song| {
             self.tracks
-                .append(QueueSongRow::new(&self.subsonic, song, &sender));
+                .append(QueueSongRow::new(&self.subsonic, song, sender));
         });
-        sender.input(QueueIn::SetCurrent(queue_cache.current));
+        // set current
+        if let Some(index) = queue_cache.current {
+            if let Some(track) = self.tracks.get(index as u32) {
+                track.borrow_mut().set_play_state(&PlayState::Pause);
+            }
+        }
 
         Ok(())
     }
@@ -295,18 +300,14 @@ pub enum QueueOut {
 
 #[relm4::component(pub)]
 impl relm4::Component for Queue {
-    type Init = (
-        Rc<RefCell<Subsonic>>,
-        Vec<submarine::data::Child>,
-        Option<usize>,
-    );
+    type Init = Rc<RefCell<Subsonic>>;
     type Input = QueueIn;
     type Output = QueueOut;
     type Widgets = QueueWidgets;
     type CommandOutput = ();
 
     fn init(
-        (subsonic, songs, index): Self::Init,
+        subsonic: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {

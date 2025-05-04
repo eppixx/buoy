@@ -28,7 +28,7 @@ use crate::{
         play_controls::{PlayControl, PlayControlIn, PlayControlOut},
         play_info::{PlayInfo, PlayInfoIn, PlayInfoOut},
         queue::{Queue, QueueIn, QueueOut},
-        seekbar::{Seekbar, SeekbarCurrent, SeekbarIn, SeekbarOut},
+        seekbar::{Seekbar, SeekbarIn, SeekbarOut},
         settings_window::{SettingsWindow, SettingsWindowIn, SettingsWindowOut},
         volume_button::{VolumeButton, VolumeButtonIn, VolumeButtonOut},
     },
@@ -147,83 +147,22 @@ impl relm4::component::AsyncComponent for App {
     ) -> relm4::component::AsyncComponentParts<Self> {
         let time_startup = std::time::Instant::now();
 
-        // load from settings
-        let (queue, queue_index, current_song, seekbar, controls) = {
-            let settings = Settings::get().lock().unwrap();
-            //queue
-            let queue = settings.queue_ids.clone();
-            let queue_index = settings.queue_current;
-
-            // play info
-            let current_song = if let Some(index) = settings.queue_current {
-                settings.queue_ids.get(index).cloned()
-            } else {
-                None
-            };
-
-            // seekbar
-            let mut seekbar = None;
-            if let Some(index) = settings.queue_current {
-                if let Some(song) = settings.queue_ids.get(index) {
-                    if let Some(duration) = song.duration {
-                        seekbar = Some(SeekbarCurrent::new(i64::from(duration) * 1000, None));
-                    }
-                }
-            };
-
-            // controls
-            let controls = match settings.queue_current {
-                Some(_) => PlayState::Pause,
-                None => PlayState::Stop,
-            };
-
-            (queue, queue_index, current_song, seekbar, controls)
-        };
-
-        // set playback song from settings
-        if let Some(child) = &current_song {
-            let client = Client::get().unwrap();
-            match client.stream_url(
-                &child.id,
-                None,
-                None::<&str>,
-                None,
-                None::<&str>,
-                None,
-                None,
-            ) {
-                Ok(url) => {
-                    if let Err(e) = playback.borrow_mut().set_track(url) {
-                        sender.input(AppIn::DisplayToast(format!("could not set track: {e}")));
-                    }
-                }
-                Err(e) => {
-                    sender.input(AppIn::DisplayToast(format!(
-                        "could not fetch stream url: {e:?}"
-                    )));
-                }
-            }
-            if let Err(e) = playback.borrow_mut().pause() {
-                sender.input(AppIn::DisplayToast(format!("error pausing: {e}")));
-            }
-        }
-
         tracing::info!("start loading subsonic information");
         let subsonic = Subsonic::load_or_create().await.unwrap_or_default();
         let subsonic = std::rc::Rc::new(std::cell::RefCell::new(subsonic));
         tracing::info!("finished loaded subsonic information");
 
         let queue: Controller<Queue> = Queue::builder()
-            .launch((subsonic.clone(), queue, queue_index))
+            .launch(subsonic.clone())
             .forward(sender.input_sender(), |msg| AppIn::Queue(Box::new(msg)));
         let play_controls = PlayControl::builder()
-            .launch(controls)
+            .launch(PlayState::Stop)
             .forward(sender.input_sender(), AppIn::PlayControlOutput);
         let seekbar = Seekbar::builder()
-            .launch(seekbar)
+            .launch(None)
             .forward(sender.input_sender(), AppIn::Seekbar);
         let play_info = PlayInfo::builder()
-            .launch((subsonic.clone(), current_song))
+            .launch((subsonic.clone(), None))
             .forward(sender.input_sender(), AppIn::PlayInfo);
         let browser = Browser::builder()
             .launch(subsonic.clone())
@@ -239,7 +178,7 @@ impl relm4::component::AsyncComponent for App {
             .forward(sender.input_sender(), AppIn::SettingsWindow);
 
         let model = App {
-            playback,
+            playback: playback.clone(),
             subsonic,
             mpris,
 
@@ -274,6 +213,52 @@ impl relm4::component::AsyncComponent for App {
             if model.queue.model().songs().is_empty() {
                 model.play_controls.emit(PlayControlIn::Disable);
             }
+        }
+
+        let current = model.queue.model().current();
+        if let Some((_, row)) = &current {
+            let child = row.item().clone();
+
+            // set playback song
+            let client = Client::get().unwrap();
+            match client.stream_url(
+                &child.id,
+                None,
+                None::<&str>,
+                None,
+                None::<&str>,
+                None,
+                None,
+            ) {
+                Ok(url) => {
+                    if let Err(e) = playback.borrow_mut().set_track(url) {
+                        sender.input(AppIn::DisplayToast(format!("could not set track: {e}")));
+                    }
+                }
+                Err(e) => {
+                    sender.input(AppIn::DisplayToast(format!(
+                        "could not fetch stream url: {e:?}"
+                    )));
+                }
+            }
+            if let Err(e) = playback.borrow_mut().pause() {
+                sender.input(AppIn::DisplayToast(format!("error pausing: {e}")));
+            }
+
+            // set play info
+            model
+                .play_info
+                .emit(PlayInfoIn::NewState(Box::new(Some(child.clone()))));
+
+            // set controls
+            model
+                .play_controls
+                .emit(PlayControlIn::NewState(PlayState::Pause));
+        } else {
+            // set controls
+            model
+                .play_controls
+                .emit(PlayControlIn::NewState(PlayState::Stop));
         }
 
         //regularly save
@@ -1250,21 +1235,16 @@ impl relm4::component::AsyncComponent for App {
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _sender: relm4::Sender<Self::Output>) {
         tracing::info!("shutdown app");
 
+        //save queue
         if let Err(e) = self.queue.model().save() {
             tracing::error!("could not save queue: {e}");
         }
 
+        //save window state to settings
         let mut settings = Settings::get().lock().unwrap();
-
-        //save queue
-        //TODO remove queue_ids from settings
-        // settings.queue_ids = self.queue.model().songs();
-        //TODO remove queue_current from settings
-        // settings.queue_current = self.queue.model().current().map(|(i, _t)| i);
-        // settings.queue_seek = self.seekbar.model().current();
-
-        //save window state
         settings.paned_position = widgets.paned.position();
+
+        // save settings
         if let Err(e) = settings.save() {
             tracing::error!("error saving settings: {e}");
         }

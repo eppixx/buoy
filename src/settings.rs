@@ -25,12 +25,6 @@ pub struct Settings {
     #[serde(default = "default_paned_position")]
     pub paned_position: i32,
 
-    #[serde(default)] //defaults to Vec::new()
-    pub queue_ids: Vec<submarine::data::Child>,
-    #[serde(default)] //defaults to None
-    pub queue_current: Option<usize>,
-    #[serde(default)] //defaults to 0.0f64
-    pub queue_seek: f64,
     #[serde(default)]
     pub queue_jump_to_new_song: bool, // jump to new song
 
