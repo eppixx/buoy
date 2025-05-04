@@ -34,8 +34,10 @@ modules:
   - name: buoy
     builddir: true
     buildsystem: meson
+    run-tests: true
     config-opts:
       - "-Doffline=true"
+      - "--buildtype=release"
     sources:
       - type: dir
         path: .
