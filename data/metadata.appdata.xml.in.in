@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>@APP_ID_UNQUOTED@</id>
+  <launchable type="desktop-id">@APP_ID_UNQUOTED@.desktop</launchable>
   <name>Buoy</name>
   <summary>A Subsonic music client</summary>
   <metadata_license>MIT</metadata_license>
@@ -8,7 +9,6 @@
   <description>
     <p>Bouy is a GTK client to browse and play from a subsonic music server. It&apos;s designed to handle large music collections</p>
   </description>
-  <launchable type="desktop-id">launcher.desktop</launchable>
   <content_rating type="oars-1.1" />
   <releases>
     <release version="0.9.0" date="2024-05-04">
