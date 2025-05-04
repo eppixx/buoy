@@ -20,12 +20,15 @@
   <screenshots>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/eppixx/buoy/develop/data/screenshots/dashboard_dark_light.png</image>
+      <caption>View of the dashboard in a dark and light theme</caption>
     </screenshot>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/eppixx/buoy/develop/data/screenshots/album_dark.png</image>
+      <caption>View of an album in dark theme</caption>
     </screenshot>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/eppixx/buoy/develop/data/screenshots/playlists_light.png</image>
+      <caption>View of the playlists in a light theme</caption>
     </screenshot>
   </screenshots>
   <url type="homepage">https://github.com/eppixx/buoy</url>
