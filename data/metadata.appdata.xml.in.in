@@ -11,8 +11,10 @@
   </description>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="1.0.0" data="2025-05-05">
-      <p>Initial Release</p>
+    <release version="1.0.0" date="2025-05-05">
+      <description>
+        <p>Initial Release</p>
+      </description>
     </release>
     <release version="0.9.0" date="2025-05-04">
       <description>
