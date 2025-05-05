@@ -345,6 +345,7 @@ impl relm4::component::Component for ArtistsView {
                                 gtk::Button {
                                     set_icon_name: "list-add-symbolic",
                                     connect_clicked => ArtistsViewIn::FilterAdd,
+                                    set_tooltip: &gettext("Add new filter"),
                                 }
                             }
                         },

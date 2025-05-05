@@ -359,12 +359,13 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                         gtk::Button {
                             gtk::Box {
                                 set_halign: gtk::Align::Center,
+                                set_tooltip: &gettext("Add new empty playlist"),
 
                                 gtk::Image {
                                     set_icon_name: Some("list-add-symbolic"),
                                 },
                                 gtk::Label {
-                                    set_text: &gettext("New Playlist"),
+                                    set_text: &gettext("New playlist"),
                                 }
                             },
 

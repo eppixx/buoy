@@ -377,6 +377,7 @@ impl relm4::component::Component for AlbumsView {
                                 gtk::Button {
                                     set_icon_name: "list-add-symbolic",
                                     connect_clicked => AlbumsViewIn::FilterAdd,
+                                    set_tooltip: &gettext("Add new filter"),
                                 }
                             }
                         },

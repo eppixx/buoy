@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-05 15:17+0200\n"
-"PO-Revision-Date: 2025-05-05 15:19+0200\n"
+"POT-Creation-Date: 2025-05-05 15:27+0200\n"
+"PO-Revision-Date: 2025-05-05 15:28+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -48,7 +48,7 @@ msgstr "Album"
 # Kontext: Albuminfo
 # Beispiel:
 # Length: 1 • Year: 2000 • 5 songs
-#: src/components/playlists_view.rs:272 src/components/playlists_view.rs:1247
+#: src/components/playlists_view.rs:272 src/components/playlists_view.rs:1248
 #: src/components/album_view.rs:113 src/components/album_view.rs:531
 #: src/components/albums_view.rs:152 src/components/tracks_view.rs:179
 #: src/factory/playlist_element.rs:131 src/factory/album_element.rs:84
@@ -59,36 +59,39 @@ msgstr "Länge"
 msgid "Playlists"
 msgstr "Playlisten"
 
-#: src/components/playlists_view.rs:367 src/components/browser.rs:585
-#: src/components/browser.rs:589
-msgid "New Playlist"
-msgstr "Neue Playlist"
+#: src/components/playlists_view.rs:362
+msgid "Add new empty playlist"
+msgstr "Neue leere Playlist erstellen"
 
-#: src/components/playlists_view.rs:421
+#: src/components/playlists_view.rs:368
+msgid "New playlist"
+msgstr "Neue Playliste"
+
+#: src/components/playlists_view.rs:422
 msgid "Select a playlist to show its songs"
 msgstr "Wähle eine Playliste um dessen Inhalt zu zeigen"
 
-#: src/components/playlists_view.rs:465
+#: src/components/playlists_view.rs:466
 msgid "Append playlist to end of queue"
 msgstr "Playlist an Warteschlange anhängen"
 
-#: src/components/playlists_view.rs:475
+#: src/components/playlists_view.rs:476
 msgid "Insert playlist after currently played or paused item"
 msgstr "Playlist nach derzeitigen Titel einfügen"
 
-#: src/components/playlists_view.rs:485
+#: src/components/playlists_view.rs:486
 msgid "Replaces current queue with this playlist"
 msgstr "Warteschlange mit Playlist ersetzen"
 
-#: src/components/playlists_view.rs:495 src/components/album_view.rs:285
+#: src/components/playlists_view.rs:496 src/components/album_view.rs:285
 msgid "Click to select a folder to download this album to"
 msgstr "Klicken um Ordner zum downloaden des Albums zu wählen"
 
-#: src/components/playlists_view.rs:1241
+#: src/components/playlists_view.rs:1242
 msgid "Created at: %d.%m.%Y, %H:%M"
 msgstr "Erstellt am: %d.%m.%Y, %H:%M"
 
-#: src/components/playlists_view.rs:1245 src/components/album_view.rs:527
+#: src/components/playlists_view.rs:1246 src/components/album_view.rs:527
 #: src/factory/playlist_element.rs:129
 msgid "Songs"
 msgstr "Titel"
@@ -358,6 +361,10 @@ msgstr "von"
 msgid "on"
 msgstr "auf"
 
+#: src/components/browser.rs:585 src/components/browser.rs:589
+msgid "New Playlist"
+msgstr "Neue Playlist"
+
 #: src/components/browser.rs:706
 msgid "Created a new playlist"
 msgstr "Neue Playlist erstellt"
@@ -561,13 +568,13 @@ msgstr "Cover"
 msgid "Year"
 msgstr "Jahr"
 
-#: src/components/albums_view.rs:259 src/components/albums_view.rs:560
+#: src/components/albums_view.rs:259 src/components/albums_view.rs:561
 #: src/components/tracks_view.rs:99 src/components/tracks_view.rs:316
 msgid "Shown albums"
 msgstr "Gezeigte Alben"
 
-#: src/components/albums_view.rs:263 src/components/albums_view.rs:561
-#: src/components/artists_view.rs:170 src/components/artists_view.rs:385
+#: src/components/albums_view.rs:263 src/components/albums_view.rs:562
+#: src/components/artists_view.rs:170 src/components/artists_view.rs:386
 #: src/components/tracks_view.rs:98 src/components/tracks_view.rs:312
 msgid "Shown artists"
 msgstr "Gezeigte Artisten"
@@ -591,6 +598,11 @@ msgstr "Filter"
 #: src/components/tracks_view.rs:428
 msgid "New filter:"
 msgstr "Neuer Filter:"
+
+#: src/components/albums_view.rs:380 src/components/artists_view.rs:348
+#: src/components/tracks_view.rs:440
+msgid "Add new filter"
+msgstr "Neuen Filter hinzufügen"
 
 #: src/components/artists_view.rs:50
 msgid "There are too many artists to add to queue"
@@ -680,7 +692,7 @@ msgstr "Warteschlange mit gezeigten Titel ersetzen"
 msgid "Create a playlist with shown tracks"
 msgstr "Erstellt eine Playliste mit den gezeigten Titeln"
 
-#: src/components/tracks_view.rs:668
+#: src/components/tracks_view.rs:669
 msgid ""
 "The playlist will be more than 2000 songs\n"
 "Proceed?"
@@ -688,15 +700,15 @@ msgstr ""
 "Die Playlist wird mehr als 2000 Titel haben.\n"
 "Fortfahren?"
 
-#: src/components/tracks_view.rs:672 src/download.rs:58 src/download.rs:93
+#: src/components/tracks_view.rs:673 src/download.rs:58 src/download.rs:93
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/components/tracks_view.rs:676
+#: src/components/tracks_view.rs:677
 msgid "Create Playlist"
 msgstr "Playlist erstellen"
 
-#: src/components/tracks_view.rs:689 src/components/tracks_view.rs:700
+#: src/components/tracks_view.rs:690 src/components/tracks_view.rs:701
 msgid "New playlist from shown tracks"
 msgstr "Neue Playlist aus gezeigten Titeln"
 

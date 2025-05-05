@@ -437,6 +437,7 @@ impl relm4::Component for TracksView {
                                 gtk::Button {
                                     set_icon_name: "list-add-symbolic",
                                     connect_clicked => Self::Input::FilterAdd,
+                                    set_tooltip: &gettext("Add new filter"),
                                 }
                             }
                         },
