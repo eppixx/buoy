@@ -665,7 +665,7 @@ impl relm4::Component for TracksView {
                         warning = WarningDialog {
                             #[template_child]
                             warning_text {
-                                set_label: &gettext("You're aboput to create a playlist with over 2000 songs\nDo want to proceed?"),
+                                set_label: &gettext("The playlist will be more than 2000 songs\nProceed?"),
                             },
                             #[template_child]
                             cancel_btn {
@@ -686,7 +686,7 @@ impl relm4::Component for TracksView {
                     warning.proceed_btn.connect_clicked(move |_btn| {
                         sender
                             .output(TracksViewOut::CreatePlaylist(
-                                gettext("New playlist from tracks"),
+                                gettext("New playlist from shown tracks"),
                                 tracks.clone(),
                             ))
                             .unwrap();
@@ -697,7 +697,7 @@ impl relm4::Component for TracksView {
                 } else {
                     sender
                         .output(TracksViewOut::CreatePlaylist(
-                            gettext("New playlist from tracks"),
+                            gettext("New playlist from shown tracks"),
                             tracks.clone(),
                         ))
                         .unwrap();

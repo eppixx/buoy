@@ -43,7 +43,7 @@ impl Download {
             gettext("You're about to download"),
             download_len,
             gettext("songs"),
-            gettext("This may take a while. Do you want to proceed?"),
+            gettext("This may take a while. Proceed?"),
         );
 
         relm4::view! {

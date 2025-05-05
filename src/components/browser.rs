@@ -703,7 +703,7 @@ impl relm4::component::AsyncComponent for Browser {
                 sender
                     .output(BrowserOut::DisplayToast(format!(
                         "{}: {name}",
-                        gettext("Created a new playlilst")
+                        gettext("Created a new playlist")
                     )))
                     .unwrap();
             }

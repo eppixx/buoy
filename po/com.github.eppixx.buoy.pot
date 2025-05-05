@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: com.github.eppixx.buoy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-23 16:40+0200\n"
+"POT-Creation-Date: 2025-05-05 15:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,117 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: src/app.rs:130
-msgid "loading information from server"
-msgstr ""
-
-#: src/app.rs:378
-msgid "Go back to previous page"
-msgstr ""
-
-#: src/app.rs:395
-msgid "Open search bar"
-msgstr ""
-
-#: src/app.rs:408
-msgid "Go to dashboard"
-msgstr ""
-
-#: src/app.rs:422
-msgid "Dashboard"
-msgstr ""
-
-#: src/app.rs:429
-msgid "Show artists"
-msgstr ""
-
-#: src/app.rs:443
-msgid "Artists"
-msgstr ""
-
-#: src/app.rs:460 src/components/playlists_view.rs:263
-#: src/components/filter_categories.rs:30 src/components/album_view.rs:104
-#: src/components/filter_row.rs:563 src/components/albums_view.rs:141
-#: src/components/tracks_view.rs:142
-msgid "Artist"
-msgstr ""
-
-#: src/app.rs:467
-msgid "Show albums"
-msgstr ""
-
-#: src/app.rs:481 src/components/artists_view.rs:129
-msgid "Albums"
-msgstr ""
-
-#: src/app.rs:498 src/components/playlists_view.rs:267
-#: src/components/filter_categories.rs:31 src/components/filter_row.rs:590
-#: src/components/albums_view.rs:137 src/components/tracks_view.rs:146
-msgid "Album"
-msgstr ""
-
-#: src/app.rs:505
-msgid "Show tracks"
-msgstr ""
-
-#: src/app.rs:519
-msgid "Tracks"
-msgstr ""
-
-#: src/app.rs:526
-msgid "Show playlists"
-msgstr ""
-
-#: src/app.rs:551 src/components/playlists_view.rs:330
-msgid "Playlists"
-msgstr ""
-
-#: src/app.rs:576
-msgid "Change volume by opening, scrolling or middle clicking"
-msgstr ""
-
-#: src/app.rs:620
-msgid "Open settings"
-msgstr ""
-
-#: src/app.rs:644
-msgid "Search..."
-msgstr ""
-
-#: src/app.rs:646
-msgid "Enter your search here"
-msgstr ""
-
-#: src/app.rs:658
-msgid "Use fuzzy search"
-msgstr ""
-
-#: src/app.rs:659
-msgid "Shows close and similar search results if activated"
-msgstr ""
-
-#: src/app.rs:668
-msgid "Use case sensitivity"
-msgstr ""
-
-#: src/app.rs:669
-msgid "Ignores case sensitivity in search term and results"
-msgstr ""
-
-#: src/app.rs:795
-msgid ""
-"Deleted cache\n"
-"Please restart to reload the cache"
-msgstr ""
-
-#: src/app.rs:870
-msgid "New playlist from Queue"
-msgstr ""
-
-#: src/app.rs:1317 src/factory/queue_song_row.rs:275
-msgid "Unkonwn Artist"
-msgstr ""
 
 #: src/components/volume_button.rs:101
 msgid "Increase volume"
@@ -136,117 +25,244 @@ msgstr ""
 msgid "Decrease volume"
 msgstr ""
 
-#: src/components/playlists_view.rs:259 src/components/filter_categories.rs:26
-#: src/components/album_view.rs:100 src/components/filter_row.rs:536
-#: src/components/tracks_view.rs:138
+#: src/components/playlists_view.rs:260 src/components/album_view.rs:101
+#: src/components/tracks_view.rs:163 src/common/filter_categories.rs:26
+#: src/factory/filter_row.rs:543
 msgid "Title"
 msgstr ""
 
-#: src/components/playlists_view.rs:271 src/components/playlists_view.rs:1267
-#: src/components/album_element.rs:88 src/components/album_view.rs:112
-#: src/components/album_view.rs:533 src/components/albums_view.rs:149
-#: src/components/tracks_view.rs:154
+#: src/components/playlists_view.rs:264 src/components/app.rs:452
+#: src/components/album_view.rs:105 src/components/albums_view.rs:144
+#: src/components/tracks_view.rs:167 src/common/filter_categories.rs:30
+#: src/factory/filter_row.rs:570
+msgid "Artist"
+msgstr ""
+
+#: src/components/playlists_view.rs:268 src/components/app.rs:492
+#: src/components/albums_view.rs:140 src/components/tracks_view.rs:171
+#: src/common/filter_categories.rs:31 src/factory/filter_row.rs:597
+msgid "Album"
+msgstr ""
+
+#: src/components/playlists_view.rs:272 src/components/playlists_view.rs:1247
+#: src/components/album_view.rs:113 src/components/album_view.rs:531
+#: src/components/albums_view.rs:152 src/components/tracks_view.rs:179
+#: src/factory/playlist_element.rs:131 src/factory/album_element.rs:84
 msgid "Length"
 msgstr ""
 
-#: src/components/playlists_view.rs:354 src/components/browser.rs:564
-#: src/components/browser.rs:568
+#: src/components/playlists_view.rs:343 src/components/app.rs:547
+msgid "Playlists"
+msgstr ""
+
+#: src/components/playlists_view.rs:367 src/components/browser.rs:585
+#: src/components/browser.rs:589
 msgid "New Playlist"
 msgstr ""
 
-#: src/components/playlists_view.rs:408
+#: src/components/playlists_view.rs:421
 msgid "Select a playlist to show its songs"
 msgstr ""
 
-#: src/components/playlists_view.rs:449 src/components/artist_view.rs:212
-#: src/components/album_view.rs:222 src/components/albums_view.rs:237
-#: src/components/artists_view.rs:205 src/components/tracks_view.rs:272
-msgid "Append"
-msgstr ""
-
-#: src/components/playlists_view.rs:452
+#: src/components/playlists_view.rs:465
 msgid "Append playlist to end of queue"
 msgstr ""
 
-#: src/components/playlists_view.rs:461 src/components/artist_view.rs:227
-#: src/components/album_view.rs:239 src/components/albums_view.rs:249
-#: src/components/artists_view.rs:218 src/components/tracks_view.rs:284
-msgid "Play next"
-msgstr ""
-
-#: src/components/playlists_view.rs:464
+#: src/components/playlists_view.rs:475
 msgid "Insert playlist after currently played or paused item"
 msgstr ""
 
-#: src/components/playlists_view.rs:473 src/components/artist_view.rs:241
-#: src/components/album_view.rs:256 src/components/albums_view.rs:261
-#: src/components/artists_view.rs:231 src/components/tracks_view.rs:296
-msgid "Replace queue"
-msgstr ""
-
-#: src/components/playlists_view.rs:476
+#: src/components/playlists_view.rs:485
 msgid "Replaces current queue with this playlist"
 msgstr ""
 
-#: src/components/playlists_view.rs:485
-msgid "Download Playlist"
-msgstr ""
-
-#: src/components/playlists_view.rs:488 src/components/album_view.rs:276
+#: src/components/playlists_view.rs:495 src/components/album_view.rs:285
 msgid "Click to select a folder to download this album to"
 msgstr ""
 
-#: src/components/playlists_view.rs:1261
+#: src/components/playlists_view.rs:1241
 msgid "Created at: %d.%m.%Y, %H:%M"
 msgstr ""
 
-#: src/components/playlists_view.rs:1265 src/components/album_view.rs:529
+#: src/components/playlists_view.rs:1245 src/components/album_view.rs:527
+#: src/factory/playlist_element.rs:129
 msgid "Songs"
 msgstr ""
 
-#: src/components/artist_view.rs:215
+#: src/components/app.rs:128
+msgid "loading information from server"
+msgstr ""
+
+#: src/components/app.rs:365
+msgid "Go back to previous page"
+msgstr ""
+
+#: src/components/app.rs:384
+msgid "Open search bar"
+msgstr ""
+
+#: src/components/app.rs:398
+msgid "Go to dashboard"
+msgstr ""
+
+#: src/components/app.rs:412
+msgid "Dashboard"
+msgstr ""
+
+#: src/components/app.rs:420
+msgid "Show artists"
+msgstr ""
+
+#: src/components/app.rs:434
+msgid "Artists"
+msgstr ""
+
+#: src/components/app.rs:460
+msgid "Show albums"
+msgstr ""
+
+#: src/components/app.rs:474 src/components/artists_view.rs:133
+msgid "Albums"
+msgstr ""
+
+#: src/components/app.rs:500
+msgid "Show tracks"
+msgstr ""
+
+#: src/components/app.rs:514
+msgid "Tracks"
+msgstr ""
+
+#: src/components/app.rs:522
+msgid "Show playlists"
+msgstr ""
+
+#: src/components/app.rs:566
+msgid "Open Equalizer settings"
+msgstr ""
+
+#: src/components/app.rs:577
+msgid "Change volume by opening, scrolling or middle clicking"
+msgstr ""
+
+#: src/components/app.rs:623
+msgid "Open settings"
+msgstr ""
+
+#: src/components/app.rs:649
+msgid "Search..."
+msgstr ""
+
+#: src/components/app.rs:651
+msgid "Enter your search here"
+msgstr ""
+
+#: src/components/app.rs:663
+msgid "Use fuzzy search"
+msgstr ""
+
+#: src/components/app.rs:664
+msgid "Shows close and similar search results if activated"
+msgstr ""
+
+#: src/components/app.rs:673
+msgid "Use case sensitivity"
+msgstr ""
+
+#: src/components/app.rs:674
+msgid "Ignores case sensitivity in search term and results"
+msgstr ""
+
+#: src/components/app.rs:800
+msgid ""
+"Deleted cache\n"
+"Please restart to reload the cache"
+msgstr ""
+
+#: src/components/app.rs:875
+msgid "New playlist from Queue"
+msgstr ""
+
+#: src/components/app.rs:1326 src/factory/queue_song_row.rs:271
+#: src/factory/artist_song_row.rs:168
+msgid "Unkonwn Artist"
+msgstr ""
+
+#: src/components/artist_view.rs:268
 msgid "Append Artist to end of queue"
 msgstr ""
 
-#: src/components/artist_view.rs:230
+#: src/components/artist_view.rs:280
 msgid "Insert Artist after currently played or paused item"
 msgstr ""
 
-#: src/components/artist_view.rs:244
+#: src/components/artist_view.rs:292
 msgid "Replaces current queue with this artist"
 msgstr ""
 
-#: src/components/artist_view.rs:255
-msgid "Download Artist"
-msgstr ""
-
-#: src/components/artist_view.rs:258
+#: src/components/artist_view.rs:304
 msgid "Click to select a folder to download this artist to"
 msgstr ""
 
-#: src/components/artist_view.rs:351
+#: src/components/artist_view.rs:332
+msgid "Most played"
+msgstr ""
+
+#: src/components/artist_view.rs:362
+msgid "No top played songs yet"
+msgstr ""
+
+#: src/components/artist_view.rs:379
+msgid "Random songs"
+msgstr ""
+
+#: src/components/artist_view.rs:383
+msgid "Rerandomize songs"
+msgstr ""
+
+#: src/components/artist_view.rs:405
+msgid "No random songs available"
+msgstr ""
+
+#: src/components/artist_view.rs:419
+msgid "Similar songs"
+msgstr ""
+
+#: src/components/artist_view.rs:449
+msgid "Server returned no similar songs"
+msgstr ""
+
+#: src/components/artist_view.rs:453
+msgid "There my be additioinal setup steps for your server required"
+msgstr ""
+
+#: src/components/artist_view.rs:467
+msgid "All albums"
+msgstr ""
+
+#: src/components/artist_view.rs:568
 msgid "No biography found"
 msgstr ""
 
-#: src/components/main_window.rs:310
+#: src/components/main_window.rs:312
 msgid "Loading information from server"
 msgstr ""
 
-#: src/components/main_window.rs:366
+#: src/components/main_window.rs:368
 msgid "Can't connect to subsonic server"
 msgstr ""
 
-#: src/components/main_window.rs:371
+#: src/components/main_window.rs:373
 msgid ""
 "Make sure the connection to the server is available. You might want to try "
 "later or connect to another server"
 msgstr ""
 
-#: src/components/main_window.rs:378
+#: src/components/main_window.rs:380
 msgid "Retry connecting"
 msgstr ""
 
-#: src/components/main_window.rs:383
+#: src/components/main_window.rs:385
 msgid "Logout"
 msgstr ""
 
@@ -282,32 +298,32 @@ msgstr ""
 msgid "Least Albums"
 msgstr ""
 
-#: src/components/sort_by.rs:80 src/components/filter_row.rs:66
-#: src/components/filter_row.rs:138 src/components/filter_row.rs:199
+#: src/components/sort_by.rs:80 src/factory/filter_row.rs:57
+#: src/factory/filter_row.rs:131 src/factory/filter_row.rs:201
 msgid "Selection"
 msgstr ""
 
-#: src/components/queue.rs:391
+#: src/components/queue.rs:493
 msgid "Queue is empty"
 msgstr ""
 
-#: src/components/queue.rs:395
+#: src/components/queue.rs:497
 msgid "Drag music here to add it"
 msgstr ""
 
-#: src/components/queue.rs:430
+#: src/components/queue.rs:532
 msgid "Remove selected songs from queue"
 msgstr ""
 
-#: src/components/queue.rs:439
+#: src/components/queue.rs:541
 msgid "Clear queue"
 msgstr ""
 
-#: src/components/queue.rs:449
+#: src/components/queue.rs:551
 msgid "Toggle following played track in queue. Disables on scrolling"
 msgstr ""
 
-#: src/components/queue.rs:463
+#: src/components/queue.rs:565
 msgid "Create new playlist from queue"
 msgstr ""
 
@@ -325,50 +341,8 @@ msgstr ""
 msgid "on"
 msgstr ""
 
-#: src/components/filter_categories.rs:25 src/components/album_view.rs:120
-#: src/components/albums_view.rs:157 src/components/artists_view.rs:133
-#: src/components/tracks_view.rs:162
-msgid "Favorite"
-msgstr ""
-
-#: src/components/filter_categories.rs:27 src/components/album_element.rs:89
-#: src/components/filter_row.rs:321 src/components/albums_view.rs:153
-msgid "Year"
-msgstr ""
-
-#: src/components/filter_categories.rs:28
-msgid "CD"
-msgstr ""
-
-#: src/components/filter_categories.rs:29
-msgid "Track Number"
-msgstr ""
-
-#: src/components/filter_categories.rs:32 src/components/album_view.rs:108
-#: src/components/album_view.rs:552 src/components/filter_row.rs:606
-#: src/components/filter_row.rs:618 src/components/albums_view.rs:145
-#: src/components/tracks_view.rs:150
-msgid "Genre"
-msgstr ""
-
-#: src/components/filter_categories.rs:33
-msgid "Length (min)"
-msgstr ""
-
-#: src/components/filter_categories.rs:34
-msgid "Length (sec)"
-msgstr ""
-
-#: src/components/filter_categories.rs:35
-msgid "Bit Rate"
-msgstr ""
-
-#: src/components/filter_categories.rs:36
-msgid "Album Count"
-msgstr ""
-
-#: src/components/filter_categories.rs:121
-msgid "Category"
+#: src/components/browser.rs:706
+msgid "Created a new playlist"
 msgstr ""
 
 #: src/components/equalizer.rs:117
@@ -443,463 +417,579 @@ msgstr ""
 msgid "Address is invalid"
 msgstr ""
 
-#: src/components/album_view.rs:116 src/components/tracks_view.rs:158
+#: src/components/album_view.rs:109 src/components/albums_view.rs:148
+#: src/components/tracks_view.rs:175 src/common/filter_categories.rs:32
+#: src/factory/filter_row.rs:613 src/factory/filter_row.rs:625
+msgid "Genre"
+msgstr ""
+
+#: src/components/album_view.rs:117 src/components/tracks_view.rs:183
 msgid "Bitrate"
 msgstr ""
 
-#: src/components/album_view.rs:198
+#: src/components/album_view.rs:121 src/components/albums_view.rs:160
+#: src/components/artists_view.rs:137 src/components/tracks_view.rs:187
+#: src/common/filter_categories.rs:25
+msgid "Favorite"
+msgstr ""
+
+#: src/components/album_view.rs:208
 msgid "Loading Album"
 msgstr ""
 
-#: src/components/album_view.rs:225
+#: src/components/album_view.rs:226
+msgid "Genre:"
+msgstr ""
+
+#: src/components/album_view.rs:240
 msgid "Append Album to end of queue"
 msgstr ""
 
-#: src/components/album_view.rs:242
+#: src/components/album_view.rs:255
 msgid "Insert Album after currently played or paused item"
 msgstr ""
 
-#: src/components/album_view.rs:259
+#: src/components/album_view.rs:270
 msgid "Replaces current queue with this album"
 msgstr ""
 
-#: src/components/album_view.rs:273
-msgid "Download Album"
-msgstr ""
-
-#: src/components/album_view.rs:506
+#: src/components/album_view.rs:504
 msgid "Unkown Artist"
 msgstr ""
 
-#: src/components/album_view.rs:538
+#: src/components/album_view.rs:536
 msgid "Release"
 msgstr ""
 
-#: src/components/album_view.rs:544
+#: src/components/album_view.rs:542
 msgid "played"
 msgstr ""
 
-#: src/components/album_view.rs:548
+#: src/components/album_view.rs:546
 msgid "times"
 msgstr ""
 
-#: src/components/dashboard.rs:266
+#: src/components/dashboard.rs:232
 msgid "Newly added"
 msgstr ""
 
-#: src/components/dashboard.rs:330
+#: src/components/dashboard.rs:239 src/components/dashboard.rs:254
+#: src/components/dashboard.rs:305 src/components/dashboard.rs:320
+#: src/components/dashboard.rs:410 src/components/dashboard.rs:426
+#: src/components/dashboard.rs:479 src/components/dashboard.rs:494
+msgid "Press and hold mouse button to scroll"
+msgstr ""
+
+#: src/components/dashboard.rs:298
 msgid "Recently Played"
 msgstr ""
 
-#: src/components/dashboard.rs:403
+#: src/components/dashboard.rs:373
 msgid "Nothing played recently"
 msgstr ""
 
-#: src/components/dashboard.rs:407
-msgid "You might need to turn on scrobbling to populate this area"
+#: src/components/dashboard.rs:377
+msgid "Scrobbling might need to be turned on"
 msgstr ""
 
-#: src/components/dashboard.rs:427
+#: src/components/dashboard.rs:397
 msgid "Random"
 msgstr ""
 
-#: src/components/dashboard.rs:431
+#: src/components/dashboard.rs:401
 msgid "Rerandomize albums"
 msgstr ""
 
-#: src/components/dashboard.rs:499
+#: src/components/dashboard.rs:471
 msgid "Most Played"
 msgstr ""
 
-#: src/components/filter_row.rs:46
-msgid "both"
-msgstr ""
-
-#: src/components/filter_row.rs:50
-msgid "yes"
-msgstr ""
-
-#: src/components/filter_row.rs:54
-msgid "no"
-msgstr ""
-
-#: src/components/filter_row.rs:114
-msgid "contains"
-msgstr ""
-
-#: src/components/filter_row.rs:118
-msgid "contains not"
-msgstr ""
-
-#: src/components/filter_row.rs:122
-msgid "matches not"
-msgstr ""
-
-#: src/components/filter_row.rs:126
-msgid "matches"
-msgstr ""
-
-#: src/components/filter_row.rs:305
-msgid "Favorites"
-msgstr ""
-
-#: src/components/filter_row.rs:340 src/components/filter_row.rs:369
-#: src/components/filter_row.rs:398 src/components/filter_row.rs:428
-#: src/components/filter_row.rs:457 src/components/filter_row.rs:486
-#: src/components/filter_row.rs:514 src/components/filter_row.rs:541
-#: src/components/filter_row.rs:568 src/components/filter_row.rs:595
-#: src/components/filter_row.rs:623
-msgid "remove this filter"
-msgstr ""
-
-#: src/components/filter_row.rs:350
-msgid "CD number"
-msgstr ""
-
-#: src/components/filter_row.rs:379
-msgid "Track number"
-msgstr ""
-
-#: src/components/filter_row.rs:409
-msgid "Album count"
-msgstr ""
-
-#: src/components/filter_row.rs:438
-msgid "Duration (sec)"
-msgstr ""
-
-#: src/components/filter_row.rs:467
-msgid "Duration (min)"
-msgstr ""
-
-#: src/components/filter_row.rs:496
-msgid "Bit rate"
-msgstr ""
-
-#: src/components/filter_row.rs:524
-msgid "Title name"
-msgstr ""
-
-#: src/components/filter_row.rs:551
-msgid "Artist name"
-msgstr ""
-
-#: src/components/filter_row.rs:578
-msgid "Album name"
-msgstr ""
-
-#: src/components/albums_view.rs:53
+#: src/components/albums_view.rs:54
 msgid "There are too many albums to add to queue"
 msgstr ""
 
-#: src/components/albums_view.rs:57
+#: src/components/albums_view.rs:58
 msgid "There are too many albums to append to queue"
 msgstr ""
 
-#: src/components/albums_view.rs:61
+#: src/components/albums_view.rs:62
 msgid "There are too many albums to replace queue"
 msgstr ""
 
-#: src/components/albums_view.rs:66
+#: src/components/albums_view.rs:67
 msgid "Append shown albums to end of queue"
 msgstr ""
 
-#: src/components/albums_view.rs:69
+#: src/components/albums_view.rs:70
 msgid "Insert shown albums after currently played or paused item"
 msgstr ""
 
-#: src/components/albums_view.rs:74
+#: src/components/albums_view.rs:75
 msgid "Replaces current queue with shown albums"
 msgstr ""
 
-#: src/components/albums_view.rs:133 src/components/artists_view.rs:121
+#: src/components/albums_view.rs:136 src/components/artists_view.rs:125
 msgid "Cover"
 msgstr ""
 
-#: src/components/albums_view.rs:220 src/components/albums_view.rs:729
-#: src/components/tracks_view.rs:259 src/components/tracks_view.rs:883
+#: src/components/albums_view.rs:156 src/common/filter_categories.rs:27
+#: src/factory/album_element.rs:85 src/factory/filter_row.rs:328
+msgid "Year"
+msgstr ""
+
+#: src/components/albums_view.rs:259 src/components/albums_view.rs:560
+#: src/components/tracks_view.rs:99 src/components/tracks_view.rs:316
 msgid "Shown albums"
 msgstr ""
 
-#: src/components/albums_view.rs:224 src/components/albums_view.rs:734
-#: src/components/artists_view.rs:160 src/components/artists_view.rs:339
-#: src/components/tracks_view.rs:255 src/components/tracks_view.rs:878
+#: src/components/albums_view.rs:263 src/components/albums_view.rs:561
+#: src/components/artists_view.rs:170 src/components/artists_view.rs:385
+#: src/components/tracks_view.rs:98 src/components/tracks_view.rs:312
 msgid "Shown artists"
 msgstr ""
 
-#: src/components/albums_view.rs:275 src/components/artists_view.rs:246
-#: src/components/tracks_view.rs:322
+#: src/components/albums_view.rs:306 src/components/artists_view.rs:275
+#: src/components/tracks_view.rs:363
+msgid "Activate to show filter panel"
+msgstr ""
+
+#: src/components/albums_view.rs:309 src/components/artists_view.rs:278
+#: src/components/tracks_view.rs:366
 msgid "Filters:"
 msgstr ""
 
-#: src/components/albums_view.rs:313 src/components/artists_view.rs:283
-#: src/components/tracks_view.rs:362
+#: src/components/albums_view.rs:347 src/components/artists_view.rs:315
+#: src/components/tracks_view.rs:406
 msgid "Active Filters"
 msgstr ""
 
-#: src/components/albums_view.rs:335 src/components/artists_view.rs:305
-#: src/components/tracks_view.rs:384
+#: src/components/albums_view.rs:369 src/components/artists_view.rs:337
+#: src/components/tracks_view.rs:428
 msgid "New filter:"
 msgstr ""
 
-#: src/components/artists_view.rs:48
+#: src/components/artists_view.rs:50
 msgid "There are too many artists to add to queue"
 msgstr ""
 
-#: src/components/artists_view.rs:52
+#: src/components/artists_view.rs:54
 msgid "There are too many artists to append to queue"
 msgstr ""
 
-#: src/components/artists_view.rs:56
+#: src/components/artists_view.rs:58
 msgid "There are too many artists to replace queue"
 msgstr ""
 
-#: src/components/artists_view.rs:61
+#: src/components/artists_view.rs:63
 msgid "Append shown artists to end of queue"
 msgstr ""
 
-#: src/components/artists_view.rs:64
+#: src/components/artists_view.rs:66
 msgid "Insert shown artists after currently played or paused item"
 msgstr ""
 
-#: src/components/artists_view.rs:69
+#: src/components/artists_view.rs:71
 msgid "Replaces current queue with shown artists"
 msgstr ""
 
-#: src/components/artists_view.rs:125
+#: src/components/artists_view.rs:129
 msgid "Name"
 msgstr ""
 
-#: src/components/artists_view.rs:193
+#: src/components/artists_view.rs:230
 msgid "Shown artists:"
 msgstr ""
 
-#: src/components/artists_view.rs:208
+#: src/components/artists_view.rs:243
 msgid "Append artists to end of queue"
 msgstr ""
 
-#: src/components/artists_view.rs:221
+#: src/components/artists_view.rs:254
 msgid "Insert artists after currently played or paused item"
 msgstr ""
 
-#: src/components/artists_view.rs:234
+#: src/components/artists_view.rs:265
 msgid "Replaces current queue with artists"
 msgstr ""
 
-#: src/components/tracks_view.rs:55
+#: src/components/tracks_view.rs:63
 msgid "There are too many tracks to add to queue"
 msgstr ""
 
-#: src/components/tracks_view.rs:59
+#: src/components/tracks_view.rs:67
 msgid "There are too many tracks to append to queue"
 msgstr ""
 
-#: src/components/tracks_view.rs:63
+#: src/components/tracks_view.rs:71
 msgid "There are too many tracks to replace queue"
 msgstr ""
 
-#: src/components/tracks_view.rs:68
+#: src/components/tracks_view.rs:76
 msgid "Append shown tracks to end of queue"
 msgstr ""
 
-#: src/components/tracks_view.rs:71
+#: src/components/tracks_view.rs:79
 msgid "Insert shown after currently played or paused item"
 msgstr ""
 
-#: src/components/tracks_view.rs:76
+#: src/components/tracks_view.rs:84
 msgid "Replaces current queue with shown tracks"
 msgstr ""
 
-#: src/components/tracks_view.rs:251 src/components/tracks_view.rs:873
+#: src/components/tracks_view.rs:97 src/components/tracks_view.rs:308
 msgid "Shown tracks"
 msgstr ""
 
-#: src/components/tracks_view.rs:307
-msgid "Download Tracks"
+#: src/components/tracks_view.rs:327
+msgid "Append Tracks to end of queue"
 msgstr ""
 
-#: src/components/tracks_view.rs:310
-msgid "Click to select a folder to download shown tracks to"
+#: src/components/tracks_view.rs:336
+msgid "Insert Tracks after currently played or paused item"
 msgstr ""
 
-#: src/components/settings_window.rs:61
+#: src/components/tracks_view.rs:345
+msgid "Replaces current queue with tracks"
+msgstr ""
+
+#: src/components/tracks_view.rs:353
+msgid "Create a playlist with shown tracks"
+msgstr ""
+
+#: src/components/tracks_view.rs:668
+msgid ""
+"The playlist will be more than 2000 songs\n"
+"Proceed?"
+msgstr ""
+
+#: src/components/tracks_view.rs:672 src/download.rs:58 src/download.rs:93
+msgid "Cancel"
+msgstr ""
+
+#: src/components/tracks_view.rs:676
+msgid "Create Playlist"
+msgstr ""
+
+#: src/components/tracks_view.rs:689 src/components/tracks_view.rs:700
+msgid "New playlist from shown tracks"
+msgstr ""
+
+#: src/components/settings_window.rs:62
 msgid "Settings"
 msgstr ""
 
-#: src/components/settings_window.rs:73
+#: src/components/settings_window.rs:74
 msgid "Wether or not send desktop notifications"
 msgstr ""
 
-#: src/components/settings_window.rs:77
+#: src/components/settings_window.rs:78
 msgid ""
 "Send desktop notifications\n"
 "when in background"
 msgstr ""
 
-#: src/components/settings_window.rs:90
+#: src/components/settings_window.rs:93
 msgid ""
 "Updates play count, played timestamp on server and the now playing page in "
 "the web app"
 msgstr ""
 
-#: src/components/settings_window.rs:94
+#: src/components/settings_window.rs:97
 msgid "Scrobble to server"
 msgstr ""
 
-#: src/components/settings_window.rs:108
+#: src/components/settings_window.rs:112
 msgid ""
 "How much of a song needs to be played to be scrobbled to server in percent"
 msgstr ""
 
-#: src/components/settings_window.rs:112
+#: src/components/settings_window.rs:116
 msgid "Scrobble threshold"
 msgstr ""
 
-#: src/components/settings_window.rs:129
+#: src/components/settings_window.rs:133
 msgid "Show an animation for scrolling to currently played song in queue"
 msgstr ""
 
-#: src/components/settings_window.rs:133
+#: src/components/settings_window.rs:137
 msgid "Jump to current song scroll animation"
 msgstr ""
 
-#: src/components/settings_window.rs:151
+#: src/components/settings_window.rs:156
 msgid "Delete cache"
 msgstr ""
 
-#: src/components/settings_window.rs:152
+#: src/components/settings_window.rs:157
 msgid ""
 "Deletes the local cache of Covers and Metadata of music. They will be "
 "redownloaded from the server on the next start"
 msgstr ""
 
-#: src/components/settings_window.rs:163
+#: src/components/settings_window.rs:168
 msgid "Logout from Server"
 msgstr ""
 
-#: src/components/settings_window.rs:164
+#: src/components/settings_window.rs:169
 msgid ""
 "Logging out will delete the cache and also require to login again to listen "
 "to music"
 msgstr ""
 
-#: src/factory/playlist_element.rs:237 src/factory/playlist_element.rs:444
-#: src/download.rs:49
-msgid "songs"
+#: src/common/filter_categories.rs:28
+msgid "CD"
 msgstr ""
 
-#: src/factory/playlist_element.rs:249
+#: src/common/filter_categories.rs:29
+msgid "Track Number"
+msgstr ""
+
+#: src/common/filter_categories.rs:33
+msgid "Length (min)"
+msgstr ""
+
+#: src/common/filter_categories.rs:34
+msgid "Length (sec)"
+msgstr ""
+
+#: src/common/filter_categories.rs:35
+msgid "Bit Rate"
+msgstr ""
+
+#: src/common/filter_categories.rs:36
+msgid "Album Count"
+msgstr ""
+
+#: src/common/filter_categories.rs:121
+msgid "Category"
+msgstr ""
+
+#: src/factory/playlist_element.rs:259
 msgid "Playlist is unchangeable"
 msgstr ""
 
-#: src/factory/playlist_element.rs:264
+#: src/factory/playlist_element.rs:274
 msgid "Rename Playlist"
 msgstr ""
 
-#: src/factory/playlist_element.rs:270
+#: src/factory/playlist_element.rs:280
 msgid "Delete Playlist"
 msgstr ""
 
-#: src/factory/playlist_element.rs:290
+#: src/factory/playlist_element.rs:300
 msgid "Renamed title of the playlist"
 msgstr ""
 
-#: src/factory/playlist_element.rs:304
+#: src/factory/playlist_element.rs:314
 msgid "Confirm renaming the playlist"
 msgstr ""
 
-#: src/factory/playlist_element.rs:309
+#: src/factory/playlist_element.rs:319
 msgid "Don't change the playlist name"
 msgstr ""
 
-#: src/factory/playlist_element.rs:319
+#: src/factory/playlist_element.rs:329
 msgid "Realy delete"
 msgstr ""
 
-#: src/factory/playlist_element.rs:333
+#: src/factory/playlist_element.rs:343
 msgid "Confirm deletion of the playlist"
 msgstr ""
 
-#: src/factory/playlist_element.rs:338
+#: src/factory/playlist_element.rs:348
 msgid "Don't delete the playlist"
 msgstr ""
 
-#: src/factory/artist_row.rs:220 src/factory/playlist_row.rs:460
-#: src/factory/album_row.rs:404 src/factory/track_row.rs:522
-#: src/factory/queue_song_row.rs:201 src/factory/album_track_row.rs:441
-msgid "Click to (un)favorite song"
-msgstr ""
-
-#: src/factory/playlist_row.rs:242 src/factory/album_row.rs:203
-#: src/factory/track_row.rs:300 src/factory/album_track_row.rs:278
+#: src/factory/playlist_row.rs:238 src/factory/album_row.rs:205
+#: src/factory/track_row.rs:302 src/factory/album_track_row.rs:280
 msgid "Unknown Artist"
 msgstr ""
 
-#: src/factory/playlist_row.rs:290 src/factory/track_row.rs:350
+#: src/factory/playlist_row.rs:286 src/factory/track_row.rs:352
 msgid "Unknown Album"
 msgstr ""
 
-#: src/factory/playlist_row.rs:342 src/factory/album_row.rs:254
-#: src/factory/track_row.rs:408 src/factory/album_track_row.rs:325
+#: src/factory/playlist_row.rs:338 src/factory/album_row.rs:256
+#: src/factory/track_row.rs:410 src/factory/album_track_row.rs:327
 msgid "Unknown genre"
 msgstr ""
 
-#: src/factory/album_row.rs:279
+#: src/factory/album_row.rs:281
 msgid "No year"
 msgstr ""
 
-#: src/factory/album_row.rs:313
+#: src/factory/album_row.rs:315
 msgid "No CD"
 msgstr ""
 
-#: src/factory/track_row.rs:195 src/factory/album_track_row.rs:218
+#: src/factory/track_row.rs:197 src/factory/album_track_row.rs:220
 msgid "Track"
 msgstr ""
 
-#: src/factory/track_row.rs:196 src/factory/album_track_row.rs:219
+#: src/factory/track_row.rs:198 src/factory/album_track_row.rs:221
 msgid "on CD"
 msgstr ""
 
-#: src/download.rs:47
+#: src/factory/filter_row.rs:34
+msgid "both"
+msgstr ""
+
+#: src/factory/filter_row.rs:35
+msgid "Shows item, when favorite is either yes or no"
+msgstr ""
+
+#: src/factory/filter_row.rs:39
+msgid "yes"
+msgstr ""
+
+#: src/factory/filter_row.rs:40
+msgid "Only shows item, when favorite is yes"
+msgstr ""
+
+#: src/factory/filter_row.rs:44
+msgid "no"
+msgstr ""
+
+#: src/factory/filter_row.rs:45
+msgid "Only shows item, when favorite is no"
+msgstr ""
+
+#: src/factory/filter_row.rs:103
+msgid "contains"
+msgstr ""
+
+#: src/factory/filter_row.rs:104
+msgid "Shows item, when entry is a substring of item"
+msgstr ""
+
+#: src/factory/filter_row.rs:108
+msgid "contains not"
+msgstr ""
+
+#: src/factory/filter_row.rs:109
+msgid "Shows item, when entry is not a substring of item"
+msgstr ""
+
+#: src/factory/filter_row.rs:113
+msgid "matches not"
+msgstr ""
+
+#: src/factory/filter_row.rs:114
+msgid "Shows item, when entry is not a complete match of item"
+msgstr ""
+
+#: src/factory/filter_row.rs:118
+msgid "matches"
+msgstr ""
+
+#: src/factory/filter_row.rs:119
+msgid "Shows item, when entry is a complete match of item"
+msgstr ""
+
+#: src/factory/filter_row.rs:179
+msgid "Shows item, when category is greater than entry"
+msgstr ""
+
+#: src/factory/filter_row.rs:184
+msgid "Shows item, when category is equal to entry"
+msgstr ""
+
+#: src/factory/filter_row.rs:189
+msgid "Shows item, when category is less than entry"
+msgstr ""
+
+#: src/factory/filter_row.rs:312
+msgid "Favorites"
+msgstr ""
+
+#: src/factory/filter_row.rs:347 src/factory/filter_row.rs:376
+#: src/factory/filter_row.rs:405 src/factory/filter_row.rs:435
+#: src/factory/filter_row.rs:464 src/factory/filter_row.rs:493
+#: src/factory/filter_row.rs:521 src/factory/filter_row.rs:548
+#: src/factory/filter_row.rs:575 src/factory/filter_row.rs:602
+#: src/factory/filter_row.rs:630
+msgid "remove this filter"
+msgstr ""
+
+#: src/factory/filter_row.rs:357
+msgid "CD number"
+msgstr ""
+
+#: src/factory/filter_row.rs:386
+msgid "Track number"
+msgstr ""
+
+#: src/factory/filter_row.rs:416
+msgid "Album count"
+msgstr ""
+
+#: src/factory/filter_row.rs:445
+msgid "Duration (sec)"
+msgstr ""
+
+#: src/factory/filter_row.rs:474
+msgid "Duration (min)"
+msgstr ""
+
+#: src/factory/filter_row.rs:503
+msgid "Bit rate"
+msgstr ""
+
+#: src/factory/filter_row.rs:531
+msgid "Title name"
+msgstr ""
+
+#: src/factory/filter_row.rs:558
+msgid "Artist name"
+msgstr ""
+
+#: src/factory/filter_row.rs:585
+msgid "Album name"
+msgstr ""
+
+#: src/factory/mod.rs:28
+msgid "Click to (un)favorite song"
+msgstr ""
+
+#: src/download.rs:43
 msgid "You're about to download"
 msgstr ""
 
-#: src/download.rs:50
-msgid "This may take a while. Do want to proceed?"
+#: src/download.rs:45
+msgid "songs"
 msgstr ""
 
-#: src/download.rs:100 src/download.rs:139
-msgid "Cancel"
+#: src/download.rs:46
+msgid "This may take a while. Proceed?"
 msgstr ""
 
-#: src/download.rs:104
+#: src/download.rs:62
 msgid "Download"
 msgstr ""
 
-#: src/download.rs:131
+#: src/download.rs:85
 msgid "Choose location for download"
 msgstr ""
 
-#: src/download.rs:138
+#: src/download.rs:92
 msgid "Choose folder"
 msgstr ""
 
-#: src/download.rs:239
+#: src/download.rs:193
 msgid "Start downloading:"
 msgstr ""
 
-#: src/download.rs:248
+#: src/download.rs:202
 msgid "Download of"
 msgstr ""
 
-#: src/download.rs:250 src/download.rs:280
+#: src/download.rs:204 src/download.rs:234
 msgid "failed"
 msgstr ""
 
-#: src/download.rs:278
+#: src/download.rs:232
 msgid "Saving of"
 msgstr ""
 
-#: src/download.rs:289
+#: src/download.rs:243
 msgid "Finished downloading"
 msgstr ""

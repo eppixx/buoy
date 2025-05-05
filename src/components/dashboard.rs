@@ -374,7 +374,7 @@ impl relm4::Component for Dashboard {
                                     add_css_class: granite::STYLE_CLASS_H2_LABEL,
                                 },
                                 gtk::Label {
-                                    set_label: &gettext("You might need to turn on scrobbling to populate this area"),
+                                    set_label: &gettext("Scrobbling might need to be turned on"),
                                     add_css_class: granite::STYLE_CLASS_H3_LABEL,
                                 }
                             },
