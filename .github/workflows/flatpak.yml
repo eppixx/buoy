@@ -4,7 +4,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "develop", "gh-runner" ]
+    branches: [ "main", "develop", "dev/gh-runner" ]
     paths:
       - '*.json'
   pull_request:

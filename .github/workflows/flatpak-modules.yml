@@ -6,7 +6,7 @@ concurrency:
 
 on:
   push:
-    branches: [ "main", "develop", "gh-runner" ]
+    branches: [ "main", "develop", "dev/gh-runner" ]
     paths:
       - 'Cargo.lock'
 
