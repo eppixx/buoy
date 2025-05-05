@@ -7,7 +7,7 @@ use relm4::{
         self, glib, pango,
         prelude::{BoxExt, WidgetExt},
     },
-    ComponentController,
+    ComponentController, RelmWidgetExt,
 };
 
 use crate::{
@@ -76,6 +76,7 @@ impl relm4::component::Component for PlayInfo {
             append = &model.covers.widget().clone() {
                 set_hexpand: true,
                 set_halign: gtk::Align::Center,
+                set_tooltip: &gettext("Click to enlarge"),
 
                 add_controller = gtk::GestureClick {
                     connect_pressed[sender] => move |_ctrl, _btn, _x, _y| {

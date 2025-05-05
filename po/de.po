@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-05 15:27+0200\n"
-"PO-Revision-Date: 2025-05-05 15:28+0200\n"
+"POT-Creation-Date: 2025-05-05 15:33+0200\n"
+"PO-Revision-Date: 2025-05-05 15:33+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -32,14 +32,14 @@ msgstr "Lautstärke verringern"
 msgid "Title"
 msgstr "Titel"
 
-#: src/components/playlists_view.rs:264 src/components/app.rs:452
+#: src/components/playlists_view.rs:264 src/components/app.rs:453
 #: src/components/album_view.rs:105 src/components/albums_view.rs:144
 #: src/components/tracks_view.rs:167 src/common/filter_categories.rs:30
 #: src/factory/filter_row.rs:570
 msgid "Artist"
 msgstr "Artist"
 
-#: src/components/playlists_view.rs:268 src/components/app.rs:492
+#: src/components/playlists_view.rs:268 src/components/app.rs:493
 #: src/components/albums_view.rs:140 src/components/tracks_view.rs:171
 #: src/common/filter_categories.rs:31 src/factory/filter_row.rs:597
 msgid "Album"
@@ -55,7 +55,7 @@ msgstr "Album"
 msgid "Length"
 msgstr "Länge"
 
-#: src/components/playlists_view.rs:343 src/components/app.rs:547
+#: src/components/playlists_view.rs:343 src/components/app.rs:548
 msgid "Playlists"
 msgstr "Playlisten"
 
@@ -100,87 +100,87 @@ msgstr "Titel"
 msgid "loading information from server"
 msgstr "Lade Informationen vom Server"
 
-#: src/components/app.rs:365
+#: src/components/app.rs:366
 msgid "Go back to previous page"
 msgstr "Eine Seite zurück gehen"
 
-#: src/components/app.rs:384
+#: src/components/app.rs:385
 msgid "Open search bar"
 msgstr "Öffne die Suchleiste"
 
-#: src/components/app.rs:398
+#: src/components/app.rs:399
 msgid "Go to dashboard"
 msgstr "Zeige Übersicht"
 
-#: src/components/app.rs:412
+#: src/components/app.rs:413
 msgid "Dashboard"
 msgstr "Übersicht"
 
-#: src/components/app.rs:420
+#: src/components/app.rs:421
 msgid "Show artists"
 msgstr "Zeige Artisten"
 
-#: src/components/app.rs:434
+#: src/components/app.rs:435
 msgid "Artists"
 msgstr "Artisten"
 
-#: src/components/app.rs:460
+#: src/components/app.rs:461
 msgid "Show albums"
 msgstr "Zeige Alben"
 
-#: src/components/app.rs:474 src/components/artists_view.rs:133
+#: src/components/app.rs:475 src/components/artists_view.rs:133
 msgid "Albums"
 msgstr "Alben"
 
-#: src/components/app.rs:500
+#: src/components/app.rs:501
 msgid "Show tracks"
 msgstr "Zeige Titel"
 
-#: src/components/app.rs:514
+#: src/components/app.rs:515
 msgid "Tracks"
 msgstr "Titel"
 
-#: src/components/app.rs:522
+#: src/components/app.rs:523
 msgid "Show playlists"
 msgstr "Zeige Playlisten"
 
-#: src/components/app.rs:566
+#: src/components/app.rs:567
 msgid "Open Equalizer settings"
 msgstr "Öffne Equalizer"
 
-#: src/components/app.rs:577
+#: src/components/app.rs:578
 msgid "Change volume by opening, scrolling or middle clicking"
 msgstr "Ändere die Lautstärke nach dem Öffnen, Scrollen oder Mittelklick"
 
-#: src/components/app.rs:623
+#: src/components/app.rs:624
 msgid "Open settings"
 msgstr "Öffne Einstellungen"
 
-#: src/components/app.rs:649
+#: src/components/app.rs:650
 msgid "Search..."
 msgstr "Suche nach..."
 
-#: src/components/app.rs:651
+#: src/components/app.rs:652
 msgid "Enter your search here"
 msgstr "Gebe deine Suche hier ein"
 
-#: src/components/app.rs:663
+#: src/components/app.rs:664
 msgid "Use fuzzy search"
 msgstr "Benutze Fuzzy-Suche"
 
-#: src/components/app.rs:664
+#: src/components/app.rs:665
 msgid "Shows close and similar search results if activated"
 msgstr "Zeige ähnliche Suchresultate an, wenn aktiviert"
 
-#: src/components/app.rs:673
+#: src/components/app.rs:674
 msgid "Use case sensitivity"
 msgstr "Beachte Groß-/Kleinschreibung"
 
-#: src/components/app.rs:674
+#: src/components/app.rs:675
 msgid "Ignores case sensitivity in search term and results"
 msgstr "Ignoriert Groß-/Kleinschreibung in der Sucheingabe und Resultate"
 
-#: src/components/app.rs:800
+#: src/components/app.rs:801
 msgid ""
 "Deleted cache\n"
 "Please restart to reload the cache"
@@ -188,11 +188,11 @@ msgstr ""
 "Lokalen Speicher gelöscht\n"
 "Bitte starten sie die App neu"
 
-#: src/components/app.rs:875
+#: src/components/app.rs:876
 msgid "New playlist from Queue"
 msgstr "Neue Playlist von Warteschlange"
 
-#: src/components/app.rs:1326 src/factory/queue_song_row.rs:271
+#: src/components/app.rs:1327 src/factory/queue_song_row.rs:271
 #: src/factory/artist_song_row.rs:168
 msgid "Unkonwn Artist"
 msgstr "Unbekannter Artist"
@@ -345,19 +345,23 @@ msgstr ""
 msgid "Create new playlist from queue"
 msgstr "Neue Playlist von Warteschlange erstellen"
 
-#: src/components/play_info.rs:93 src/components/play_info.rs:154
+#: src/components/play_info.rs:79
+msgid "Click to enlarge"
+msgstr "Klicken um zu vergrößern"
+
+#: src/components/play_info.rs:94 src/components/play_info.rs:155
 msgid "Nothing is playing"
 msgstr "Nichts wird gespielt"
 
 # by {artists} on {album}
 #. build artist markup string
-#: src/components/play_info.rs:183
+#: src/components/play_info.rs:184
 msgid "by"
 msgstr "von"
 
 # by {artists} on {album}
 #. build album markup string
-#: src/components/play_info.rs:209
+#: src/components/play_info.rs:210
 msgid "on"
 msgstr "auf"
 
