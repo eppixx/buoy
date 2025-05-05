@@ -324,12 +324,13 @@ impl relm4::component::AsyncComponent for App {
                                     set_margin_top: 10,
                                 },
 
-                                add_overlay = &gtk::CenterBox {
+                                add_overlay = &gtk::Box {
                                     set_margin_top: 3,
                                     set_margin_start: 3,
+                                    set_valign: gtk::Align::Start,
+                                    set_halign: gtk::Align::Start,
 
-                                    #[wrap(Some)]
-                                    set_start_widget = &gtk::WindowControls {
+                                    gtk::WindowControls {
                                         set_valign: gtk::Align::Start,
                                         set_side: gtk::PackType::Start,
                                     },
