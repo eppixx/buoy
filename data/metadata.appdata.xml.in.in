@@ -6,6 +6,9 @@
   <summary>A Subsonic music client</summary>
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
+  <url type="homepage">https://github.com/eppixx/buoy</url>
+  <url type="vcs-browser">https://github.com/eppixx/buoy</url>
+  <url type="bugtracker">https://github.com/eppixx/buoy/issues</url>
   <description>
     <p>Bouy is a GTK client to browse and play from a subsonic music server. It&apos;s designed to handle large music collections</p>
   </description>
@@ -40,5 +43,4 @@
       <caption>Oraganize your playlists</caption>
     </screenshot>
   </screenshots>
-  <url type="homepage">https://github.com/eppixx/buoy</url>
 </component>
