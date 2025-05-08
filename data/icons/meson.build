@@ -5,12 +5,12 @@ icon_sizes = ['16', '24', '32', '48', '64', '128']
 
 foreach i : icon_sizes
     install_data(
-        'hicolor' / i + '.svg',
+        'symbolic.svg',
         install_dir: get_option('datadir') / 'icons' / 'hicolor' / i + 'x' + i / 'apps',
         rename: application_id + '.svg'
     )
     install_data(
-        'hicolor' / i + '.svg',
+        'symbolic.svg',
         install_dir: get_option('datadir') / 'icons' / 'hicolor' / i + 'x' + i + '@2' / 'apps',
         rename: application_id + '.svg'
     )
