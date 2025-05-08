@@ -60,8 +60,8 @@ sudo apt install flatpak-builder
 flatpak --user remote-add --if-not-exists elementary https://flatpak.elementary.io/repo.flatpakrepo
 flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 # install actual dependencies
-flatpak --user install -y --noninteractive io.elementary.Platform/x86_64/8.1 io.elementary.Sdk/x86_64/8.1
-flatpak --user install -y --noninteractive org.freedesktop.Sdk.Extension.rust-stable/x86_64/24.08
+flatpak --user install -y io.elementary.Platform/x86_64/8.1 io.elementary.Sdk/x86_64/8.1
+flatpak --user install -y org.freedesktop.Sdk.Extension.rust-stable/x86_64/24.08
 ```
 
 #### Updating `cargo-sources.json`
