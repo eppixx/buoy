@@ -13,6 +13,9 @@
     <p>Bouy is a GTK client to browse and play from a subsonic music server. It&apos;s designed to handle large music collections</p>
   </description>
   <content_rating type="oars-1.1" />
+  <branding>
+    <color type="primary">#2e586b</color>
+  </branding>
   <releases>
     <release version="1.0.0" date="2025-05-05">
       <description>
