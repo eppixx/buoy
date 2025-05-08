@@ -2,23 +2,27 @@
 <component type="desktop-application">
   <id>@APP_ID_UNQUOTED@</id>
   <launchable type="desktop-id">@APP_ID_UNQUOTED@.desktop</launchable>
-  <name>Buoy</name>
-  <summary>A Subsonic music client</summary>
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
+  <content_rating type="oars-1.1" />
   <url type="homepage">https://github.com/eppixx/buoy</url>
   <url type="vcs-browser">https://github.com/eppixx/buoy</url>
   <url type="bugtracker">https://github.com/eppixx/buoy/issues</url>
+
+  <name>Buoy</name>
+  <summary>A Subsonic music client</summary>
   <description>
     <p>Bouy is a GTK client to browse and play from a subsonic music server. It&apos;s designed to handle large music collections</p>
   </description>
-  <content_rating type="oars-1.1" />
+
   <developer id="com.github.eppixx">
     <name>Thomas Eppers</name>
   </developer>
+
   <branding>
     <color type="primary">#2e586b</color>
   </branding>
+
   <releases>
     <release version="1.0.0" date="2025-05-05">
       <description>
@@ -31,6 +35,7 @@
       </description>
     </release>
   </releases>
+
   <screenshots>
     <screenshot type="default" environment="pantheon:dark">
       <image>https://raw.githubusercontent.com/eppixx/buoy/main/data/screenshots/dashboard_dark.png</image>
@@ -49,4 +54,5 @@
       <caption>Oraganize your playlists</caption>
     </screenshot>
   </screenshots>
+
 </component>
