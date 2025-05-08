@@ -37,19 +37,19 @@
   </releases>
 
   <screenshots>
-    <screenshot type="default" environment="pantheon:dark">
+    <screenshot type="default">
       <image>https://raw.githubusercontent.com/eppixx/buoy/main/data/screenshots/dashboard_dark.png</image>
       <caption>An overview of your music</caption>
     </screenshot>
-    <screenshot environment="pantheon:light">
+    <screenshot>
       <image>https://raw.githubusercontent.com/eppixx/buoy/main/data/screenshots/album_light.png</image>
       <caption>View your albums</caption>
     </screenshot>
-    <screenshot environment="pantheon:dark">
+    <screenshot>
       <image>https://raw.githubusercontent.com/eppixx/buoy/main/data/screenshots/tracks_dark.png</image>
       <caption>Browse all tracks in your library</caption>
     </screenshot>
-    <screenshot environment="pantheon:light">
+    <screenshot>
       <image>https://raw.githubusercontent.com/eppixx/buoy/main/data/screenshots/playlists_light.png</image>
       <caption>Oraganize your playlists</caption>
     </screenshot>
