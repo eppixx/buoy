@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-13 00:10+0100\n"
-"PO-Revision-Date: 2025-04-18 20:34+0200\n"
+"POT-Creation-Date: 2025-05-09 09:06+0200\n"
+"PO-Revision-Date: 2025-05-09 09:14+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.4.4\n"
 
-#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:4
+#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:12
 msgid "Buoy"
 msgstr "Buoy"
 
@@ -30,18 +30,45 @@ msgstr "Musik Player"
 msgid "Play music from a subsonic server"
 msgstr "Spielt Musik von einem Subsonic Server"
 
-#: data/metadata.appdata.xml.in.in:5
+#: data/metadata.appdata.xml.in.in:13
 msgid "A Subsonic music client"
 msgstr "Ein Subsonic Musik Client"
 
-#: data/metadata.appdata.xml.in.in:9
-msgid ""
-"Buoy is a client for playing music off of a subsonic server. It is written "
-"in Rust with GTK for elementary OS."
-msgstr ""
-"Buoy ist ein Client um Musik eines Subsonic Servers abzuspielen. Er ist in "
-"Rust mit GTK für elementary OS geschrieben."
-
 #: data/metadata.appdata.xml.in.in:15
+msgid ""
+"Bouy is a GTK client to browse and play from a subsonic music server. It's "
+"designed to handle large music collections"
+msgstr ""
+"Bouy ist eine GTK-Client zum durchstöbern und abspielen eines Subsonic "
+"Musik Servers. Es ist designet um große Musikbibliotheken zu verarbeiten"
+
+#: data/metadata.appdata.xml.in.in:29
 msgid "Initial Release"
 msgstr "Initialer Release"
+
+#: data/metadata.appdata.xml.in.in:34
+msgid "Pre Release"
+msgstr "Pre Release"
+
+#: data/metadata.appdata.xml.in.in:42
+msgid "An overview of your music"
+msgstr "Eine Übersicht deiner Musik"
+
+#: data/metadata.appdata.xml.in.in:46
+msgid "View your albums"
+msgstr "Sehe eine Alben an"
+
+#: data/metadata.appdata.xml.in.in:50
+msgid "Browse all tracks in your library"
+msgstr "Stöber in allen Titel deine Bibliothek"
+
+#: data/metadata.appdata.xml.in.in:54
+msgid "Oraganize your playlists"
+msgstr "Organisiere deine Playlisten"
+
+#~ msgid ""
+#~ "Buoy is a client for playing music off of a subsonic server. It is "
+#~ "written in Rust with GTK for elementary OS."
+#~ msgstr ""
+#~ "Buoy ist ein Client um Musik eines Subsonic Servers abzuspielen. Er ist "
+#~ "in Rust mit GTK für elementary OS geschrieben."
