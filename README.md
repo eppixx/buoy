@@ -6,8 +6,9 @@
 
 ## Screenshots
 
-![Screenshot showing the tracks view in light and dark mode](data/screenshots/dashboard_dark_light.png)
-![Screenshot showing the dashboard view](data/screenshots/album_dark.png)
+![Screenshot showing the tracks view in light and dark mode](data/screenshots/dashboard_dark.png)
+![Screenshot showing the dashboard view](data/screenshots/album_light.png)
+![Screenshot showing the tracks view](data/screenshots/tracks_dark.png)
 ![Screenshot showing the playlists view](data/screenshots/playlists_light.png)
 
 ## Requirements
