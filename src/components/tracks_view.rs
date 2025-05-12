@@ -407,40 +407,44 @@ impl relm4::Component for TracksView {
                         }
                     },
 
-                    model.filters.borrow().widget().clone() -> gtk::ListBox {
-                        set_margin_all: 5,
-                        add_css_class: granite::STYLE_CLASS_FRAME,
-                        add_css_class: granite::STYLE_CLASS_RICH_LIST,
-                        set_vexpand: true,
-                        set_selection_mode: gtk::SelectionMode::None,
+                    gtk::ScrolledWindow {
+                        set_propagate_natural_width: true,
 
-                        // display new filter button
-                        gtk::ListBoxRow {
-                            set_focusable: false,
-                            set_valign: gtk::Align::Center,
+                        model.filters.borrow().widget().clone() -> gtk::ListBox {
+                            set_margin_all: 5,
+                            add_css_class: granite::STYLE_CLASS_FRAME,
+                            add_css_class: granite::STYLE_CLASS_RICH_LIST,
+                            set_vexpand: true,
+                            set_selection_mode: gtk::SelectionMode::None,
 
+                            // display new filter button
+                            gtk::ListBoxRow {
+                                set_focusable: false,
+                                set_valign: gtk::Align::Center,
 
-                            gtk::Box {
-                                set_spacing: 15,
-                                set_halign: gtk::Align::Center,
+                                gtk::Box {
+                                    set_spacing: 15,
+                                    set_halign: gtk::Align::Center,
 
-                                gtk::Label {
-                                    set_text: &gettext("New filter:"),
-                                },
+                                    gtk::Label {
+                                        set_text: &gettext("New filter:"),
+                                    },
 
-                                #[name = "new_filter"]
-                                gtk::DropDown {
-                                    set_model: Some(&Category::tracks()),
-                                    set_factory: Some(&Category::factory()),
-                                },
+                                    #[name = "new_filter"]
+                                    gtk::DropDown {
+                                        set_model: Some(&Category::tracks()),
+                                        set_factory: Some(&Category::factory()),
+                                    },
 
-                                gtk::Button {
-                                    set_icon_name: "list-add-symbolic",
-                                    connect_clicked => Self::Input::FilterAdd,
-                                    set_tooltip: &gettext("Add new filter"),
+                                    gtk::Button {
+                                        set_valign: gtk::Align::Center,
+                                        set_icon_name: "list-add-symbolic",
+                                        set_tooltip: &gettext("Add new filter"),
+                                        connect_clicked => Self::Input::FilterAdd,
+                                    }
                                 }
-                            }
-                        },
+                            },
+                        }
                     }
                 }
             }
