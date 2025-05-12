@@ -81,17 +81,17 @@ sudo apt install python3-aiohttp python3-toml
 
 Building the project
 ```bash
-flatpak-builder --user flatpak_app com.github.eppixx.buoy.yaml --force-clean
+flatpak-builder --user flatpak_app com.github.eppixx.buoy.yml --force-clean
 ```
 
 Run the build version without installing with
 ```bash
-flatpak-builder --run flatpak_app com.github.eppixx.buoy.yaml buoy
+flatpak-builder --run flatpak_app com.github.eppixx.buoy.yml buoy
 ```
 
 Install with
 ```bash
-flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.yaml --force-clean
+flatpak-builder --user --install flatpak_app com.github.eppixx.buoy.yml --force-clean
 
 ```
 
