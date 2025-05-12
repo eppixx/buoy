@@ -344,67 +344,71 @@ impl relm4::component::AsyncComponent for PlaylistsView {
                     }
                 },
 
-                model.playlists.widget().clone() -> gtk::ListBox {
-                    add_css_class: granite::STYLE_CLASS_FRAME,
-                    add_css_class: granite::STYLE_CLASS_RICH_LIST,
-                    set_vexpand: true,
+                gtk::ScrolledWindow {
+                    set_propagate_natural_width: true,
 
-                    connect_row_selected[sender] => move |_listbox, row| {
-                        if let Some(row) = row {
-                            sender.input(PlaylistsViewIn::Selected(row.index()));
-                        }
-                    },
+                    model.playlists.widget().clone() -> gtk::ListBox {
+                        add_css_class: granite::STYLE_CLASS_FRAME,
+                        add_css_class: granite::STYLE_CLASS_RICH_LIST,
+                        set_vexpand: true,
 
-                    gtk::ListBoxRow {
-                        gtk::Button {
-                            gtk::Box {
-                                set_halign: gtk::Align::Center,
-                                set_tooltip: &gettext("Add new empty playlist"),
+                        connect_row_selected[sender] => move |_listbox, row| {
+                            if let Some(row) = row {
+                                sender.input(PlaylistsViewIn::Selected(row.index()));
+                            }
+                        },
 
-                                gtk::Image {
-                                    set_icon_name: Some("list-add-symbolic"),
-                                },
-                                gtk::Label {
-                                    set_text: &gettext("New playlist"),
-                                }
-                            },
+                        gtk::ListBoxRow {
+                            gtk::Button {
+                                gtk::Box {
+                                    set_halign: gtk::Align::Center,
+                                    set_tooltip: &gettext("Add new empty playlist"),
 
-                            connect_clicked[sender] => move |_btn| {
-                                sender.output(PlaylistsViewOut::CreateEmptyPlaylist).unwrap();
-                            },
-
-                            add_controller = gtk::DropTarget {
-                                set_actions: gdk::DragAction::COPY,
-                                set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
-                                             , <QueueUids as gtk::prelude::StaticType>::static_type()
-                                             , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
-                                ],
-
-                                connect_motion[sender] => move |_controller, _x, y| {
-                                    sender.input(PlaylistsViewIn::DropHover(y));
-                                    gdk::DragAction::COPY
+                                    gtk::Image {
+                                        set_icon_name: Some("list-add-symbolic"),
+                                    },
+                                    gtk::Label {
+                                        set_text: &gettext("New playlist"),
+                                    }
                                 },
 
-                                connect_leave[sender] => move |_controller| {
-                                    sender.input(PlaylistsViewIn::DropMotionLeave)
+                                connect_clicked[sender] => move |_btn| {
+                                    sender.output(PlaylistsViewOut::CreateEmptyPlaylist).unwrap();
                                 },
 
-                                connect_drop[sender] => move |_controller, value, _x, _y| {
-                                    sender.input(PlaylistsViewIn::DropMotionLeave);
+                                add_controller = gtk::DropTarget {
+                                    set_actions: gdk::DragAction::COPY,
+                                    set_types: &[<Droppable as gtk::prelude::StaticType>::static_type()
+                                                 , <QueueUids as gtk::prelude::StaticType>::static_type()
+                                                 , <PlaylistElementDragged as gtk::prelude::StaticType>::static_type(),
+                                    ],
 
-                                    let drop = if let Ok(drop) = value.get::<QueueUids>() {
-                                        Droppable::QueueSongs(drop.0)
-                                    } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
-                                        Droppable::Playlist(drop.0)
-                                    } else if let Ok(drop) = value.get::<Droppable>() {
-                                        drop
-                                    } else {
-                                        return false;
-                                    };
+                                    connect_motion[sender] => move |_controller, _x, y| {
+                                        sender.input(PlaylistsViewIn::DropHover(y));
+                                        gdk::DragAction::COPY
+                                    },
 
-                                    sender.output(PlaylistsViewOut::CreatePlaylist(drop)).unwrap();
+                                    connect_leave[sender] => move |_controller| {
+                                        sender.input(PlaylistsViewIn::DropMotionLeave)
+                                    },
 
-                                    true
+                                    connect_drop[sender] => move |_controller, value, _x, _y| {
+                                        sender.input(PlaylistsViewIn::DropMotionLeave);
+
+                                        let drop = if let Ok(drop) = value.get::<QueueUids>() {
+                                            Droppable::QueueSongs(drop.0)
+                                        } else if let Ok(drop) = value.get::<PlaylistElementDragged>() {
+                                            Droppable::Playlist(drop.0)
+                                        } else if let Ok(drop) = value.get::<Droppable>() {
+                                            drop
+                                        } else {
+                                            return false;
+                                        };
+
+                                        sender.output(PlaylistsViewOut::CreatePlaylist(drop)).unwrap();
+
+                                        true
+                                    }
                                 }
                             }
                         }
