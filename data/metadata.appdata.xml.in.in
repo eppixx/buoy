@@ -25,6 +25,19 @@
   </branding>
 
   <releases>
+    <release version="1.0.1" date="2025-05-13">
+      <description>
+        <ul>
+          <li>updated dependencies</li>
+          <li>updated german translation</li>
+          <li>added scroll bars in:
+          <ul>
+            <li>filters in views (artists, albums, tracks)</li>
+            <li>list of playlists</li>
+          </ul></li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.0" date="2025-05-05">
       <description>
         <p>Initial Release</p>
