@@ -30,11 +30,8 @@
         <ul>
           <li>updated dependencies</li>
           <li>updated german translation</li>
-          <li>added scroll bars in:
-          <ul>
-            <li>filters in views (artists, albums, tracks)</li>
-            <li>list of playlists</li>
-          </ul></li>
+          <li>added scroll bars to filters in artists, albums and tracks</li>
+          <li>added scroll bars to list of playlists</li>
         </ul>
       </description>
     </release>
