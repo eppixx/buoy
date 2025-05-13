@@ -8,6 +8,7 @@
   <url type="homepage">https://github.com/eppixx/buoy</url>
   <url type="vcs-browser">https://github.com/eppixx/buoy</url>
   <url type="bugtracker">https://github.com/eppixx/buoy/issues</url>
+  <url type="translate">https://github.com/eppixx/buoy/blob/main/po/README.md</url>
 
   <name>Buoy</name>
   <summary>A Subsonic music client</summary>
