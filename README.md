@@ -17,12 +17,12 @@ You need access to a subsonic server. The recommended option is [Navidrome](http
 If you don't have access, you may install it locally.
 
 
-## First Setup
+## Before installing or developing
 
-Install the needed dependencies (assuming rust is already installed)
+Install git
 
 ```bash
-sudo apt install libgtk-4-dev libgranite-7-dev libgstreamer1.0-dev meson git gettext desktop-file-utils
+sudo apt install git
 ```
 
 and clone the repository with
@@ -36,7 +36,13 @@ cd buoy
 
 ### Installing with meson
 
-It can be installed with the following commands
+Install the dependencies with
+```bash
+sudo apt install libgtk-4-dev libgranite-7-dev libgstreamer1.0-dev meson gettext desktop-file-utils
+```
+Rust is assumed to be installed.
+
+Buoy can now be installed with the following commands
 ```bash
 meson setup build-release --buildtype=release
 ninja -C build-release install # installing will ask for the superuser password
