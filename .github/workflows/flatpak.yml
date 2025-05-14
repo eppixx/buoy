@@ -6,11 +6,11 @@ on:
   push:
     branches: [ "main", "develop", "dev/gh-runner" ]
     paths:
-      - '*.json'
+      - '*.yml'
   pull_request:
     branches: [ 'main' ]
     paths:
-      - '*.json'
+      - '*.yml'
     types:
       - opened
       - reopened
@@ -61,3 +61,4 @@ jobs:
           cache-key: "flatpak-builder-${{ github.sha }}"
           branch: daily
           arch: ${{ matrix.arch }}
+          upload-artifact: false
