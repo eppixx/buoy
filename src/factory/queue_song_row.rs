@@ -165,6 +165,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
 
                 append: cover_stack = &gtk::Stack {
                     set_transition_type: gtk::StackTransitionType::Crossfade,
+                    set_valign: gtk::Align::Center,
 
                     add_enumed[PlayState::Stop]: cover_box = &gtk::Viewport,
                     add_enumed[PlayState::Play] = &gtk::Image {
@@ -179,6 +180,7 @@ impl relm4::typed_view::list::RelmListItem for QueueSongRow {
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
+                    set_valign: gtk::Align::Center,
 
                     append: title = &gtk::Label {
                         set_text: "no title given",
