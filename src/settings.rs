@@ -157,10 +157,7 @@ impl Settings {
 
     pub fn save(&self) -> anyhow::Result<()> {
         let config_path = dirs::config_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create config dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create config dir"))?
             .join(PREFIX)
             .join(FILE_NAME);
 

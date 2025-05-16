@@ -130,10 +130,7 @@ impl SubsonicCovers {
         let cache: Vec<u8> = postcard::to_allocvec(self)?;
 
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(COVER_CACHE);
         std::fs::write(cache_path, cache)?;
@@ -143,10 +140,7 @@ impl SubsonicCovers {
 
     pub fn load(&mut self) -> anyhow::Result<()> {
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(COVER_CACHE);
         let content = std::fs::read(cache_path)?;
@@ -160,10 +154,7 @@ impl SubsonicCovers {
 
     pub fn delete_cache(&self) -> anyhow::Result<()> {
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(COVER_CACHE);
         std::fs::remove_file(cache_path)?;

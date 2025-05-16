@@ -189,10 +189,7 @@ impl Queue {
         let mut serializer = rmp_serde::Serializer::new(&mut cache);
         queue.serialize(&mut serializer)?;
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(QUEUE_INFOS);
         std::fs::write(cache_path, cache)?;
@@ -202,10 +199,7 @@ impl Queue {
 
     pub fn load(&mut self, sender: &relm4::ComponentSender<Queue>) -> anyhow::Result<()> {
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(QUEUE_INFOS);
 
@@ -237,10 +231,7 @@ impl Queue {
     pub fn delete_cache(&self) -> anyhow::Result<()> {
         // delete queue info
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant find queue cache info",
-            ))?
+            .ok_or(std::io::Error::other("cant find queue cache info"))?
             .join(PREFIX)
             .join(QUEUE_INFOS);
 

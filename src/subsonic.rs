@@ -155,10 +155,7 @@ impl Subsonic {
 
     pub async fn load() -> anyhow::Result<Self> {
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(MUSIC_INFOS);
         let content = tokio::fs::read(cache_path).await?;
@@ -193,10 +190,7 @@ impl Subsonic {
         let mut serializer = rmp_serde::Serializer::new(&mut cache);
         self.serialize(&mut serializer)?;
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant create cache dir",
-            ))?
+            .ok_or(std::io::Error::other("cant create cache dir"))?
             .join(PREFIX)
             .join(MUSIC_INFOS);
         std::fs::write(cache_path, cache)?;
@@ -427,10 +421,7 @@ impl Subsonic {
 
         // delete music info
         let cache_path = dirs::cache_dir()
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "cant find cache info",
-            ))?
+            .ok_or(std::io::Error::other("cant find cache info"))?
             .join(PREFIX)
             .join(MUSIC_INFOS);
 
