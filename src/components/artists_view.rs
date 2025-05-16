@@ -154,10 +154,10 @@ impl relm4::component::Component for ArtistsView {
             .push_back(Category::Favorite);
 
         //add artists
-        let list = model.subsonic.borrow().artists().to_vec();
-        for artist in list.iter() {
+        let list = model.subsonic.borrow().artists().clone();
+        for artist in list.into_iter() {
             model.shown_artists.insert(artist.name.clone());
-            let artist = ArtistRow::new(&model.subsonic, artist.clone(), sender.clone());
+            let artist = ArtistRow::new(&model.subsonic, artist, sender.clone());
             model.entries.append(artist);
         }
 
