@@ -204,14 +204,14 @@ impl relm4::Component for TracksView {
         model.info_cover.model().add_css_class_image("size100");
 
         // add tracks
-        let list = subsonic.borrow().tracks().to_vec();
+        let list = subsonic.borrow().tracks().clone();
         let tracks: Vec<TrackRow> = list
-            .iter()
+            .into_iter()
             .map(|track| {
                 model.shown_tracks.push(track.id.clone());
                 model.shown_albums.insert(track.album.clone());
                 model.shown_artists.insert(track.artist.clone());
-                TrackRow::new(&model.subsonic, track.clone(), &sender)
+                TrackRow::new(&model.subsonic, track, &sender)
             })
             .collect();
         model.tracks.extend_from_iter(tracks);
