@@ -172,11 +172,11 @@ impl relm4::component::Component for AlbumsView {
         };
 
         //add some albums
-        let list = model.subsonic.borrow().albums().to_vec();
-        for album in list.iter() {
+        let list = model.subsonic.borrow().albums().clone();
+        for album in list.into_iter() {
             model.shown_albums.insert(album.album.clone());
             model.shown_artists.insert(album.artist.clone());
-            let album = AlbumRow::new(&model.subsonic, album.clone(), sender.clone());
+            let album = AlbumRow::new(&model.subsonic, album, sender.clone());
             model.entries.append(album);
         }
 
