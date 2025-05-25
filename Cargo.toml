@@ -1,6 +1,6 @@
 [package]
 name = "buoy"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["Thomas Eppers"]
 description = "A GTK client for connecting, showing and playing from a subsonic music server"
