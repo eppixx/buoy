@@ -25,6 +25,13 @@
   </branding>
 
   <releases>
+    <release version="1.0.2" date="2025-05-26">
+        <ul>
+          <li>updated dependencies</li>
+          <li>fixed seekbar setup on startup</li>
+          <li>added delayed loading of tracks in TracksView for large databases</li>
+        </ul>
+    </release>
     <release version="1.0.1" date="2025-05-13">
       <description>
         <ul>
