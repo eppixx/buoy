@@ -254,6 +254,13 @@ impl relm4::component::AsyncComponent for App {
             model
                 .play_controls
                 .emit(PlayControlIn::NewState(PlayState::Pause));
+
+            // set seekbar
+            if let Some(duration) = &child.duration {
+                model
+                    .seekbar
+                    .emit(SeekbarIn::NewRange(i64::from(*duration) * 1000));
+            }
         } else {
             // set controls
             model
