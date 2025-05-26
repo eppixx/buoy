@@ -22,7 +22,7 @@ relm4 = "0.9.1"
 granite = { version = "2.0.0", package = "granite-rs", features = ["v7_3"] }
 submarine = { version = "0.1.1", features = ["navidrome"] }
 gstreamer = "0.23.6"
-tokio = { version = "1.45.0", features = ["rt", "macros", "rt-multi-thread"]}
+tokio = { version = "1.45.1", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.31"
 async-channel = "2.3.1"
 fuzzy-matcher = "0.3.7"
@@ -33,7 +33,7 @@ clap_derive = "4.5.32"
 gettext-rs = { version = "0.7.2", features = ["gettext-system"] }
 
 #mpris
-zbus = "5.7.0"
+zbus = "5.7.1"
 zvariant = "5.5.1"
 
 # converting strings on seekbar
