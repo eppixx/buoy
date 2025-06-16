@@ -28,7 +28,7 @@ async-channel = "2.3.1"
 fuzzy-matcher = "0.3.7"
 rand = "0.9.1"
 itertools = "0.14.0"
-clap = { version = "4.5.39", features = ["derive"] }
+clap = { version = "4.5.40", features = ["derive"] }
 clap_derive = "4.5.32"
 gettext-rs = { version = "0.7.2", features = ["gettext-system"] }
 
