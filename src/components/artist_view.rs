@@ -450,7 +450,7 @@ impl relm4::Component for ArtistView {
                                         set_ellipsize: pango::EllipsizeMode::End,
                                     },
                                     gtk::Label {
-                                        set_label: &gettext("There my be additioinal setup steps for your server required"),
+                                        set_label: &gettext("There may be additioinal setup steps for your server required"),
                                         set_ellipsize: pango::EllipsizeMode::End,
 
                                     }
