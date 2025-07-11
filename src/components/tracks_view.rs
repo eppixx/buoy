@@ -132,12 +132,17 @@ pub enum TracksViewOut {
     CreatePlaylist(String, Vec<submarine::data::Child>),
 }
 
+#[derive(Debug)]
+pub enum TracksViewCmd {
+    AddTracks(Vec<submarine::data::Child>),
+}
+
 #[relm4::component(pub)]
 impl relm4::Component for TracksView {
     type Init = Rc<RefCell<Subsonic>>;
     type Input = TracksViewIn;
     type Output = TracksViewOut;
-    type CommandOutput = ();
+    type CommandOutput = TracksViewCmd;
 
     fn init(
         subsonic: Self::Init,
@@ -203,28 +208,18 @@ impl relm4::Component for TracksView {
         };
         model.info_cover.model().add_css_class_image("size100");
 
-        // add tracks
+        // fetch tracks
         let list = subsonic.borrow().tracks().clone();
-        let tracks: Vec<TrackRow> = list
-            .into_iter()
-            .map(|track| {
-                model.shown_tracks.push(track.id.clone());
-                model.shown_albums.insert(track.album.clone());
-                model.shown_artists.insert(track.artist.clone());
-                TrackRow::new(&model.subsonic, track, &sender)
-            })
-            .collect();
-        model.tracks.extend_from_iter(tracks);
+
+        // process the the songs later for better responsivnes
+        sender.oneshot_command(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+            TracksViewCmd::AddTracks(list)
+        });
 
         let widgets = view_output!();
 
-        //update labels and buttons
-        model.update_count_labels(
-            &widgets.shown_tracks,
-            &widgets.shown_albums,
-            &widgets.shown_artists,
-        );
-
+        // setup filter view
         model
             .filters
             .borrow_mut()
@@ -707,6 +702,53 @@ impl relm4::Component for TracksView {
                         ))
                         .unwrap();
                 }
+            }
+        }
+    }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::CommandOutput,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            TracksViewCmd::AddTracks(mut list) => {
+                // finshed when empty
+                if list.is_empty() {
+                    return;
+                }
+
+                // calc chunk len
+                let max_chunk_len = 500;
+                let chunk_len = usize::min(max_chunk_len, list.len());
+
+                // take a chunk and convert it into a row
+                let rest = list.split_off(chunk_len);
+                let tracks: Vec<TrackRow> = list
+                    .into_iter()
+                    .map(|track| {
+                        self.shown_tracks.push(track.id.clone());
+                        self.shown_albums.insert(track.album.clone());
+                        self.shown_artists.insert(track.artist.clone());
+                        TrackRow::new(&self.subsonic, track, &sender)
+                    })
+                    .collect();
+                self.tracks.extend_from_iter(tracks);
+
+                // update labels
+                self.update_count_labels(
+                    &widgets.shown_tracks,
+                    &widgets.shown_albums,
+                    &widgets.shown_artists,
+                );
+
+                // process the rest of the songs later
+                sender.oneshot_command(async move {
+                    tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+                    TracksViewCmd::AddTracks(rest)
+                });
             }
         }
     }

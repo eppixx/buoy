@@ -14,6 +14,7 @@ use crate::{
 
 pub struct Cover {
     subsonic: Rc<RefCell<Subsonic>>,
+    id: Option<String>,
 
     // stack shows either a stock image, a loading wheel or a loaded cover
     stack: gtk::Stack,
@@ -77,6 +78,7 @@ impl relm4::Component for Cover {
     ) -> relm4::ComponentParts<Self> {
         let model = Self {
             subsonic,
+            id: None,
             stack: gtk::Stack::default(),
             cover: gtk::Image::default(),
         };
@@ -143,6 +145,7 @@ impl relm4::Component for Cover {
                 .set_visible_child_enum(&LoadingWidgetState::Empty),
             CoverIn::LoadId(Some(id)) => {
                 sender.input(CoverIn::ChangeImage(self.subsonic.borrow_mut().cover(&id)));
+                self.id = Some(id);
             }
             CoverIn::LoadSong(child) => match child.album_id {
                 None => self
@@ -199,9 +202,11 @@ impl relm4::Component for Cover {
     ) {
         match message {
             CoverCmd::CoverLoaded(id, Some(texture), Some(buffer)) => {
-                sender.input(CoverIn::ChangeImage(subsonic_cover::Response::Loaded(
-                    texture,
-                )));
+                if self.id.as_deref() == Some(&id) {
+                    sender.input(CoverIn::ChangeImage(subsonic_cover::Response::Loaded(
+                        texture,
+                    )));
+                }
 
                 self.subsonic.borrow_mut().cover_update(&id, Some(buffer));
             }
