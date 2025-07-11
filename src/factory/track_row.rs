@@ -84,6 +84,7 @@ impl TrackRow {
         &self.fav_btn
     }
 
+    // this will be set when clicking on a row
     pub fn set_drag_src(&mut self, drop: Droppable) {
         // remove old DragSource if there is one
         if self.multiple_drag_src.is_some() {
@@ -110,7 +111,7 @@ impl TrackRow {
             }
         });
 
-        //add this DragSource
+        //add this DragSource to row
         if let Some(list_item) = super::get_list_item_widget(&self.title_box) {
             list_item.add_controller(src.clone());
         }
@@ -127,6 +128,8 @@ impl TrackRow {
         self.multiple_drag_src = None;
     }
 
+    // this will be called when click dragging before selecting
+    // selecting happens when click is released
     fn create_drag_src(
         &self,
         cell: &Rc<RefCell<Option<submarine::data::Child>>>,
@@ -256,7 +259,7 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
             let drag_src = item.create_drag_src(cell);
             list_item.add_controller(drag_src);
 
-            //connect left click
+            //connect left click for showing cover of clicked item
             let gesture = gtk::GestureClick::default();
             let sender = item.sender.clone();
             let uid = uid.clone();
