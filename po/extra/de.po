@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-13 09:46+0200\n"
+"POT-Creation-Date: 2025-07-11 17:40+0200\n"
 "PO-Revision-Date: 2025-05-13 09:49+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.4.4\n"
 
-#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:12
+#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:13
 msgid "Buoy"
 msgstr "Buoy"
 
@@ -30,11 +30,11 @@ msgstr "Musik Player"
 msgid "Play music from a subsonic server"
 msgstr "Spielt Musik von einem Subsonic Server"
 
-#: data/metadata.appdata.xml.in.in:13
+#: data/metadata.appdata.xml.in.in:14
 msgid "A Subsonic music client"
 msgstr "Ein Subsonic Musik Client"
 
-#: data/metadata.appdata.xml.in.in:15
+#: data/metadata.appdata.xml.in.in:16
 msgid ""
 "Bouy is a GTK client to browse and play from a subsonic music server. It's "
 "designed to handle large music collections"
@@ -42,27 +42,51 @@ msgstr ""
 "Bouy ist ein GTK-Client zum durchstöbern und abspielen eines Subsonic Musik "
 "Servers. Es ist designet um große Musikbibliotheken zu verarbeiten"
 
-#: data/metadata.appdata.xml.in.in:29
+#: data/metadata.appdata.xml.in.in:31 data/metadata.appdata.xml.in.in:40
+msgid "updated dependencies"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:32
+msgid "fixed seekbar setup on startup"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:33
+msgid "added delayed loading of tracks in TracksView for large databases"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:41
+msgid "updated german translation"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:42
+msgid "added scroll bars to filters in artists, albums and tracks"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:43
+msgid "added scroll bars to list of playlists"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:49
 msgid "Initial Release"
 msgstr "Initialer Release"
 
-#: data/metadata.appdata.xml.in.in:34
+#: data/metadata.appdata.xml.in.in:54
 msgid "Pre Release"
 msgstr "Pre Release"
 
-#: data/metadata.appdata.xml.in.in:42
+#: data/metadata.appdata.xml.in.in:62
 msgid "An overview of your music"
 msgstr "Eine Übersicht deiner Musik"
 
-#: data/metadata.appdata.xml.in.in:46
+#: data/metadata.appdata.xml.in.in:66
 msgid "View your albums"
 msgstr "Sehe eine Alben an"
 
-#: data/metadata.appdata.xml.in.in:50
+#: data/metadata.appdata.xml.in.in:70
 msgid "Browse all tracks in your library"
 msgstr "Stöber in allen Titel deine Bibliothek"
 
-#: data/metadata.appdata.xml.in.in:54
+#: data/metadata.appdata.xml.in.in:74
 msgid "Oraganize your playlists"
 msgstr "Organisiere deine Playlisten"
 

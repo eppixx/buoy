@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: extra\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-13 09:46+0200\n"
+"POT-Creation-Date: 2025-07-11 17:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:12
+#: data/launcher.desktop.in.in:3 data/metadata.appdata.xml.in.in:13
 msgid "Buoy"
 msgstr ""
 
@@ -29,36 +29,60 @@ msgstr ""
 msgid "Play music from a subsonic server"
 msgstr ""
 
-#: data/metadata.appdata.xml.in.in:13
+#: data/metadata.appdata.xml.in.in:14
 msgid "A Subsonic music client"
 msgstr ""
 
-#: data/metadata.appdata.xml.in.in:15
+#: data/metadata.appdata.xml.in.in:16
 msgid ""
 "Bouy is a GTK client to browse and play from a subsonic music server. It's "
 "designed to handle large music collections"
 msgstr ""
 
-#: data/metadata.appdata.xml.in.in:29
-msgid "Initial Release"
+#: data/metadata.appdata.xml.in.in:31 data/metadata.appdata.xml.in.in:40
+msgid "updated dependencies"
 msgstr ""
 
-#: data/metadata.appdata.xml.in.in:34
-msgid "Pre Release"
+#: data/metadata.appdata.xml.in.in:32
+msgid "fixed seekbar setup on startup"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:33
+msgid "added delayed loading of tracks in TracksView for large databases"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:41
+msgid "updated german translation"
 msgstr ""
 
 #: data/metadata.appdata.xml.in.in:42
-msgid "An overview of your music"
+msgid "added scroll bars to filters in artists, albums and tracks"
 msgstr ""
 
-#: data/metadata.appdata.xml.in.in:46
-msgid "View your albums"
+#: data/metadata.appdata.xml.in.in:43
+msgid "added scroll bars to list of playlists"
 msgstr ""
 
-#: data/metadata.appdata.xml.in.in:50
-msgid "Browse all tracks in your library"
+#: data/metadata.appdata.xml.in.in:49
+msgid "Initial Release"
 msgstr ""
 
 #: data/metadata.appdata.xml.in.in:54
+msgid "Pre Release"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:62
+msgid "An overview of your music"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:66
+msgid "View your albums"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:70
+msgid "Browse all tracks in your library"
+msgstr ""
+
+#: data/metadata.appdata.xml.in.in:74
 msgid "Oraganize your playlists"
 msgstr ""
