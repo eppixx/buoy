@@ -255,7 +255,13 @@ impl relm4::typed_view::column::RelmColumn for TitleColumn {
         // we need only 1 DragSource for the ListItem as it is updated by updating cell
         if !finished.0 {
             finished.0 = true;
-            let list_item = super::get_list_item_widget(&item.title_box).unwrap();
+            // TODO investigate why this crashes
+            // let list_item = super::get_list_item_widget(&item.title_box).unwrap();
+            // workaround start
+            let b = item.title_box.parent().unwrap();
+            let column_view_cell = b.parent().unwrap();
+            let list_item = column_view_cell;
+            // workaround end
             let drag_src = item.create_drag_src(cell);
             list_item.add_controller(drag_src);
 
