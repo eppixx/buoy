@@ -105,7 +105,7 @@ fn default_volume() -> f64 {
 }
 
 fn default_mute() -> bool {
-    true
+    false
 }
 
 fn default_scrobble_threshold() -> u32 {
