@@ -56,8 +56,53 @@ image = "0.25.6"
 keyframe = "1.1.1"
 
 [profile.release]
-strip = "debuginfo"
 lto = true
-# overflow-checks = true
+overflow-checks = true
+#debug = "full"              # No one needs an undebuggable release binary
+#panic = "abort"             # reduces binary size by ~50% in combination with -Zbuild-std-features=panic_immediate_abort
+#split-debuginfo = "packed"  # generates a seperate *.dwp/*.dSYM so the binary can get stripped
+#strip = "symbols"           # See split-debuginfo - allows us to drop the size by ~65%
 
-[profile.dev]
+# https://github.com/kornelski/cargo-deb
+[package.metadata.deb]
+depends = "libgtk-4-common (>= 4.6.9), libgranite-7 (>= 7.3.0) | libgranite-7-7 (>= 7.4.0), libgstreamer1.0-0 (>=1.20.3)"
+assets = [
+    # binary
+    ["target/release/buoy", "usr/bin/", "755"],
+    # desktop file
+    ["build-deb/data/com.github.eppixx.buoy.desktop", "usr/share/applications/com.github.eppixx.buoy.desktop", "644"],
+    # icons
+    ["data/icons/svg/audio-x-generic-symbolic.svg", "usr/share/icons/hicolor/scalable/mimes/audio-x-generic-symbolic", "644"],
+    ["data/icons/symbolic.svg", "usr/share/icons/hicolor/symbolic/apps/com.github.eppixx.buoy.svg", "644"],
+    ["data/icons/svg/playlist-symbolic.svg", "usr/share/icons/hicolor/scalable/places/", "644"],
+    ["data/icons/svg/media-eq-symbolic.svg","usr/share/icons/hicolor/scalable/actions/", "644"],
+    ["data/icons/svg/media-playlist-no-repeat-symbolic.svg", "usr/share/icons/hicolor/scalable/status/", "644"],
+    ["data/icons/svg/media-playlist-repeat-symbolic.svg", "usr/share/icons/hicolor/scalable/status/", "644"],
+    ["data/icons/svg/queue-replace-symbolic.svg", "usr/share/icons/hicolor/scalable/actions/", "644"],
+    ["data/icons/svg/queue-append-symbolic.svg", "usr/share/icons/hicolor/scalable/actions/", "644"],
+    ["data/icons/svg/queue-insert-symbolic.svg", "usr/share/icons/hicolor/scalable/actions/", "644"],
+]
+
+# https://github.com/cat-in-136/cargo-generate-rpm
+[package.metadata.generate-rpm]
+auto-req = "no"
+assets = [
+    # binary
+    { source = "target/release/buoy", dest = "/usr/bin/", mode = "755" },
+    # desktop file
+    { source = "build-rpm/data/com.github.eppixx.buoy.desktop", dest = "/usr/share/applications/", mode = "644" },
+    # icons
+    { source = "data/icons/svg/audio-x-generic-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/mimes/", mode = "644" },
+    { source = "data/icons/symbolic.svg", dest = "/usr/share/icons/hicolor/symbolic/apps/com.github.eppixx.buoy.svg", mode = "644" },
+    { source = "data/icons/svg/playlist-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/places/", mode = "644" },
+    { source = "data/icons/svg/media-eq-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/actions/", mode = "644" },
+    { source = "data/icons/svg/media-playlist-repeat-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/status/", mode = "644" },
+    { source = "data/icons/svg/queue-replace-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/actions/", mode = "644" },
+    { source = "data/icons/svg/queue-append-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/actions/", mode = "644" },
+    { source = "data/icons/svg/queue-insert-symbolic.svg", dest = "/usr/share/icons/hicolor/scalable/actions/", mode = "644" },
+]
+
+[package.metadata.generate-rpm.requires]
+granite-7 = ">= 7.4.0"
+gtk4 = ">= 4.6.9"
+gstreamer1 = ">= 1.20.3"
