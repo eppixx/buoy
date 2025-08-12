@@ -307,6 +307,7 @@ impl relm4::typed_view::column::RelmColumn for AlbumColumn {
     }
 }
 
+#[allow(dead_code)]
 pub struct GenreColumn;
 
 impl relm4::typed_view::column::RelmColumn for GenreColumn {
@@ -409,6 +410,7 @@ impl relm4::typed_view::column::RelmColumn for PlayCountColumn {
     }
 }
 
+#[allow(dead_code)]
 pub struct BitRateColumn;
 
 impl relm4::typed_view::column::RelmColumn for BitRateColumn {
