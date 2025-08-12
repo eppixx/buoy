@@ -296,6 +296,7 @@ impl relm4::typed_view::column::RelmColumn for YearColumn {
     }
 }
 
+#[allow(dead_code)]
 pub struct CdColumn;
 
 impl relm4::typed_view::column::RelmColumn for CdColumn {

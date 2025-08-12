@@ -274,13 +274,13 @@ impl Player {
     fn open_uri(&self, _uri: &str) {}
 
     #[zbus(property)]
-    pub fn playback_status(&self) -> zvariant::Value {
+    pub fn playback_status(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().state.to_mpris_string())
     }
 
     //None, Track, Playlist
     #[zbus(property)]
-    pub fn loop_status(&self) -> zvariant::Value {
+    pub fn loop_status(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().loop_status.to_mpris_string())
     }
 
@@ -303,7 +303,7 @@ impl Player {
     fn set_rate(&self, _rate: f64) {}
 
     #[zbus(property)]
-    pub fn shuffle(&self) -> zvariant::Value {
+    pub fn shuffle(&self) -> zvariant::Value<'_> {
         let shuffle = self.info.lock().unwrap().shuffle == Shuffle::Shuffle;
         zvariant::Value::new(shuffle)
     }
@@ -323,7 +323,7 @@ impl Player {
 
     /// specifications: https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/
     #[zbus(property)]
-    pub fn metadata(&self) -> zvariant::Value {
+    pub fn metadata(&self) -> zvariant::Value<'_> {
         let mut map = HashMap::new();
         if let Some(song) = &self.info.lock().unwrap().song {
             use zvariant::Value;
@@ -363,7 +363,7 @@ impl Player {
 
     //ranges from 0.0 to 1.0
     #[zbus(property)]
-    pub fn volume(&self) -> zvariant::Value {
+    pub fn volume(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().volume)
     }
 
@@ -376,48 +376,48 @@ impl Player {
 
     //time im microseconds
     #[zbus(property)]
-    fn position(&self) -> zvariant::Value {
+    fn position(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().song_position)
     }
 
     #[zbus(property)]
-    fn minimum_rate(&self) -> zvariant::Value {
+    fn minimum_rate(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(1.0f64)
     }
 
     #[zbus(property)]
-    fn maximum_rate(&self) -> zvariant::Value {
+    fn maximum_rate(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(1.0f64)
     }
 
     #[zbus(property)]
-    pub fn can_go_next(&self) -> zvariant::Value {
+    pub fn can_go_next(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().can_next)
     }
 
     #[zbus(property)]
-    pub fn can_go_previous(&self) -> zvariant::Value {
+    pub fn can_go_previous(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().can_previous)
     }
 
     /// if a playable track is possible to play, not if a track is playing/pausing
     #[zbus(property)]
-    pub fn can_play(&self) -> zvariant::Value {
+    pub fn can_play(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(self.info.lock().unwrap().can_play)
     }
 
     #[zbus(property)]
-    pub fn can_pause(&self) -> zvariant::Value {
+    pub fn can_pause(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(true)
     }
 
     #[zbus(property)]
-    pub fn can_seek(&self) -> zvariant::Value {
+    pub fn can_seek(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(true)
     }
 
     #[zbus(property)]
-    fn can_control(&self) -> zvariant::Value {
+    fn can_control(&self) -> zvariant::Value<'_> {
         zvariant::Value::new(true)
     }
 }

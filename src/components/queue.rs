@@ -97,7 +97,7 @@ impl Queue {
             .collect()
     }
 
-    pub fn iter_tracks(&self) -> QueueRowIterator {
+    pub fn iter_tracks(&self) -> QueueRowIterator<'_> {
         QueueRowIterator {
             queue: self,
             index: 0,
