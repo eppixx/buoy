@@ -7,7 +7,7 @@ use relm4::gtk::{
 
 static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum AutomaticScrolling {
     #[default]
     Ready,
