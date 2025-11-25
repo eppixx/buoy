@@ -9,15 +9,10 @@ static UID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AutomaticScrolling {
+    #[default]
     Ready,
     GracePeriod,
     Scrolling,
-}
-
-impl Default for AutomaticScrolling {
-    fn default() -> Self {
-        Self::Ready
-    }
 }
 
 pub trait ScrolledWindowExt {
