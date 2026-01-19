@@ -34,10 +34,10 @@ gettext-rs = { version = "0.7.7", features = ["gettext-system"] }
 
 #mpris
 zbus = "5.13.1"
-zvariant = "5.8.0"
+zvariant = "5.9.2"
 
 # converting strings on seekbar
-chrono = "0.4.42"
+chrono = "0.4.43"
 
 # used for loading and saving settings
 serde = { version = "1.0.228", features = ["derive"] }
