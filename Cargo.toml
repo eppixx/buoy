@@ -33,7 +33,7 @@ clap_derive = "4.5.32"
 gettext-rs = { version = "0.7.7", features = ["gettext-system"] }
 
 #mpris
-zbus = "5.13.1"
+zbus = "5.13.2"
 zvariant = "5.9.2"
 
 # converting strings on seekbar
