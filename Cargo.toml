@@ -50,7 +50,7 @@ dirs = "6.0.0"
 url = "2.5.8"
 
 # desktop notifications
-notify-rust = { version = "4.11.7", features = ["images"] }
+notify-rust = { version = "4.12.0", features = ["images"] }
 image = "0.25.9"
 
 keyframe = "1.1.1"
