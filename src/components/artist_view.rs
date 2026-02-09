@@ -529,7 +529,7 @@ impl relm4::Component for ArtistView {
             ArtistViewIn::ClickedRandomize => {
                 let songs = self.subsonic.borrow().songs_of_artist(self.id.inner());
                 let mut rng = rand::rng();
-                let random_songs = songs.iter().choose_multiple(&mut rng, 5);
+                let random_songs = songs.iter().sample(&mut rng, 5);
                 if random_songs.is_empty() {
                     widgets
                         .random_songs_stack
