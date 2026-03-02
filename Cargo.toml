@@ -21,7 +21,7 @@ anyhow = "1.0.102"
 relm4 = "0.10.1"
 granite = { version = "3.1.0", package = "granite-rs", features = ["v7_3"] }
 submarine = { version = "0.1.1", features = ["navidrome"] }
-gstreamer = "0.24.4"
+gstreamer = "0.25.1"
 tokio = { version = "1.49.0", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.32"
 async-channel = "2.5.0"
