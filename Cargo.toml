@@ -14,7 +14,7 @@ categories = ["multimedia::audio"]
 [dependencies]
 # common components
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"]}
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"]}
 anyhow = "1.0.102"
 
 # core components
@@ -28,7 +28,7 @@ async-channel = "2.5.0"
 fuzzy-matcher = "0.3.7"
 rand = "0.10.0"
 itertools = "0.14.0"
-clap = { version = "4.5.60", features = ["derive"] }
+clap = { version = "4.6.0", features = ["derive"] }
 clap_derive = "4.5.55"
 gettext-rs = { version = "0.7.7", features = ["gettext-system"] }
 
@@ -51,7 +51,7 @@ url = "2.5.8"
 
 # desktop notifications
 notify-rust = { version = "4.12.0", features = ["images"] }
-image = "0.25.9"
+image = "0.25.10"
 
 keyframe = "1.1.1"
 
