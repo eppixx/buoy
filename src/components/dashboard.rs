@@ -98,7 +98,7 @@ impl relm4::Component for Dashboard {
 
         //load recently added albums
         let mut albums = subsonic.borrow().albums().clone();
-        albums.sort_by(|a, b| b.created.cmp(&a.created));
+        albums.sort_by_key(|b| std::cmp::Reverse(b.created));
         let list: Vec<(Rc<RefCell<Subsonic>>, Id)> = albums
             .iter()
             .take(Settings::get().lock().unwrap().dashboard_line_items)
@@ -112,7 +112,7 @@ impl relm4::Component for Dashboard {
         sender.input(DashboardIn::ClickedRandomize);
 
         //load most played albums
-        albums.sort_by(|a, b| b.play_count.cmp(&a.play_count));
+        albums.sort_by_key(|b| std::cmp::Reverse(b.play_count));
         let ids: Vec<Id> = albums
             .iter()
             .take(Settings::get().lock().unwrap().dashboard_line_items)
