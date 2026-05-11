@@ -21,8 +21,8 @@ anyhow = "1.0.102"
 relm4 = "0.10.1"
 granite = { version = "3.1.0", package = "granite-rs", features = ["v7_3"] }
 submarine = { version = "0.1.1", features = ["navidrome"] }
-gstreamer = "0.25.1"
-tokio = { version = "1.52.2", features = ["rt", "macros", "rt-multi-thread"]}
+gstreamer = "0.25.2"
+tokio = { version = "1.52.3", features = ["rt", "macros", "rt-multi-thread"]}
 futures = "0.3.32"
 async-channel = "2.5.0"
 fuzzy-matcher = "0.3.7"
@@ -50,7 +50,7 @@ dirs = "6.0.0"
 url = "2.5.8"
 
 # desktop notifications
-notify-rust = { version = "4.16.1", features = ["images"] }
+notify-rust = { version = "4.17.0", features = ["images"] }
 image = "0.25.10"
 
 keyframe = "1.1.1"
