@@ -284,6 +284,15 @@ impl Filter {
                     return false;
                 }
             }
+            Filter::TrackNumber(order, value) => {
+                if let Some(number) = &track.track {
+                    if number.cmp(&(*value as i32)) != *order {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
             _ => unreachable!("there are filters that shouldnt be"),
         }
 
